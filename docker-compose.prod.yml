@@ -1,0 +1,107 @@
+# Production overlay — app containers + loopback health ports.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Host binds registered in /srv/scripts/PORT_REGISTRY.md
+
+services:
+  postgres:
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-inabiya}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-inabiya}
+      POSTGRES_DB: ${POSTGRES_DB:-inabiya}
+
+  redis:
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: inabiya-api:${GIT_COMMIT:-latest}
+    container_name: inabiya-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      API_PORT: '4001'
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inabiya}:${POSTGRES_PASSWORD:-inabiya}@postgres:5432/${POSTGRES_DB:-inabiya}?schema=public
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '127.0.0.1:4001:4001'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4001/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks:
+      - inabiya_internal
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    image: inabiya-worker:${GIT_COMMIT:-latest}
+    container_name: inabiya-worker
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    networks:
+      - inabiya_internal
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: inabiya-web:${GIT_COMMIT:-latest}
+    container_name: inabiya-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      WEB_PORT: '3001'
+      API_URL: ${API_URL:-http://api:4001}
+      APP_URL: ${APP_URL:-http://127.0.0.1:3001}
+    ports:
+      - '127.0.0.1:3001:3001'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks:
+      - inabiya_internal
+      - vps_edge
+
+networks:
+  vps_edge:
+    external: true

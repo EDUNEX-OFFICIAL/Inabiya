@@ -1,6 +1,6 @@
 ---
 description: How to edit Inabiya docs without drift
-globs: docs/**/*.md
+globs: docs/**/*.md,Docs/**/*.md
 alwaysApply: false
 ---
 

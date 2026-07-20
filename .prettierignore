@@ -4,3 +4,8 @@ dist
 coverage
 pnpm-lock.yaml
 prisma/migrations
+Docs
+docs
+*.md
+!README.md
+

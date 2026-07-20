@@ -2,10 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 /** Minimal shadcn-style primitive — restyle with tokens later. */
-export function Button({
-  className,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function Button({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       className={cn(

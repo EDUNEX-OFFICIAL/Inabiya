@@ -14,10 +14,7 @@ export class HealthService {
   }
 
   async readiness() {
-    const [database, redis] = await Promise.all([
-      this.prisma.isHealthy(),
-      this.redis.isHealthy(),
-    ]);
+    const [database, redis] = await Promise.all([this.prisma.isHealthy(), this.redis.isHealthy()]);
     const ready = database && redis;
     return {
       status: ready ? ('ready' as const) : ('degraded' as const),
