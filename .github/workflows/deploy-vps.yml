@@ -15,6 +15,9 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      # Prisma validate/generate need a URL shape; no live DB in CI
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
     steps:
       - uses: actions/checkout@v4
 
