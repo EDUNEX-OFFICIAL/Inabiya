@@ -1,0 +1,22 @@
+---
+description: Phase discipline and Memory.md update obligations
+alwaysApply: true
+---
+
+# Phase & Memory Discipline
+
+Active phase is defined only in `docs/Memory.md`. Default order: 0→1→2→3→4→5→6→7→8→9.
+
+## Do
+
+- Implement only P0/P1 for the active phase (`docs/Phases.md`)
+- Ask which phase if Memory is unclear
+- Mark checkboxes honestly — never invent progress
+
+## Don't
+
+- Build checkout/editorial/creator features during Phase 0
+- Skip Phase N while doing Phase N+2 (unless user explicitly overrides and Memory logs it)
+- Leave session without updating Memory when implementation changed
+
+Prototype under `Inabiya-emergent-ai` is reference-only — never copy its CRA/FastAPI/Mongo stack into production.

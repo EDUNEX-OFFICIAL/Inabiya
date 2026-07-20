@@ -1,0 +1,51 @@
+---
+description: GSAP 2026 modern ecommerce motion — Next.js App Router safe patterns
+globs: apps/web/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# GSAP for Inabiya Ecommerce (2026)
+
+GSAP is primary for marketing/scroll/storytelling motion on Soft Gift storefront. Framer Motion only for tiny UI (toast/presence micro-interactions). Do not animate everything.
+
+## Setup (required)
+
+- Client leaf only: `'use client'`
+- Use `@gsap/react` → `useGSAP()` for create + auto cleanup/context
+- Register plugins client-side only:
+  `if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger)`
+- Never call `gsap.*` / `ScrollTrigger.*` during SSR/render
+- Scope selectors to a container `ref` (no global `'.card'` across the app)
+
+## Performance
+
+- Prefer `transform` + `opacity` (compositor-friendly)
+- Avoid animating layout props (`top/left/width/height`) unless Flip needs it
+- Batch lists with `ScrollTrigger.batch` when many similar reveals
+- `ScrollTrigger.refresh()` after fonts/images/layout shifts
+- Kill/cleanup on route change (useGSAP handles if scoped correctly)
+- Code-split heavy scenes with `next/dynamic` + `ssr: false` when bundle weight hurts LCP
+
+## Accessibility
+
+If `prefers-reduced-motion: reduce`:
+
+- Skip pin / scrub / parallax / big timelines
+- Keep final content visible (no opacity 0 traps)
+- Don’t rely on animation to reveal critical CTA/price/stock
+
+## Ecommerce UX (Soft Gift)
+
+Use GSAP for: hero presence, collection reveals, PDP gallery polish, Build-Your-Box step transitions, soft scroll storytelling on marketing pages.
+
+Do NOT use heavy GSAP on: checkout pay path, cart line edits, admin tables, input typing — keep crisp & instant.
+
+Match Design.md: calm premium motion (≈0.2–0.6s), not flashy SaaS bounce spam. 2–3 intentional motions per polished view beat 20 weak ones.
+
+## Hydration safety
+
+Server and client JSX trees must match. Don’t branch markup on `window`. Animate after mount via useGSAP only.
+
+## Checklist before merging animation work
+
+- [ ] useGSAP scoped · [ ] reduced-motion path · [ ] no SSR window crash · [ ] mobile pin sane or disabled · [ ] LCP image not delayed by animation · [ ] CTAs clickable during/after motion

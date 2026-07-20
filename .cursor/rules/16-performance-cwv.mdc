@@ -1,0 +1,27 @@
+---
+description: Core Web Vitals and ecommerce frontend performance
+globs: apps/web/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# Performance / Core Web Vitals
+
+Protect LCP, INP, CLS on PLP/PDP/cart/checkout/home.
+
+## Do
+
+- `next/image` for product/hero images with correct sizes/priority for LCP hero only
+- Reserve aspect ratio space to prevent CLS
+- Keep checkout light — minimal animation, minimal third-party
+- Defer non-critical JS; avoid shipping GSAP on checkout routes if unused
+- Server Components by default; client islands only where needed
+- Cache public catalog reads carefully; never cache private cart HTML
+
+## Don't
+
+- Unsized images / layout-shifting banners
+- Huge client carousels on first paint
+- Blocking third-party scripts in checkout
+- Animate LCP element from opacity 0 without SSR-visible fallback
+
+Measure before “optimizing.” Prefer deleting JS over micro-tweaks.

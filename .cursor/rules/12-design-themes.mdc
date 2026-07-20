@@ -1,0 +1,23 @@
+---
+description: Dual design systems Soft Gift vs Creator Collective
+globs: apps/web/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# Design Systems A/B
+
+## System A — Soft Gift (`data-theme="gift"`)
+
+Pink `#FF6B9D`, soft bg `#FFF3F8`, heading `#2D2640` · Fonts: Fraunces + Plus Jakarta Sans · Soft rounded cards/pills · Used for storefront, blog public UI, commerce admin dense family.
+
+## System B — Creator (`data-theme="creator"`)
+
+Forest/cream/terracotta HSL tokens · Fonts: Playfair Display + Manrope · Tetris marketing / dense dashboards · Never pink gift tokens.
+
+## Never
+
+Mix themes · treat medical specialists as marketplace creators · Inter/Roboto brand stacks · emoji icons · purple-glow SaaS heroes · hero sticker overlays.
+
+Critical controls need `data-testid` (kebab-case). Tap targets ≥ 48px.
+
+Motion: GSAP primary on Soft Gift storytelling surfaces — see `15-gsap-motion.mdc`. Calm premium, not bounce spam.

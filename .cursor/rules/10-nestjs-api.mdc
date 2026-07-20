@@ -1,0 +1,29 @@
+---
+description: NestJS modular monolith patterns for apps/api
+globs: apps/api/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# NestJS API Rules
+
+## Module ownership
+
+Keep domains isolated: `identity`, `media`, `notifications`, `audit`, `commerce/*`, `editorial/*`, `creator/*`, `platform/*`.
+
+Never Prisma-query another module’s tables. Cross-domain via use-case API, events, or ACL.
+
+## Layering
+
+```text
+controller → use-case → domain policy → ports ← infrastructure (Prisma/Redis/S3)
+```
+
+Controllers: validate → authZ → call one use-case → map response. No pricing/inventory/workflow logic in controllers.
+
+## Required
+
+- Versioned routes `/api/v1/...`
+- Error envelope: `{ error: { code, message, details, requestId } }`
+- Idempotency for place-order, payment webhooks, awards, payouts
+- Explicit state-machine transitions (409 on illegal jumps)
+- Money in integer paise / Decimal — never JS float

@@ -1,0 +1,19 @@
+---
+description: BullMQ jobs, domain events, and async side effects
+globs: "{apps/worker/**,apps/api/src/**/*queue*,apps/api/src/**/*job*,apps/api/src/**/*worker*,apps/api/src/**/*event*}"
+alwaysApply: false
+---
+
+# Jobs & Events
+
+Use BullMQ for: email/SMS, payment webhook follow-up, media variants, search reindex, scheduled article publish, low-stock alerts, payout retries, analytics fan-out.
+
+## Rules
+
+- Handlers must be idempotent (at-least-once delivery)
+- Explicit retry/backoff + dead-letter visibility
+- Propagate correlation IDs
+- Do not hide long external IO in request hot paths when a queue should own it
+- Redis down must not corrupt money/inventory truth (DB remains source of record)
+
+Example events: `OrderPaid`, `OrderCancelled`, `ArticlePublished`, `CampaignAwarded`, `DeliverableApproved`.

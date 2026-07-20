@@ -1,0 +1,26 @@
+---
+description: Prisma, PostgreSQL, Redis, and money/data invariants
+globs: "{**/prisma/**,**/schema.prisma,apps/api/**/*repository*.ts,apps/api/**/*prisma*.ts}"
+alwaysApply: false
+---
+
+# Data & Prisma Rules
+
+PostgreSQL is system of record. Redis is cache/queue/lock only — never durable business truth. Search indexes are rebuildable projections. Media bytes in S3; metadata in DB.
+
+## Prisma
+
+- Every schema change = migration
+- UUID/ULID public IDs
+- Named indexes for hot paths
+- Soft delete only when PRD requires recoverability
+
+## Money & inventory
+
+- Integer paise (or Decimal) — never float
+- Reservations explicit; release on cancel/fail payment
+- No implicit negative stock
+
+## Idempotency keys required for
+
+checkout/place order · payment webhooks · campaign award · payout/writer payment release

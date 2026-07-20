@@ -1,0 +1,19 @@
+---
+description: SEO and metadata for ecommerce + blog routes
+globs: "{apps/web/app/**/page.tsx,apps/web/app/**/layout.tsx,apps/web/app/**/sitemap.ts,apps/web/app/**/robots.ts}"
+alwaysApply: false
+---
+
+# SEO & Metadata
+
+- Unique title + meta description per indexable page
+- Canonical URLs on PDP/PLP/articles
+- Open Graph + Twitter cards for shareable PDP/blog
+- Semantic landmarks/headings (one H1)
+- Product JSON-LD where appropriate (name, price, availability, image) — keep accurate to server data
+- Article JSON-LD for published blog posts
+- `sitemap.ts` / `robots.ts` for public surfaces
+- Noindex drafts, previews, account, checkout, admin
+- Clean slugs; avoid duplicate content via facet URLs without canonical strategy
+
+Never stuff keywords. Trust + clarity > spam SEO tricks.

@@ -1,0 +1,18 @@
+---
+description: Checkout and cart UX — speed, trust, no motion blockers
+globs: "{apps/web/app/(gift)/**/cart/**,apps/web/app/(gift)/**/checkout/**,apps/api/src/modules/commerce/cart/**,apps/api/src/modules/commerce/checkout/**,apps/api/src/modules/commerce/orders/**}"
+alwaysApply: false
+---
+
+# Cart & Checkout UX
+
+- Instant feedback on line edits; no heavy GSAP timelines
+- Disable double-submit on pay
+- Preserve form state on recoverable errors
+- Server recomputes totals — never trust client money
+- Show shipping/tax clearly when known; no surprise jumps late
+- Guest checkout allowed per PRD; deterministic login merge
+- Loading skeletons > opaque spinners that hide errors
+- Success page: reassurance + order id + next steps
+
+Security and idempotency beat animation polish on this path.

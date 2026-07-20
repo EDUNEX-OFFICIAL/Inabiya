@@ -1,0 +1,23 @@
+---
+description: How to edit Inabiya docs without drift
+globs: docs/**/*.md
+alwaysApply: false
+---
+
+# Documentation Rules
+
+| Doc | Owns |
+|---|---|
+| PRD.md | Product behavior |
+| Architecture.md | Technical structure (v2 Inabiya only — no LMS) |
+| Rules.md | Engineering law |
+| Phases.md | Delivery sequence |
+| Design.md | Visual systems A/B |
+| Memory.md | Live progress |
+
+## When editing
+
+- Keep docs consistent with locked stack
+- Prefer Memory for progress; do not duplicate PRD into Memory
+- Architecture changes that affect coding need Rules/Phases sync if sequencing/stack shifts
+- Never reintroduce Student/Admission/Hostel education domains

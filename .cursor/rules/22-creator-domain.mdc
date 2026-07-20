@@ -1,0 +1,21 @@
+---
+description: Creator Collective reverse-bidding and System B UI
+globs: "{apps/api/src/modules/creator/**,apps/web/app/(creator)/**,apps/web/app/(admin)/creator/**}"
+alwaysApply: false
+---
+
+# Creator Collective Domain
+
+Owns: creator/brand profiles, campaigns, reverse bids/proposals, messaging, deliverables, campaign payments, ratings.
+
+## Invariants
+
+- Closed/awarded campaigns reject new proposals
+- Award/selection rules explicit (single-winner default unless PRD says otherwise)
+- Payment/escrow release requires deliverable approval gates
+- Brand/creator data isolation by ownership
+- Ratings only after eligible completion states
+
+## UI
+
+Always `data-theme="creator"` (Playfair+Manrope, forest/terracotta). Never Soft Gift pink.

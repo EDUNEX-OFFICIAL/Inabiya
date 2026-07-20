@@ -1,0 +1,23 @@
+---
+description: Accessibility requirements for Inabiya storefront and apps
+globs: apps/web/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Accessibility
+
+Target practical WCAG 2.2 AA on core flows (browse → PDP → cart → checkout → account).
+
+## Required
+
+- Visible focus rings using theme tokens
+- Keyboard access for dialogs, menus, builder steps, cart drawers
+- Icon-only controls need `aria-label`
+- Tap targets ≥ 48px (primary CTAs often 56px)
+- Don’t convey status by color alone
+- Form errors tied to fields + announced appropriately
+- Meaningful `alt` on product images; decorative marked
+- Honor `prefers-reduced-motion` (see GSAP rule)
+- Modals: focus trap + Escape + restore focus
+
+Tag chips (must/rec/nice) use dark text on pastel fills for contrast.

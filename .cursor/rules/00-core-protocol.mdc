@@ -1,0 +1,19 @@
+---
+description: Inabiya core agent protocol — docs order, phase lock, stack
+alwaysApply: true
+---
+
+# Inabiya Core Protocol
+
+Before coding, read `docs/Memory.md` (active phase), then only the relevant slices of `docs/Phases.md`, `docs/Rules.md`, `docs/Architecture.md`, `docs/Design.md`. Open `docs/PRD.md` only for ambiguous product behavior.
+
+## Hard locks
+
+- Stack: Next.js App Router, NestJS, PostgreSQL+Prisma, Redis+BullMQ, Tailwind+shadcn, Zod, pnpm
+- Never introduce MongoDB, FastAPI, CRA, Pages Router, second ORM, or LMS domains (Student/Hostel/Exam)
+- One active phase — do not pull future-phase features
+- Dual design: System A gift ≠ System B creator — never mix tokens
+
+## After coding
+
+Update `docs/Memory.md` checkboxes + session log. Summarize changes, migrations, env keys, remaining risks.

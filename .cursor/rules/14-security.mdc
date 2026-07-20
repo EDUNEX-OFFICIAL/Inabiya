@@ -1,0 +1,17 @@
+---
+description: Security, AuthZ, PII, and payment safety
+alwaysApply: true
+---
+
+# Security Rules
+
+- Authenticate protected routes; authorize at use-case boundary (not UI-only)
+- Least privilege roles: Customer, Commerce Admin, Content Admin, Writer, SEO Editor, Medical Reviewer, Creator, Brand, Finance, Support, Super Admin
+- Prevent IDOR — verify ownership on sensitive reads/writes
+- Validate all external input with Zod/DTOs
+- Never log tokens, passwords, OTPs, PAN/CVV
+- Never store raw card data — provider tokens only
+- Secrets only in env/secret manager — never commit `.env`
+- Rate-limit auth and sensitive POSTs
+- Audit privileged admin/finance/publish/award actions
+- Private media via signed URLs

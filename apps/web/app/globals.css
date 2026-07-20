@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Phase 0 theme stubs from docs/Design.md — full UI later */
+
+:root {
+  color-scheme: light;
+}
+
+[data-theme='gift'] {
+  --inabiya-pink: #ff6b9d;
+  --inabiya-pink-dark: #e65688;
+  --inabiya-soft: #fff3f8;
+  --inabiya-heading: #2d2640;
+  --inabiya-body: #3c3352;
+  --inabiya-yellow: #ffd166;
+  --inabiya-mint: #b5ead7;
+  --inabiya-lavender: #e8d5f5;
+  --inabiya-white: #ffffff;
+
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --radius: 1rem;
+  --background: var(--inabiya-soft);
+  --foreground: var(--inabiya-heading);
+  --primary: var(--inabiya-pink);
+  --primary-foreground: #fff;
+}
+
+[data-theme='creator'] {
+  --background: hsl(40 33% 98%);
+  --foreground: hsl(150 40% 15%);
+  --card: hsl(0 0% 100%);
+  --primary: hsl(150 40% 20%);
+  --primary-foreground: hsl(40 33% 98%);
+  --secondary: hsl(20 60% 50%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(40 20% 90%);
+  --muted-foreground: hsl(150 20% 40%);
+  --accent: hsl(40 30% 92%);
+  --border: hsl(40 20% 85%);
+  --ring: hsl(150 40% 20%);
+  --radius: 0.75rem;
+
+  --font-display: 'Playfair Display', ui-serif, Georgia, serif;
+  --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--background, #fff);
+  color: var(--foreground, #111);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), Georgia, serif;
+}

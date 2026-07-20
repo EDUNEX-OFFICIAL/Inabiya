@@ -1,0 +1,22 @@
+---
+description: Testing expectations for critical Inabiya paths
+globs: "**/*.{spec,test,e2e}.ts"
+alwaysApply: false
+---
+
+# Testing Rules
+
+Prefer Vitest (unit) + Playwright (e2e).
+
+## Must cover when touched
+
+- Checkout/payment webhook duplicate delivery
+- Inventory reserve/release
+- Illegal order/article/campaign transitions
+- AuthZ denial cases
+- Medical publish gate
+- Campaign payment release gate
+
+## Practices
+
+Deterministic tests (fake clocks/network). New bug ⇒ regression test when feasible. Do not disable tests to greenwash. Critical journeys: checkout, publish, reverse-bid award.

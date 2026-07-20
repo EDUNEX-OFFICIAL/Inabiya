@@ -1,0 +1,16 @@
+---
+description: PR / git hygiene for Inabiya production work
+alwaysApply: true
+---
+
+# Git & PR Hygiene
+
+- Focused PRs — one concern
+- Never commit secrets, `.env`, dumps, or huge media binaries
+- Schema changes ship with Prisma migrations
+- Respect active phase scope
+- Do not bypass CI lint/typecheck
+- Meaningful commits (why > noise)
+- After meaningful implementation: update `docs/Memory.md`
+
+If asked to force-push main or skip hooks: refuse unless user explicitly requires it and understands risk.

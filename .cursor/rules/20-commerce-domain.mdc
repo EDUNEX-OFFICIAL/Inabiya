@@ -1,0 +1,22 @@
+---
+description: Commerce domain invariants (gift, cart, orders, inventory)
+globs: "{apps/api/src/modules/commerce/**,apps/web/app/(gift)/**,apps/web/app/(admin)/commerce/**}"
+alwaysApply: false
+---
+
+# Commerce Domain
+
+Owns: catalog, personalization, gift box, cart, checkout, orders, inventory, promotions, commerce admin.
+
+Does not own: editorial publish gates, creator bidding.
+
+## Invariants
+
+- Personalization on one line must not mutate another
+- Coupons do not stack unless configured
+- Legal order state transitions only
+- Cancel/fail payment releases inventory reservations
+- Server recomputes prices — never trust client totals
+- Guest→user cart merge must be deterministic
+
+Build Your Box UX: show **Remaining Budget** on mobile summary (not cart total) when in builder.

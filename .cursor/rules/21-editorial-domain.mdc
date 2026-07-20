@@ -1,0 +1,20 @@
+---
+description: Editorial workflow and medical/SEO publish gates
+globs: "{apps/api/src/modules/editorial/**,apps/web/app/(blog)/**,apps/web/app/(admin)/editorial/**}"
+alwaysApply: false
+---
+
+# Editorial Domain
+
+Owns: assignments, writer tools, SEO/medical review, schedule/publish, writer payments.
+
+Does not own: SKU inventory, creator proposals.
+
+## Invariants
+
+- Unpublished content is not publicly routable
+- Medical-required articles cannot publish without medical approval
+- Writers cannot self-approve SEO/medical gates
+- Scheduled publish via BullMQ job — not browser-only
+- Writer payout release is privileged + audited + idempotent
+- Editorial specialists ≠ Creator Collective creators (separate models/routes/UI)

@@ -1,0 +1,79 @@
+# Local infrastructure only — do not publish to 0.0.0.0 on the VPS host.
+# Host binds registered in /srv/scripts/PORT_REGISTRY.md
+
+name: inabiya
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: inabiya-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: inabiya
+      POSTGRES_PASSWORD: inabiya
+      POSTGRES_DB: inabiya
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - inabiya_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inabiya -d inabiya"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - inabiya_internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: inabiya-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6381:6379"
+    volumes:
+      - inabiya_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - inabiya_internal
+
+  # Optional local object storage (S3-compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: inabiya-minio
+    profiles: ["extras"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: inabiya
+      MINIO_ROOT_PASSWORD: inabiyadev
+    ports:
+      - "127.0.0.1:9002:9000"
+      - "127.0.0.1:9003:9001"
+    volumes:
+      - inabiya_minio_data:/data
+    networks:
+      - inabiya_internal
+
+  # Optional local SMTP catcher
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: inabiya-mailhog
+    profiles: ["extras"]
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    networks:
+      - inabiya_internal
+
+networks:
+  inabiya_internal:
+    driver: bridge
+
+volumes:
+  inabiya_pg_data:
+  inabiya_redis_data:
+  inabiya_minio_data:

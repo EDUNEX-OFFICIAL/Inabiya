@@ -1,0 +1,24 @@
+---
+description: Product/media image standards for Soft Gift ecommerce
+globs: "{apps/web/**/*.{tsx,ts},apps/api/src/modules/media/**,apps/api/src/modules/commerce/catalog/**}"
+alwaysApply: false
+---
+
+# Images & Media
+
+## Storefront
+
+- Product cards: 1:1 or 4:5 · Blog thumbs: 16:9 · Hero: full-bleed intentional crop
+- Warm soft lighting; real product/context — not abstract purple gradients
+- Use `next/image`; set width/height or fill + sized parent
+- Priority only on true LCP hero
+- Lazy-load below fold
+
+## Platform
+
+- Bytes in S3-compatible storage; DB stores metadata only
+- Validate MIME/size; private assets via signed URLs
+- Don’t store binaries in Postgres
+- Generate variants via BullMQ jobs when needed (thumb/web)
+
+Empty alt only when decorative; products need descriptive alt (name + key trait).
