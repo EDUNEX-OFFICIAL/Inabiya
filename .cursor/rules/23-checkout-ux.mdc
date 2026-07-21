@@ -1,18 +1,37 @@
 ---
-description: Checkout and cart UX — speed, trust, no motion blockers
-globs: "{apps/web/app/(gift)/**/cart/**,apps/web/app/(gift)/**/checkout/**,apps/api/src/modules/commerce/cart/**,apps/api/src/modules/commerce/checkout/**,apps/api/src/modules/commerce/orders/**}"
+description: Cart/checkout trust path — double-submit, server totals, webhook idempotency
+globs: "{apps/web/app/(gift)/**/cart/**,apps/web/app/(gift)/**/checkout/**,apps/web/app/(gift)/checkout/**,apps/api/src/modules/commerce/cart/**,apps/api/src/modules/commerce/checkout/**,apps/api/src/modules/commerce/orders/**}"
 alwaysApply: false
 ---
 
 # Cart & Checkout UX
 
-- Instant feedback on line edits; no heavy GSAP timelines
-- Disable double-submit on pay
-- Preserve form state on recoverable errors
-- Server recomputes totals — never trust client money
-- Show shipping/tax clearly when known; no surprise jumps late
-- Guest checkout allowed per PRD; deterministic login merge
-- Loading skeletons > opaque spinners that hide errors
-- Success page: reassurance + order id + next steps
+Correctness > animation. No heavy GSAP on this path.
 
-Security and idempotency beat animation polish on this path.
+## UI (web)
+
+```tsx
+// checkout/page.tsx pattern — disable while in flight
+<button type="submit" disabled={busy}>
+  {busy ? 'Placing order…' : 'Pay & place order'}
+</button>
+```
+
+| Do | Don't |
+|---|---|
+| Instant line-edit feedback | GSAP timelines on qty/pay |
+| Show subtotal / discount / shipping / total from **preview API** (`*Paise`) | Invent totals in the client |
+| Keep form values when error is recoverable | Clear the address form on a 400 |
+| Skeletons / inline `error` text | Opaque spinner that hides the failure |
+| Success: order id + reassurance + next step | Dead-end blank page |
+
+Guest checkout per PRD; login merge must be deterministic.
+
+## API correctness
+
+1. `POST checkout/place-order` → reserve stock + `PENDING_PAYMENT` in one transaction.  
+2. Webhooks: `PaymentFulfillmentService.processWebhook` dedupes on `(provider, eventId)` — duplicate returns `{ duplicate: true }` with **no** second capture.  
+3. `CAPTURED` → commit inventory + mark order paid; `FAILED` → release reservation.  
+4. Never mark paid on unknown/partial provider state.
+
+Payment row uses `idempotencyKey` (e.g. `order-${order.id}`). Keep that discipline for retries.

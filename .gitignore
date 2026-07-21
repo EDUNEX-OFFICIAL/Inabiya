@@ -35,3 +35,5 @@ prisma/*.db-journal
 .turbo
 tmp
 temp
+backups/
+*.dump

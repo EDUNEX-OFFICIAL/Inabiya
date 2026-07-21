@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -17,6 +18,75 @@ const ROLES: Array<{ code: string; name: string; description: string }> = [
   { code: 'SUPER_ADMIN', name: 'Super Admin', description: 'Platform super administrator' },
 ];
 
+/** Easy local/VPS test accounts — email/password only (no OAuth). */
+const TEST_USERS: Array<{
+  email: string;
+  password: string;
+  displayName: string;
+  roleCodes: string[];
+}> = [
+  {
+    email: 'customer@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Customer',
+    roleCodes: ['CUSTOMER'],
+  },
+  {
+    email: 'commerce@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Commerce Admin',
+    roleCodes: ['COMMERCE_ADMIN'],
+  },
+  {
+    email: 'writer@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Writer',
+    roleCodes: ['WRITER'],
+  },
+  {
+    email: 'content@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Content Admin',
+    roleCodes: ['CONTENT_ADMIN'],
+  },
+  {
+    email: 'seo@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test SEO Editor',
+    roleCodes: ['SEO_EDITOR'],
+  },
+  {
+    email: 'medical@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Medical Reviewer',
+    roleCodes: ['MEDICAL_REVIEWER'],
+  },
+  {
+    email: 'finance@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Finance',
+    roleCodes: ['FINANCE'],
+  },
+  {
+    email: 'support@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Support',
+    roleCodes: ['SUPPORT'],
+  },
+  {
+    email: 'brand@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Brand',
+    roleCodes: ['BRAND'],
+  },
+  {
+    email: 'creator@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Creator',
+    roleCodes: ['CREATOR'],
+  },
+];
+
 async function main() {
   for (const role of ROLES) {
     await prisma.role.upsert({
@@ -26,6 +96,491 @@ async function main() {
     });
   }
   console.log(`Seeded ${ROLES.length} baseline roles`);
+
+  for (const tu of TEST_USERS) {
+    const passwordHash = await bcrypt.hash(tu.password, 10);
+    const user = await prisma.user.upsert({
+      where: { email: tu.email },
+      update: {
+        passwordHash,
+        displayName: tu.displayName,
+        isActive: true,
+      },
+      create: {
+        email: tu.email,
+        passwordHash,
+        displayName: tu.displayName,
+      },
+    });
+
+    for (const code of tu.roleCodes) {
+      const role = await prisma.role.findUniqueOrThrow({ where: { code } });
+      await prisma.userRole.upsert({
+        where: { userId_roleId: { userId: user.id, roleId: role.id } },
+        update: {},
+        create: { userId: user.id, roleId: role.id },
+      });
+    }
+    console.log(`Seeded user ${tu.email} → ${tu.roleCodes.join(',')}`);
+  }
+
+  const categories = [
+    { slug: 'newborn', name: 'Newborn', description: 'Welcome baby essentials', sortOrder: 1 },
+    { slug: 'keepsakes', name: 'Keepsakes', description: 'Memory makers', sortOrder: 2 },
+    { slug: 'clothing', name: 'Clothing', description: 'Soft wear for tiny humans', sortOrder: 3 },
+    { slug: 'bath-skin', name: 'Bath & Skin', description: 'Gentle care', sortOrder: 4 },
+    { slug: 'toys', name: 'Toys', description: 'Playful gifts', sortOrder: 5 },
+    { slug: 'mom-care', name: 'Mom Care', description: 'For expecting & new moms', sortOrder: 6 },
+  ];
+  for (const c of categories) {
+    await prisma.category.upsert({
+      where: { slug: c.slug },
+      update: { name: c.name, description: c.description, sortOrder: c.sortOrder },
+      create: c,
+    });
+  }
+  console.log(`Seeded ${categories.length} categories`);
+
+  const newborn = await prisma.category.findUniqueOrThrow({ where: { slug: 'newborn' } });
+  const keepsakes = await prisma.category.findUniqueOrThrow({ where: { slug: 'keepsakes' } });
+  const clothing = await prisma.category.findUniqueOrThrow({ where: { slug: 'clothing' } });
+  const toys = await prisma.category.findUniqueOrThrow({ where: { slug: 'toys' } });
+  const momCare = await prisma.category.findUniqueOrThrow({ where: { slug: 'mom-care' } });
+
+  const demoProducts = [
+    {
+      slug: 'cloud-soft-swaddle',
+      title: 'Cloud Soft Swaddle',
+      description: 'Breathable muslin swaddle for sleepy newborns.',
+      sku: 'SWAD-001',
+      label: 'Standard',
+      pricePaise: 129900,
+      onHand: 25,
+      categoryId: newborn.id,
+      imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e3ddd4e7?w=800',
+      recipientTags: ['girl', 'boy', 'unisex'],
+      ageBands: ['newborn'],
+      occasionTags: ['welcome-baby'],
+      isReadyMadeHamper: false,
+      brandName: 'Soft Nest',
+    },
+    {
+      slug: 'personalised-name-blanket',
+      title: 'Personalised Name Blanket',
+      description: 'Cosy fleece blanket with embroidered baby name.',
+      sku: 'BLNK-001',
+      label: 'Default',
+      pricePaise: 249900,
+      onHand: 15,
+      categoryId: keepsakes.id,
+      imageUrl: 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800',
+      recipientTags: ['girl', 'unisex'],
+      ageBands: ['newborn', 'infant'],
+      occasionTags: ['welcome-baby', 'naming'],
+      isReadyMadeHamper: false,
+      brandName: 'Mamaearth',
+    },
+    {
+      slug: 'wooden-rattle-set',
+      title: 'Wooden Rattle Set',
+      description: 'Natural wood rattles — gift box friendly.',
+      sku: 'RATT-001',
+      label: 'Set of 3',
+      pricePaise: 89900,
+      onHand: 40,
+      categoryId: toys.id,
+      imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800',
+      recipientTags: ['boy', 'unisex'],
+      ageBands: ['infant', 'toddler'],
+      occasionTags: ['birthday', 'welcome-baby'],
+      isReadyMadeHamper: false,
+      brandName: 'Chicco',
+    },
+    {
+      slug: 'welcome-baby-hamper',
+      title: 'Welcome Baby Hamper',
+      description: 'Ready-made hamper: swaddle, rattle & keepsake card.',
+      sku: 'HAMP-001',
+      label: 'Classic',
+      pricePaise: 399900,
+      onHand: 12,
+      categoryId: newborn.id,
+      imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e3ddd4e7?w=800',
+      recipientTags: ['girl', 'boy', 'unisex'],
+      ageBands: ['newborn'],
+      occasionTags: ['welcome-baby', 'baby-shower'],
+      isReadyMadeHamper: true,
+      brandName: 'Inabiya',
+      extraCategoryIds: [clothing.id],
+    },
+    {
+      slug: 'expecting-mom-calm-kit',
+      title: 'Expecting Mom Calm Kit',
+      description: 'Gentle self-care set for the third trimester.',
+      sku: 'MOM-001',
+      label: 'Kit',
+      pricePaise: 179900,
+      onHand: 20,
+      categoryId: momCare.id,
+      imageUrl: 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800',
+      recipientTags: ['mom'],
+      ageBands: ['any'],
+      occasionTags: ['baby-shower'],
+      isReadyMadeHamper: true,
+      brandName: 'The Moms Co.',
+    },
+  ];
+
+  for (const dp of demoProducts) {
+    const product = await prisma.product.upsert({
+      where: { slug: dp.slug },
+      update: {
+        title: dp.title,
+        description: dp.description,
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+        recipientTags: dp.recipientTags,
+        ageBands: dp.ageBands,
+        occasionTags: dp.occasionTags,
+        isReadyMadeHamper: dp.isReadyMadeHamper,
+        brandName: dp.brandName,
+      },
+      create: {
+        slug: dp.slug,
+        title: dp.title,
+        description: dp.description,
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+        recipientTags: dp.recipientTags,
+        ageBands: dp.ageBands,
+        occasionTags: dp.occasionTags,
+        isReadyMadeHamper: dp.isReadyMadeHamper,
+        brandName: dp.brandName,
+      },
+    });
+
+    await prisma.productCategory.upsert({
+      where: { productId_categoryId: { productId: product.id, categoryId: dp.categoryId } },
+      update: {},
+      create: { productId: product.id, categoryId: dp.categoryId },
+    });
+    for (const extraId of dp.extraCategoryIds ?? []) {
+      await prisma.productCategory.upsert({
+        where: { productId_categoryId: { productId: product.id, categoryId: extraId } },
+        update: {},
+        create: { productId: product.id, categoryId: extraId },
+      });
+    }
+
+    const variant = await prisma.productVariant.upsert({
+      where: { sku: dp.sku },
+      update: { label: dp.label, pricePaise: dp.pricePaise, giftBoxEligible: true },
+      create: {
+        productId: product.id,
+        sku: dp.sku,
+        label: dp.label,
+        pricePaise: dp.pricePaise,
+        giftBoxEligible: true,
+      },
+    });
+
+    await prisma.inventoryItem.upsert({
+      where: { variantId: variant.id },
+      update: { onHand: dp.onHand },
+      create: { variantId: variant.id, onHand: dp.onHand },
+    });
+
+    const existingMedia = await prisma.productMedia.findFirst({
+      where: { productId: product.id, url: dp.imageUrl },
+    });
+    if (!existingMedia) {
+      await prisma.productMedia.create({
+        data: { productId: product.id, url: dp.imageUrl, altText: dp.title },
+      });
+    }
+
+    await prisma.personalizationOption.upsert({
+      where: { productId_key: { productId: product.id, key: 'babyName' } },
+      update: { label: 'Baby name', type: 'TEXT', maxLength: 24, required: false },
+      create: {
+        productId: product.id,
+        key: 'babyName',
+        label: 'Baby name',
+        type: 'TEXT',
+        maxLength: 24,
+        required: false,
+      },
+    });
+
+    console.log(`Seeded product ${dp.slug}`);
+  }
+
+  await prisma.commerceSetting.upsert({
+    where: { key: 'homepage.featured_slugs' },
+    update: {
+      value: [
+        'cloud-soft-swaddle',
+        'personalised-name-blanket',
+        'wooden-rattle-set',
+        'welcome-baby-hamper',
+      ],
+    },
+    create: {
+      key: 'homepage.featured_slugs',
+      value: [
+        'cloud-soft-swaddle',
+        'personalised-name-blanket',
+        'wooden-rattle-set',
+        'welcome-baby-hamper',
+      ],
+    },
+  });
+  console.log('Seeded homepage featured products');
+
+  const featuredSlugs = [
+    'cloud-soft-swaddle',
+    'personalised-name-blanket',
+    'wooden-rattle-set',
+    'welcome-baby-hamper',
+  ];
+
+  const homeBlocks = [
+    {
+      type: 'hero',
+      sortOrder: 0,
+      props: {
+        variant: 'storefront',
+        headline: 'Little bundles of joy, thoughtfully chosen.',
+        subcopy:
+          'Build a bespoke baby box in gentle steps — or pick a ready-made hamper. Packed with warmth, shipped across India.',
+        ctaLabel: 'Build Your Box',
+        ctaHref: '/gift/box',
+        ctaLabel2: 'Browse Hampers',
+        ctaHref2: '/gift/products?hamper=1',
+        trustLine: 'Free shipping over ₹2,000 · Baby-safe brands · Curated for new parents',
+        imageUrl: 'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=900&q=85',
+      },
+    },
+    {
+      type: 'brandStrip',
+      sortOrder: 1,
+      props: { title: 'Trusted brands we stock' },
+    },
+    {
+      type: 'recipientSplit',
+      sortOrder: 2,
+      props: {
+        title: 'Shop by baby',
+        subtitle: 'Curated palettes — unisex-safe picks included.',
+        left: {
+          label: 'girl',
+          href: '/gift/products?recipient=girl',
+          eyebrow: 'For the little',
+          cta: 'Shop girl gifts →',
+          accent: 'pink',
+        },
+        right: {
+          label: 'boy',
+          href: '/gift/products?recipient=boy',
+          eyebrow: 'For the little',
+          cta: 'Shop boy gifts →',
+          accent: 'sky',
+        },
+      },
+    },
+    {
+      type: 'productGrid',
+      sortOrder: 3,
+      props: {
+        title: 'Ready-made hampers',
+        hamper: true,
+        limit: 3,
+        seeAllHref: '/gift/products?hamper=1',
+      },
+    },
+    {
+      type: 'productGrid',
+      sortOrder: 4,
+      props: {
+        title: 'Featured gifts',
+        productSlugs: featuredSlugs,
+      },
+    },
+    {
+      type: 'cta',
+      sortOrder: 5,
+      props: {
+        title: 'Corporate & bulk gifting',
+        body: 'Teams and events — share quantity and occasion; we will reply with pricing.',
+        label: 'Get a quote',
+        href: '/gift/corporate',
+      },
+    },
+    {
+      type: 'articleTeasers',
+      sortOrder: 6,
+      props: {
+        overline: 'Journal',
+        title: 'From the parenting journal',
+        limit: 3,
+      },
+    },
+  ];
+
+  const existingHome = await prisma.marketingPage.findUnique({ where: { slug: 'home' } });
+  if (existingHome) {
+    await prisma.pageBlock.deleteMany({ where: { pageId: existingHome.id } });
+    await prisma.marketingPage.update({
+      where: { id: existingHome.id },
+      data: {
+        title: 'Soft Gift homepage',
+        seoTitle: 'Inabiya Soft Gift',
+        seoDescription: 'Thoughtfully personalised baby essentials & gifting.',
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+        blocks: {
+          create: homeBlocks.map((b) => ({
+            type: b.type,
+            sortOrder: b.sortOrder,
+            props: b.props,
+          })),
+        },
+      },
+    });
+  } else {
+    await prisma.marketingPage.create({
+      data: {
+        slug: 'home',
+        title: 'Soft Gift homepage',
+        seoTitle: 'Inabiya Soft Gift',
+        seoDescription: 'Thoughtfully personalised baby essentials & gifting.',
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+        blocks: {
+          create: homeBlocks.map((b) => ({
+            type: b.type,
+            sortOrder: b.sortOrder,
+            props: b.props,
+          })),
+        },
+      },
+    });
+  }
+  console.log('Seeded Soft Gift homepage MarketingPage (slug=home)');
+
+  const coupons = [
+    {
+      code: 'WELCOME10',
+      description: '10% off welcome offer',
+      discountPercent: 10,
+      minSubtotalPaise: 50_000,
+    },
+    {
+      code: 'FLAT100',
+      description: '₹100 off',
+      discountPaise: 10_000,
+      minSubtotalPaise: 100_000,
+    },
+  ];
+  for (const c of coupons) {
+    await prisma.coupon.upsert({
+      where: { code: c.code },
+      update: {
+        description: c.description,
+        discountPercent: c.discountPercent ?? null,
+        discountPaise: c.discountPaise ?? null,
+        minSubtotalPaise: c.minSubtotalPaise,
+        active: true,
+      },
+      create: {
+        code: c.code,
+        description: c.description,
+        discountPercent: c.discountPercent ?? null,
+        discountPaise: c.discountPaise ?? null,
+        minSubtotalPaise: c.minSubtotalPaise,
+        active: true,
+      },
+    });
+  }
+  console.log(`Seeded ${coupons.length} coupons`);
+
+  const editorialCategories = [
+    {
+      slug: 'newborn-care',
+      name: 'Newborn Care',
+      description: 'Trusted guidance for the first weeks',
+    },
+    {
+      slug: 'gifting',
+      name: 'Gifting',
+      description: 'Thoughtful gift ideas and etiquette',
+    },
+  ];
+  for (const c of editorialCategories) {
+    await prisma.editorialCategory.upsert({
+      where: { slug: c.slug },
+      update: { name: c.name, description: c.description },
+      create: c,
+    });
+  }
+  console.log(`Seeded ${editorialCategories.length} editorial categories`);
+
+  await prisma.specialistProfile.upsert({
+    where: { slug: 'dr-meera-sharma' },
+    update: {
+      name: 'Dr. Meera Sharma',
+      title: 'Paediatrician',
+      bio: 'Supports families with evidence-based newborn care guidance.',
+      credentials: 'MBBS, DCH',
+    },
+    create: {
+      slug: 'dr-meera-sharma',
+      name: 'Dr. Meera Sharma',
+      title: 'Paediatrician',
+      bio: 'Supports families with evidence-based newborn care guidance.',
+      credentials: 'MBBS, DCH',
+    },
+  });
+  console.log('Seeded specialist dr-meera-sharma');
+
+  const brandUser = await prisma.user.findUniqueOrThrow({
+    where: { email: 'brand@test.inabiya' },
+  });
+  await prisma.brandProfile.upsert({
+    where: { userId: brandUser.id },
+    update: {
+      slug: 'soft-nest-co',
+      companyName: 'Soft Nest Co',
+      bio: 'Parenting brand seeking authentic creators.',
+    },
+    create: {
+      userId: brandUser.id,
+      slug: 'soft-nest-co',
+      companyName: 'Soft Nest Co',
+      bio: 'Parenting brand seeking authentic creators.',
+    },
+  });
+
+  const creatorUser = await prisma.user.findUniqueOrThrow({
+    where: { email: 'creator@test.inabiya' },
+  });
+  await prisma.creatorProfile.upsert({
+    where: { userId: creatorUser.id },
+    update: {
+      slug: 'anya-creates',
+      displayName: 'Anya Creates',
+      bio: 'Lifestyle creator focused on newborn routines.',
+      niches: ['newborn', 'lifestyle'],
+    },
+    create: {
+      userId: creatorUser.id,
+      slug: 'anya-creates',
+      displayName: 'Anya Creates',
+      bio: 'Lifestyle creator focused on newborn routines.',
+      niches: ['newborn', 'lifestyle'],
+    },
+  });
+  console.log('Seeded brand@ + creator@ profiles');
 }
 
 main()

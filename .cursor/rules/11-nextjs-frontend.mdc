@@ -1,32 +1,39 @@
 ---
-description: Next.js App Router + dual theme frontend rules
+description: App Router route groups, themes, RSC defaults, AuthZ parity with Nest
 globs: apps/web/**/*.{ts,tsx,css}
 alwaysApply: false
 ---
 
-# Next.js Frontend Rules
+# Next.js Frontend
 
-## Structure
+## Route groups & themes (already in repo)
 
-Use route groups: `(gift)`, `(blog)`, `(creator)`, `(admin)/commerce|editorial|creator|platform`.  
-Set `data-theme="gift"` or `data-theme="creator"` in layouts.
+| Group | `data-theme` |
+|---|---|
+| `(gift)`, `(blog)`, commerce/editorial/platform admin | `gift` |
+| `(creator)`, creator admin | `creator` |
+
+Set theme on the **layout** wrapper (`apps/web/app/(gift)/layout.tsx` pattern). Never import Soft Gift pink tokens into creator routes (or vice versa).
 
 ## Rendering
 
-- Server Components default for read pages
-- Client islands only for interactive UI
-- No secrets in client bundles
-- Server Actions (if used) need Zod + AuthZ equal to Nest API
-- Prefer Nest `/api/v1` as system of record
+| Default | When to break |
+|---|---|
+| Server Component | Read pages, SEO content, catalog |
+| `'use client'` island | Cart interactions, forms, GSAP, drawers |
 
-## State & UI
+- No JWT secrets / payment keys in client bundles (`NEXT_PUBLIC_*` only when truly public).
+- Prefer Nest `/api/v1` as source of truth. Add Next route handlers only when BFF is justified.
+- Server Actions (if used) = **same Zod + AuthZ bar as Nest** — not a backdoor.
 
-TanStack Query for server state. No Redux unless ADR. Forms: RHF+Zod. Components: shadcn/Radix restyled to theme tokens. Icons: lucide (gift); lucide+Phosphor (creator). Toasts: Sonner.
+## State & forms
+
+- Server state: TanStack Query. Local UI: React state.
+- Forms: RHF + Zod. Disable submit while in-flight on pay / proposal / publish.
+- Critical controls: `data-testid` kebab-case (`checkout-pay-button`).
+- Field errors inline; toasts (Sonner) for transient issues; keep form values on recoverable failure.
+- Hiding an admin nav link ≠ authorization.
 
 ## Motion
 
-- **GSAP** primary for Soft Gift marketing/scroll/PDP/builder storytelling (`15-gsap-motion` rule)
-- **Framer Motion** only for tiny UI presence (optional)
-- Checkout/cart/admin: minimal motion, max clarity
-
-AuthZ is never UI-only hiding.
+GSAP for Soft Gift marketing/PDP/builder storytelling (`15-gsap-motion`). Checkout/cart/admin → crisp, almost no motion. Framer only for tiny presence UI.

@@ -1,17 +1,41 @@
 ---
-description: Security, AuthZ, PII, and payment safety
+description: AuthZ at use-case, IDOR, roles, PII, payments — with repo patterns
 alwaysApply: true
 ---
 
-# Security Rules
+# Security
 
-- Authenticate protected routes; authorize at use-case boundary (not UI-only)
-- Least privilege roles: Customer, Commerce Admin, Content Admin, Writer, SEO Editor, Medical Reviewer, Creator, Brand, Finance, Support, Super Admin
-- Prevent IDOR — verify ownership on sensitive reads/writes
-- Validate all external input with Zod/DTOs
-- Never log tokens, passwords, OTPs, PAN/CVV
-- Never store raw card data — provider tokens only
-- Secrets only in env/secret manager — never commit `.env`
-- Rate-limit auth and sensitive POSTs
-- Audit privileged admin/finance/publish/award actions
-- Private media via signed URLs
+## AuthN / AuthZ (how we do it here)
+
+- Guards: `JwtAuthGuard`, `OptionalJwtAuthGuard`, `RolesGuard` + `@Roles('COMMERCE_ADMIN', …)`.
+- Authorize in the **service/use-case**, not only by hiding UI.
+- Resource access: load by id **and** verify `userId` / ownership / role. Ignore client-supplied owner ids.
+
+```typescript
+// ❌ IDOR — trust body
+await prisma.order.findFirst({ where: { id: body.orderId } });
+
+// ✅ scope to actor (or elevated role path)
+await prisma.order.findFirst({ where: { id: orderId, userId: user.id } });
+```
+
+Roles in play: Customer, Commerce Admin, Content Admin, Writer, SEO Editor, Medical Reviewer, Creator, Brand, Finance, Support, Super Admin. No convenience “god” role.
+
+Rate-limit auth + sensitive POSTs (checkout, payout, publish, award). Session cookies: httpOnly + Secure when used; CSRF strategy must match transport.
+
+## Input / uploads
+
+- Every external input through Zod (`ZodValidationPipe` / shared schemas).
+- Prisma only (parameterized). No string-concat SQL.
+- Uploads: MIME + size; no executable inline; private objects via **signed URLs**.
+
+## Secrets & PII
+
+- Never commit `.env` / keys / dumps.
+- Never log tokens, passwords, OTPs, PAN/CVV, raw provider payloads.
+- Cards: provider tokens only. Mask PII in logs; audit admin PII reads.
+
+## Privileged + payments
+
+Audit: publish, award, payout, refund, role-change, finance.  
+Payments must not report success on unknown/partial provider state. Webhook handlers **idempotent** (`eventId` / `idempotencyKey`).

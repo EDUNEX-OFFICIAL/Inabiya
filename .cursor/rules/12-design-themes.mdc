@@ -1,23 +1,43 @@
 ---
-description: Dual design systems Soft Gift vs Creator Collective
+description: Soft Gift vs Creator themes — CSS vars, fonts, never mix
 globs: apps/web/**/*.{tsx,css}
 alwaysApply: false
 ---
 
 # Design Systems A/B
 
-## System A — Soft Gift (`data-theme="gift"`)
+Tokens live in `apps/web/app/globals.css` under `[data-theme='gift'|'creator']`. Layouts set the attribute (`(gift)/layout.tsx`, `(creator)/layout.tsx`). Prefer `var(--primary)` / `var(--background)` — don’t hardcode the other theme’s hex into a route.
 
-Pink `#FF6B9D`, soft bg `#FFF3F8`, heading `#2D2640` · Fonts: Fraunces + Plus Jakarta Sans · Soft rounded cards/pills · Used for storefront, blog public UI, commerce admin dense family.
+## Soft Gift (`gift`)
 
-## System B — Creator (`data-theme="creator"`)
+| Token | Role |
+|---|---|
+| `--inabiya-pink` `#FF6B9D` | Primary CTA |
+| `--inabiya-soft` `#FFF3F8` | Page bg |
+| `--inabiya-heading` `#2D2640` | Display text |
+| Fonts | Fraunces (display) + Plus Jakarta Sans (body) |
 
-Forest/cream/terracotta HSL tokens · Fonts: Playfair Display + Manrope · Tetris marketing / dense dashboards · Never pink gift tokens.
+Surfaces: storefront, blog, commerce/editorial/platform admin.
+
+```tsx
+// ❌ BAD — hardcoded pink (seen in some MVP pages); breaks theme + dark-text contrast work
+className="bg-[#FF6B9D]"
+
+// ✅ GOOD
+className="bg-[var(--primary)] text-[var(--primary-foreground)]"
+```
+
+## Creator (`creator`)
+
+Forest/cream/terracotta via HSL CSS vars. Fonts: Playfair Display + Manrope. Never Soft Gift pink on these trees.
 
 ## Never
 
-Mix themes · treat medical specialists as marketplace creators · Inter/Roboto brand stacks · emoji icons · purple-glow SaaS heroes · hero sticker overlays.
+- Mix themes on one route tree
+- Treat medical `SpecialistProfile` as marketplace creators
+- Inter/Roboto/Arial as brand · emoji icons · purple-glow SaaS heroes · hero sticker overlays
+- A third palette without `Design.md` + ADR
 
-Critical controls need `data-testid` (kebab-case). Tap targets ≥ 48px.
+## Interaction
 
-Motion: GSAP primary on Soft Gift storytelling surfaces — see `15-gsap-motion.mdc`. Calm premium, not bounce spam.
+`data-testid` kebab-case on critical controls. Tap targets ≥ 48px (primary CTAs ~56px). Soft Gift motion: calm 0.2–0.6s GSAP — see `15-gsap-motion`.

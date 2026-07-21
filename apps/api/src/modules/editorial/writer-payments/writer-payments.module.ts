@@ -1,5 +1,13 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from '../../audit/audit.module';
+import { IdentityModule } from '../../identity/identity.module';
+import { WriterPaymentsController } from './writer-payments.controller';
+import { WriterPaymentsService } from './writer-payments.service';
 
-/** Phase 0 scaffold — no business logic yet. */
-@Module({})
+@Module({
+  imports: [IdentityModule, AuditModule],
+  controllers: [WriterPaymentsController],
+  providers: [WriterPaymentsService],
+  exports: [WriterPaymentsService],
+})
 export class WriterPaymentsModule {}

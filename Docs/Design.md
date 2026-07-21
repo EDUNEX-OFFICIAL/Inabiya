@@ -116,6 +116,23 @@ First viewport on branded marketing pages:
 - Tag text = heading dark (never white on yellow/mint/lavender)
 - Primary button = white on pink
 - Progress fill = pink; track = lavender
+- **Soft Gift UI must not hardcode hex, rgba, or ad-hoc spacing in TSX** — use CSS vars + recipes + Tailwind `gs-*` / semantic colors only (see §4.2a–4.7)
+
+### 4.2a Semantic tokens (System A — required)
+
+Defined in `apps/web/app/globals.css` under `[data-theme='gift']`. Brand hex lives only as primitives; components consume semantics.
+
+| Layer | Tokens |
+|---|---|
+| Space | `--space-1`…`--space-8` → Tailwind `gs-1`…`gs-8` (`p-gs-4`, `gap-gs-5`, …) |
+| Radius | `--radius-pill`, `--radius-card`, `--radius-control` → `rounded-pill` / `rounded-clay` / `rounded-control` |
+| Surface | `--surface`, `--surface-soft`, `--surface-nav` |
+| Border / focus | `--border-subtle`, `--border-strong`, `--border-focus`, `--ring` |
+| Elevation | `--clay-shadow`, `--clay-shadow-hover`, `--clay-shadow-press` → `shadow-clay*` |
+| Status | `--success`/`--success-bg`, `--warning`/`--warning-bg`, `--danger`/`--danger-bg`, `--info`/`--info-bg` |
+| Control | `--input-bg`, `--input-border`, `--input-border-error`, `--tap-min` |
+
+**Recipes (prefer over one-off classes):** `.clay-btn` / `.clay-btn-secondary` / `.clay-btn-ghost` (hover/active/disabled/focus-visible), `.clay-input` (hover/focus/disabled/`aria-invalid`), `.clay-card` / `.clay-panel` / `.clay-chip` / `.clay-nav`, `.gift-page` / `.gift-section` / `.gift-stack*`, `.gift-banner--success|warning|danger|info`, type: `.gift-display` / `.gift-h1` / `.gift-h2` / `.gift-body` / `.gift-muted` / `.gift-overline`. Homepage polish (Soft Gift–interpreted, not third-party clone): `.gift-band--blush|mint|sky|lavender|soft`, `.gift-doodle`, `.gift-toys` (faded corner SVGs), `.gift-wave-card` (recipient/category cards only), `.gift-pill-overlap`, `.gift-usp`. Avoid `100vw` full-bleed (scrollbar overflow).
 
 ### 4.3 shadcn semantic mapping (System A)
 
@@ -215,12 +232,11 @@ Line length for reading: aim ~60–75ch on article pages.
 
 ### 4.7 Spacing & layout
 
-- Prefer `gap-6` / `gap-8` between sections
-- Mobile container `px-4` / `px-6`
-- Builder pages `pb-32+` for sticky summary clearance
+- Prefer `--space-*` / Tailwind `gs-*` only inside Soft Gift (no raw `p-5` / `px-6` mixes)
+- Page chrome: `.gift-page` (token padding) or `.gift-section` / `.gift-stack`
 - Mobile feeds: 1 col or dense 2 col
 - Desktop catalogs: 3–4 col / bento
-- Premium = generous whitespace (2–3× more than “tight SaaS”)
+- Premium = generous whitespace (favor `gs-6`–`gs-8` between sections)
 
 ### 4.8 Motion (System A)
 

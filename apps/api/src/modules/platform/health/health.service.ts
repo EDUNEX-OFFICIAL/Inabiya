@@ -26,7 +26,8 @@ export class HealthService {
     return {
       name: 'inabiya-api',
       version: process.env.npm_package_version ?? '0.0.0',
-      phase: 0,
+      phase: Number(process.env.INABIYA_PHASE ?? 9),
+      gitCommit: process.env.GIT_COMMIT ?? null,
     };
   }
 }

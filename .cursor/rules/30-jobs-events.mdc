@@ -1,19 +1,41 @@
 ---
-description: BullMQ jobs, domain events, and async side effects
-globs: "{apps/worker/**,apps/api/src/**/*queue*,apps/api/src/**/*job*,apps/api/src/**/*worker*,apps/api/src/**/*event*}"
+description: BullMQ notifications queue, idempotent jobs, schedulers, DB as source of truth
+globs: "{apps/worker/**,apps/api/src/**/*queue*,apps/api/src/**/*job*,apps/api/src/**/*worker*,apps/api/src/**/*event*,apps/api/src/**/*scheduler*}"
 alwaysApply: false
 ---
 
 # Jobs & Events
 
-Use BullMQ for: email/SMS, payment webhook follow-up, media variants, search reindex, scheduled article publish, low-stock alerts, payout retries, analytics fan-out.
+Async side effects go through queues/schedulers — not long SMTP/S3 work on the request hot path.
+
+## Current pattern (`NotificationsQueueService`)
+
+```typescript
+// Queue name: 'notifications'
+await queue.add('order.confirmation', data, { removeOnComplete: 200, removeOnFail: 200 });
+await queue.add('cart.abandonment', data, { jobId: `cart-abandon-${cartId}`, … });
+await queue.add('assignment.due_reminder', data, { jobId: `article-due-${articleId}`, … });
+```
+
+Stable `jobId` ⇒ natural idempotency for that reminder/abandon event. Prefer **IDs in payload** + reload from DB over embedding mutable snapshots.
+
+## Also async today
+
+- `PublishingService.processDueSchedules` — flip due `SCHEDULED` → `PUBLISHED` (scanner/worker), not browser-only publish.
+- Payment webhook follow-up / notifications after capture.
 
 ## Rules
 
-- Handlers must be idempotent (at-least-once delivery)
-- Explicit retry/backoff + dead-letter visibility
-- Propagate correlation IDs
-- Do not hide long external IO in request hot paths when a queue should own it
-- Redis down must not corrupt money/inventory truth (DB remains source of record)
+| Rule | Why |
+|---|---|
+| Handlers idempotent | At-least-once delivery |
+| Explicit retry/backoff + DLQ visibility | Ops can see poison jobs |
+| Propagate `requestId` / correlation | Trace money + notify |
+| Redis down ≠ corrupt stock/orders | Postgres remains source of record |
+| Name jobs clearly | `order.confirmation`, `editorial.publish-scheduled`, … |
 
-Example events: `OrderPaid`, `OrderCancelled`, `ArticlePublished`, `CampaignAwarded`, `DeliverableApproved`.
+## Example domain events
+
+`OrderPaid` · `OrderCancelled` · `ArticlePublished` · `CampaignAwarded` · `DeliverableApproved` · `PaymentCaptured`
+
+Consumers must tolerate duplicates (same as webhook `eventId` dedupe).

@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
+import { CouponService } from './coupon.service';
 
-/** Phase 0 scaffold — no business logic yet. */
-@Module({})
+@Module({
+  providers: [CouponService],
+  exports: [CouponService],
+})
 export class PromotionsModule {}

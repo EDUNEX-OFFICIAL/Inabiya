@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
+import { InventoryService } from './inventory.service';
 
-/** Phase 0 scaffold — no business logic yet. */
-@Module({})
+@Module({
+  providers: [InventoryService],
+  exports: [InventoryService],
+})
 export class InventoryModule {}

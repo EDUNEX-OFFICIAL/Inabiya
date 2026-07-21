@@ -1,21 +1,41 @@
 ---
-description: Creator Collective reverse-bidding and System B UI
-globs: "{apps/api/src/modules/creator/**,apps/web/app/(creator)/**,apps/web/app/(admin)/creator/**}"
+description: Creator Collective — System B theme, scaffolds today, invariants when building
+globs: "{apps/api/src/modules/creator/**,apps/web/app/(creator)/**,apps/web/app/(admin)/admin/creator/**}"
 alwaysApply: false
 ---
 
 # Creator Collective Domain
 
-Owns: creator/brand profiles, campaigns, reverse bids/proposals, messaging, deliverables, campaign payments, ratings.
+**Owns:** creator/brand profiles, campaigns, reverse bids/proposals, messaging, deliverables, campaign payments, ratings.  
+**Does not own:** gift engraving, medical article review, Soft Gift cart.
 
-## Invariants
+## Honest repo state
 
-- Closed/awarded campaigns reject new proposals
-- Award/selection rules explicit (single-winner default unless PRD says otherwise)
-- Payment/escrow release requires deliverable approval gates
-- Brand/creator data isolation by ownership
-- Ratings only after eligible completion states
+`CreatorModule` is still **empty scaffolds** (`campaigns`, `proposals`, `deliverables`, …). When you implement, follow invariants below — don’t invent LMS or Gift Commerce shortcuts. Roles already seeded: `CREATOR`, `BRAND`.
+
+## Invariants (enforce as soon as endpoints exist)
+
+| Invariant | Behavior |
+|---|---|
+| Closed / awarded campaign | Reject new proposals |
+| Award | Explicit rules; **single-winner default** unless PRD says multi |
+| Escrow / campaign pay | Release only after deliverable approval gate |
+| Ownership | Brand sees own campaigns; creator sees own proposals — IDOR-safe |
+| Ratings | Only after eligible completion states |
+
+## State machines (target)
+
+Campaign: `draft → open → reviewing → awarded → in_delivery → completed | cancelled`  
+Deliverable: `submitted → changes_requested → approved`  
+Illegal jump → `409` + stable code. Money paths: `*Paise` Int + idempotent payout keys (same bar as commerce/editorial).
 
 ## UI
 
-Always `data-theme="creator"` (Playfair+Manrope, forest/terracotta). Never Soft Gift pink.
+Always `data-theme="creator"` (Playfair + Manrope, forest/terracotta from `globals.css`).  
+
+```text
+❌ Soft Gift pink / Fraunces on creator trees
+❌ Treat SpecialistProfile (editorial) as a marketplace creator
+```
+
+Cross-domain: no Prisma into `commerce_*` / `articles` tables from creator modules — use events or ACL ports.

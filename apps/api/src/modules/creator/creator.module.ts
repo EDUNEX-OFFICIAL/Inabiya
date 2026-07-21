@@ -6,7 +6,7 @@ import { MessagingModule } from './messaging/messaging.module';
 import { DeliverablesModule } from './deliverables/deliverables.module';
 import { CampaignPaymentsModule } from './campaign-payments/campaign-payments.module';
 
-/** Creator Collective domain aggregator — Phase 0 empty scaffolds only. */
+/** Creator Collective domain aggregator — Phase 8 live in Profiles + Campaigns. */
 @Module({
   imports: [
     ProfilesModule,

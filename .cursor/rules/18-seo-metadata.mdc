@@ -1,19 +1,46 @@
 ---
-description: SEO and metadata for ecommerce + blog routes
-globs: "{apps/web/app/**/page.tsx,apps/web/app/**/layout.tsx,apps/web/app/**/sitemap.ts,apps/web/app/**/robots.ts}"
+description: Next.js generateMetadata, canonical, robots, publish-gated public SEO
+globs: "{apps/web/app/**/*.{ts,tsx},apps/web/**/*seo*,apps/web/**/*metadata*}"
 alwaysApply: false
 ---
 
 # SEO & Metadata
 
-- Unique title + meta description per indexable page
-- Canonical URLs on PDP/PLP/articles
-- Open Graph + Twitter cards for shareable PDP/blog
-- Semantic landmarks/headings (one H1)
-- Product JSON-LD where appropriate (name, price, availability, image) — keep accurate to server data
-- Article JSON-LD for published blog posts
-- `sitemap.ts` / `robots.ts` for public surfaces
-- Noindex drafts, previews, account, checkout, admin
-- Clean slugs; avoid duplicate content via facet URLs without canonical strategy
+Use App Router `metadata` / `generateMetadata` — not manual `<head>` hacks. Public content is **publish-gated**: API `getPublicBySlug` only returns `PUBLISHED`; drafts must stay noindex / unroutable.
 
-Never stuff keywords. Trust + clarity > spam SEO tricks.
+## Pattern (already on articles)
+
+```tsx
+// apps/web/app/(gift)/articles/[slug]/page.tsx
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const article = await load(params.slug);
+  if (!article) return { title: 'Article' };
+  return {
+    title: article.seo.title,
+    description: article.seo.description ?? undefined,
+    alternates: { canonical: article.seo.canonicalPath },
+    openGraph: {
+      title: article.seo.title,
+      description: article.seo.description ?? undefined,
+      images: article.seo.ogImageUrl ? [article.seo.ogImageUrl] : undefined,
+    },
+  };
+}
+```
+
+Mirror this for PDP / specialists: title, description, canonical, OG image from **real data**.
+
+## Rules
+
+| Do | Don't |
+|---|---|
+| One `h1`; semantic `main` / `article` | Keyword-stuffed titles |
+| `robots: { index: false }` on admin, drafts, previews | Index unpublished articles |
+| Stable readable slugs | Invent medical claims / prices in meta |
+| Propose slug + title + description when drafting a new public page | Ad-hoc conflicting `<title>` in client components |
+
+## Structured data
+
+Add JSON-LD (`Article`, `Product`, real `FAQPage` only) when the page has verified fields. No fake availability or star ratings.
+
+Images: honest `alt`; see `19-images-media`.

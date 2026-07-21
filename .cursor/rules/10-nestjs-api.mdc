@@ -1,29 +1,55 @@
 ---
-description: NestJS modular monolith patterns for apps/api
+description: Nest controllers, Zod pipes, error envelope, domain boundaries, money
 globs: apps/api/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
-# NestJS API Rules
+# NestJS API
 
-## Module ownership
+## Module walls
 
-Keep domains isolated: `identity`, `media`, `notifications`, `audit`, `commerce/*`, `editorial/*`, `creator/*`, `platform/*`.
-
-Never Prisma-query another module’s tables. Cross-domain via use-case API, events, or ACL.
-
-## Layering
+Own tables only inside `identity` · `media` · `notifications` · `audit` · `search` · `commerce/*` · `editorial/*` · `creator/*` · `platform/*`.
 
 ```text
-controller → use-case → domain policy → ports ← infrastructure (Prisma/Redis/S3)
+❌ editorial service: prisma.product.findMany(...)
+✅ editorial calls a commerce use-case / event / ACL port
 ```
 
-Controllers: validate → authZ → call one use-case → map response. No pricing/inventory/workflow logic in controllers.
+## Controller shape (match existing checkout)
 
-## Required
+1. `@UseGuards(JwtAuthGuard)` / `RolesGuard` + `@Roles(...)` as needed  
+2. `@Body(new ZodValidationPipe(schema))` from `@inabiya/validation`  
+3. Pass `user.id` from `@CurrentUser()` — never trust body `userId`  
+4. Call **one** service/use-case; pass `requestId` (`req.id`) into mutating money/audit paths  
+5. No pricing, inventory math, or state-machine logic in the controller
 
-- Versioned routes `/api/v1/...`
-- Error envelope: `{ error: { code, message, details, requestId } }`
-- Idempotency for place-order, payment webhooks, awards, payouts
-- Explicit state-machine transitions (409 on illegal jumps)
-- Money in integer paise / Decimal — never JS float
+```typescript
+// Pattern already in checkout.controller.ts
+@Post('place-order')
+@UseGuards(JwtAuthGuard)
+placeOrder(
+  @CurrentUser() user: { id: string },
+  @Body(new ZodValidationPipe(checkoutPlaceOrderBodySchema)) body: CheckoutPlaceOrderBody,
+  @Req() req: AuthedRequest,
+) {
+  return this.checkout.placeOrder(user.id, cartHeader?.trim(), body, String(req.id ?? ''));
+}
+```
+
+## Errors (global `ApiExceptionFilter`)
+
+Client always gets:
+
+```json
+{ "error": { "code": "EMPTY_CART", "message": "Cart is empty.", "requestId": "…" } }
+```
+
+Throw `HttpException` subclasses with `{ code, message, details? }`. No SQL, stacks, or provider dumps in the response. Illegal state → **409** + stable code.
+
+## Money & idempotency
+
+- Persist/compute `*Paise` integers inside `$transaction` when stock + order rows move together (see `CheckoutService.placeOrder`).
+- Webhooks / place-order / payouts / awards: same key ⇒ same effect (Payment `idempotencyKey` unique).
+- Timeouts on provider calls; retry only if safe.
+
+Routes: `/api/v1/...`, plural nouns, no `/createOrder` verbs.

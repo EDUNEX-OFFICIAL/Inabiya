@@ -1,23 +1,29 @@
 ---
-description: How to edit Inabiya docs without drift
-globs: docs/**/*.md,Docs/**/*.md
+description: Docs ownership map, Memory vs PRD, no LMS bleed, surgical edits
+globs: "{docs/**/*.md,Docs/**/*.md}"
 alwaysApply: false
 ---
 
-# Documentation Rules
+# Documentation
 
-| Doc | Owns |
-|---|---|
-| PRD.md | Product behavior |
-| Architecture.md | Technical structure (v2 Inabiya only — no LMS) |
-| Rules.md | Engineering law |
-| Phases.md | Delivery sequence |
-| Design.md | Visual systems A/B |
-| Memory.md | Live progress |
+Path: `/srv/Inabiya/Docs/` (`docs` → `Docs` symlink for Cursor rules).
 
-## When editing
+| Doc | Owns | Not for |
+|---|---|---|
+| `PRD.md` | Product behavior | Session progress |
+| `Architecture.md` | Structure (Inabiya domains) | Education/LMS features |
+| `Rules.md` | Engineering law | Live checkbox status |
+| `Phases.md` | Delivery sequence | “What we finished today” |
+| `Design.md` | Visual systems A/B | API contracts |
+| `Memory.md` | Live progress, decisions, blockers | Full PRD paste |
+| `IMPLEMENTATION_AUDIT.md` | Phases ↔ repo cross-check | Design tokens |
+| `PORTS.md` | Inabiya port cheat-sheet | Global VPS registry (that’s `/srv/scripts/PORT_REGISTRY.md`) |
 
-- Keep docs consistent with locked stack
-- Prefer Memory for progress; do not duplicate PRD into Memory
-- Architecture changes that affect coding need Rules/Phases sync if sequencing/stack shifts
-- Never reintroduce Student/Admission/Hostel education domains
+## Edit discipline
+
+- Prefer **Memory** for progress; keep it dated, phase-tagged, secret-free, ≤5 next actions.
+- Stack/sequence changes → sync `Rules.md` / `Phases.md` (and Cursor rules if agent behavior must change).
+- Architecture may still mention LMS residue — **never reintroduce** Student/Admission/Hostel into Inabiya docs or code.
+- Mark decisions with date + rationale; don’t silently rewrite history.
+- Surgical edits unless the user asked for a rewrite.
+- After meaningful implementation: update Memory checkboxes + session log (core protocol).

@@ -1,0 +1,42 @@
+---
+description: File/symbol naming — Nest, Prisma, Zod schemas, PRD language, REST paths
+globs: "{apps,packages,prisma}/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Naming Conventions
+
+Match what already ships in the monorepo.
+
+| Kind | Convention | Real example |
+|---|---|---|
+| Nest controller | `*.controller.ts` | `checkout.controller.ts` |
+| Nest service | `*.service.ts` | `payment-fulfillment.service.ts` |
+| Nest module | `*.module.ts` | `writer-payments.module.ts` |
+| Scheduler | `*.scheduler.ts` | `assignment-due-reminder.scheduler.ts` |
+| Prisma model → table | PascalCase → `@@map` snake | `Order` → `orders`, `totalPaise` → `total_paise` |
+| React page/component | PascalCase file / export | `ArticleBody.tsx` |
+| Hook | `useX.ts` | `useCart.ts` |
+| Zod in `@inabiya/validation` | `camelCase` + `BodySchema` / `QuerySchema` | `checkoutPlaceOrderBodySchema`, `loginBodySchema` |
+| Inferred type | Same stem without Schema | `CheckoutPlaceOrderBody` |
+| Test | `*.spec.ts` / `*.test.ts` / `*.e2e.ts` | `place-order.spec.ts` |
+| Env | SCREAMING_SNAKE | `JWT_ACCESS_SECRET` |
+| `data-testid` | kebab-case | `checkout-pay-button` |
+| Audit action | `resource.verb` dotted | `article.published`, `writer_payment.released` |
+
+## Ubiquitous language (PRD)
+
+Use: `GiftBox`, `InventoryItem`, `Article`, `SpecialistProfile`, `WriterPayment`, `CampaignProposal`, `ReverseBid`, `Deliverable`.
+
+```text
+❌ Student, Hostel, Exam, Admission, FeeInvoice, LibraryLoan
+✅ ArticleStatus.MEDICAL_REVIEW, medicalGateRequired — not “creator review”
+```
+
+`Article.createdBy` relation is named `ArticleCreator` in Prisma — that means **editorial author**, not Creator Collective. Don’t conflate the two domains.
+
+## HTTP paths
+
+- Plural nouns under `/api/v1`: `/orders`, `/articles`, `/checkout/place-order` (command exception already used)
+- No `/createOrder`-style verbs for CRUD resources
+- Nest only when ownership is real: `/campaigns/:id/proposals`

@@ -15,8 +15,10 @@ import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { StorageModule } from './infrastructure/storage/storage.module';
 import { PaymentsModule } from './infrastructure/payments/payments.module';
+import { NotificationsQueueModule } from './infrastructure/notifications/notifications-queue.module';
 import { MailModule } from './infrastructure/mail/mail.module';
 import { CommonModule } from './common/common.module';
+import { SecurityHeadersModule } from './common/security-headers.middleware';
 
 @Module({
   imports: [
@@ -54,10 +56,12 @@ import { CommonModule } from './common/common.module';
       },
     }),
     CommonModule,
+    SecurityHeadersModule,
     PrismaModule,
     RedisModule,
     StorageModule,
     PaymentsModule,
+    NotificationsQueueModule,
     MailModule,
     HealthModule,
     IdentityModule,

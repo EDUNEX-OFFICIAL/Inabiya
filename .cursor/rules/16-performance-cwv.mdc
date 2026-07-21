@@ -1,27 +1,41 @@
 ---
-description: Core Web Vitals and ecommerce frontend performance
+description: LCP INP CLS budgets for PLP PDP cart checkout — next/image, JS weight
 globs: apps/web/**/*.{ts,tsx,css}
 alwaysApply: false
 ---
 
 # Performance / Core Web Vitals
 
-Protect LCP, INP, CLS on PLP/PDP/cart/checkout/home.
+Protect **LCP · INP · CLS** on home, PLP, PDP, cart, checkout.
+
+## Practical budgets
+
+| Surface | Rule |
+|---|---|
+| LCP hero | One `next/image` with `priority`; don’t start it at `opacity: 0` waiting on GSAP |
+| Checkout / cart | Minimal third-party JS; **no** heavy GSAP import on pay path |
+| Lists | Prefer Server Components; client islands only for interactivity |
+
+Measure before micro-optimizing. Prefer **deleting JS** over clever tweaks.
 
 ## Do
 
-- `next/image` for product/hero images with correct sizes/priority for LCP hero only
-- Reserve aspect ratio space to prevent CLS
-- Keep checkout light — minimal animation, minimal third-party
-- Defer non-critical JS; avoid shipping GSAP on checkout routes if unused
-- Server Components by default; client islands only where needed
-- Cache public catalog reads carefully; never cache private cart HTML
+```tsx
+// LCP hero only
+<Image src={hero} alt="…" priority sizes="100vw" className="…" />
+
+// Below-fold — default lazy; reserve space
+<div className="relative aspect-[4/5]">
+  <Image src={url} alt={name} fill sizes="(max-width:768px) 50vw, 25vw" />
+</div>
+```
+
+- Cache public catalog HTML carefully; **never** cache private cart/account responses.
+- Dynamic-import GSAP scenes when they hurt LCP.
 
 ## Don't
 
-- Unsized images / layout-shifting banners
+- Unsized images / banners that shift layout (CLS)
 - Huge client carousels on first paint
-- Blocking third-party scripts in checkout
-- Animate LCP element from opacity 0 without SSR-visible fallback
-
-Measure before “optimizing.” Prefer deleting JS over micro-tweaks.
+- Blocking third-party scripts on checkout
+- Animating layout props when transform/opacity work

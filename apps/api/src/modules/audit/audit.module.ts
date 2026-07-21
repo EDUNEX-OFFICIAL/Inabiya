@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
+import { AuditService } from './audit.service';
 
-/** Phase 0 scaffold — no business logic yet. */
-@Module({})
+@Module({
+  providers: [AuditService],
+  exports: [AuditService],
+})
 export class AuditModule {}

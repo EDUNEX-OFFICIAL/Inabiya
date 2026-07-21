@@ -1,18 +1,33 @@
 ---
-description: Forbidden tech and approved Inabiya stack
+description: Locked stack table; ADR gate; what you may add without approval
 alwaysApply: true
 ---
 
 # Stack Guardrails
 
-## Approved
+Any change to a locked row needs an **ADR + eng lead**. Do not “just try” an alternate.
 
-TypeScript strict · Next.js App Router · NestJS modular monolith · Prisma · PostgreSQL · Redis · BullMQ · Tailwind · shadcn/ui · Radix · Zod · react-hook-form · TanStack Query · lucide-react · pnpm · **GSAP + `@gsap/react`** (Soft Gift motion) · Framer Motion optional (tiny UI only)
+## Locked
 
-## Forbidden without ADR
+| Layer | Use this | Not this |
+|---|---|---|
+| Language | TypeScript strict | Untyped JS as default |
+| Web | Next.js **App Router** | CRA, Vite-as-primary, new Pages Router routes |
+| API | NestJS modular monolith | FastAPI/Django/Flask primary |
+| Data | Prisma + PostgreSQL | Mongo, second ORM (TypeORM/Drizzle/…) |
+| Cache/jobs | Redis + BullMQ | Redis as business DB; fire-and-forget hacks |
+| UI | Tailwind + shadcn/ui + Radix | MUI / Ant / Chakra as primary |
+| Forms/validate | Zod + RHF | Ad-hoc untyped forms |
+| Client server-state | TanStack Query | Redux/MobX as default |
+| Motion | GSAP + `@gsap/react` (Soft Gift story) | Animate everything; Framer only for tiny UI |
+| Money | `*Paise: Int` (or Decimal) | JS `number` float rupees |
+| Packages | pnpm workspaces | npm/yarn drift without ADR |
+| API shape | REST `/api/v1` | Unversioned public APIs |
 
-Mongo/Mongoose · FastAPI/Django as primary API · CRA/Vite-as-primary · Pages Router new routes · TypeORM/Sequelize/Drizzle beside Prisma · Redux/MobX as default · MUI/Ant/Chakra as primary UI · float money · secrets in git · microservices-by-default · cross-module table queries
+## OK without ADR
 
-## Prototype
+`clsx`, `tailwind-merge`, `sonner`, Helmet/security middleware, pino/structured logs, payment/email SDKs **behind adapters**, **one** of date-fns | luxon repo-wide.
 
-Older CRA+FastAPI+Mongo code is behavioral reference only — not architecture template.
+## Instant reject
+
+Secrets in git · cross-module table queries · microservices-by-default · `any` to silence TS · LMS vocabulary models · copying prototype CRA/FastAPI/Mongo into production paths.

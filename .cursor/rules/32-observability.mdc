@@ -1,0 +1,45 @@
+---
+description: requestId, health/ready, audit, safe logs, resilience classes
+globs: "{apps/api/**,apps/worker/**,apps/web/**/instrumentation*.ts}"
+alwaysApply: false
+---
+
+# Observability & Resilience
+
+## Request correlation (already in API)
+
+Mutating controllers pass `String(req.id ?? '')` into services/audit (checkout, articles, writer-payments, auth). `ApiExceptionFilter` echoes `requestId` in every error envelope. **Keep propagating it** on new money/publish/payout paths.
+
+```typescript
+// ✅
+return this.payments.release(id, user.id, String(req.id ?? ''));
+
+// audit.write({ …, requestId })
+```
+
+## Health (platform)
+
+| Route | Meaning |
+|---|---|
+| `GET /api/v1/health` | Liveness `{ status: 'ok' }` |
+| `GET /api/v1/ready` | DB + Redis checks; **503** when degraded |
+| `GET /api/v1/version` | Build/name metadata |
+
+Don’t use liveness as a substitute for readiness in orchestrators.
+
+## Logging
+
+- Prefer structured logs; include `requestId` / stable domain `code` on failures.
+- **Never** log: tokens, passwords, OTPs, PAN/CVV, raw provider payloads, full `.env`.
+- Audit privileged actions via `AuditService` (`article.published`, `writer_payment.released`, …) — not only `console.log`.
+
+## Resilience classes
+
+| Class | HTTP | Example |
+|---|---|---|
+| Presentation | 400 | Bad Zod / empty cart |
+| AuthZ | 401/403 | Missing JWT / `MEDICAL_GATE_REQUIRED` |
+| Domain conflict | 409 (or mapped 400 with code) | Illegal status jump / `NOT_PENDING` |
+| Infra | 5xx / queue retry | DB/Redis/payment timeout |
+
+Timeouts on external calls. Retry only idempotent ops. Degrade search/recs — never “succeed” checkout on unknown payment state. No empty `catch`.

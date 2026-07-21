@@ -1,23 +1,35 @@
 ---
-description: Accessibility requirements for Inabiya storefront and apps
+description: WCAG 2.2 AA practical bar for gift browse→checkout and admin critical paths
 globs: apps/web/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
 # Accessibility
 
-Target practical WCAG 2.2 AA on core flows (browse → PDP → cart → checkout → account).
+Target practical **WCAG 2.2 AA** on: browse → PDP → cart → checkout → account (plus admin money/publish paths).
 
-## Required
+## Must
 
-- Visible focus rings using theme tokens
-- Keyboard access for dialogs, menus, builder steps, cart drawers
-- Icon-only controls need `aria-label`
-- Tap targets ≥ 48px (primary CTAs often 56px)
-- Don’t convey status by color alone
-- Form errors tied to fields + announced appropriately
-- Meaningful `alt` on product images; decorative marked
-- Honor `prefers-reduced-motion` (see GSAP rule)
-- Modals: focus trap + Escape + restore focus
+| Requirement | How |
+|---|---|
+| Focus visible | Theme ring tokens — never `outline: none` without a replacement |
+| Keyboard | Dialogs, menus, cart drawer, builder steps fully operable |
+| Icon-only | `aria-label` (password Eye toggle pattern) or visible text |
+| Touch | ≥ 48px targets; primary CTAs often 56px |
+| Status | Not by color alone (text / icon / `aria`) |
+| Forms | `aria-invalid` + `aria-describedby` tied to error text |
+| Images | Product `alt` = name + trait; decorative `alt=""` |
+| Motion | Honor `prefers-reduced-motion` — price/CTA never trapped at opacity 0 |
+| Modals | Focus trap + Escape + restore focus — prefer Radix/shadcn |
 
-Tag chips (must/rec/nice) use dark text on pastel fills for contrast.
+## Soft Gift contrast
+
+Pink CTAs need white/`--primary-foreground` text. Pastel chips (must/rec/nice): **dark text on pastel fills**, not light-on-light.
+
+```tsx
+// ❌ BAD
+<button className="outline-none">…</button>
+
+// ✅ GOOD — keep a visible focus style
+<button className="focus-visible:ring-2 focus-visible:ring-[var(--ring,var(--primary))]">…</button>
+```

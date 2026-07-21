@@ -1,26 +1,52 @@
 ---
-description: Prisma, PostgreSQL, Redis, and money/data invariants
-globs: "{**/prisma/**,**/schema.prisma,apps/api/**/*repository*.ts,apps/api/**/*prisma*.ts}"
+description: Postgres source of truth; Prisma migrations; paise Int; inventory + idempotency
+globs: "{**/prisma/**,**/schema.prisma,apps/api/**/*repository*.ts,apps/api/**/*prisma*.ts,apps/api/**/*.use-case.ts,apps/api/**/*.service.ts}"
 alwaysApply: false
 ---
 
-# Data & Prisma Rules
+# Data & Prisma
 
-PostgreSQL is system of record. Redis is cache/queue/lock only — never durable business truth. Search indexes are rebuildable projections. Media bytes in S3; metadata in DB.
+## Storage roles
 
-## Prisma
+| Store | Allowed | Forbidden |
+|---|---|---|
+| PostgreSQL | Business truth (orders, stock, articles, payments) | — |
+| Redis | Cache, queue, lock, rate-limit | Durable order/stock truth |
+| S3 | Media bytes | — |
+| DB rows | Media metadata / keys | BYTEA / base64 blobs |
 
-- Every schema change = migration
-- UUID/ULID public IDs
-- Named indexes for hot paths
-- Soft delete only when PRD requires recoverability
+## Schema discipline
 
-## Money & inventory
+- Every change → Prisma migration checked in with the feature. No silent prod SQL.
+- Public IDs: UUID/ULID strings.
+- Status = explicit enums (`OrderStatus`, …), not `isPaid` + `isCancelled` soups.
+- Index hot filters: customer orders, variant stock, article/campaign status.
+- Soft-delete only when PRD needs recoverability.
 
-- Integer paise (or Decimal) — never float
-- Reservations explicit; release on cancel/fail payment
-- No implicit negative stock
+## Money (this repo’s convention)
 
-## Idempotency keys required for
+```prisma
+totalPaise    Int   @map("total_paise")
+amountPaise   Int   @map("amount_paise")
+```
 
-checkout/place order · payment webhooks · campaign award · payout/writer payment release
+```typescript
+// ❌ BAD
+const total = priceRupees * 1.18;
+
+// ✅ GOOD — integer paise only; server recomputes from cart lines
+subtotalPaise: totals.subtotalPaise,
+totalPaise: totals.totalPaise,
+```
+
+Never accept client `totalPaise` as authoritative.
+
+## Inventory & transactions
+
+- `onHand` / `reserved` are first-class. Reserve inside the same `$transaction` as order create; release on cancel/failed payment.
+- No implicit negative stock.
+- Multi-row money/stock writes → `prisma.$transaction`.
+
+## Idempotency
+
+Required for: place-order, payment webhooks (`Payment.idempotencyKey` / event id), campaign award, writer/campaign payout release, bulk stock adjust. Duplicate delivery must not double-charge or double-reserve.

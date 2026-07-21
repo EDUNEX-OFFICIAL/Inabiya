@@ -1,22 +1,38 @@
 ---
-description: Phase discipline and Memory.md update obligations
+description: Active phase from Memory only; honest checkboxes; override protocol
 alwaysApply: true
 ---
 
-# Phase & Memory Discipline
+# Phase & Memory
 
-Active phase is defined only in `docs/Memory.md`. Default order: 0→1→2→3→4→5→6→7→8→9.
+**Source of truth for “what phase are we in?”** = `docs/Memory.md` only. Order: `0→1→…→9`. Chat history is not authority.
 
-## Do
+## Implement
 
-- Implement only P0/P1 for the active phase (`docs/Phases.md`)
-- Ask which phase if Memory is unclear
-- Mark checkboxes honestly — never invent progress
+- Only **P0/P1** of the active phase (`docs/Phases.md`).
+- Prefer finishing current P0 over starting future-phase polish.
+- Before marking a phase complete: cross-check `docs/IMPLEMENTATION_AUDIT.md` against the repo.
+- If Memory’s active phase is unclear → ask the human. Do not guess.
 
-## Don't
+## Memory honesty
 
-- Build checkout/editorial/creator features during Phase 0
-- Skip Phase N while doing Phase N+2 (unless user explicitly overrides and Memory logs it)
-- Leave session without updating Memory when implementation changed
+```text
+❌ Mark “checkout done” because UI looks finished
+✅ Mark done only when Memory exit criteria / audit items are actually true
+```
 
-Prototype under `Inabiya-emergent-ai` is reference-only — never copy its CRA/FastAPI/Mongo stack into production.
+- Never invent checkbox progress.
+- Any implementation session that changes code **must** append a dated session log + update checkboxes that actually moved.
+- Keep entries short: what shipped, migrations, env keys, risks, ≤5 next actions. No secrets. No PRD paste.
+
+## Override protocol
+
+Human may skip/reorder phases. You must:
+
+1. Restate the override in your reply.
+2. Log date + reason in Memory session log.
+3. Still obey hard locks (stack, money, AuthZ, theme isolation).
+
+## Prototype
+
+`Inabiya-emergent-ai` (CRA/FastAPI/Mongo) = **behavior reference only**. Never copy its stack, schema style, or folder layout into `/srv/Inabiya`.

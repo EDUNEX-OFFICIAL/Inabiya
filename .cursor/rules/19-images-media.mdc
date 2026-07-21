@@ -1,24 +1,40 @@
 ---
-description: Product/media image standards for Soft Gift ecommerce
+description: next/image ratios, S3 metadata-only, signed URLs, upload validation
 globs: "{apps/web/**/*.{tsx,ts},apps/api/src/modules/media/**,apps/api/src/modules/commerce/catalog/**}"
 alwaysApply: false
 ---
 
 # Images & Media
 
-## Storefront
+## Storefront ratios
 
-- Product cards: 1:1 or 4:5 · Blog thumbs: 16:9 · Hero: full-bleed intentional crop
-- Warm soft lighting; real product/context — not abstract purple gradients
-- Use `next/image`; set width/height or fill + sized parent
-- Priority only on true LCP hero
-- Lazy-load below fold
+| Surface | Aspect | Notes |
+|---|---|---|
+| Product cards | 1:1 or 4:5 | Real product/context; warm light |
+| Blog thumbs | 16:9 | |
+| Hero | Full-bleed crop | One LCP `priority` image max |
+
+```tsx
+// ✅ sized parent prevents CLS
+<div className="relative aspect-square">
+  <Image src={url} alt={`${name} gift`} fill sizes="(max-width:768px) 50vw, 25vw" />
+</div>
+```
+
+- Empty `alt` only when decorative.
+- No abstract purple-gradient “product” heroes.
 
 ## Platform
 
-- Bytes in S3-compatible storage; DB stores metadata only
-- Validate MIME/size; private assets via signed URLs
-- Don’t store binaries in Postgres
-- Generate variants via BullMQ jobs when needed (thumb/web)
+| Store | Holds |
+|---|---|
+| S3-compatible | Bytes |
+| Postgres | Metadata, keys, dimensions, MIME — **not** BYTEA/base64 |
 
-Empty alt only when decorative; products need descriptive alt (name + key trait).
+- Validate MIME + size at upload; reject executables/polyglots.
+- Private assets → **signed URLs** with expiry (never permanent public ACL for private).
+- Variants (thumb/web) via BullMQ when needed — don’t block request path on heavy transforms.
+
+## Don't
+
+Hotlink unsigned private objects from the browser. Ship unsized `<img>` that shove layout.

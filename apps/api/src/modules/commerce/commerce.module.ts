@@ -6,8 +6,13 @@ import { CheckoutModule } from './checkout/checkout.module';
 import { OrdersModule } from './orders/orders.module';
 import { PromotionsModule } from './promotions/promotions.module';
 import { CustomersModule } from './customers/customers.module';
+import { OpsModule } from './ops/ops.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { ReturnsModule } from './returns/returns.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { CmsModule } from './cms/cms.module';
 
-/** Commerce domain aggregator — Phase 0 empty scaffolds only. */
+/** Commerce domain aggregator */
 @Module({
   imports: [
     CatalogModule,
@@ -17,6 +22,11 @@ import { CustomersModule } from './customers/customers.module';
     OrdersModule,
     PromotionsModule,
     CustomersModule,
+    OpsModule,
+    ReviewsModule,
+    ReturnsModule,
+    AnalyticsModule,
+    CmsModule,
   ],
 })
 export class CommerceModule {}

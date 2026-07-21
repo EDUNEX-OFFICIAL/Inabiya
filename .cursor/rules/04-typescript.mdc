@@ -1,0 +1,41 @@
+---
+description: Strict TypeScript — Zod at boundaries, no any, real Inabiya patterns
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript
+
+`strict` is assumed. Prefer parse-at-boundary over cast-through.
+
+## Boundaries (where bugs enter)
+
+External input (HTTP body/query, Server Actions, webhooks, env) → **Zod parse** → typed value. Shared schemas live in `@inabiya/validation` when FE and BE both need them (see checkout controllers).
+
+```typescript
+// ❌ BAD — trust + cast
+const total = (req.body as any).total as number;
+
+// ✅ GOOD — pipe already used in Nest; same idea everywhere
+@Body(new ZodValidationPipe(checkoutPlaceOrderBodySchema))
+body: CheckoutPlaceOrderBody
+```
+
+## Do
+
+- Discriminated unions / type guards instead of `as`
+- `unknown` + Zod at JSON/webhook edges
+- `satisfies` for config/payload shapes that must keep keys (`AccessPayload` pattern)
+- Explicit return types on exported public APIs when inference hides intent
+- Prisma enums / string unions + Zod — avoid numeric enums
+
+## Don't
+
+| Pattern | Why |
+|---|---|
+| `any` / `as unknown as T` | Hides invariants; needs a one-line justification if unavoidable |
+| `foo!` non-null | Prefer early return / narrow |
+| `@ts-ignore` | Use `@ts-expect-error` + reason, then fix |
+| `number` for money | Use `*Paise: number` only as **integer paise**, never rupees float |
+
+Money fields in this codebase are `subtotalPaise`, `totalPaise`, `amountPaise` (`Int` in Prisma). Keep that naming — don’t invent `price: number` rupees.

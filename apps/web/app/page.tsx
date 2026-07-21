@@ -5,8 +5,14 @@ export default function HomePage() {
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <h1>Inabiya</h1>
-      <p>Phase 0 platform foundation. Product surfaces live under route groups.</p>
+      <p>Phase 1 identity — simple email/password auth (no third-party IdP).</p>
       <ul>
+        <li>
+          <Link href="/login">Login</Link>
+        </li>
+        <li>
+          <Link href="/register">Register</Link>
+        </li>
         <li>
           <Link href="/gift">Gift storefront (System A)</Link>
         </li>

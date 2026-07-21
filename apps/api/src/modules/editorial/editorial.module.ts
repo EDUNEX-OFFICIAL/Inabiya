@@ -5,7 +5,7 @@ import { ReviewWorkflowModule } from './review-workflow/review-workflow.module';
 import { PublishingModule } from './publishing/publishing.module';
 import { WriterPaymentsModule } from './writer-payments/writer-payments.module';
 
-/** Editorial domain aggregator — Phase 0 empty scaffolds only. */
+/** Editorial domain aggregator — Phase 6 workflow live in ArticlesModule. */
 @Module({
   imports: [
     AssignmentsModule,

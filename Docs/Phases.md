@@ -709,10 +709,90 @@ Roadmap changes require:
 
 ## 22. Immediate Next Action
 
-1. Keep Active Phase = **Phase 0** in `Memory.md`
-2. Confirm production repo/monorepo path (Open Question)
-3. Start scaffolding Next.js + NestJS + Prisma + Redis + BullMQ
-4. Do not begin Product D UI until Phase 1 primitives exist
+> Historical: Phase 0–9 closed (VPS-local). Active track = **Phase 10** Soft Gift Nav & Merchandising — see `Memory.md` and `SOFT_GIFT_HOMEPAGE_REFERENCE.md`.
+
+---
+
+## 23. Phase 10 — Soft Gift Nav & Merchandising (post Wave 1–3)
+
+**Trigger:** Client homepage reference; **navbar IA** is the core feature signal. UI is improvised under Soft Gift Design — no pixel match.
+
+**Authority:** `Docs/SOFT_GIFT_HOMEPAGE_REFERENCE.md` + PRD §41.
+
+### 10A — Nav IA + taxonomy (P0)
+
+- Product attributes: recipient tags, age bands, occasion tags
+- Public `GET /catalog/products` filters + PLP chrome
+- Expand Soft Gift nav to client IA → filtered routes
+- Seed shop categories (clothing, bath-skin, toys, mom-care)
+- Admin product edit for attributes
+
+### 10B — Six-step Build Your Box (P0)
+
+- GiftBox prefs: recipient, ageBand, occasion, budget, categorySlugs
+- Wizard UI; recommendations within budget; move-to-cart retained
+- Zod + AuthZ on mutations
+
+### 10C — Ready-made hampers + light trust (P1)
+
+- `isReadyMadeHamper` + hamper PLP / home section
+- Optional journal teaser + review snippet on `/gift`
+- Free-shipping copy matches ₹2,000 (unless Product changes)
+
+### 10D — B2B / offers / polish (P2)
+
+- Corporate / bulk inquiry lead form + admin list
+- Optional brands strip via `brandName`
+- Footer IA when primary nav + builder ship
+
+### Exit criteria
+
+- [x] Nav links resolve to working filtered PLPs / builder
+- [x] Builder completes prefs → recommendations → box → cart
+- [x] At least one ready-made hamper discoverable
+- [x] Corporate/bulk inquiry can be submitted
+- [x] Memory + audit updated; Soft Gift theme only
+
+---
+
+## 24. Phase 11 — Marketing Page Builder (DnD)
+
+**Status:** **CLOSED** — 11A–11D shipped (2026-07-21); Soft Gift `/gift` on block engine.  
+**Authority:** [`Docs/CMS_PAGE_BUILDER.md`](CMS_PAGE_BUILDER.md).  
+**Product decision:** Full marketing pages at `/pages/[slug]` with ordered blocks (client DnD request = **1B**). Not TipTap replacement; not homepage-only reorder as end state.
+
+### 11A — Schema + CRUD + public renderer (P0)
+
+- [x] `MarketingPage` + `PageBlock` Prisma models + migration
+- [x] Admin CRUD (order via up/down — no DnD lib yet)
+- [x] Public `/pages/[slug]` for `hero` · `richText` · `cta`
+- [x] Zod + AuthZ (`COMMERCE_ADMIN` / `CONTENT_ADMIN` / `SUPER_ADMIN`) + audit on publish
+
+### 11B — Drag-and-drop + full block set (P0)
+
+- [x] `@dnd-kit` reorder in admin canvas
+- [x] Remaining v1 blocks: `image` · `productGrid` · `spacer`
+- [x] SEO metadata on public pages (title/description + Open Graph)
+
+### 11C — Catalog grid + polish (P1)
+
+- [x] `productGrid` resolves live catalog (slugs / category → `props.products`)
+- [x] Draft preview (`GET …/preview` + `/pages/preview/[id]`); Soft Gift visual polish
+
+### 11D — Homepage migration (P2)
+
+- [x] Migrate `/gift` onto MarketingPage slug `home` + `MarketingPageBlocks` (`layout=home`)
+- [x] Homepage blocks: storefront hero, brandStrip, recipientSplit, productGrid (hamper/featured), corporate cta, articleTeasers
+- [x] Reserved slug locks (no delete/unpublish); `/pages/home` → `/gift`; seed published `home`
+- [x] Soft Gift Design preserved; no pixel-match client homepage reference
+
+### Exit criteria
+
+- [x] Admin create → blocks → reorder → publish
+- [x] Public published-only render; unpublished 404
+- [x] Sanitised richText; Zod props; audit publish
+- [x] Memory honest (no checkbox until code ships)
+- [x] Soft Gift `/gift` driven by block engine (11D)
 
 ---
 

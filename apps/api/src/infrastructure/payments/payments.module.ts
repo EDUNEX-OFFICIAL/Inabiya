@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
+import { MockPaymentProvider } from './mock-payment.provider';
+import { PaymentsService } from './payments.service';
 
-/** Payment provider adapter port — implement in Phase 3. */
-@Module({})
+@Module({
+  providers: [MockPaymentProvider, PaymentsService],
+  exports: [PaymentsService],
+})
 export class PaymentsModule {}

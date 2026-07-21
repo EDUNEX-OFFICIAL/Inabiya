@@ -1,19 +1,34 @@
 ---
-description: Inabiya core agent protocol — docs order, phase lock, stack
+description: Session start, authority order, hard locks, stop conditions, DoD
 alwaysApply: true
 ---
 
-# Inabiya Core Protocol
+# Core Protocol
 
-Before coding, read `docs/Memory.md` (active phase), then only the relevant slices of `docs/Phases.md`, `docs/Rules.md`, `docs/Architecture.md`, `docs/Design.md`. Open `docs/PRD.md` only for ambiguous product behavior.
+## Before you write code
 
-## Hard locks
+1. Read `docs/Memory.md` — note **Active Phase**, blockers, last session.
+2. Open **only** the doc slices you need (`Phases` / `Rules` / `Architecture` / `Design`). Open `PRD.md` only when product behavior is ambiguous.
+3. If Memory and the user disagree → **ask**, then sync Memory. Do not code on a disputed phase.
 
-- Stack: Next.js App Router, NestJS, PostgreSQL+Prisma, Redis+BullMQ, Tailwind+shadcn, Zod, pnpm
-- Never introduce MongoDB, FastAPI, CRA, Pages Router, second ORM, or LMS domains (Student/Hostel/Exam)
-- One active phase — do not pull future-phase features
-- Dual design: System A gift ≠ System B creator — never mix tokens
+## Authority (when docs conflict)
 
-## After coding
+`PRD` → `Architecture` (Inabiya domains only; ignore LMS residue) → `Rules` → `Design` → `Phases` → `Memory`
 
-Update `docs/Memory.md` checkboxes + session log. Summarize changes, migrations, env keys, remaining risks.
+## Hard locks (non-negotiable)
+
+| Lock | Meaning |
+|---|---|
+| Stack | Next.js App Router · NestJS · Postgres+Prisma · Redis+BullMQ · Tailwind+shadcn · Zod · pnpm |
+| No alternate stack | No Mongo, FastAPI/Django primary, CRA, Pages Router for new work, second ORM |
+| Phase | Only active-phase P0/P1 unless human overrides **and** Memory logs it |
+| Themes | Soft Gift (`gift`) ≠ Creator (`creator`) — never mix tokens |
+| Domains | No LMS models (`Student`, `Hostel`, `Exam`, …) |
+
+## Stop coding and escalate
+
+Stack swap · cross-module Prisma · float money · auth/validation bypass · phase skip · theme mix · “temporary” security disable.
+
+## Done means
+
+Scope matches phase · Zod/DTO + AuthZ on mutations · migrations/env noted · non-trivial logic has one check · Memory session log updated.

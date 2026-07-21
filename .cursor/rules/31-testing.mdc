@@ -1,22 +1,35 @@
 ---
-description: Testing expectations for critical Inabiya paths
+description: What to test when touching money, stock, AuthZ, publish — Vitest + Playwright
 globs: "**/*.{spec,test,e2e}.ts"
 alwaysApply: false
 ---
 
-# Testing Rules
+# Testing
 
-Prefer Vitest (unit) + Playwright (e2e).
+Prefer **Vitest** (unit/integration) + **Playwright** (e2e). CI should run lint + typecheck + unit. Repo may still be thin on specs — **when you touch a risk area below, add coverage in the same change**.
 
 ## Must cover when touched
 
-- Checkout/payment webhook duplicate delivery
-- Inventory reserve/release
-- Illegal order/article/campaign transitions
-- AuthZ denial cases
-- Medical publish gate
-- Campaign payment release gate
+| Risk | Minimum assertion |
+|---|---|
+| Payment webhook | Same `(provider, eventId)` twice → `duplicate: true`, single capture / single stock commit |
+| Inventory | `reserve` then `release`/`commit` leaves `onHand`/`reserved` consistent; `INSUFFICIENT_STOCK` when empty |
+| Order / article / campaign transitions | Illegal jump rejected (409 / domain code) |
+| AuthZ | Wrong role / other user’s order → 401/403/404, not data leak |
+| Medical publish gate | Cannot publish medical-required without approval |
+| Writer / campaign payout | Gate + idempotent release |
 
-## Practices
+## How to write them
 
-Deterministic tests (fake clocks/network). New bug ⇒ regression test when feasible. Do not disable tests to greenwash. Critical journeys: checkout, publish, reverse-bid award.
+```typescript
+// ✅ test the invariant (fulfillment / inventory service)
+await fulfillment.processWebhook({ provider: 'mock', eventId: 'evt_1', … });
+await fulfillment.processWebhook({ provider: 'mock', eventId: 'evt_1', … }); // duplicate
+
+// ❌ only snapshot JSX class names
+```
+
+- Fake clocks/network — no `sleep(1000)` flakes.
+- New production bug → regression test when feasible.
+- E2E smoke for critical journeys: checkout, article publish, reverse-bid award — not for every formatter.
+- Never disable failing critical tests to greenwash CI.

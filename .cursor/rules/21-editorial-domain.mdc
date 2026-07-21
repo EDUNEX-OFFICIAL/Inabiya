@@ -1,20 +1,43 @@
 ---
-description: Editorial workflow and medical/SEO publish gates
-globs: "{apps/api/src/modules/editorial/**,apps/web/app/(blog)/**,apps/web/app/(admin)/editorial/**}"
+description: Editorial publish gates, ArticleStatus machine, writer payouts, specialists ≠ creators
+globs: "{apps/api/src/modules/editorial/**,apps/web/app/(gift)/articles/**,apps/web/app/(gift)/specialists/**,apps/web/app/(blog)/**,apps/web/app/(admin)/admin/editorial/**}"
 alwaysApply: false
 ---
 
 # Editorial Domain
 
-Owns: assignments, writer tools, SEO/medical review, schedule/publish, writer payments.
+**Owns:** assignments, writer tools, SEO/medical review, schedule/publish, writer payments, public articles/specialists.  
+**Does not own:** SKU inventory, Creator Collective bids.
 
-Does not own: SKU inventory, creator proposals.
+## ArticleStatus (Prisma — enforce in `ArticlesService.transition` / publish)
 
-## Invariants
+`ASSIGNED → DRAFT → SEO_REVIEW → MEDICAL_REVIEW → APPROVED → SCHEDULED → PUBLISHED`  
+Also: `CHANGES_REQUESTED`. Illegal jump → domain error (`409`/`400`) + stable `code`.
 
-- Unpublished content is not publicly routable
-- Medical-required articles cannot publish without medical approval
-- Writers cannot self-approve SEO/medical gates
-- Scheduled publish via BullMQ job — not browser-only
-- Writer payout release is privileged + audited + idempotent
-- Editorial specialists ≠ Creator Collective creators (separate models/routes/UI)
+## Publish invariants (code anchors)
+
+| Rule | Where |
+|---|---|
+| Public reads only `PUBLISHED` | `PublishingService.getPublicBySlug` / `listPublic` |
+| Publish only from `APPROVED` or `SCHEDULED` | `assertPublishable` → `NOT_APPROVED` |
+| If `medicalGateRequired` | history must include `MEDICAL_REVIEW` or `MEDICAL_GATE_REQUIRED` |
+| Writers cannot self-approve SEO/medical | role checks on transition endpoints |
+| Schedule → publish | `processDueSchedules` / scanner — not browser-only hope |
+| On publish | upsert `WriterPayment` PENDING + audit `article.published` |
+
+```typescript
+// publishing.service.ts — do not weaken this
+if (article.medicalGateRequired) {
+  const passed = article.statusHistory.some((h) => h.status === ArticleStatus.MEDICAL_REVIEW);
+  if (!passed) throw new ForbiddenException({ code: 'MEDICAL_GATE_REQUIRED', … });
+}
+```
+
+## Writer payouts
+
+`POST …/writer-payments/:id/release` — `@Roles('FINANCE', 'SUPER_ADMIN')`.  
+Only `PENDING` + article `PUBLISHED` → `RELEASED`; audit `writer_payment.released`. Re-release of non-PENDING → `NOT_PENDING` (idempotent-safe refusal).
+
+## Specialists ≠ creators
+
+`SpecialistProfile` is editorial/medical attribution on articles. Never reuse Creator Collective models, routes, or `data-theme="creator"` for specialists. Public blog/articles stay Soft Gift (`gift`).

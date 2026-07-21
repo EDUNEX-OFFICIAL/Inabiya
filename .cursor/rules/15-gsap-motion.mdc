@@ -1,51 +1,44 @@
 ---
-description: GSAP 2026 modern ecommerce motion — Next.js App Router safe patterns
+description: GSAP + useGSAP — Soft Gift story motion; never on checkout SSR-safe
 globs: apps/web/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
-# GSAP for Inabiya Ecommerce (2026)
+# GSAP (Soft Gift storytelling)
 
-GSAP is primary for marketing/scroll/storytelling motion on Soft Gift storefront. Framer Motion only for tiny UI (toast/presence micro-interactions). Do not animate everything.
+Primary motion for marketing / scroll / PDP / Build-Your-Box. Framer Motion only for tiny UI presence. **Do not** animate cart qty, pay button, or admin tables with heavy timelines.
 
-## Setup (required)
+## Required setup
 
-- Client leaf only: `'use client'`
-- Use `@gsap/react` → `useGSAP()` for create + auto cleanup/context
-- Register plugins client-side only:
-  `if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger)`
-- Never call `gsap.*` / `ScrollTrigger.*` during SSR/render
-- Scope selectors to a container `ref` (no global `'.card'` across the app)
+```tsx
+'use client';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-## Performance
+if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 
-- Prefer `transform` + `opacity` (compositor-friendly)
-- Avoid animating layout props (`top/left/width/height`) unless Flip needs it
-- Batch lists with `ScrollTrigger.batch` when many similar reveals
-- `ScrollTrigger.refresh()` after fonts/images/layout shifts
-- Kill/cleanup on route change (useGSAP handles if scoped correctly)
-- Code-split heavy scenes with `next/dynamic` + `ssr: false` when bundle weight hurts LCP
+// inside component — scope to ref; useGSAP cleans up on unmount/route change
+useGSAP(() => {
+  gsap.from('.hero-title', { opacity: 0, y: 16, duration: 0.45 });
+}, { scope: containerRef });
+```
 
-## Accessibility
+| Do | Don't |
+|---|---|
+| Client leaf only | `gsap.*` during SSR/render |
+| Scope selectors to a container `ref` | Global `'.card'` across the app |
+| `transform` + `opacity` | Animate `top/left/width/height` (unless Flip) |
+| `next/dynamic` + `ssr: false` for heavy scenes | Ship GSAP on checkout bundle “just in case” |
 
-If `prefers-reduced-motion: reduce`:
+## Reduced motion
 
-- Skip pin / scrub / parallax / big timelines
-- Keep final content visible (no opacity 0 traps)
-- Don’t rely on animation to reveal critical CTA/price/stock
+If `prefers-reduced-motion: reduce` → skip pin/scrub/parallax; keep final content visible; **never** hide CTA / price / stock behind opacity 0.
 
-## Ecommerce UX (Soft Gift)
+## Hydration
 
-Use GSAP for: hero presence, collection reveals, PDP gallery polish, Build-Your-Box step transitions, soft scroll storytelling on marketing pages.
+Server and client JSX must match. Don’t branch markup on `window`. Animate after mount only.
 
-Do NOT use heavy GSAP on: checkout pay path, cart line edits, admin tables, input typing — keep crisp & instant.
+## Merge checklist
 
-Match Design.md: calm premium motion (≈0.2–0.6s), not flashy SaaS bounce spam. 2–3 intentional motions per polished view beat 20 weak ones.
-
-## Hydration safety
-
-Server and client JSX trees must match. Don’t branch markup on `window`. Animate after mount via useGSAP only.
-
-## Checklist before merging animation work
-
-- [ ] useGSAP scoped · [ ] reduced-motion path · [ ] no SSR window crash · [ ] mobile pin sane or disabled · [ ] LCP image not delayed by animation · [ ] CTAs clickable during/after motion
+- [ ] `useGSAP` scoped · [ ] reduced-motion path · [ ] no SSR crash · [ ] mobile pin sane/off · [ ] LCP image not delayed by fade-in · [ ] CTAs clickable during/after

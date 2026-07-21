@@ -4,6 +4,11 @@ RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
 WORKDIR /repo
 
 FROM base AS build
+ARG NEXT_PUBLIC_API_URL=same-origin
+ARG API_REWRITE_URL=http://api:4001
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV API_REWRITE_URL=$API_REWRITE_URL
+ENV API_URL=$API_REWRITE_URL
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/web ./apps/web

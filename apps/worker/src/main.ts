@@ -1,7 +1,6 @@
-import { Queue, Worker, type Job } from 'bullmq';
+import { Worker, type Job } from 'bullmq';
 import IORedis from 'ioredis';
 import pino from 'pino';
-import { randomUUID } from 'crypto';
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
@@ -11,55 +10,105 @@ const logger = pino({
       : undefined,
 });
 
-const QUEUE_NAME = 'sample';
+type OrderConfirmationJob = {
+  orderId: string;
+  orderNumber: string;
+  userEmail: string;
+  totalPaise: number;
+};
 
-interface SampleJobData {
-  message: string;
-  correlationId: string;
-}
+type CartAbandonmentJob = {
+  cartId: string;
+  userEmail: string | null;
+  itemCount: number;
+};
 
 async function main() {
   const redisUrl = process.env.REDIS_URL ?? 'redis://127.0.0.1:6381';
   const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
-  const queue = new Queue<SampleJobData>(QUEUE_NAME, { connection });
-
-  const worker = new Worker<SampleJobData>(
-    QUEUE_NAME,
-    async (job: Job<SampleJobData>) => {
-      logger.info(
-        {
-          jobId: job.id,
-          correlationId: job.data.correlationId,
-          message: job.data.message,
-        },
-        'sample job processed',
-      );
-      return { ok: true };
+  const notifications = new Worker(
+    'notifications',
+    async (job: Job) => {
+      if (job.name === 'order.confirmation') {
+        const data = job.data as OrderConfirmationJob;
+        logger.info(
+          {
+            jobId: job.id,
+            orderId: data.orderId,
+            orderNumber: data.orderNumber,
+            userEmail: data.userEmail,
+            totalPaise: data.totalPaise,
+          },
+          'order confirmation notification (email stub)',
+        );
+        return { sent: true };
+      }
+      if (job.name === 'cart.abandonment') {
+        const data = job.data as CartAbandonmentJob;
+        logger.info(
+          {
+            jobId: job.id,
+            cartId: data.cartId,
+            userEmail: data.userEmail,
+            itemCount: data.itemCount,
+          },
+          'cart abandonment recovery email (stub)',
+        );
+        return { sent: true };
+      }
+      if (job.name === 'assignment.due_reminder') {
+        const data = job.data as {
+          articleId: string;
+          title: string;
+          dueAt: string;
+          assigneeEmail: string | null;
+        };
+        logger.info(
+          {
+            jobId: job.id,
+            articleId: data.articleId,
+            title: data.title,
+            dueAt: data.dueAt,
+            assigneeEmail: data.assigneeEmail,
+          },
+          'assignment due reminder (email stub)',
+        );
+        return { sent: true };
+      }
+      if (job.name === 'auth.password_reset') {
+        const data = job.data as {
+          userId: string;
+          userEmail: string;
+          resetUrl: string;
+          expiresAt: string;
+        };
+        logger.info(
+          {
+            jobId: job.id,
+            userId: data.userId,
+            userEmail: data.userEmail,
+            resetUrl: data.resetUrl,
+            expiresAt: data.expiresAt,
+          },
+          'password reset email (stub)',
+        );
+        return { sent: true };
+      }
+      return { skipped: true };
     },
     { connection },
   );
 
-  worker.on('failed', (job, err) => {
-    logger.error({ jobId: job?.id, err }, 'sample job failed');
+  notifications.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, err }, 'notification job failed');
   });
 
-  const correlationId = randomUUID();
-  const job = await queue.add(
-    'hello',
-    { message: 'Phase 0 sample job', correlationId },
-    { removeOnComplete: 100, removeOnFail: 100 },
-  );
-
-  logger.info(
-    { jobId: job.id, correlationId, queue: QUEUE_NAME },
-    'sample job enqueued — worker ready',
-  );
+  logger.info('worker ready — notifications queue');
 
   const shutdown = async () => {
     logger.info('shutting down worker');
-    await worker.close();
-    await queue.close();
+    await notifications.close();
     await connection.quit();
     process.exit(0);
   };

@@ -1,5 +1,16 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from '../../audit/audit.module';
+import { IdentityModule } from '../../identity/identity.module';
+import {
+  ProfilesAuthController,
+  ProfilesPublicController,
+} from './profiles.controller';
+import { ProfilesService } from './profiles.service';
 
-/** Phase 0 scaffold — no business logic yet. */
-@Module({})
+@Module({
+  imports: [IdentityModule, AuditModule],
+  controllers: [ProfilesPublicController, ProfilesAuthController],
+  providers: [ProfilesService],
+  exports: [ProfilesService],
+})
 export class ProfilesModule {}

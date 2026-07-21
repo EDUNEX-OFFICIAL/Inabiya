@@ -1,0 +1,144 @@
+'use client';
+
+import Link from 'next/link';
+import { FormEvent, useState } from 'react';
+import { apiUrl } from '@/lib/api-base';
+
+export default function CorporateGiftingPage() {
+  const [type, setType] = useState<'corporate' | 'bulk'>('corporate');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [company, setCompany] = useState('');
+  const [message, setMessage] = useState('');
+  const [estimatedQty, setEstimatedQty] = useState('');
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(apiUrl('/catalog/gifting-inquiries'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type,
+          fullName,
+          email,
+          phone: phone || undefined,
+          company: company || undefined,
+          message,
+          estimatedQty: estimatedQty ? Number(estimatedQty) : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+        throw new Error(j?.error?.message ?? `Request failed (${res.status})`);
+      }
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not submit');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <main className="gift-page max-w-lg">
+      <Link href="/gift" className="gift-link text-sm">
+        ← Gift home
+      </Link>
+      <h1 className="gift-h1 mt-gs-4">Corporate & bulk gifting</h1>
+      <p className="mt-gs-2 text-sm opacity-80">
+        Share your needs — we will follow up with pricing. Inquiry form only.
+      </p>
+
+      {done ? (
+        <div className="clay-panel mt-gs-6 p-gs-6 text-center sm:p-gs-6">
+          <p className="gift-h2">Thanks</p>
+          <p className="mt-gs-2 text-sm opacity-80">We received your inquiry.</p>
+          <Link href="/gift" className="clay-btn mt-gs-5 inline-flex">
+            Back to shop
+          </Link>
+        </div>
+      ) : (
+        <form
+          onSubmit={(e) => void onSubmit(e)}
+          className="clay-panel mt-gs-6 space-y-gs-3 p-gs-5 text-sm sm:p-gs-6"
+        >
+          <label className="block">
+            Type
+            <select
+              className="clay-input"
+              value={type}
+              onChange={(e) => setType(e.target.value as 'corporate' | 'bulk')}
+            >
+              <option value="corporate">Corporate</option>
+              <option value="bulk">Bulk / event</option>
+            </select>
+          </label>
+          <label className="block">
+            Full name
+            <input
+              required
+              className="clay-input"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            Email
+            <input
+              required
+              type="email"
+              className="clay-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            Phone
+            <input
+              className="clay-input"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            Company
+            <input
+              className="clay-input"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            Estimated quantity
+            <input
+              className="clay-input"
+              inputMode="numeric"
+              value={estimatedQty}
+              onChange={(e) => setEstimatedQty(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            Message
+            <textarea
+              required
+              className="clay-input min-h-[100px]"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+          </label>
+          {error ? <p className="text-danger">{error}</p> : null}
+          <button type="submit" disabled={busy} className="clay-btn w-full sm:w-auto disabled:opacity-50">
+            {busy ? 'Sending…' : 'Submit inquiry'}
+          </button>
+        </form>
+      )}
+    </main>
+  );
+}

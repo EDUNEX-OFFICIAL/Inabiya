@@ -1,16 +1,36 @@
 ---
-description: PR / git hygiene for Inabiya production work
+description: Focused commits/PRs; migrations with schema; Memory; refuse unsafe git asks
 alwaysApply: true
 ---
 
 # Git & PR Hygiene
 
-- Focused PRs — one concern
-- Never commit secrets, `.env`, dumps, or huge media binaries
-- Schema changes ship with Prisma migrations
-- Respect active phase scope
-- Do not bypass CI lint/typecheck
-- Meaningful commits (why > noise)
-- After meaningful implementation: update `docs/Memory.md`
+## What lands in a change
 
-If asked to force-push main or skip hooks: refuse unless user explicitly requires it and understands risk.
+- **One concern** per PR (e.g. “Phase 7 schedule publish”, not “publish + redesign + random refactor”).
+- Commit message = **why** (conventional `feat:` / `fix:` / `chore:` welcome).
+- Schema change ⇒ Prisma migration files in the **same** change set.
+- Meaningful app work ⇒ update `docs/Memory.md` in the same effort (checkboxes + session log).
+- Stay inside active-phase scope unless Memory logs an override.
+
+## Never commit
+
+`.env`, secrets, DB dumps, huge binaries/media, `node_modules`.
+
+## CI
+
+Do not bypass lint / typecheck / unit tests to merge. Do not disable failing critical tests to “go green”.
+
+## Author checklist
+
+- [ ] Phase-scoped  
+- [ ] No secrets  
+- [ ] Migration if schema touched  
+- [ ] New endpoints: Zod + AuthZ + ownership  
+- [ ] Money/stock paths: transaction + idempotent where required  
+- [ ] Regression/check for critical mutation when non-trivial  
+- [ ] Memory updated  
+
+## Refuse unless user explicitly accepts risk
+
+Force-push to `main`/`master` · `--no-verify` · shipping with auth/validation removed “temporarily”.

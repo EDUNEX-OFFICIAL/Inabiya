@@ -1,22 +1,41 @@
 ---
-description: Commerce domain invariants (gift, cart, orders, inventory)
-globs: "{apps/api/src/modules/commerce/**,apps/web/app/(gift)/**,apps/web/app/(admin)/commerce/**}"
+description: Commerce invariants — cart lines, stock reserve/release, order states, pricing
+globs: "{apps/api/src/modules/commerce/**,apps/web/app/(gift)/**,apps/web/app/(admin)/admin/commerce/**}"
 alwaysApply: false
 ---
 
 # Commerce Domain
 
-Owns: catalog, personalization, gift box, cart, checkout, orders, inventory, promotions, commerce admin.
+**Owns:** catalog, personalization, gift box, cart, checkout, orders, inventory, promotions, commerce admin.  
+**Does not own:** editorial publish gates, creator bidding.
 
-Does not own: editorial publish gates, creator bidding.
+## Invariants (enforce in services)
 
-## Invariants
+| Invariant | Code anchor |
+|---|---|
+| Server recomputes money | `CheckoutService` uses `cart.totals` — ignore client totals |
+| Stock check + reserve | `InventoryService.assertAvailable` → `reserve(tx, …)` inside order `$transaction` |
+| Available = onHand − reserved | Never let reserved exceed onHand implicitly |
+| Fail/cancel releases hold | `release` / payment `FAILED` path in `PaymentFulfillmentService` |
+| Capture commits stock | `commit` on `CAPTURED` |
+| One line’s personalization | Must not mutate another line’s options |
+| Coupons | No stack unless explicitly configured |
+| Guest→user cart merge | Deterministic, conflict-safe |
 
-- Personalization on one line must not mutate another
-- Coupons do not stack unless configured
-- Legal order state transitions only
-- Cancel/fail payment releases inventory reservations
-- Server recomputes prices — never trust client totals
-- Guest→user cart merge must be deterministic
+```typescript
+// ❌ trust client
+order.totalPaise = body.totalPaise;
 
-Build Your Box UX: show **Remaining Budget** on mobile summary (not cart total) when in builder.
+// ✅ server totals only (placeOrder pattern)
+const totals = await this.cart.totals(cartDto.id, body.shippingMethod);
+```
+
+## OrderStatus (Prisma)
+
+`PENDING_PAYMENT → PAID → PROCESSING → SHIPPED → DELIVERED`  
+Branches: `CANCELLED` · `PAYMENT_FAILED` · `RETURNED`  
+Illegal jump → `409` + stable `code`.
+
+## UX
+
+Build-Your-Box mobile summary: show **Remaining Budget**, not cart total (`Design.md`). Checkout details → `23-checkout-ux`.

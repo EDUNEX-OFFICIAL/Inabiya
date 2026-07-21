@@ -1,0 +1,37 @@
+---
+description: Inabiya ports 3001/4001 vs 3101/4101, Caddy, vps_edge, postgres role
+globs: "{**/docker-compose*.{yml,yaml},**/Dockerfile*,**/Caddyfile*,**/sites.d/**,Docs/PORTS.md,scripts/deploy*.sh}"
+alwaysApply: false
+---
+
+# Ops & Port Isolation
+
+Follow `/srv/VPS_MULTI_PROJECT_GUIDELINE.md` + `/srv/scripts/PORT_REGISTRY.md`. Inabiya cheat-sheet: `Docs/PORTS.md`.
+
+## Inabiya reserved ports (host loopback)
+
+| Port | Process | Mode |
+|---|---|---|
+| `127.0.0.1:3001` | `inabiya-web` | Docker prod |
+| `127.0.0.1:4001` | `inabiya-api` | Docker prod |
+| `127.0.0.1:3101` | Next | `pnpm dev:web` only |
+| `127.0.0.1:4101` | Nest | `pnpm dev:api` only |
+| `127.0.0.1:5433` | Postgres | compose infra |
+| `127.0.0.1:6381` | Redis | compose infra |
+
+Health: `http://127.0.0.1:4001/api/v1/health` (prod) or `:4101` (dev). API has **no** useful page at `/`.
+
+## Must
+
+- Only `green-city-caddy` binds public `80` / `127.0.0.1:8443` — no second edge proxy.
+- Thin `vps_edge`: public web/gateway only; Redis/DB/workers on private / `*_internal` nets.
+- Before publishing any new host port → update `PORT_REGISTRY.md`; bind `127.0.0.1:` not `0.0.0.0`.
+- If using shared `edunex-postgres`: dedicated DB + **non-superuser** role — not superuser `edunex` in `DATABASE_URL`.
+- Caddy site files under `/srv/automation/deploy/caddy/sites.d/*.caddy`; upstream must share a Docker network with Caddy.
+
+## Don't
+
+- Run Docker prod **and** `pnpm dev` on the same 3001/4001 pair.
+- Point Caddy at `localhost:PORT` for another project’s container.
+- Flat shared LAN / revive ghost compose paths.
+- Publish app ports on all interfaces.

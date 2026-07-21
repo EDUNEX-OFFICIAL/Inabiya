@@ -141,10 +141,28 @@ Public domain / Caddy site is not wired yet (`web` already joins `vps_edge`).
 | `pnpm lint`       | ESLint all packages |
 | `pnpm typecheck`  | `tsc --noEmit`      |
 | `pnpm db:migrate` | Prisma migrate dev  |
-| `pnpm db:seed`    | Seed baseline roles |
+| `pnpm db:seed`    | Seed roles + Phase 1 test users |
 
-## Phase 0 scope (what is / is not built)
+## Auth (Phase 1 — email/password only)
 
-**Built:** monorepo boots, health/ready, Prisma foundation models, Redis, sample job, error envelope, S3 adapter stub, role seed, empty domain folders, theme route shells, Docker prod compose, VPS deploy pipeline.
+No Google/OAuth. JWT access + refresh. Test in browser: `/login`, `/register`.
 
-**Not built:** auth, catalog, checkout, payments, editorial workflow, creator marketplace, or any product features.
+| User | Password | Role |
+| --- | --- | --- |
+| `customer@test.inabiya` | `Password123!` | CUSTOMER |
+| `commerce@test.inabiya` | `Password123!` | COMMERCE_ADMIN |
+| `writer@test.inabiya` | `Password123!` | WRITER |
+
+```bash
+curl -s -X POST http://127.0.0.1:4001/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"commerce@test.inabiya","password":"Password123!"}'
+```
+
+## Phase scope (what is / is not built)
+
+**Phase 0 (closed):** monorepo, health/ready, Prisma, Redis, sample job, CI/CD, Docker prod.
+
+**Phase 1 (in progress):** email/password register/login/refresh/logout, JWT guards, RBAC smoke, audit on auth, login/register UI.
+
+**Not built yet:** OAuth, password reset, media signed URLs, catalog, checkout, editorial, creator marketplace.

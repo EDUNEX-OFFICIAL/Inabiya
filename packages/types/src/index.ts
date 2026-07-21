@@ -1,4 +1,4 @@
-/** Shared API types — Phase 0 foundation only. */
+/** Shared API types — Phase 0 foundation + Phase 1 auth. */
 
 export interface ApiErrorBody {
   error: {
@@ -21,3 +21,21 @@ export type RoleCode =
   | 'FINANCE'
   | 'SUPPORT'
   | 'SUPER_ADMIN';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  displayName: string | null;
+  roles: RoleCode[];
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+export interface AuthSessionResponse {
+  user: AuthUser;
+  tokens: AuthTokens;
+}
