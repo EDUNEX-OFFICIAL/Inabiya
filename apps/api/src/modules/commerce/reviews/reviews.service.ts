@@ -57,6 +57,34 @@ export class ReviewsService {
     };
   }
 
+  /** Store-wide approved reviews for PDP cold-start / social proof */
+  async listRecentApproved(limit = 6) {
+    const take = Math.min(12, Math.max(1, limit));
+    const rows = await this.prisma.productReview.findMany({
+      where: { status: ReviewStatus.APPROVED },
+      orderBy: { createdAt: 'desc' },
+      take,
+      include: {
+        user: { select: { displayName: true } },
+        product: { select: { title: true, slug: true } },
+      },
+    });
+    return {
+      count: rows.length,
+      reviews: rows.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        headline: r.headline,
+        body: r.body,
+        createdAt: r.createdAt,
+        authorName: r.user.displayName ?? 'Customer',
+        verifiedPurchase: Boolean(r.orderId),
+        productTitle: r.product.title,
+        productSlug: r.product.slug,
+      })),
+    };
+  }
+
   async createForSlug(slug: string, userId: string, body: CreateReviewBody, requestId?: string) {
     const product = await this.prisma.product.findFirst({
       where: { slug, status: 'PUBLISHED' },

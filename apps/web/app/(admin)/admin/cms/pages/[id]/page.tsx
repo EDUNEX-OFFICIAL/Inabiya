@@ -35,7 +35,8 @@ type BlockType =
   | 'recipientSplit'
   | 'articleTeasers'
   | 'footer'
-  | 'saleStrip';
+  | 'saleStrip'
+  | 'faq';
 
 type Block = {
   clientId: string;
@@ -50,6 +51,9 @@ type MarketingPage = {
   status: string;
   seoTitle: string | null;
   seoDescription: string | null;
+  canonicalPath: string | null;
+  ogImageUrl: string | null;
+  robotsIndex: boolean;
   isHomepage?: boolean;
   blocks: Array<{ id: string; type: string; props: Record<string, unknown> }>;
 };
@@ -66,6 +70,7 @@ const ALL_TYPES: BlockType[] = [
   'articleTeasers',
   'footer',
   'saleStrip',
+  'faq',
 ];
 
 const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
@@ -135,6 +140,30 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     ctaLabel: 'Shop →',
     ctaHref: '/gift',
     tone: 'blush',
+  },
+  faq: {
+    title: 'Frequently asked questions',
+    itemsJson: JSON.stringify(
+      [
+        {
+          question: 'How long does shipping take?',
+          answerHtml:
+            '<p>We prepare Soft Gift orders carefully. Standard delivery timing is confirmed at checkout for your pincode.</p>',
+        },
+        {
+          question: 'Can I personalise my gift?',
+          answerHtml:
+            '<p>Many products support personalisation (like a baby name). Toggle it on the product page before adding to cart.</p>',
+        },
+        {
+          question: 'What is your return window?',
+          answerHtml:
+            '<p>Returns open for 14 days after delivery. Personalised items may have limited return eligibility.</p>',
+        },
+      ],
+      null,
+      0,
+    ),
   },
 };
 
@@ -253,6 +282,15 @@ function toEditable(blocks: MarketingPage['blocks']): Block[] {
             props.hamper = v === true || v === 'true' ? 'true' : 'false';
           } else if (k === 'limit' && v != null) {
             props.limit = String(v);
+          } else if (k === 'items' && Array.isArray(v) && b.type === 'faq') {
+            props.itemsJson = JSON.stringify(
+              v
+                .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+                .map((row) => ({
+                  question: String(row.question ?? ''),
+                  answerHtml: String(row.answerHtml ?? ''),
+                })),
+            );
           } else if (v != null && typeof v !== 'object') {
             props[k] = String(v);
           }
@@ -422,6 +460,35 @@ function toPayload(blocks: Block[]) {
         },
       };
     }
+    if (b.type === 'faq') {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(b.props.itemsJson || '[]') as unknown;
+      } catch {
+        throw new Error('FAQ items JSON is invalid — fix the FAQ block before saving.');
+      }
+      if (!Array.isArray(parsed)) {
+        throw new Error('FAQ items must be a JSON array of { question, answerHtml }.');
+      }
+      const items = parsed
+        .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+        .map((row) => ({
+          question: String(row.question ?? '').trim(),
+          answerHtml: String(row.answerHtml ?? '').trim(),
+        }))
+        .filter((row) => row.question && row.answerHtml)
+        .slice(0, 20);
+      if (items.length === 0) {
+        throw new Error('FAQ block needs at least one question and answerHtml.');
+      }
+      return {
+        type: 'faq' as const,
+        props: {
+          ...(b.props.title ? { title: b.props.title } : {}),
+          items,
+        },
+      };
+    }
     return {
       type: 'cta' as const,
       props: {
@@ -531,7 +598,8 @@ function PropField({
     fieldKey === 'subtitle' ||
     fieldKey === 'shopLinks' ||
     fieldKey === 'companyLinks' ||
-    fieldKey === 'trustLine'
+    fieldKey === 'trustLine' ||
+    fieldKey === 'itemsJson'
   ) {
     return (
       <textarea
@@ -549,7 +617,9 @@ function PropField({
                   ? 'Chip A · Chip B · Chip C'
                   : fieldKey === 'productSlugs'
                     ? 'one, two, three'
-                    : undefined
+                    : fieldKey === 'itemsJson'
+                      ? '[{"question":"…","answerHtml":"<p>…</p>"}]'
+                      : undefined
         }
       />
     );
@@ -651,6 +721,9 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
   const [title, setTitle] = useState('');
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
+  const [canonicalPath, setCanonicalPath] = useState('');
+  const [ogImageUrl, setOgImageUrl] = useState('');
+  const [robotsIndex, setRobotsIndex] = useState(true);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selected, setSelected] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
@@ -676,6 +749,9 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
         setTitle(p.title);
         setSeoTitle(p.seoTitle ?? '');
         setSeoDescription(p.seoDescription ?? '');
+        setCanonicalPath(p.canonicalPath ?? '');
+        setOgImageUrl(p.ogImageUrl ?? '');
+        setRobotsIndex(p.robotsIndex !== false);
         setBlocks(toEditable(p.blocks));
       })
       .catch(() => router.replace('/admin/cms/pages'));
@@ -720,16 +796,29 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
     setError(null);
     setMsg(null);
     try {
+      let blockPayload;
+      try {
+        blockPayload = toPayload(blocks);
+      } catch (payloadErr) {
+        setError(payloadErr instanceof Error ? payloadErr.message : 'Invalid blocks');
+        return;
+      }
       const updated = await apiAuth<MarketingPage>(`/admin/cms/pages/${page.id}`, {
         method: 'PATCH',
         json: {
           title,
           seoTitle: seoTitle || null,
           seoDescription: seoDescription || null,
-          blocks: toPayload(blocks),
+          canonicalPath: canonicalPath.trim() || null,
+          ogImageUrl: ogImageUrl.trim() || null,
+          robotsIndex,
+          blocks: blockPayload,
         },
       });
       setPage(updated);
+      setCanonicalPath(updated.canonicalPath ?? '');
+      setOgImageUrl(updated.ogImageUrl ?? '');
+      setRobotsIndex(updated.robotsIndex !== false);
       setBlocks(toEditable(updated.blocks));
       setMsg('Saved');
     } catch (err) {
@@ -907,12 +996,33 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
               onChange={(e) => setSeoDescription(e.target.value)}
             />
           </label>
+          <label className="block">
+            Canonical path
+            <input
+              className="mt-1 block w-full rounded border px-2 py-1 font-mono text-xs"
+              value={canonicalPath}
+              onChange={(e) => setCanonicalPath(e.target.value)}
+              placeholder="/pages/your-slug or /gift"
+            />
+          </label>
+          <label className="block">
+            OG image URL
+            <CmsMediaField value={ogImageUrl} onChange={setOgImageUrl} />
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={robotsIndex}
+              onChange={(e) => setRobotsIndex(e.target.checked)}
+            />
+            Allow search indexing (robots index)
+          </label>
           {current ? (
             <div className="border-t pt-3 space-y-2">
               <p className="font-medium">Props · {current.type}</p>
               {Object.keys(EMPTY_PROPS[current.type]).map((key) => (
                 <label key={key} className="block">
-                  {key}
+                  {key === 'itemsJson' ? 'FAQ items (JSON)' : key}
                   <PropField
                     blockType={current.type}
                     fieldKey={key}

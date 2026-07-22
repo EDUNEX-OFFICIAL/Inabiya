@@ -8,6 +8,15 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ['@inabiya/types', '@inabiya/validation'],
+  async redirects() {
+    return [
+      {
+        source: '/gift/box',
+        destination: '/gift/build-your-box',
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

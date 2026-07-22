@@ -3,6 +3,14 @@ import { OrderStatus, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { PaymentsService } from '../../../infrastructure/payments/payments.service';
 import { AuditService } from '../../audit/audit.service';
+import {
+  asInvoiceAddress,
+  isInvoiceEligible,
+  renderInvoicePdf,
+  toInvoicePreviewDto,
+  type InvoiceInput,
+  type InvoicePreviewDto,
+} from './order-invoice';
 
 const FULFILLMENT_NEXT: Partial<Record<OrderStatus, OrderStatus[]>> = {
   PAID: ['PROCESSING'],
@@ -44,7 +52,79 @@ export class OrdersService {
     if (!order) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Order not found.' });
     }
-    return this.mapDetail(order);
+    return {
+      ...this.mapDetail(order),
+    };
+  }
+
+  /** Invoice payload for storefront preview — ownership scoped. */
+  async getInvoiceForCustomer(userId: string, orderId: string): Promise<InvoicePreviewDto> {
+    const input = await this.loadInvoiceInput(userId, orderId);
+    return toInvoicePreviewDto(input);
+  }
+
+  /** PDF tax receipt for paid (or refunded) orders — ownership scoped. */
+  async getInvoicePdfForCustomer(userId: string, orderId: string): Promise<{
+    filename: string;
+    pdf: Buffer;
+  }> {
+    const input = await this.loadInvoiceInput(userId, orderId);
+    const pdf = await renderInvoicePdf(input);
+    return {
+      filename: `inabiya-invoice-${input.orderNumber}.pdf`,
+      pdf,
+    };
+  }
+
+  private async loadInvoiceInput(userId: string, orderId: string): Promise<InvoiceInput> {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, userId },
+      include: {
+        user: true,
+        items: true,
+        payments: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+    if (!order) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Order not found.' });
+    }
+    if (!isInvoiceEligible(order)) {
+      throw new BadRequestException({
+        code: 'INVOICE_UNAVAILABLE',
+        message: 'Invoice is available after payment is captured.',
+      });
+    }
+    const payment = order.payments.find(
+      (p) => p.status === PaymentStatus.CAPTURED || p.status === PaymentStatus.REFUNDED,
+    );
+    return {
+      invoiceNumber: `INV-${order.orderNumber}`,
+      orderNumber: order.orderNumber,
+      issuedAt: order.paidAt ?? order.createdAt,
+      paidAt: order.paidAt,
+      status: order.status,
+      customerEmail: order.user.email,
+      customerName: order.user.displayName,
+      shippingAddress: asInvoiceAddress(order.shippingAddress),
+      billingAddress: asInvoiceAddress(order.billingAddress),
+      items: order.items.map((i) => ({
+        title: i.title,
+        label: i.label,
+        sku: i.sku,
+        quantity: i.quantity,
+        unitPricePaise: i.unitPricePaise,
+        lineTotalPaise: i.lineTotalPaise,
+      })),
+      subtotalPaise: order.subtotalPaise,
+      discountPaise: order.discountPaise,
+      shippingPaise: order.shippingPaise,
+      taxPaise: order.taxPaise,
+      totalPaise: order.totalPaise,
+      shippingMethod: order.shippingMethod,
+      couponCode: order.couponCode,
+      paymentProvider: payment?.provider ?? order.payments[0]?.provider ?? null,
+      paymentStatus: payment?.status ?? order.payments[0]?.status ?? null,
+    };
   }
 
   async listAdmin() {
@@ -268,6 +348,10 @@ export class OrdersService {
       paymentStatus: order.payments[0]?.status ?? 'PENDING',
       createdAt: order.createdAt,
       paidAt: order.paidAt,
+      invoiceAvailable: isInvoiceEligible({
+        paidAt: order.paidAt,
+        payments: order.payments,
+      }),
     };
   }
 
@@ -285,6 +369,7 @@ export class OrdersService {
     giftMessage: string | null;
     giftWrap: boolean;
     shippingAddress: unknown;
+    billingAddress: unknown;
     createdAt: Date;
     paidAt: Date | null;
     items: Array<{
@@ -315,6 +400,7 @@ export class OrdersService {
       giftMessage: order.giftMessage,
       giftWrap: order.giftWrap,
       shippingAddress: order.shippingAddress,
+      billingAddress: order.billingAddress,
       items: order.items,
       payments: order.payments,
       statusHistory: order.statusHistory,

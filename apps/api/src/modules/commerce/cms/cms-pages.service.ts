@@ -17,6 +17,9 @@ type PageWithBlocks = {
   status: MarketingPageStatus;
   seoTitle: string | null;
   seoDescription: string | null;
+  canonicalPath: string | null;
+  ogImageUrl: string | null;
+  robotsIndex: boolean;
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -51,6 +54,21 @@ export class CmsPagesService {
       blockCount: p._count.blocks,
       isHomepage: p.slug === GIFT_HOMEPAGE_SLUG,
     }));
+  }
+
+  /** Slim published list for sitemap / discovery */
+  async listPublishedForSitemap() {
+    const rows = await this.prisma.marketingPage.findMany({
+      where: { status: MarketingPageStatus.PUBLISHED },
+      select: {
+        slug: true,
+        updatedAt: true,
+        publishedAt: true,
+        robotsIndex: true,
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+    return rows.filter((r) => r.robotsIndex);
   }
 
   async getAdmin(id: string) {
@@ -115,6 +133,9 @@ export class CmsPagesService {
         title: body.title,
         seoTitle: body.seoTitle,
         seoDescription: body.seoDescription,
+        canonicalPath: body.canonicalPath,
+        ogImageUrl: body.ogImageUrl,
+        robotsIndex: body.robotsIndex ?? true,
         status: MarketingPageStatus.DRAFT,
         blocks: {
           create: blocks.map((b, i) => ({
@@ -162,6 +183,9 @@ export class CmsPagesService {
           ...(body.title !== undefined ? { title: body.title } : {}),
           ...(body.seoTitle !== undefined ? { seoTitle: body.seoTitle } : {}),
           ...(body.seoDescription !== undefined ? { seoDescription: body.seoDescription } : {}),
+          ...(body.canonicalPath !== undefined ? { canonicalPath: body.canonicalPath } : {}),
+          ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
+          ...(body.robotsIndex !== undefined ? { robotsIndex: body.robotsIndex } : {}),
         },
         include: { blocks: { orderBy: { sortOrder: 'asc' } } },
       });
@@ -426,6 +450,9 @@ export class CmsPagesService {
       status: page.status,
       seoTitle: page.seoTitle,
       seoDescription: page.seoDescription,
+      canonicalPath: page.canonicalPath,
+      ogImageUrl: page.ogImageUrl,
+      robotsIndex: page.robotsIndex,
       publishedAt: page.publishedAt,
       createdAt: page.createdAt,
       updatedAt: page.updatedAt,

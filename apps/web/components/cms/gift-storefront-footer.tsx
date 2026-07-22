@@ -18,7 +18,7 @@ const DEFAULT_FOOTER: Required<GiftFooterProps> = {
     {
       title: 'Shop',
       links: [
-        { label: 'Build Your Box', href: '/gift/box' },
+        { label: 'Build Your Box', href: '/gift/build-your-box' },
         { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
         { label: 'Shop by Age', href: '/gift/products?age=newborn' },
         { label: 'Corporate Gifting', href: '/gift/corporate' },

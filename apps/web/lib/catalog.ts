@@ -20,6 +20,7 @@ export type CatalogProduct = {
   occasionTags?: string[];
   isReadyMadeHamper?: boolean;
   brandName?: string | null;
+  storefrontLabels?: Array<'NEW' | 'SALE'>;
   media: Array<{ url: string; altText: string | null }>;
   categories: Array<{ slug: string; name: string }>;
   variants: Array<{

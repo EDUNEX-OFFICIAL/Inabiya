@@ -9,7 +9,7 @@
     "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx src/modules/media/media-mime.check.ts"
+    "test": "tsx src/modules/media/media-mime.check.ts && tsx src/modules/commerce/catalog/gift-box-recommendations.check.ts && tsx src/modules/commerce/orders/order-invoice.check.ts"
   },
   "dependencies": {
     "@inabiya/types": "workspace:*",
@@ -24,6 +24,7 @@
     "cookie-parser": "^1.4.7",
     "ioredis": "^5.4.1",
     "nestjs-pino": "^4.1.0",
+    "pdfkit": "^0.19.1",
     "pino": "^9.4.0",
     "pino-http": "^10.3.0",
     "reflect-metadata": "^0.2.2",
@@ -38,11 +39,12 @@
     "@types/express": "^4.17.21",
     "@types/multer": "^1.4.12",
     "@types/node": "^20.14.0",
-    "tsx": "^4.19.0",
+    "@types/pdfkit": "^0.17.6",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.1",
     "pino-pretty": "^11.2.2",
+    "tsx": "^4.19.0",
     "typescript": "^5.6.3"
   }
 }

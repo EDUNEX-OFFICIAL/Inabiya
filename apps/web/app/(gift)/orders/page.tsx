@@ -13,6 +13,7 @@ type Order = {
   totalPaise: number;
   itemCount: number;
   createdAt: string;
+  invoiceAvailable?: boolean;
 };
 
 export default function OrdersPage() {
@@ -50,7 +51,8 @@ export default function OrdersPage() {
                 {o.orderNumber}
               </Link>
               <p className="mt-gs-1 opacity-70">
-                {o.status} · {formatInr(o.totalPaise)} · {o.itemCount} items
+                {o.status.replaceAll('_', ' ')} · {formatInr(o.totalPaise)} · {o.itemCount} items
+                {o.invoiceAvailable ? ' · Invoice ready' : ''}
               </p>
             </li>
           ))

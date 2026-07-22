@@ -13,7 +13,8 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 22, 2026 (Phase 12 media library)
+Last Updated: July 22, 2026 (CMS FAQ/SEO edge-case pass)
+
 
 ---
 
@@ -174,6 +175,83 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-07-22 — CMS FAQ/SEO edge-case hardening
+
+- `/pages/corporate-gifting` → redirect `/gift/corporate` (canonical duplicate)
+- Admin FAQ save: reject invalid/empty JSON (no placeholder pollution)
+- SEO Zod: empty strings → null/omit for canonical/OG/seo fields
+- Unpublished QA pages `dnd-test-*` / `welcome-test-*` (left sitemap)
+
+### 2026-07-22 — CMS FAQ block + Marketing SEO completeness
+
+- Phase 12 CMS backlog: `faq` page block (accordion + FAQPage JSON-LD)
+- MarketingPage SEO: `canonicalPath`, `ogImageUrl`, `robotsIndex`; wire `/gift`, `/gift/corporate`, `/pages/[slug]`
+- Discovery: `app/sitemap.ts` + `app/robots.ts`; preview noindex
+- Product/PDP SEO fields deferred
+
+### 2026-07-22 — PDP UX polish (Google feedback, adapted)
+
+- **Override:** Gift Commerce PDP polish outside Phase 12
+- Stars under title; personalisation toggle (no fake +₹ fee); wishlist heart; TrustStrip icons
+- About highlights from real product data (not invented material claims); Quick Add on related
+- Empty reviews: warmer copy + `GET /catalog/reviews/recent` store-wide social proof
+- Multi-image gallery already has thumbs; added dots — extra narrative photos need Admin media
+
+### 2026-07-22 — Product storefront labels (NEW / SALE)
+
+- **Override:** Gift Commerce merchandising polish outside Phase 12
+- `Product.storefrontLabels` String[] (`NEW`|`SALE`); Commerce Admin checkboxes; PLP overlay + PDP chips
+- Not auto from publish date; no compare-at pricing this pass
+
+### 2026-07-22 — Soft Gift PDP modern hierarchy
+
+- **Override:** Gift Commerce PDP polish outside Phase 12
+- Gallery + sticky buy box (qty, CTA hierarchy, personalization helpers)
+- TrustStrip; About + tags; shipping/returns details; related products; reviews form collapsed by default
+- Components: `pdp-gallery.tsx`, `trust-strip.tsx`
+
+### 2026-07-22 — Invoice document format polish
+
+- Preview: hide GiftNav; proper TAX INVOICE header, meta grid, address cards, item table (Qty/Price/Amount), clean totals
+- Payment label maps `mock` → Online payment; dates en-IN
+- PDF layout aligned to same structure; print CSS for clean sheet
+
+### 2026-07-22 — Invoice preview + PDF download
+
+- Why HTML before: MVP receipt without PDF lib — users wanted real PDF + preview
+- `/orders/[id]/invoice` Soft Gift preview (Print + Download PDF)
+- `GET /orders/me/:id/invoice` JSON; `GET …/invoice/pdf` → `application/pdf` via pdfkit
+- Order detail CTA: **View invoice** (not direct HTML download)
+
+### 2026-07-22 — Account displayName syncs to GiftNav
+
+- Profile PATCH updated DB + page state but not `localStorage` user → header stayed stale
+- Fix: `updateStoredUser()` + `AUTH_CHANGED` notify after save
+
+### 2026-07-22 — Order invoice download (post-payment)
+
+- `GET /orders/me/:id/invoice` → printable HTML receipt (AuthZ + only after CAPTURED/paidAt)
+- Order detail: Download invoice CTA, ship/bill address, payment line, Continue shopping / Build another box, support email
+- Invoice # = `INV-{orderNumber}` (dedicated Invoice model / PDF lib deferred)
+- Check: `order-invoice.check.ts`
+- **Override:** Gift Commerce polish (user-reported) outside Phase 12
+
+### 2026-07-22 — Build Your Box URL → `/gift/build-your-box`
+
+- Canonical path renamed from vague `/gift/box` for clarity + SEO
+- Permanent redirect `/gift/box` → `/gift/build-your-box` in `next.config.js`
+- Nav/CTA/seed/defaults updated; login `next=` + PDP continue preserve new path
+
+### 2026-07-22 — Build Your Box wizard UX + recommendations fix
+
+- **Bug:** login → `/gift/box` silently dumped users on step 6 (persisted box + auto-force when items existed)
+- **Fix:** resume gate (Continue / Start over); remove mount auto-jump to step 6; `POST /catalog/gift-boxes/reset` clears items+prefs; move-to-cart resets wizard to step 1; empty step-6 auto-reset
+- Recommendations: progressive filter relaxation (category→occasion→age→budget-only); `ageBand=any` no longer requires tag `any`
+- PDP Add-to-box uses `?continue=1` to skip resume gate
+- Check: `gift-box-recommendations.check.ts`
+- **Override:** Gift Commerce polish outside Phase 12 (user-reported storefront bug)
+- Next: redeploy web+api for live site; manual smoke of wizard 1→6 + recommendations
 
 ### 2026-07-22 — Phase 12 media library COMPLETE
 
@@ -793,6 +871,56 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-22 (CMS FAQ/SEO cross-check + fixes)
+
+- Cross-check: FAQ/SEO live OK; found duplicate `/pages/corporate-gifting`, test pages in sitemap, FAQ placeholder on bad JSON
+- Fixes: corporate redirect; FAQ save rejects invalid/empty; Zod empty→null SEO; unpublish QA pages; FAQ JSON-LD entity decode
+- Deploy: `api` + `web`
+- Next: optional articles sitemap take>50 if catalog grows; Product/PDP SEO still deferred
+
+---
+
+### Session — 2026-07-22 (CMS FAQ + marketing SEO)
+
+- Zod `faq` block; Soft Gift accordion + FAQPage JSON-LD; admin palette
+- Prisma SEO fields migration; cms-seo helper; gift/corporate/pages metadata
+- Public `GET /cms/pages` for sitemap; robots.txt
+- Seed: home FAQ block + canonical `/gift`
+- Files: validation, cms service/controller, marketing-page-blocks, admin CMS editor, sitemap/robots
+
+---
+
+### Session — 2026-07-22 (PDP UX trust / CTA / reviews)
+
+- **Override:** Gift Commerce polish outside Phase 12
+- Buy box: star summary, personalisation checkbox reveal, primary+heart CTA, secondary gift box
+- TrustStrip icons; About value highlights; related Quick Add; recent reviews API
+- Skipped fake embroidery surcharge and false fabric claims
+- Files: PDP page, trust-strip, pdp-gallery dots, clay-product-card, star-rating-summary, reviews API
+
+---
+
+### Session — 2026-07-22 (Product storefront labels NEW/SALE)
+
+- **Override:** Gift Commerce polish outside Phase 12
+- Prisma `storefront_labels` + Zod; CatalogService map/create/update
+- Admin edit checkboxes; `ProductLabels` on ClayProductCard + PDP
+- Seed demo: swaddle NEW, blanket SALE, hamper NEW+SALE
+- Files: schema migration, validation, catalog.service, admin product edit, product-labels.tsx
+
+---
+
+### Session — 2026-07-22 (Soft Gift PDP modern hierarchy)
+
+- **Override:** Gift Commerce PDP polish outside Phase 12
+- Reading order: breadcrumb → gallery + sticky buy box → TrustStrip → About/tags/shipping → related → reviews
+- Qty stepper; CTA: Add to cart → Add to gift box (if eligible) → Wishlist; reviews form collapsed by default
+- Edge/responsive pass: related fallbacks (category→recipient→all); buy-box line-clamp; slug reset; required personalization; SELECT fields; breadcrumb truncate; gallery square + thumb scroll
+- Files: `gift/products/[slug]/page.tsx`, `pdp-gallery.tsx`, `trust-strip.tsx`; Memory decisions log
+- Typecheck OK; deployed web
+
+---
 
 ### Session — 2026-07-22 (Phase 12 §12 media library)
 

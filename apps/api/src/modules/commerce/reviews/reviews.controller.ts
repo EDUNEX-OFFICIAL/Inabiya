@@ -17,6 +17,11 @@ import { ReviewsService } from './reviews.service';
 export class ReviewsPublicController {
   constructor(private readonly reviews: ReviewsService) {}
 
+  @Get('reviews/recent')
+  listRecent() {
+    return this.reviews.listRecentApproved(6);
+  }
+
   @Get('products/:slug/reviews')
   list(@Param('slug') slug: string) {
     return this.reviews.listApprovedForSlug(slug);

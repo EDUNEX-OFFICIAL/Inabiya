@@ -25,7 +25,7 @@ type MegaCopy = {
 };
 
 const DEFAULT_SHOP_LINKS: MegaLink[] = [
-  { href: '/gift/box', label: 'Build Your Box' },
+  { href: '/gift/build-your-box', label: 'Build Your Box' },
   { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
   { href: '/gift/products?category=clothing', label: 'Clothing' },
   { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
@@ -46,7 +46,7 @@ const DEFAULT_FOR_WHOM_LINKS: MegaLink[] = [
 const DEFAULT_SHOP_MEGA: MegaCopy = {
   headline: 'Build or pick a hamper',
   body: 'Guided boxes and ready-made packs — soft, safe, gift-ready.',
-  ctaHref: '/gift/box',
+  ctaHref: '/gift/build-your-box',
   ctaLabel: 'Start building →',
   imageSrc: '/gift/nav/shop.svg',
 };

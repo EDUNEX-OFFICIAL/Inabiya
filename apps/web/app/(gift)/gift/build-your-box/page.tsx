@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 
@@ -70,12 +70,24 @@ const CATEGORIES = [
 ] as const;
 
 export default function GiftBoxPage() {
+  return (
+    <Suspense fallback={<main className="p-gs-6 text-sm opacity-70">Loading gift box…</main>}>
+      <GiftBoxWizard />
+    </Suspense>
+  );
+}
+
+function GiftBoxWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const skipResumeGate = searchParams.get('continue') === '1';
   const [box, setBox] = useState<GiftBox | null>(null);
   const [budget, setBudget] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  /** When a prior session left a filled step-6 box, ask before dumping into review. */
+  const [resumeChoice, setResumeChoice] = useState(false);
 
   const loadSuggestions = useCallback(async (b: GiftBox) => {
     try {
@@ -90,25 +102,36 @@ export default function GiftBoxPage() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login?next=/gift/box');
+      router.replace('/login?next=/gift/build-your-box');
       return;
     }
     apiAuth<GiftBox>('/catalog/gift-boxes/active')
       .then(async (b) => {
-        let next = b;
-        // PDP "Add to box" can leave items while wizardStep is still 1–5
-        if (b.items.length > 0 && (b.wizardStep ?? 1) < 6) {
-          next = await apiAuth<GiftBox>('/catalog/gift-boxes', {
-            method: 'POST',
-            json: { wizardStep: 6 },
-          });
+        // Empty abandoned review → start wizard fresh (e.g. leftover step 6 after cart)
+        if (b.wizardStep >= 6 && b.items.length === 0) {
+          const fresh = await apiAuth<GiftBox>('/catalog/gift-boxes/reset', { method: 'POST' });
+          setBox(fresh);
+          setBudget('');
+          setResumeChoice(false);
+          return;
         }
-        setBox(next);
-        if (next.budgetPaise != null) setBudget(String(next.budgetPaise / 100));
-        if (next.wizardStep >= 6) void loadSuggestions(next);
+        setBox(b);
+        if (b.budgetPaise != null) setBudget(String(b.budgetPaise / 100));
+        else setBudget('');
+        // Prior completed/in-review box → don't silently dump into step 6
+        // (skip when returning from PDP "Add to box" via ?continue=1)
+        if (
+          !skipResumeGate &&
+          b.wizardStep >= 6 &&
+          (b.items.length > 0 || b.recipient || b.budgetPaise != null)
+        ) {
+          setResumeChoice(true);
+          return;
+        }
+        if (b.wizardStep >= 6) void loadSuggestions(b);
       })
-      .catch(() => router.replace('/login?next=/gift/box'));
-  }, [router, loadSuggestions]);
+      .catch(() => router.replace('/login?next=/gift/build-your-box'));
+  }, [router, loadSuggestions, skipResumeGate]);
 
   async function savePrefs(
     patch: Partial<{
@@ -132,6 +155,28 @@ export default function GiftBoxPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save');
     }
+  }
+
+  async function restartWizard() {
+    setBusy(true);
+    setError(null);
+    try {
+      const next = await apiAuth<GiftBox>('/catalog/gift-boxes/reset', { method: 'POST' });
+      setBox(next);
+      setBudget('');
+      setSuggestions([]);
+      setResumeChoice(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not restart');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function continueExistingBox() {
+    if (!box) return;
+    setResumeChoice(false);
+    await loadSuggestions(box);
   }
 
   async function setBudgetOnBox() {
@@ -203,20 +248,32 @@ export default function GiftBoxPage() {
       <ol className="-mx-gs-1 mt-gs-6 flex gap-gs-2 overflow-x-auto px-gs-1 pb-gs-1 text-xs sm:flex-wrap sm:overflow-visible">
         {STEPS.map((label, i) => {
           const n = i + 1;
-          const active = n === step;
-          const done = n < step;
+          const active = !resumeChoice && n === step;
+          const done = !resumeChoice && n < step;
+          const canJump = !resumeChoice && done;
           return (
-            <li
-              key={label}
-              className={`shrink-0 rounded-full border px-gs-3 py-gs-2 ${
-                active
-                  ? 'border-transparent bg-primary text-white shadow-clay'
-                  : done
-                    ? 'clay-chip opacity-90'
-                    : 'opacity-50 border-border'
-              }`}
-            >
-              {n}. {label}
+            <li key={label} className="shrink-0">
+              {canJump ? (
+                <button
+                  type="button"
+                  className="rounded-full border px-gs-3 py-gs-2 clay-chip opacity-90"
+                  onClick={() => void savePrefs({ wizardStep: n })}
+                >
+                  {n}. {label}
+                </button>
+              ) : (
+                <span
+                  className={`inline-block rounded-full border px-gs-3 py-gs-2 ${
+                    active
+                      ? 'border-transparent bg-primary text-white shadow-clay'
+                      : done
+                        ? 'clay-chip opacity-90'
+                        : 'opacity-50 border-border'
+                  }`}
+                >
+                  {n}. {label}
+                </span>
+              )}
             </li>
           );
         })}
@@ -224,7 +281,46 @@ export default function GiftBoxPage() {
 
       {error ? <p className="mt-gs-4 text-sm text-danger">{error}</p> : null}
 
-      {step === 1 ? (
+      {resumeChoice ? (
+        <section className="mt-gs-6 space-y-gs-4">
+          <h2 className="font-display text-xl">Continue your box?</h2>
+          <p className="text-sm opacity-80">
+            You already started a gift box
+            {box.recipient || box.ageBand || box.occasion || box.budgetPaise != null ? (
+              <>
+                {' '}
+                (
+                {[box.recipient, box.ageBand, box.occasion]
+                  .filter(Boolean)
+                  .join(' · ')}
+                {box.budgetPaise != null ? ` · Budget ${formatInr(box.budgetPaise)}` : ''}
+                {box.items.length ? ` · ${box.items.length} item(s)` : ''})
+              </>
+            ) : null}
+            . Pick up where you left off, or start fresh from step 1.
+          </p>
+          <div className="flex flex-wrap gap-gs-3">
+            <button
+              type="button"
+              className="clay-btn"
+              disabled={busy}
+              onClick={() => void continueExistingBox()}
+            >
+              Continue this box
+            </button>
+            <button
+              type="button"
+              className="clay-btn-secondary"
+              disabled={busy}
+              onClick={() => void restartWizard()}
+            >
+              Start over
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {!resumeChoice && step === 1 ? (
         <section className="mt-gs-6">
           <h2 className="font-display text-xl">Who is it for?</h2>
           {box.items.length > 0 ? (
@@ -256,7 +352,7 @@ export default function GiftBoxPage() {
         </section>
       ) : null}
 
-      {step === 2 ? (
+      {!resumeChoice && step === 2 ? (
         <section className="mt-gs-6">
           <h2 className="font-display text-xl">Baby age</h2>
           <div className="mt-gs-4 grid gap-gs-2 sm:grid-cols-2">
@@ -283,7 +379,7 @@ export default function GiftBoxPage() {
         </section>
       ) : null}
 
-      {step === 3 ? (
+      {!resumeChoice && step === 3 ? (
         <section className="mt-gs-6">
           <h2 className="font-display text-xl">Occasion</h2>
           <div className="mt-gs-4 grid gap-gs-2 sm:grid-cols-2">
@@ -310,7 +406,7 @@ export default function GiftBoxPage() {
         </section>
       ) : null}
 
-      {step === 4 ? (
+      {!resumeChoice && step === 4 ? (
         <section className="mt-gs-6">
           <h2 className="font-display text-xl">Budget</h2>
           <p className="text-sm opacity-70 mt-gs-1">We never add items that go over this amount.</p>
@@ -338,7 +434,7 @@ export default function GiftBoxPage() {
         </section>
       ) : null}
 
-      {step === 5 ? (
+      {!resumeChoice && step === 5 ? (
         <section className="mt-gs-6">
           <h2 className="font-display text-xl">Categories</h2>
           <p className="text-sm opacity-70 mt-gs-1">Pick one or more (optional).</p>
@@ -383,7 +479,7 @@ export default function GiftBoxPage() {
         </section>
       ) : null}
 
-      {step === 6 ? (
+      {!resumeChoice && step === 6 ? (
         <section className="mt-gs-6 space-y-gs-6">
           <div>
             <h2 className="font-display text-xl">Your box</h2>
@@ -436,7 +532,7 @@ export default function GiftBoxPage() {
             <h3 className="font-medium text-sm mb-gs-2">Recommended within budget</h3>
             {suggestions.length === 0 ? (
               <p className="text-sm opacity-70">
-                No matches —{' '}
+                No matches within remaining budget —{' '}
                 <Link href="/gift/products" className="underline">
                   browse all products
                 </Link>
@@ -469,7 +565,7 @@ export default function GiftBoxPage() {
             )}
           </div>
 
-          <div className="flex flex-wrap gap-gs-3">
+          <div className="flex flex-wrap gap-gs-3 items-center">
             <button
               type="button"
               disabled={busy || box.items.length === 0 || over}
@@ -483,10 +579,11 @@ export default function GiftBoxPage() {
             </Link>
             <button
               type="button"
-              className="text-sm underline opacity-70"
-              onClick={() => void savePrefs({ wizardStep: 1 })}
+              disabled={busy}
+              className="text-sm underline opacity-70 disabled:opacity-40"
+              onClick={() => void restartWizard()}
             >
-              Restart wizard
+              Start over
             </button>
           </div>
         </section>

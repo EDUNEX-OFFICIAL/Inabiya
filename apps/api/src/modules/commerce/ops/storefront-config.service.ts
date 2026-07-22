@@ -16,7 +16,7 @@ export type StorefrontHomeConfig = {
 export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'forWhomLinks'>> &
   GiftChromeBody = {
   shopLinks: [
-    { href: '/gift/box', label: 'Build Your Box' },
+    { href: '/gift/build-your-box', label: 'Build Your Box' },
     { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
     { href: '/gift/products?category=clothing', label: 'Clothing' },
     { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
@@ -53,7 +53,7 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
       {
         title: 'Shop',
         links: [
-          { label: 'Build Your Box', href: '/gift/box' },
+          { label: 'Build Your Box', href: '/gift/build-your-box' },
           { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
           { label: 'Shop by Age', href: '/gift/products?age=newborn' },
           { label: 'Corporate Gifting', href: '/gift/corporate' },

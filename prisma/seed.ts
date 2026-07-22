@@ -170,6 +170,7 @@ async function main() {
       occasionTags: ['welcome-baby'],
       isReadyMadeHamper: false,
       brandName: 'Soft Nest',
+      storefrontLabels: ['NEW'],
     },
     {
       slug: 'personalised-name-blanket',
@@ -186,6 +187,7 @@ async function main() {
       occasionTags: ['welcome-baby', 'naming'],
       isReadyMadeHamper: false,
       brandName: 'Mamaearth',
+      storefrontLabels: ['SALE'],
     },
     {
       slug: 'wooden-rattle-set',
@@ -202,6 +204,7 @@ async function main() {
       occasionTags: ['birthday', 'welcome-baby'],
       isReadyMadeHamper: false,
       brandName: 'Chicco',
+      storefrontLabels: [] as string[],
     },
     {
       slug: 'welcome-baby-hamper',
@@ -218,6 +221,7 @@ async function main() {
       occasionTags: ['welcome-baby', 'baby-shower'],
       isReadyMadeHamper: true,
       brandName: 'Inabiya',
+      storefrontLabels: ['NEW', 'SALE'],
       extraCategoryIds: [clothing.id],
     },
     {
@@ -235,6 +239,7 @@ async function main() {
       occasionTags: ['baby-shower'],
       isReadyMadeHamper: true,
       brandName: 'The Moms Co.',
+      storefrontLabels: [] as string[],
     },
   ];
 
@@ -251,6 +256,7 @@ async function main() {
         occasionTags: dp.occasionTags,
         isReadyMadeHamper: dp.isReadyMadeHamper,
         brandName: dp.brandName,
+        storefrontLabels: dp.storefrontLabels ?? [],
       },
       create: {
         slug: dp.slug,
@@ -263,6 +269,7 @@ async function main() {
         occasionTags: dp.occasionTags,
         isReadyMadeHamper: dp.isReadyMadeHamper,
         brandName: dp.brandName,
+        storefrontLabels: dp.storefrontLabels ?? [],
       },
     });
 
@@ -368,7 +375,7 @@ async function main() {
         subcopy:
           'Build a bespoke baby box in gentle steps — or pick a ready-made hamper. Packed with warmth, shipped across India.',
         ctaLabel: 'Build Your Box',
-        ctaHref: '/gift/box',
+        ctaHref: '/gift/build-your-box',
         ctaLabel2: 'Browse Hampers',
         ctaHref2: '/gift/products?hamper=1',
         trustLine: 'Baby-safe brands · Free shipping over ₹2,000 · Curated for new parents',
@@ -462,8 +469,32 @@ async function main() {
       },
     },
     {
-      type: 'footer',
+      type: 'faq',
       sortOrder: 7,
+      props: {
+        title: 'Frequently asked questions',
+        items: [
+          {
+            question: 'How long does shipping take?',
+            answerHtml:
+              '<p>We prepare Soft Gift orders carefully. Standard delivery timing is confirmed at checkout for your pincode.</p>',
+          },
+          {
+            question: 'Can I personalise my gift?',
+            answerHtml:
+              '<p>Many products support personalisation (like a baby name). Toggle it on the product page before adding to cart.</p>',
+          },
+          {
+            question: 'What is your return window?',
+            answerHtml:
+              '<p>Returns open for 14 days after delivery. Personalised items may have limited return eligibility.</p>',
+          },
+        ],
+      },
+    },
+    {
+      type: 'footer',
+      sortOrder: 8,
       props: {
         brandName: 'Inabiya',
         tagline: 'Thoughtfully personalised baby essentials & gifting.',
@@ -471,7 +502,7 @@ async function main() {
           {
             title: 'Shop',
             links: [
-              { label: 'Build Your Box', href: '/gift/box' },
+              { label: 'Build Your Box', href: '/gift/build-your-box' },
               { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
               { label: 'Shop by Age', href: '/gift/products?age=newborn' },
               { label: 'Corporate Gifting', href: '/gift/corporate' },
@@ -499,6 +530,8 @@ async function main() {
         title: 'Soft Gift homepage',
         seoTitle: 'Inabiya Soft Gift',
         seoDescription: 'Thoughtfully personalised baby essentials & gifting.',
+        canonicalPath: '/gift',
+        robotsIndex: true,
         status: 'PUBLISHED',
         publishedAt: new Date(),
         blocks: {
@@ -517,6 +550,8 @@ async function main() {
         title: 'Soft Gift homepage',
         seoTitle: 'Inabiya Soft Gift',
         seoDescription: 'Thoughtfully personalised baby essentials & gifting.',
+        canonicalPath: '/gift',
+        robotsIndex: true,
         status: 'PUBLISHED',
         publishedAt: new Date(),
         blocks: {
@@ -538,7 +573,7 @@ async function main() {
       key: 'gift.chrome',
       value: {
         shopLinks: [
-          { href: '/gift/box', label: 'Build Your Box' },
+          { href: '/gift/build-your-box', label: 'Build Your Box' },
           { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
           { href: '/gift/products?category=clothing', label: 'Clothing' },
           { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },

@@ -65,6 +65,13 @@ export function storeSession(session: AuthSession): void {
   notifyAuthChanged();
 }
 
+/** Update cached user (e.g. after profile PATCH) so nav/header re-render. */
+export function updateStoredUser(user: AuthUser): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+  notifyAuthChanged();
+}
+
 export function clearSession(): void {
   localStorage.removeItem(ACCESS_KEY);
   localStorage.removeItem(REFRESH_KEY);
@@ -138,4 +145,52 @@ export async function apiAuth<T>(
     throw new Error(message);
   }
   return data as T;
+}
+
+/** Authenticated binary/HTML download (invoice, etc.). Triggers browser save. */
+export async function apiAuthDownload(
+  path: string,
+  fallbackFilename: string,
+): Promise<void> {
+  const headers = new Headers();
+  const token = getStoredAccessToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  let res = await fetch(apiUrl(path), {
+    headers,
+    credentials: 'include',
+  });
+
+  if (res.status === 401) {
+    const ok = await tryRefreshSession();
+    if (ok) {
+      const headers2 = new Headers();
+      const token2 = getStoredAccessToken();
+      if (token2) headers2.set('Authorization', `Bearer ${token2}`);
+      res = await fetch(apiUrl(path), { headers: headers2, credentials: 'include' });
+    }
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const message =
+      typeof (data as { error?: { message?: string } })?.error?.message === 'string'
+        ? (data as { error: { message: string } }).error.message
+        : `Download failed (${res.status})`;
+    throw new Error(message);
+  }
+
+  const disposition = res.headers.get('Content-Disposition');
+  const match = disposition?.match(/filename="([^"]+)"/);
+  const filename = match?.[1] ?? fallbackFilename;
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }

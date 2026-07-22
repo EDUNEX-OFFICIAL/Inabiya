@@ -1,7 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, ProductStatus } from '@prisma/client';
+import { ProductStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
+import {
+  buildGiftBoxProductWhere,
+  REC_FILTER_TIERS,
+} from './gift-box-recommendations';
 
 @Injectable()
 export class WishlistService {
@@ -181,69 +185,14 @@ export class GiftBoxService {
       mapped.remainingBudgetPaise ?? mapped.budgetPaise ?? Number.MAX_SAFE_INTEGER,
     );
     const inBox = new Set(mapped.items.map((i) => i.variantId));
-
-    const where: Prisma.ProductWhereInput = {
-      status: ProductStatus.PUBLISHED,
-      variants: { some: { giftBoxEligible: true } },
+    const prefs = {
+      recipient: mapped.recipient,
+      ageBand: mapped.ageBand,
+      occasion: mapped.occasion,
+      categorySlugs: mapped.categorySlugs,
     };
-    if (mapped.recipient === 'girl' || mapped.recipient === 'boy') {
-      where.recipientTags = { hasSome: [mapped.recipient, 'unisex'] };
-    } else if (mapped.recipient) {
-      where.recipientTags = { has: mapped.recipient };
-    }
-    if (mapped.ageBand && mapped.ageBand !== 'any') {
-      where.ageBands = { hasSome: [mapped.ageBand, 'any'] };
-    } else if (mapped.ageBand === 'any') {
-      where.ageBands = { has: 'any' };
-    }
-    if (mapped.occasion) where.occasionTags = { has: mapped.occasion };
-    if (mapped.categorySlugs.length) {
-      where.categories = {
-        some: { category: { slug: { in: mapped.categorySlugs } } },
-      };
-    }
 
-    let products = await this.prisma.product.findMany({
-      where,
-      include: {
-        variants: { include: { inventory: true } },
-        media: { orderBy: { sortOrder: 'asc' }, take: 1 },
-        categories: { include: { category: true } },
-      },
-      take: 40,
-      orderBy: { publishedAt: 'desc' },
-    });
-
-    // If category + prefs yielded nothing, relax category (still honor recipient/age/occasion).
-    if (!products.length && mapped.categorySlugs.length) {
-      const relaxed: Prisma.ProductWhereInput = {
-        status: ProductStatus.PUBLISHED,
-        variants: { some: { giftBoxEligible: true } },
-      };
-      if (mapped.recipient === 'girl' || mapped.recipient === 'boy') {
-        relaxed.recipientTags = { hasSome: [mapped.recipient, 'unisex'] };
-      } else if (mapped.recipient) {
-        relaxed.recipientTags = { has: mapped.recipient };
-      }
-      if (mapped.ageBand && mapped.ageBand !== 'any') {
-        relaxed.ageBands = { hasSome: [mapped.ageBand, 'any'] };
-      } else if (mapped.ageBand === 'any') {
-        relaxed.ageBands = { has: 'any' };
-      }
-      if (mapped.occasion) relaxed.occasionTags = { has: mapped.occasion };
-      products = await this.prisma.product.findMany({
-        where: relaxed,
-        include: {
-          variants: { include: { inventory: true } },
-          media: { orderBy: { sortOrder: 'asc' }, take: 1 },
-          categories: { include: { category: true } },
-        },
-        take: 40,
-        orderBy: { publishedAt: 'desc' },
-      });
-    }
-
-    const suggestions: Array<{
+    type Suggestion = {
       variantId: string;
       productSlug: string;
       productTitle: string;
@@ -251,30 +200,90 @@ export class GiftBoxService {
       pricePaise: number;
       imageUrl: string | null;
       available: number;
-    }> = [];
+    };
 
-    for (const p of products) {
-      for (const v of p.variants) {
-        if (!v.giftBoxEligible || inBox.has(v.id)) continue;
-        const available = Math.max(0, (v.inventory?.onHand ?? 0) - (v.inventory?.reserved ?? 0));
-        if (available < 1) continue;
-        if (v.pricePaise > remaining) continue;
-        suggestions.push({
-          variantId: v.id,
-          productSlug: p.slug,
-          productTitle: p.title,
-          label: v.label,
-          pricePaise: v.pricePaise,
-          imageUrl: p.media[0]?.url ?? null,
-          available,
-        });
+    const collect = (
+      products: Array<{
+        slug: string;
+        title: string;
+        media: Array<{ url: string }>;
+        variants: Array<{
+          id: string;
+          giftBoxEligible: boolean;
+          label: string;
+          pricePaise: number;
+          inventory: { onHand: number; reserved: number } | null;
+        }>;
+      }>,
+    ): Suggestion[] => {
+      const out: Suggestion[] = [];
+      for (const p of products) {
+        for (const v of p.variants) {
+          if (!v.giftBoxEligible || inBox.has(v.id)) continue;
+          const available = Math.max(0, (v.inventory?.onHand ?? 0) - (v.inventory?.reserved ?? 0));
+          if (available < 1) continue;
+          if (v.pricePaise > remaining) continue;
+          out.push({
+            variantId: v.id,
+            productSlug: p.slug,
+            productTitle: p.title,
+            label: v.label,
+            pricePaise: v.pricePaise,
+            imageUrl: p.media[0]?.url ?? null,
+            available,
+          });
+        }
       }
+      out.sort((a, b) => a.pricePaise - b.pricePaise);
+      return out;
+    };
+
+    let suggestions: Suggestion[] = [];
+    for (const tier of REC_FILTER_TIERS) {
+      const products = await this.prisma.product.findMany({
+        where: buildGiftBoxProductWhere(prefs, tier),
+        include: {
+          variants: { include: { inventory: true } },
+          media: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        },
+        take: 40,
+        orderBy: { publishedAt: 'desc' },
+      });
+      suggestions = collect(products);
+      if (suggestions.length) break;
     }
-    suggestions.sort((a, b) => a.pricePaise - b.pricePaise);
+
     return {
       remainingBudgetPaise: mapped.remainingBudgetPaise,
       suggestions: suggestions.slice(0, 12),
     };
+  }
+
+  /** Clear items + prefs and return wizard to step 1. */
+  async reset(userId: string) {
+    const active = await this.prisma.giftBox.findFirst({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+    });
+    if (!active) {
+      return this.getOrCreateActive(userId);
+    }
+    await this.prisma.$transaction([
+      this.prisma.giftBoxItem.deleteMany({ where: { giftBoxId: active.id } }),
+      this.prisma.giftBox.update({
+        where: { id: active.id },
+        data: {
+          recipient: null,
+          ageBand: null,
+          occasion: null,
+          budgetPaise: null,
+          categorySlugs: [],
+          wizardStep: 1,
+          name: 'My gift box',
+        },
+      }),
+    ]);
+    return this.getBox(active.id, userId);
   }
 
   async addItem(
@@ -391,7 +400,20 @@ export class GiftBoxService {
         personalization,
       });
     }
-    await this.prisma.giftBoxItem.deleteMany({ where: { giftBoxId: boxId } });
+    await this.prisma.$transaction([
+      this.prisma.giftBoxItem.deleteMany({ where: { giftBoxId: boxId } }),
+      this.prisma.giftBox.update({
+        where: { id: boxId },
+        data: {
+          recipient: null,
+          ageBand: null,
+          occasion: null,
+          budgetPaise: null,
+          categorySlugs: [],
+          wizardStep: 1,
+        },
+      }),
+    ]);
     const cart = await this.cart.getOrCreate(userId);
     const box = await this.getBox(boxId, userId);
     return { cart, box };

@@ -43,14 +43,14 @@ Authorize in the **service** (not UI-only). Audit **publish** (and preferably cr
 MarketingPage
   id, slug (unique), title
   status: DRAFT | PUBLISHED
-  seoTitle?, seoDescription?
+  seoTitle?, seoDescription?, canonicalPath?, ogImageUrl?, robotsIndex
   publishedAt?
   createdAt, updatedAt
   blocks: PageBlock[]
 
 PageBlock
   id, pageId
-  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | articleTeasers | footer | saleStrip
+  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | articleTeasers | footer | saleStrip | faq
   sortOrder: Int
   props: Json   # Zod-validated per type
 ```
@@ -70,6 +70,7 @@ Money never lives in block props as floats; product prices always come from cata
 | `cta` | `label`, `href`, `variant?` | Link to box / PLP / external |
 | `spacer` | `size: sm\|md\|lg` | Layout only |
 | `saleStrip` | `text`, `ctaLabel?`, `ctaHref?`, `tone?` | Soft Gift promo band (Phase 12) |
+| `faq` | `title?`, `items[{ question, answerHtml }]` | Accordion + FAQPage JSON-LD |
 
 Unknown `type` → fail validation on save; public renderer skips unknown types safely (log).
 
@@ -92,7 +93,7 @@ Dense **admin** shell — not Soft Gift chrome.
 
 - Route: App Router `/pages/[slug]` under Soft Gift `data-theme="gift"`
 - Unpublished / missing → **404**
-- SEO: `generateMetadata` from `seoTitle` / `seoDescription` / title
+- SEO: `generateMetadata` from `seoTitle` / `seoDescription` / `canonicalPath` / `ogImageUrl` / `robotsIndex`; FAQPage + WebPage JSON-LD; `/sitemap.xml` + `/robots.txt`
 - Renderer: map `type` → small presentational components (no admin DnD on storefront)
 
 ---
@@ -164,7 +165,8 @@ Track here so testers/eng remember gaps. Ship only when Product/phase asks.
 | **Media library / image upload** for `image` + hero `imageUrl` | **Shipped (Phase 12)** | Local disk + `/api/v1/media/:id/content`; CMS picker |
 | **Inline image in richText via upload** | **Shipped (Phase 12)** | TipTap Upload/Library (URL prompt still available) |
 | **11D** `/gift` homepage on block engine | **Shipped** | Edit via `/admin/cms/pages` (slug `home`) |
-| **More block types** (FAQ, testimonials, countdown) | Client may ask | One type at a time + Zod |
+| **More block types** (testimonials, countdown) | Client may ask | One type at a time + Zod |
+| **FAQ block** | Shipped 2026-07-22 | Accordion + FAQPage JSON-LD |
 | **Real AWS/MinIO SDK** | Local disk store today | Swap behind `S3StorageAdapter` when ready |
 
 **Editorial TipTap reminder:** Toolbar shows only when article is editable (`ASSIGNED` / `DRAFT` / `CHANGES_REQUESTED`). **PUBLISHED** / review queues = read-only body (by design).

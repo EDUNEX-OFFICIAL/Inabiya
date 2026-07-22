@@ -12,6 +12,11 @@ import { CmsPagesService } from './cms-pages.service';
 export class CmsPagesPublicController {
   constructor(private readonly pages: CmsPagesService) {}
 
+  @Get()
+  listPublished() {
+    return this.pages.listPublishedForSitemap();
+  }
+
   @Get(':slug')
   getPublic(@Param('slug') slug: string) {
     return this.pages.getPublicBySlug(slug);

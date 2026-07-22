@@ -79,7 +79,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <Link href="/gift/products" className="clay-btn">
             Shop gifts
           </Link>
-          <Link href="/gift/box" className="clay-btn-secondary">
+          <Link href="/gift/build-your-box" className="clay-btn-secondary">
             Build Your Box
           </Link>
         </div>

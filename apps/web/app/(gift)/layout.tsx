@@ -10,6 +10,7 @@ const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/reset-p
 export default function GiftLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.has(pathname);
+  const isInvoicePage = pathname.includes('/invoice');
 
   return (
     <div data-theme="gift" className="clay-shell min-h-screen text-foreground">
@@ -21,8 +22,8 @@ export default function GiftLayout({ children }: { children: React.ReactNode }) 
             </Link>
           </div>
         </header>
-      ) : (
-        <header className="clay-nav relative sticky top-0 z-30 px-gs-3 py-gs-3 sm:px-gs-6 sm:py-gs-4 md:px-gs-6">
+      ) : isInvoicePage ? null : (
+        <header className="clay-nav relative sticky top-0 z-30 px-gs-3 py-gs-3 sm:px-gs-6 sm:py-gs-4 md:px-gs-6 print:hidden">
           <div className="relative mx-auto flex max-w-5xl items-center justify-between gap-gs-3">
             <Link
               href="/gift"

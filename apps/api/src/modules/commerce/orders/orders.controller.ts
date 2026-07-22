@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import type { Response } from 'express';
 import { OrderStatus } from '@prisma/client';
 import { adminOrderStatusSchema, orderNoteBodySchema } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
@@ -16,6 +27,24 @@ export class OrdersController {
   @Get('me')
   myOrders(@CurrentUser() user: { id: string }) {
     return this.orders.listForCustomer(user.id);
+  }
+
+  @Get('me/:id/invoice/pdf')
+  async myInvoicePdf(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const { filename, pdf } = await this.orders.getInvoicePdfForCustomer(user.id, id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(pdf);
+  }
+
+  @Get('me/:id/invoice')
+  myInvoice(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+    return this.orders.getInvoiceForCustomer(user.id, id);
   }
 
   @Get('me/:id')

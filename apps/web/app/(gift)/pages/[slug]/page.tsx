@@ -2,16 +2,14 @@ import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
 import { apiUrl } from '@/lib/api-base';
-import { GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
+import { GIFT_CORPORATE_SLUG, GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
+import { marketingPageMetadata, webPageJsonLd, type CmsSeoPage } from '@/lib/cms-seo';
+
 
 export const dynamic = 'force-dynamic';
 
-type MarketingPage = {
+type MarketingPage = CmsSeoPage & {
   id: string;
-  slug: string;
-  title: string;
-  seoTitle: string | null;
-  seoDescription: string | null;
   blocks: Array<{
     id: string;
     type: string;
@@ -40,29 +38,34 @@ export async function generateMetadata({
   if (params.slug === GIFT_HOMEPAGE_SLUG) {
     return { title: 'Inabiya Soft Gift' };
   }
+  if (params.slug === GIFT_CORPORATE_SLUG) {
+    return { title: 'Corporate & bulk gifting | Inabiya' };
+  }
   const page = await fetchPage(params.slug);
-  if (!page) return { title: 'Page not found' };
-  return {
-    title: page.seoTitle || page.title,
-    description: page.seoDescription || undefined,
-    openGraph: {
-      title: page.seoTitle || page.title,
-      description: page.seoDescription || undefined,
-      type: 'website',
-    },
-  };
+  if (!page) return { title: 'Page not found', robots: { index: false } };
+  return marketingPageMetadata(page);
 }
 
 export default async function MarketingPageView({ params }: { params: { slug: string } }) {
   if (params.slug === GIFT_HOMEPAGE_SLUG) {
     redirect('/gift');
   }
+  if (params.slug === GIFT_CORPORATE_SLUG) {
+    redirect('/gift/corporate');
+  }
 
   const page = await fetchPage(params.slug);
   if (!page) notFound();
 
+
+  const ld = webPageJsonLd(page);
+
   return (
     <main className="gift-page max-w-3xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+      />
       <MarketingPageBlocks blocks={page.blocks} />
     </main>
   );

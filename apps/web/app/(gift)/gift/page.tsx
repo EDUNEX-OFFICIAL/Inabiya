@@ -1,15 +1,15 @@
+import type { Metadata } from 'next';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
 import { GiftStorefrontFooter } from '@/components/cms/gift-storefront-footer';
 import { apiUrl } from '@/lib/api-base';
 import { GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
+import { marketingPageMetadata, webPageJsonLd, type CmsSeoPage } from '@/lib/cms-seo';
 
 export const dynamic = 'force-dynamic';
 
-type CmsHomePage = {
+type CmsHomePage = CmsSeoPage & {
   id: string;
-  slug: string;
-  title: string;
   blocks: Array<{
     id: string;
     type: string;
@@ -48,6 +48,17 @@ async function fetchGiftChrome(): Promise<GiftChrome | null> {
   }
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await fetchHomepage();
+  if (!page) {
+    return {
+      title: 'Inabiya Soft Gift',
+      description: 'Thoughtfully personalised baby essentials & gifting.',
+    };
+  }
+  return marketingPageMetadata({ ...page, slug: GIFT_HOMEPAGE_SLUG });
+}
+
 /** Fallback if MarketingPage `home` is missing / unpublished. */
 function LegacyGiftHomeFallback({ chrome }: { chrome: GiftChrome | null }) {
   return (
@@ -56,7 +67,7 @@ function LegacyGiftHomeFallback({ chrome }: { chrome: GiftChrome | null }) {
         headline="Little bundles of joy, thoughtfully chosen."
         subcopy="Build a bespoke baby box in gentle steps — or pick a ready-made hamper. Packed with warmth, shipped across India."
         ctaLabel="Build Your Box"
-        ctaHref="/gift/box"
+        ctaHref="/gift/build-your-box"
         ctaLabel2="Browse Hampers"
         ctaHref2="/gift/products?hamper=1"
       />
@@ -79,9 +90,14 @@ export default async function GiftHomePage() {
   }
 
   const hasFooterBlock = page.blocks.some((b) => b.type === 'footer');
+  const ld = webPageJsonLd({ ...page, slug: GIFT_HOMEPAGE_SLUG });
 
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+      />
       <MarketingPageBlocks blocks={page.blocks} layout="home" />
       {!hasFooterBlock ? <GiftStorefrontFooter {...(chrome?.footer ?? {})} /> : null}
     </main>

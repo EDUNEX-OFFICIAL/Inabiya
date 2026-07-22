@@ -794,6 +794,117 @@ function SaleStripBlock({ props, home }: { props: Record<string, unknown>; home?
   );
 }
 
+type FaqItem = { question: string; answerHtml: string };
+
+function parseFaqItems(raw: unknown): FaqItem[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+    .map((row) => ({
+      question: String(row.question ?? '').trim(),
+      answerHtml: String(row.answerHtml ?? '').trim(),
+    }))
+    .filter((row) => row.question && row.answerHtml)
+    .slice(0, 20);
+}
+
+function FaqAnswer({ html }: { html: string }) {
+  const [safe, setSafe] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void import('@/lib/article-html').then(({ sanitizeArticleHtml }) => {
+      if (!cancelled) setSafe(sanitizeArticleHtml(html));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [html]);
+  if (safe === null) return <p className="text-sm opacity-50">…</p>;
+  return (
+    <div
+      className="prose prose-sm max-w-none prose-a:text-primary"
+      dangerouslySetInnerHTML={{ __html: safe }}
+    />
+  );
+}
+
+function FaqBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
+  const title = String(props.title ?? 'Frequently asked questions').trim() || 'Frequently asked questions';
+  const items = parseFaqItems(props.items);
+  if (items.length === 0) return null;
+
+  const body = (
+    <section className={home ? 'mx-auto max-w-3xl px-gs-4 py-gs-6 sm:px-gs-6' : 'py-gs-2'}>
+      <h2 className="gift-h2">{title}</h2>
+      <div className="mt-gs-4 space-y-gs-3">
+        {items.map((item, i) => (
+          <details
+            key={`${item.question}-${i}`}
+            className="clay-panel group open:shadow-clay"
+            open={i === 0}
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-gs-3 px-gs-5 py-gs-4 text-sm font-medium marker:content-none [&::-webkit-details-marker]:hidden">
+              <span>{item.question}</span>
+              <span className="shrink-0 opacity-50" aria-hidden>
+                <span className="group-open:hidden">+</span>
+                <span className="hidden group-open:inline">−</span>
+              </span>
+            </summary>
+            <div className="border-t border-border-subtle px-gs-5 pb-gs-4 pt-gs-3 text-sm leading-relaxed opacity-85">
+              <FaqAnswer html={item.answerHtml} />
+            </div>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+
+  return body;
+}
+
+function collectFaqJsonLd(blocks: CmsPageBlock[]): Record<string, unknown> | null {
+  const entities: Array<{ '@type': string; name: string; acceptedAnswer: { '@type': string; text: string } }> =
+    [];
+  for (const b of blocks) {
+    if (b.type !== 'faq') continue;
+    for (const item of parseFaqItems(b.props.items)) {
+      const text = item.answerHtml
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!text) continue;
+      entities.push({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text },
+      });
+    }
+  }
+  if (entities.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: entities,
+  };
+}
+
+function FaqJsonLd({ blocks }: { blocks: CmsPageBlock[] }) {
+  const data = collectFaqJsonLd(blocks);
+  if (!data) return null;
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
 function renderRestBlock(
   b: CmsPageBlock,
   layout: 'page' | 'home',
@@ -819,6 +930,9 @@ function renderRestBlock(
   }
   if (b.type === 'saleStrip') {
     return <SaleStripBlock key={b.id} props={b.props} home={home} />;
+  }
+  if (b.type === 'faq') {
+    return <FaqBlock key={b.id} props={b.props} home={home} />;
   }
   if (b.type === 'footer') {
     return (
@@ -851,6 +965,7 @@ export function MarketingPageBlocks({ blocks, previewBanner, layout = 'page' }: 
     const productBandIndex = { current: 0 };
     return (
       <div>
+        <FaqJsonLd blocks={blocks} />
         {previewBanner ? (
           <div className="gift-banner gift-banner--warning sticky top-0 z-10 text-center text-xs font-medium">
             {previewBanner}
@@ -869,6 +984,7 @@ export function MarketingPageBlocks({ blocks, previewBanner, layout = 'page' }: 
 
   return (
     <div className="space-y-gs-4">
+      <FaqJsonLd blocks={blocks} />
       {previewBanner ? (
         <div className="gift-banner gift-banner--warning sticky top-0 z-10 mb-gs-4 text-center text-xs font-medium">
           {previewBanner}

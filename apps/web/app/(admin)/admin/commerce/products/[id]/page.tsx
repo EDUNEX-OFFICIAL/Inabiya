@@ -9,6 +9,7 @@ import { formatInr, type CatalogProduct } from '@/lib/catalog';
 const RECIPIENTS = ['girl', 'boy', 'mom', 'unisex'] as const;
 const AGES = ['newborn', 'infant', 'toddler', 'any'] as const;
 const OCCASIONS = ['welcome-baby', 'baby-shower', 'naming', 'birthday'] as const;
+const STOREFRONT_LABELS = ['NEW', 'SALE'] as const;
 
 function toggle(list: string[], value: string): string[] {
   return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
@@ -22,6 +23,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [recipientTags, setRecipientTags] = useState<string[]>([]);
   const [ageBands, setAgeBands] = useState<string[]>([]);
   const [occasionTags, setOccasionTags] = useState<string[]>([]);
+  const [storefrontLabels, setStorefrontLabels] = useState<Array<'NEW' | 'SALE'>>([]);
   const [isReadyMadeHamper, setIsReadyMadeHamper] = useState(false);
   const [brandName, setBrandName] = useState('');
   const [stock, setStock] = useState<Record<string, string>>({});
@@ -41,6 +43,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
         setRecipientTags(p.recipientTags ?? []);
         setAgeBands(p.ageBands ?? []);
         setOccasionTags(p.occasionTags ?? []);
+        setStorefrontLabels(p.storefrontLabels ?? []);
         setIsReadyMadeHamper(Boolean(p.isReadyMadeHamper));
         setBrandName(p.brandName ?? '');
         const s: Record<string, string> = {};
@@ -66,9 +69,11 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           occasionTags,
           isReadyMadeHamper,
           brandName: brandName.trim() || null,
+          storefrontLabels,
         },
       });
       setProduct(updated);
+      setStorefrontLabels(updated.storefrontLabels ?? []);
       setMsg('Product saved');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
@@ -153,6 +158,24 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           />
           Ready-made hamper
         </label>
+        <fieldset>
+          <legend className="text-xs opacity-70">Storefront labels</legend>
+          <p className="mt-1 text-xs opacity-60">Shown on PLP cards and product page</p>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {STOREFRONT_LABELS.map((label) => (
+              <label key={label} className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={storefrontLabels.includes(label)}
+                  onChange={() =>
+                    setStorefrontLabels((t) => toggle(t, label) as Array<'NEW' | 'SALE'>)
+                  }
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <fieldset>
           <legend className="text-xs opacity-70">Recipient tags</legend>
           <div className="mt-1 flex flex-wrap gap-2">

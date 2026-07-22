@@ -1124,3 +1124,27 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   height: 0;
   pointer-events: none;
 }
+
+/* Invoice document — clean print sheet */
+@media print {
+  [data-theme='gift'] .clay-shell {
+    background: #fff !important;
+  }
+
+  [data-theme='gift'] .invoice-sheet {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  [data-theme='gift'] .invoice-doc {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
+  [data-theme='gift'] .print\:hidden {
+    display: none !important;
+  }
+}

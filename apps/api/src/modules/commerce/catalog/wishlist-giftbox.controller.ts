@@ -43,6 +43,11 @@ export class GiftBoxController {
     return this.giftBoxes.getOrCreateActive(user.id);
   }
 
+  @Post('reset')
+  reset(@CurrentUser() user: { id: string }) {
+    return this.giftBoxes.reset(user.id);
+  }
+
   @Post()
   create(
     @CurrentUser() user: { id: string },

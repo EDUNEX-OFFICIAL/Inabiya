@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, updateStoredUser, type AuthUser } from '@/lib/auth-client';
 
 type Address = {
   id: string;
@@ -38,12 +38,18 @@ export default function AccountPage() {
   }, [router]);
 
   async function saveProfile() {
-    const u = await apiAuth<AuthUser>('/auth/me', {
-      method: 'PATCH',
-      json: { displayName },
-    });
-    setUser(u);
-    setMsg('Profile saved');
+    try {
+      const u = await apiAuth<AuthUser>('/auth/me', {
+        method: 'PATCH',
+        json: { displayName: displayName.trim() },
+      });
+      setUser(u);
+      setDisplayName(u.displayName ?? '');
+      updateStoredUser(u);
+      setMsg('Profile saved');
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Could not save profile');
+    }
   }
 
   if (!user) {

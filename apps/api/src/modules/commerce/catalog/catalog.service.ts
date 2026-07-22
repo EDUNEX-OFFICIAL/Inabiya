@@ -145,6 +145,7 @@ export class CatalogService {
           occasionTags: body.occasionTags ?? [],
           isReadyMadeHamper: body.isReadyMadeHamper ?? false,
           brandName: body.brandName,
+          storefrontLabels: body.storefrontLabels ?? [],
           categories: {
             create: categoryIds.map((categoryId) => ({ categoryId })),
           },
@@ -227,6 +228,9 @@ export class CatalogService {
             ? { isReadyMadeHamper: body.isReadyMadeHamper }
             : {}),
           ...(body.brandName !== undefined ? { brandName: body.brandName } : {}),
+          ...(body.storefrontLabels !== undefined
+            ? { storefrontLabels: body.storefrontLabels }
+            : {}),
         },
         include: productInclude,
       });
@@ -387,6 +391,9 @@ export class CatalogService {
       occasionTags: product.occasionTags,
       isReadyMadeHamper: product.isReadyMadeHamper,
       brandName: product.brandName,
+      storefrontLabels: (product.storefrontLabels ?? []).filter(
+        (l): l is 'NEW' | 'SALE' => l === 'NEW' || l === 'SALE',
+      ),
       categories: product.categories.map((pc) => ({
         slug: pc.category.slug,
         name: pc.category.name,

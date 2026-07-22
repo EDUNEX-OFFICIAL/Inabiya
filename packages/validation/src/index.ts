@@ -88,6 +88,7 @@ export const createProductBodySchema = z.object({
   occasionTags: z.array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday'])).optional(),
   isReadyMadeHamper: z.boolean().optional(),
   brandName: z.string().max(120).optional(),
+  storefrontLabels: z.array(z.enum(['NEW', 'SALE'])).max(2).optional(),
   variants: z
     .array(
       z.object({
@@ -131,6 +132,7 @@ export const updateProductBodySchema = z.object({
   occasionTags: z.array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday'])).optional(),
   isReadyMadeHamper: z.boolean().optional(),
   brandName: z.string().max(120).nullable().optional(),
+  storefrontLabels: z.array(z.enum(['NEW', 'SALE'])).max(2).optional(),
 });
 
 export const updateInventoryBodySchema = z.object({
@@ -538,6 +540,7 @@ export const pageBlockTypeSchema = z.enum([
   'articleTeasers',
   'footer',
   'saleStrip',
+  'faq',
 ]);
 
 const heroPropsSchema = z.object({
@@ -655,6 +658,16 @@ const saleStripPropsSchema = z.object({
   tone: z.enum(['blush', 'mint', 'sky', 'soft']).optional(),
 });
 
+const faqItemSchema = z.object({
+  question: z.string().trim().min(1).max(300),
+  answerHtml: z.string().trim().min(1).max(10_000),
+});
+
+const faqPropsSchema = z.object({
+  title: z.string().max(120).optional(),
+  items: z.array(faqItemSchema).min(1).max(20),
+});
+
 export const pageBlockInputSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('hero'), props: heroPropsSchema }),
   z.object({ type: z.literal('richText'), props: richTextPropsSchema }),
@@ -667,20 +680,38 @@ export const pageBlockInputSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('articleTeasers'), props: articleTeasersPropsSchema }),
   z.object({ type: z.literal('footer'), props: footerPropsSchema }),
   z.object({ type: z.literal('saleStrip'), props: saleStripPropsSchema }),
+  z.object({ type: z.literal('faq'), props: faqPropsSchema }),
 ]);
+
+/** Empty string → null so admin “clear field” does not fail path/URL regex. */
+const emptyToUndefined = (v: unknown) =>
+  typeof v === 'string' && v.trim() === '' ? undefined : v;
+const emptyToNull = (v: unknown) =>
+  typeof v === 'string' && v.trim() === '' ? null : v;
+
+const marketingCanonicalPathSchema = z
+  .string()
+  .max(500)
+  .regex(/^(\/|https?:\/\/)/, 'Must be a path or absolute URL');
 
 export const createMarketingPageBodySchema = z.object({
   slug: slugSchema,
   title: z.string().trim().min(1).max(200),
-  seoTitle: z.string().max(200).optional(),
-  seoDescription: z.string().max(500).optional(),
+  seoTitle: z.preprocess(emptyToUndefined, z.string().max(200).optional()),
+  seoDescription: z.preprocess(emptyToUndefined, z.string().max(500).optional()),
+  canonicalPath: z.preprocess(emptyToUndefined, marketingCanonicalPathSchema.optional()),
+  ogImageUrl: z.preprocess(emptyToUndefined, cmsMediaUrlSchema.optional()),
+  robotsIndex: z.boolean().optional(),
   blocks: z.array(pageBlockInputSchema).max(50).optional(),
 });
 
 export const updateMarketingPageBodySchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
-  seoTitle: z.string().max(200).nullable().optional(),
-  seoDescription: z.string().max(500).nullable().optional(),
+  seoTitle: z.preprocess(emptyToNull, z.string().max(200).nullable().optional()),
+  seoDescription: z.preprocess(emptyToNull, z.string().max(500).nullable().optional()),
+  canonicalPath: z.preprocess(emptyToNull, marketingCanonicalPathSchema.nullable().optional()),
+  ogImageUrl: z.preprocess(emptyToNull, cmsMediaUrlSchema.nullable().optional()),
+  robotsIndex: z.boolean().optional(),
   blocks: z.array(pageBlockInputSchema).max(50).optional(),
 });
 
