@@ -77,3 +77,4 @@ volumes:
   inabiya_pg_data:
   inabiya_redis_data:
   inabiya_minio_data:
+  inabiya_media_data:

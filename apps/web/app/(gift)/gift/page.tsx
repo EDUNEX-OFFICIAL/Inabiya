@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
+import { GiftStorefrontFooter } from '@/components/cms/gift-storefront-footer';
 import { apiUrl } from '@/lib/api-base';
 import { GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
 
@@ -18,6 +18,14 @@ type CmsHomePage = {
   }>;
 };
 
+type GiftChrome = {
+  footer?: {
+    brandName?: string;
+    tagline?: string;
+    columns?: Array<{ title: string; links: Array<{ label: string; href: string }> }>;
+  };
+};
+
 async function fetchHomepage(): Promise<CmsHomePage | null> {
   try {
     const res = await fetch(apiUrl(`/cms/pages/${GIFT_HOMEPAGE_SLUG}`), {
@@ -30,68 +38,18 @@ async function fetchHomepage(): Promise<CmsHomePage | null> {
   }
 }
 
-function GiftHomeFooter() {
-  return (
-    <div className="gift-band gift-band--soft">
-      <footer className="gift-band-inner grid gap-gs-6 border-t border-border-subtle pt-gs-7 text-sm opacity-80 sm:grid-cols-3">
-        <div>
-          <p className="font-display text-xl text-foreground">Inabiya</p>
-          <p className="mt-gs-2 max-w-xs">
-            Thoughtfully personalised baby essentials & gifting.
-          </p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground">Shop</p>
-          <ul className="mt-gs-2 space-y-gs-2">
-            <li>
-              <Link href="/gift/box" className="hover:text-primary">
-                Build Your Box
-              </Link>
-            </li>
-            <li>
-              <Link href="/gift/products?hamper=1" className="hover:text-primary">
-                Ready-Made Hampers
-              </Link>
-            </li>
-            <li>
-              <Link href="/gift/products?age=newborn" className="hover:text-primary">
-                Shop by Age
-              </Link>
-            </li>
-            <li>
-              <Link href="/gift/corporate" className="hover:text-primary">
-                Corporate Gifting
-              </Link>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground">Company</p>
-          <ul className="mt-gs-2 space-y-gs-2">
-            <li>
-              <Link href="/articles" className="hover:text-primary">
-                Parenting Blog
-              </Link>
-            </li>
-            <li>
-              <Link href="/specialists" className="hover:text-primary">
-                Our Specialists
-              </Link>
-            </li>
-            <li>
-              <a href="mailto:hello@inabiya.in" className="hover:text-primary">
-                Contact
-              </a>
-            </li>
-          </ul>
-        </div>
-      </footer>
-    </div>
-  );
+async function fetchGiftChrome(): Promise<GiftChrome | null> {
+  try {
+    const res = await fetch(apiUrl('/catalog/gift-chrome'), { cache: 'no-store' });
+    if (!res.ok) return null;
+    return (await res.json()) as GiftChrome;
+  } catch {
+    return null;
+  }
 }
 
 /** Fallback if MarketingPage `home` is missing / unpublished. */
-function LegacyGiftHomeFallback() {
+function LegacyGiftHomeFallback({ chrome }: { chrome: GiftChrome | null }) {
   return (
     <main>
       <GiftStorefrontHero
@@ -108,22 +66,24 @@ function LegacyGiftHomeFallback() {
           <code className="text-xs">home</code> marketing page in admin.
         </p>
       </div>
-      <GiftHomeFooter />
+      <GiftStorefrontFooter {...(chrome?.footer ?? {})} />
     </main>
   );
 }
 
 export default async function GiftHomePage() {
-  const page = await fetchHomepage();
+  const [page, chrome] = await Promise.all([fetchHomepage(), fetchGiftChrome()]);
 
   if (!page?.blocks?.length) {
-    return <LegacyGiftHomeFallback />;
+    return <LegacyGiftHomeFallback chrome={chrome} />;
   }
+
+  const hasFooterBlock = page.blocks.some((b) => b.type === 'footer');
 
   return (
     <main>
       <MarketingPageBlocks blocks={page.blocks} layout="home" />
-      <GiftHomeFooter />
+      {!hasFooterBlock ? <GiftStorefrontFooter {...(chrome?.footer ?? {})} /> : null}
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { Worker, type Job } from 'bullmq';
 import IORedis from 'ioredis';
 import pino from 'pino';
+import { sendConsoleMail } from './console-mail';
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
@@ -32,29 +33,24 @@ async function main() {
     async (job: Job) => {
       if (job.name === 'order.confirmation') {
         const data = job.data as OrderConfirmationJob;
-        logger.info(
-          {
-            jobId: job.id,
-            orderId: data.orderId,
-            orderNumber: data.orderNumber,
-            userEmail: data.userEmail,
-            totalPaise: data.totalPaise,
-          },
-          'order confirmation notification (email stub)',
-        );
+        await sendConsoleMail(logger, {
+          to: data.userEmail,
+          subject: `Order ${data.orderNumber} confirmed`,
+          text: `Your order ${data.orderNumber} (${data.totalPaise} paise) is confirmed.`,
+          template: 'order.confirmation',
+          meta: { jobId: job.id, orderId: data.orderId, orderNumber: data.orderNumber },
+        });
         return { sent: true };
       }
       if (job.name === 'cart.abandonment') {
         const data = job.data as CartAbandonmentJob;
-        logger.info(
-          {
-            jobId: job.id,
-            cartId: data.cartId,
-            userEmail: data.userEmail,
-            itemCount: data.itemCount,
-          },
-          'cart abandonment recovery email (stub)',
-        );
+        await sendConsoleMail(logger, {
+          to: data.userEmail ?? 'unknown@stub.local',
+          subject: 'You left items in your cart',
+          text: `Cart ${data.cartId} still has ${data.itemCount} item(s).`,
+          template: 'cart.abandonment',
+          meta: { jobId: job.id, cartId: data.cartId, itemCount: data.itemCount },
+        });
         return { sent: true };
       }
       if (job.name === 'assignment.due_reminder') {
@@ -64,16 +60,13 @@ async function main() {
           dueAt: string;
           assigneeEmail: string | null;
         };
-        logger.info(
-          {
-            jobId: job.id,
-            articleId: data.articleId,
-            title: data.title,
-            dueAt: data.dueAt,
-            assigneeEmail: data.assigneeEmail,
-          },
-          'assignment due reminder (email stub)',
-        );
+        await sendConsoleMail(logger, {
+          to: data.assigneeEmail ?? 'unknown@stub.local',
+          subject: `Assignment due: ${data.title}`,
+          text: `Article "${data.title}" is due at ${data.dueAt}.`,
+          template: 'assignment.due_reminder',
+          meta: { jobId: job.id, articleId: data.articleId, dueAt: data.dueAt },
+        });
         return { sent: true };
       }
       if (job.name === 'auth.password_reset') {
@@ -83,16 +76,13 @@ async function main() {
           resetUrl: string;
           expiresAt: string;
         };
-        logger.info(
-          {
-            jobId: job.id,
-            userId: data.userId,
-            userEmail: data.userEmail,
-            resetUrl: data.resetUrl,
-            expiresAt: data.expiresAt,
-          },
-          'password reset email (stub)',
-        );
+        await sendConsoleMail(logger, {
+          to: data.userEmail,
+          subject: 'Reset your Inabiya password',
+          text: `Use this link to reset your password (expires ${data.expiresAt}): ${data.resetUrl}`,
+          template: 'auth.password_reset',
+          meta: { jobId: job.id, userId: data.userId, expiresAt: data.expiresAt },
+        });
         return { sent: true };
       }
       return { skipped: true };
@@ -118,6 +108,6 @@ async function main() {
 }
 
 void main().catch((err) => {
-  logger.error({ err }, 'worker failed to start');
+  logger.error(err, 'worker failed to start');
   process.exit(1);
 });

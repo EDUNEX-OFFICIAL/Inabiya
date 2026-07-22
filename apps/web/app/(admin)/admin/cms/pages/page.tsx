@@ -38,6 +38,13 @@ export default function AdminCmsPagesListPage() {
             ← Commerce
           </Link>
           <h1 className="text-2xl font-semibold mt-2">Marketing pages</h1>
+          <p className="mt-1 text-sm opacity-70">
+            Soft Gift homepage blocks +{' '}
+            <Link href="/admin/cms/gift-chrome" className="underline">
+              nav &amp; footer chrome
+            </Link>
+            .
+          </p>
           <p className="text-sm opacity-70">Phase 11B — drag to reorder blocks.</p>
         </div>
         <Link

@@ -50,7 +50,9 @@ export default function MerchandisingPage() {
         heroTitle,
       },
     });
-    setMessage('Saved — check /gift homepage');
+    setMessage(
+      'Saved legacy KV (featured slugs) — Soft Gift /gift homepage uses Marketing page blocks, not this form.',
+    );
   }
 
   return (

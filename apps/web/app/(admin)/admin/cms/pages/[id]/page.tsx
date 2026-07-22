@@ -21,6 +21,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { ArticleEditor } from '@/components/editorial/article-editor';
+import { CmsMediaField } from '@/components/cms/cms-media-field';
 
 type BlockType =
   | 'hero'
@@ -31,7 +33,9 @@ type BlockType =
   | 'spacer'
   | 'brandStrip'
   | 'recipientSplit'
-  | 'articleTeasers';
+  | 'articleTeasers'
+  | 'footer'
+  | 'saleStrip';
 
 type Block = {
   clientId: string;
@@ -60,19 +64,22 @@ const ALL_TYPES: BlockType[] = [
   'brandStrip',
   'recipientSplit',
   'articleTeasers',
+  'footer',
+  'saleStrip',
 ];
 
 const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
   hero: {
     headline: '',
     subcopy: '',
+    eyebrow: '',
     ctaLabel: '',
     ctaHref: '/gift',
     ctaLabel2: '',
     ctaHref2: '',
     trustLine: '',
     imageUrl: '',
-    variant: '',
+    variant: 'storefront',
   },
   richText: { html: '<p></p>' },
   image: { url: '', alt: '', caption: '' },
@@ -83,10 +90,17 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     hamper: 'false',
     limit: '',
     seeAllHref: '',
+    seeAllLabel: 'See all',
   },
   cta: { label: 'Shop', href: '/gift', variant: 'primary', title: '', body: '' },
   spacer: { size: 'md' },
-  brandStrip: { title: 'Trusted brands we stock', brands: '' },
+  brandStrip: {
+    title: 'Trusted brands we stock',
+    subtitle: '',
+    brands: '',
+    usps: '',
+    showUsps: 'true',
+  },
   recipientSplit: {
     title: 'Shop by baby',
     subtitle: 'Curated gifts for little girls and boys',
@@ -95,13 +109,33 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     leftEyebrow: 'For the little',
     leftCta: 'Shop girl gifts →',
     leftAccent: 'pink',
+    leftImageUrl: '',
     rightLabel: 'boy',
     rightHref: '/gift/products?recipient=boy',
     rightEyebrow: 'For the little',
     rightCta: 'Shop boy gifts →',
     rightAccent: 'sky',
+    rightImageUrl: '',
   },
-  articleTeasers: { overline: 'Journal', title: 'From the parenting journal', limit: '3' },
+  articleTeasers: {
+    overline: 'Journal',
+    title: 'From the parenting journal',
+    limit: '3',
+    seeAllHref: '/articles',
+    seeAllLabel: 'All articles →',
+  },
+  footer: {
+    brandName: 'Inabiya',
+    tagline: 'Thoughtfully personalised baby essentials & gifting.',
+    shopLinks: '',
+    companyLinks: '',
+  },
+  saleStrip: {
+    text: 'Free personalisation on gift boxes this week',
+    ctaLabel: 'Shop →',
+    ctaHref: '/gift',
+    tone: 'blush',
+  },
 };
 
 let clientSeq = 0;
@@ -113,7 +147,14 @@ function newClientId() {
 function nestCard(
   prefix: 'left' | 'right',
   props: Record<string, string>,
-): { label: string; href: string; eyebrow?: string; cta?: string; accent?: 'pink' | 'sky' } {
+): {
+  label: string;
+  href: string;
+  eyebrow?: string;
+  cta?: string;
+  accent?: 'pink' | 'sky';
+  imageUrl?: string;
+} {
   const label = props[`${prefix}Label`] || (prefix === 'left' ? 'girl' : 'boy');
   const href =
     props[`${prefix}Href`] ||
@@ -127,6 +168,7 @@ function nestCard(
     ...(props[`${prefix}Eyebrow`] ? { eyebrow: props[`${prefix}Eyebrow`] } : {}),
     ...(props[`${prefix}Cta`] ? { cta: props[`${prefix}Cta`] } : {}),
     ...(accent ? { accent } : {}),
+    ...(props[`${prefix}ImageUrl`] ? { imageUrl: props[`${prefix}ImageUrl`] } : {}),
   };
 }
 
@@ -142,6 +184,7 @@ function flattenRecipientCard(
   if (card.eyebrow != null) props[`${prefix}Eyebrow`] = String(card.eyebrow);
   if (card.cta != null) props[`${prefix}Cta`] = String(card.cta);
   if (card.accent != null) props[`${prefix}Accent`] = String(card.accent);
+  if (card.imageUrl != null) props[`${prefix}ImageUrl`] = String(card.imageUrl);
 }
 
 function toEditable(blocks: MarketingPage['blocks']): Block[] {
@@ -167,9 +210,44 @@ function toEditable(blocks: MarketingPage['blocks']): Block[] {
           if (k === 'productSlugs' && Array.isArray(v)) {
             props.productSlugs = v.map(String).join(', ');
           } else if (k === 'brands' && Array.isArray(v)) {
-            // Stored string[] → edit; resolved objects → ignore (server fills)
-            if (v.some((item) => item != null && typeof item === 'object')) continue;
-            props.brands = v.map(String).join(', ');
+            props.brands = v
+              .map((item) => {
+                if (typeof item === 'string') return item;
+                if (item && typeof item === 'object' && 'name' in item) {
+                  const name = String((item as { name: unknown }).name);
+                  const logo =
+                    typeof (item as { logoUrl?: unknown }).logoUrl === 'string'
+                      ? String((item as { logoUrl: string }).logoUrl)
+                      : '';
+                  return logo ? `${name} | ${logo}` : name;
+                }
+                return '';
+              })
+              .filter(Boolean)
+              .join(', ');
+          } else if (k === 'usps' && Array.isArray(v)) {
+            props.usps = v
+              .map((item) => {
+                if (!item || typeof item !== 'object') return '';
+                const label = String((item as { label?: unknown }).label ?? '').trim();
+                const icon = String((item as { icon?: unknown }).icon ?? '').trim();
+                if (!label) return '';
+                return icon ? `${icon}:${label}` : label;
+              })
+              .filter(Boolean)
+              .join(', ');
+          } else if (k === 'columns' && Array.isArray(v) && b.type === 'footer') {
+            const cols = v as Array<{ title?: string; links?: Array<{ label: string; href: string }> }>;
+            const shop = cols.find((c) => /shop/i.test(String(c.title ?? ''))) ?? cols[0];
+            const company = cols.find((c) => /company/i.test(String(c.title ?? ''))) ?? cols[1];
+            props.shopLinks = (shop?.links ?? [])
+              .map((l) => `${l.label} | ${l.href}`)
+              .join('\n');
+            props.companyLinks = (company?.links ?? [])
+              .map((l) => `${l.label} | ${l.href}`)
+              .join('\n');
+          } else if (k === 'showUsps') {
+            props.showUsps = v === false || v === 'false' ? 'false' : 'true';
           } else if (k === 'hamper') {
             props.hamper = v === true || v === 'true' ? 'true' : 'false';
           } else if (k === 'limit' && v != null) {
@@ -201,6 +279,7 @@ function toPayload(blocks: Block[]) {
           ...(b.props.ctaLabel2 ? { ctaLabel2: b.props.ctaLabel2 } : {}),
           ...(b.props.ctaHref2 ? { ctaHref2: b.props.ctaHref2 } : {}),
           ...(b.props.trustLine ? { trustLine: b.props.trustLine } : {}),
+          ...(b.props.eyebrow ? { eyebrow: b.props.eyebrow } : {}),
           ...(b.props.imageUrl ? { imageUrl: b.props.imageUrl } : {}),
           ...(variant ? { variant } : {}),
         },
@@ -234,6 +313,7 @@ function toPayload(blocks: Block[]) {
           ...(b.props.hamper === 'true' ? { hamper: true } : {}),
           ...(Number.isFinite(limitNum) && limitNum > 0 ? { limit: limitNum } : {}),
           ...(b.props.seeAllHref ? { seeAllHref: b.props.seeAllHref } : {}),
+          ...(b.props.seeAllLabel ? { seeAllLabel: b.props.seeAllLabel } : {}),
         },
       };
     }
@@ -247,12 +327,34 @@ function toPayload(blocks: Block[]) {
       const brands = (b.props.brands || '')
         .split(',')
         .map((s) => s.trim())
-        .filter(Boolean);
+        .filter(Boolean)
+        .map((entry) => {
+          const [namePart, logoPart] = entry.split('|').map((x) => x.trim());
+          if (logoPart) return { name: namePart, logoUrl: logoPart };
+          return namePart;
+        });
+      const usps = (b.props.usps || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((entry) => {
+          const m = entry.match(/^(heart|package|gift|truck)\s*:\s*(.+)$/i);
+          if (m?.[1] && m[2]) {
+            return {
+              icon: m[1].toLowerCase() as 'heart' | 'package' | 'gift' | 'truck',
+              label: m[2].trim(),
+            };
+          }
+          return { label: entry };
+        });
       return {
         type: 'brandStrip' as const,
         props: {
           ...(b.props.title ? { title: b.props.title } : {}),
+          ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
           ...(brands.length ? { brands } : {}),
+          ...(usps.length ? { usps } : {}),
+          ...(b.props.showUsps === 'false' ? { showUsps: false } : { showUsps: true }),
         },
       };
     }
@@ -275,6 +377,47 @@ function toPayload(blocks: Block[]) {
           ...(b.props.overline ? { overline: b.props.overline } : {}),
           ...(b.props.title ? { title: b.props.title } : {}),
           ...(Number.isFinite(limitNum) && limitNum > 0 ? { limit: limitNum } : {}),
+          ...(b.props.seeAllHref ? { seeAllHref: b.props.seeAllHref } : {}),
+          ...(b.props.seeAllLabel ? { seeAllLabel: b.props.seeAllLabel } : {}),
+        },
+      };
+    }
+    if (b.type === 'footer') {
+      const parseLinks = (text: string) =>
+        text
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => {
+            const [label, href] = line.split('|').map((s) => s.trim());
+            return { label: label || href, href: href || label };
+          })
+          .filter((l) => l.href);
+      return {
+        type: 'footer' as const,
+        props: {
+          ...(b.props.brandName ? { brandName: b.props.brandName } : {}),
+          ...(b.props.tagline ? { tagline: b.props.tagline } : {}),
+          columns: [
+            { title: 'Shop', links: parseLinks(b.props.shopLinks || '') },
+            { title: 'Company', links: parseLinks(b.props.companyLinks || '') },
+          ].filter((c) => c.links.length > 0),
+        },
+      };
+    }
+    if (b.type === 'saleStrip') {
+      const tone = (['blush', 'mint', 'sky', 'soft'] as const).includes(
+        b.props.tone as 'blush' | 'mint' | 'sky' | 'soft',
+      )
+        ? (b.props.tone as 'blush' | 'mint' | 'sky' | 'soft')
+        : 'blush';
+      return {
+        type: 'saleStrip' as const,
+        props: {
+          text: b.props.text || 'Limited-time offer',
+          ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
+          ...(b.props.ctaHref ? { ctaHref: b.props.ctaHref } : {}),
+          tone,
         },
       };
     }
@@ -345,22 +488,56 @@ function PropField({
   fieldKey,
   value,
   onChange,
+  editorKey,
 }: {
   blockType: BlockType;
   fieldKey: string;
   value: string;
   onChange: (v: string) => void;
+  editorKey?: string;
 }) {
-  if (fieldKey === 'html' || fieldKey === 'subcopy' || fieldKey === 'productSlugs' || fieldKey === 'brands' || fieldKey === 'body' || fieldKey === 'subtitle') {
+  if (blockType === 'richText' && fieldKey === 'html') {
+    return (
+      <div className="mt-1">
+        <ArticleEditor
+          key={editorKey ?? 'richtext'}
+          initialContent={value || '<p></p>'}
+          onChange={onChange}
+          placeholder="Write page copy…"
+          className="text-sm"
+          enableMediaLibrary
+        />
+      </div>
+    );
+  }
+
+  if (
+    fieldKey === 'url' ||
+    fieldKey === 'imageUrl' ||
+    fieldKey === 'leftImageUrl' ||
+    fieldKey === 'rightImageUrl'
+  ) {
+    return <CmsMediaField value={value} onChange={onChange} />;
+  }
+
+  if (fieldKey === 'html' || fieldKey === 'subcopy' || fieldKey === 'productSlugs' || fieldKey === 'brands' || fieldKey === 'usps' || fieldKey === 'body' || fieldKey === 'subtitle' || fieldKey === 'shopLinks' || fieldKey === 'companyLinks' || fieldKey === 'trustLine') {
     return (
       <textarea
         className="mt-1 block w-full rounded border px-2 py-1 min-h-[80px] font-mono text-xs"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={
-          fieldKey === 'productSlugs' || fieldKey === 'brands'
-            ? 'one, two, three'
-            : undefined
+          fieldKey === 'brands'
+            ? 'Name | /gift/brands/x.svg, …'
+            : fieldKey === 'usps'
+              ? 'heart:Personalised with care, package:Ready-made hampers'
+              : fieldKey === 'shopLinks' || fieldKey === 'companyLinks'
+                ? 'Label | /path (one per line)'
+                : fieldKey === 'trustLine'
+                  ? 'Chip A · Chip B · Chip C'
+                  : fieldKey === 'productSlugs'
+                    ? 'one, two, three'
+                    : undefined
         }
       />
     );
@@ -380,7 +557,22 @@ function PropField({
     );
   }
 
-  if (fieldKey === 'hamper') {
+  if (fieldKey === 'tone' && blockType === 'saleStrip') {
+    return (
+      <select
+        className="mt-1 block w-full rounded border px-2 py-1"
+        value={value || 'blush'}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="blush">blush</option>
+        <option value="mint">mint</option>
+        <option value="sky">sky</option>
+        <option value="soft">soft</option>
+      </select>
+    );
+  }
+
+  if (fieldKey === 'hamper' || fieldKey === 'showUsps') {
     return (
       <select
         className="mt-1 block w-full rounded border px-2 py-1"
@@ -716,6 +908,7 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
                     fieldKey={key}
                     value={current.props[key] ?? ''}
                     onChange={(v) => updateProp(key, v)}
+                    editorKey={current.clientId}
                   />
                 </label>
               ))}

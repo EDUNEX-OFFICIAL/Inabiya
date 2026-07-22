@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -13,6 +13,7 @@ import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { normalizeArticleBody } from '@/lib/article-html';
+import { MediaLibraryModal, uploadCmsMediaFile } from '@/components/cms/cms-media-field';
 
 type Props = {
   /** Initial HTML/plain body — remount via parent `key` when reloading from server */
@@ -20,6 +21,10 @@ type Props = {
   onChange: (html: string) => void;
   editable?: boolean;
   className?: string;
+  /** TipTap placeholder when empty */
+  placeholder?: string;
+  /** Show media library / upload for images (CMS + editorial). */
+  enableMediaLibrary?: boolean;
 };
 
 function ToolbarButton({
@@ -55,7 +60,10 @@ export function ArticleEditor({
   onChange,
   editable = true,
   className,
+  placeholder = 'Write the article…',
+  enableMediaLibrary = false,
 }: Props) {
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -68,7 +76,7 @@ export function ArticleEditor({
         HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
       }),
       Image.configure({ allowBase64: false }),
-      Placeholder.configure({ placeholder: 'Write the article…' }),
+      Placeholder.configure({ placeholder }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Table.configure({ resizable: false }),
       TableRow,
@@ -114,9 +122,24 @@ export function ArticleEditor({
 
   function setImage() {
     if (!editor) return;
+    if (enableMediaLibrary) {
+      setLibraryOpen(true);
+      return;
+    }
     const url = window.prompt('Image URL (https://…)');
     if (!url) return;
     editor.chain().focus().setImage({ src: url }).run();
+  }
+
+  async function uploadImageFile(file: File | null) {
+    if (!editor || !file) return;
+    try {
+      const asset = await uploadCmsMediaFile(file);
+      const url = asset.publicUrl ?? `/api/v1/media/${asset.id}/content`;
+      editor.chain().focus().setImage({ src: url }).run();
+    } catch (e) {
+      window.alert(String((e as Error).message ?? e));
+    }
   }
 
   return (
@@ -205,6 +228,22 @@ export function ArticleEditor({
           <ToolbarButton title="Image" onClick={setImage}>
             Image
           </ToolbarButton>
+          {enableMediaLibrary ? (
+            <>
+              <label className="cursor-pointer rounded border border-black/10 bg-white/80 px-2 py-1 text-xs hover:bg-black/5">
+                Upload img
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={(e) => void uploadImageFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              <ToolbarButton title="Media library" onClick={() => setLibraryOpen(true)}>
+                Library
+              </ToolbarButton>
+            </>
+          ) : null}
           <ToolbarButton
             title="Insert table"
             onClick={() =>
@@ -244,6 +283,15 @@ export function ArticleEditor({
         </div>
       ) : null}
       <EditorContent editor={editor} />
+      {enableMediaLibrary ? (
+        <MediaLibraryModal
+          open={libraryOpen}
+          onClose={() => setLibraryOpen(false)}
+          onPick={(url) => {
+            editor.chain().focus().setImage({ src: url }).run();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

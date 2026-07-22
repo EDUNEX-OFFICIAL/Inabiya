@@ -202,7 +202,8 @@ Do these in order if time is short:
 - **Plush Clay UI:** Soft Gift customer surfaces use locked tokens — `.clay-*` recipes, `gift-banner--*`, spacing `gs-*` only (no random hex/red-green Tailwind). Focus/disabled/invalid inputs should look consistent.
 - **Responsive smoke:** phone-width (~375px) home hero CTAs, Menu nav, PLP 1-col cards, checkout form usable without horizontal page scroll.
 - **Editorial TipTap toolbar:** Shows only when article is editable (`ASSIGNED` / `DRAFT` / `CHANGES_REQUESTED`). On **PUBLISHED** (or SEO/Medical review) the body is read-only — no Bold/H2 toolbar. That is expected, not a missing feature. Amber banner on the edit page explains this.
-- **CMS page builder text:** `hero.headline` = plain field; `richText` = raw HTML for now (no TipTap yet). See future backlog below.
+- **CMS page builder text:** `hero.headline` = plain field; `richText` = **TipTap** (`ArticleEditor`, Phase 12). Sanity-check Bold/link → save → public page sanitised HTML.
+- **CMS media:** Upload/Library on hero/`image`/recipient URLs; TipTap Upload/Library. Public path `/api/v1/media/:id/content`.
 
 ---
 
@@ -212,13 +213,14 @@ Do **not** fail a test for these — log as “future” / enhancement:
 
 | # | Reminder |
 |---|---|
-| F1 | TipTap / formatting toolbar on CMS **`richText`** blocks (page builder) |
-| F2 | Custom blocks e.g. **`saleStrip`** / promo banner |
-| F3 | Media library / **image upload** (CMS `image` + hero `imageUrl`; TipTap image beyond URL prompt) |
-| F4 | Optional **11D**: Soft Gift homepage on block engine |
+| F1 | ~~TipTap on CMS `richText`~~ — **shipped Phase 12** |
+| F2 | ~~`saleStrip` promo~~ — **shipped Phase 12** |
+| F3 | ~~Media library / image upload~~ — **shipped Phase 12** (local disk; AWS SDK deferred) |
+| F4 | ~~11D Soft Gift homepage on blocks~~ — **shipped** |
 | F5 | Extra blocks (FAQ, testimonials, countdown) when Product asks |
 | F6 | Phase 1: password reset, real email, feature flags |
 | F7 | Razorpay (replace mock pay) + public domain / Caddy |
+| F8 | Real AWS/MinIO SDK behind storage adapter |
 
 Canonical eng list also in `Docs/CMS_PAGE_BUILDER.md` §12.
 

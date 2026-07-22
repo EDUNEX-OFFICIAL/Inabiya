@@ -113,6 +113,18 @@ export class AuthController {
     return { ok: true };
   }
 
+  @Post('logout-all')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  async logoutAll(
+    @CurrentUser() user: { id: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.auth.logoutAll(user.id);
+    clearAuthCookies(res);
+    return { ok: true };
+  }
+
   @Post('forgot-password')
   @HttpCode(200)
   @UseGuards(AuthRateLimitGuard)

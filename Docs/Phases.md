@@ -796,4 +796,36 @@ Roadmap changes require:
 
 ---
 
+## 25. Phase 12 — CMS TipTap + saleStrip + media
+
+**Status:** **CLOSED** — TipTap, `saleStrip`, and CMS media library/upload (2026-07-22).  
+**Authority:** [`Docs/CMS_PAGE_BUILDER.md`](CMS_PAGE_BUILDER.md) §12.  
+**Out of scope:** real AWS/MinIO SDK (local disk store), FAQ/testimonials.
+
+### P0
+
+- [x] TipTap (`ArticleEditor`) for marketing page `richText` blocks in admin (replaces raw HTML textarea)
+- [x] Public richText continues to sanitize via `sanitizeArticleHtml` / DOMPurify
+- [x] New block type `saleStrip` — Zod props (`text`, optional `ctaLabel`/`ctaHref`, `tone`)
+- [x] Admin canvas: add/edit/reorder `saleStrip`
+- [x] Soft Gift public renderer (`GiftBand` / gift-band tones)
+
+### P1 — Media library / image upload (§12 remainder)
+
+- [x] Local-disk persistence (`MEDIA_LOCAL_ROOT`) via storage adapter
+- [x] Public `GET /api/v1/media/:id/content` for image MIME
+- [x] CMS `CmsMediaField` on `image.url`, hero/`recipient` `imageUrl` (Upload + Library)
+- [x] TipTap Library/Upload for CMS richText + editorial articles
+- [x] Zod `cmsMediaUrlSchema` accepts http(s) or `/api/v1/media/{id}/content`
+
+### Exit criteria
+
+- [x] Admin can author richText with TipTap toolbar; save persists `html`
+- [x] Published page renders sanitized richText
+- [x] Admin can add `saleStrip`; public Soft Gift band shows text + optional CTA
+- [x] Upload image → pick in CMS → public Soft Gift page shows image
+- [x] Memory + CMS_PAGE_BUILDER + audit updated honestly
+
+---
+
 **End of Phases.md v2.0.0**

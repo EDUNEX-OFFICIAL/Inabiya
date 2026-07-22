@@ -219,6 +219,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
             key={`${article.id}-${editorKey}`}
             initialContent={body}
             editable={article.canEditBody}
+            enableMediaLibrary={article.canEditBody}
             onChange={(html) => {
               setBody(html);
               setDirty(true);

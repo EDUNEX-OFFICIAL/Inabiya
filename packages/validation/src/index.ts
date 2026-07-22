@@ -49,10 +49,29 @@ export const resetPasswordBodySchema = z.object({
   password: z.string().min(8).max(128),
 });
 
+export const testSendMailBodySchema = z.object({
+  to: z.string().email().max(320),
+  subject: z.string().trim().min(1).max(200),
+  text: z.string().trim().min(1).max(5000),
+});
+
+export const mediaListQuerySchema = z.object({
+  cursor: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(20),
+});
+
+export const upsertFeatureFlagBodySchema = z.object({
+  enabled: z.boolean(),
+  description: z.string().trim().max(500).nullable().optional(),
+});
+
 export type RegisterBody = z.infer<typeof registerBodySchema>;
 export type LoginBody = z.infer<typeof loginBodySchema>;
 export type ForgotPasswordBody = z.infer<typeof forgotPasswordBodySchema>;
 export type ResetPasswordBody = z.infer<typeof resetPasswordBodySchema>;
+export type TestSendMailBody = z.infer<typeof testSendMailBodySchema>;
+export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;
+export type UpsertFeatureFlagBody = z.infer<typeof upsertFeatureFlagBodySchema>;
 
 /** Phase 2 — catalog admin + storefront queries */
 export const createProductBodySchema = z.object({
@@ -488,6 +507,29 @@ export type CampaignRatingBody = z.infer<typeof campaignRatingBodySchema>;
 /** Soft Gift storefront homepage — reserved MarketingPage.slug (Phase 11D). */
 export const GIFT_HOMEPAGE_SLUG = 'home';
 
+/** Reserved MarketingPage.slug for Soft Gift corporate landing. */
+export const GIFT_CORPORATE_SLUG = 'corporate-gifting';
+
+/** HTTP(S) or same-origin media content path from Media library. */
+export const cmsMediaUrlSchema = z
+  .string()
+  .min(1)
+  .max(500)
+  .refine(
+    (s) => {
+      if (/^\/api\/v1\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/content$/i.test(s)) {
+        return true;
+      }
+      try {
+        const u = new URL(s);
+        return u.protocol === 'http:' || u.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    },
+    { message: 'Must be http(s) URL or /api/v1/media/{id}/content' },
+  );
+
 /** Phase 11 — Marketing page builder */
 export const pageBlockTypeSchema = z.enum([
   'hero',
@@ -499,6 +541,8 @@ export const pageBlockTypeSchema = z.enum([
   'brandStrip',
   'recipientSplit',
   'articleTeasers',
+  'footer',
+  'saleStrip',
 ]);
 
 const heroPropsSchema = z.object({
@@ -508,8 +552,10 @@ const heroPropsSchema = z.object({
   ctaHref: z.string().max(500).optional(),
   ctaLabel2: z.string().max(80).optional(),
   ctaHref2: z.string().max(500).optional(),
-  trustLine: z.string().max(200).optional(),
-  imageUrl: z.string().url().max(500).optional(),
+  /** Pipe/middot-separated trust chips, e.g. "A · B · C" */
+  trustLine: z.string().max(400).optional(),
+  eyebrow: z.string().max(80).optional(),
+  imageUrl: cmsMediaUrlSchema.optional(),
   variant: z.enum(['panel', 'storefront']).optional(),
 });
 
@@ -518,7 +564,7 @@ const richTextPropsSchema = z.object({
 });
 
 const imagePropsSchema = z.object({
-  url: z.string().url().max(500),
+  url: cmsMediaUrlSchema,
   alt: z.string().min(1).max(200),
   caption: z.string().max(300).optional(),
 });
@@ -530,6 +576,7 @@ const productGridPropsSchema = z.object({
   hamper: z.boolean().optional(),
   limit: z.number().int().min(1).max(24).optional(),
   seeAllHref: z.string().max(500).optional(),
+  seeAllLabel: z.string().max(80).optional(),
 });
 
 const ctaPropsSchema = z.object({
@@ -544,9 +591,26 @@ const spacerPropsSchema = z.object({
   size: z.enum(['sm', 'md', 'lg']).default('md'),
 });
 
+const brandEntrySchema = z.union([
+  z.string().max(80),
+  z.object({
+    name: z.string().min(1).max(80),
+    logoUrl: z.string().max(500).optional(),
+  }),
+]);
+
+const uspItemSchema = z.object({
+  label: z.string().min(1).max(80),
+  icon: z.enum(['heart', 'package', 'gift', 'truck']).optional(),
+});
+
 const brandStripPropsSchema = z.object({
   title: z.string().max(120).optional(),
-  brands: z.array(z.string().max(80)).max(24).optional(),
+  subtitle: z.string().max(200).optional(),
+  brands: z.array(brandEntrySchema).max(24).optional(),
+  /** When set, replaces hardcoded USP row under Soft Gift home brand band */
+  usps: z.array(uspItemSchema).max(8).optional(),
+  showUsps: z.boolean().optional(),
 });
 
 const recipientCardSchema = z.object({
@@ -555,6 +619,7 @@ const recipientCardSchema = z.object({
   eyebrow: z.string().max(80).optional(),
   cta: z.string().max(80).optional(),
   accent: z.enum(['pink', 'sky']).optional(),
+  imageUrl: cmsMediaUrlSchema.optional(),
 });
 
 const recipientSplitPropsSchema = z.object({
@@ -568,6 +633,31 @@ const articleTeasersPropsSchema = z.object({
   overline: z.string().max(80).optional(),
   title: z.string().max(120).optional(),
   limit: z.number().int().min(1).max(12).optional(),
+  seeAllHref: z.string().max(500).optional(),
+  seeAllLabel: z.string().max(80).optional(),
+});
+
+const footerLinkSchema = z.object({
+  label: z.string().min(1).max(80),
+  href: z.string().min(1).max(500),
+});
+
+const footerColumnSchema = z.object({
+  title: z.string().min(1).max(80),
+  links: z.array(footerLinkSchema).max(12),
+});
+
+const footerPropsSchema = z.object({
+  brandName: z.string().max(80).optional(),
+  tagline: z.string().max(300).optional(),
+  columns: z.array(footerColumnSchema).max(4).optional(),
+});
+
+const saleStripPropsSchema = z.object({
+  text: z.string().min(1).max(200),
+  ctaLabel: z.string().max(80).optional(),
+  ctaHref: z.string().max(500).optional(),
+  tone: z.enum(['blush', 'mint', 'sky', 'soft']).optional(),
 });
 
 export const pageBlockInputSchema = z.discriminatedUnion('type', [
@@ -580,6 +670,8 @@ export const pageBlockInputSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('brandStrip'), props: brandStripPropsSchema }),
   z.object({ type: z.literal('recipientSplit'), props: recipientSplitPropsSchema }),
   z.object({ type: z.literal('articleTeasers'), props: articleTeasersPropsSchema }),
+  z.object({ type: z.literal('footer'), props: footerPropsSchema }),
+  z.object({ type: z.literal('saleStrip'), props: saleStripPropsSchema }),
 ]);
 
 export const createMarketingPageBodySchema = z.object({
@@ -600,4 +692,28 @@ export const updateMarketingPageBodySchema = z.object({
 export type PageBlockInput = z.infer<typeof pageBlockInputSchema>;
 export type CreateMarketingPageBody = z.infer<typeof createMarketingPageBodySchema>;
 export type UpdateMarketingPageBody = z.infer<typeof updateMarketingPageBodySchema>;
+
+const giftNavLinkSchema = z.object({
+  href: z.string().min(1).max(500),
+  label: z.string().min(1).max(80),
+});
+
+const giftMegaPanelSchema = z.object({
+  headline: z.string().max(120).optional(),
+  body: z.string().max(300).optional(),
+  ctaHref: z.string().max(500).optional(),
+  ctaLabel: z.string().max(80).optional(),
+  imageSrc: z.string().max(500).optional(),
+});
+
+/** Soft Gift global chrome (nav + default footer) — CommerceSetting JSON */
+export const giftChromeBodySchema = z.object({
+  shopLinks: z.array(giftNavLinkSchema).max(16).optional(),
+  forWhomLinks: z.array(giftNavLinkSchema).max(16).optional(),
+  shopMega: giftMegaPanelSchema.optional(),
+  forWhomMega: giftMegaPanelSchema.optional(),
+  footer: footerPropsSchema.optional(),
+});
+
+export type GiftChromeBody = z.infer<typeof giftChromeBodySchema>;
 

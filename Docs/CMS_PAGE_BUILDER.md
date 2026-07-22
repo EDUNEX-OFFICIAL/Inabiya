@@ -1,12 +1,12 @@
 # CMS — Marketing Page Builder (Drag & Drop)
 
-Version: 1.0.0  
-Status: **11A–11D shipped** (`/gift` on MarketingPage `home`; TipTap/saleStrip still backlog)  
-Last Updated: 2026-07-21 (Phase 11D homepage on blocks)
+Version: 1.1.0  
+Status: **11A–11D + Phase 12 TipTap/saleStrip/media shipped** (real S3 SDK still deferred)  
+Last Updated: 2026-07-22 (Phase 12 media library)
 
 Client asked for **drag-and-drop page creation** in CMS. Product decision (**1B**): full **marketing pages** at `/pages/[slug]`, composed of ordered blocks — not TipTap-only articles, and not “homepage section reorder only” as the end state.
 
-**This doc is the engineering contract.** Implementation = **Phase 11** (`Docs/Phases.md`). Do not invent progress in Memory until code ships.
+**This doc is the engineering contract.** Implementation = **Phase 11** + **Phase 12** (`Docs/Phases.md`). Do not invent progress in Memory until code ships.
 
 Related: Homepage KV CMS (existing) · TipTap articles (Editorial) · Soft Gift Design.md · `SOFT_GIFT_HOMEPAGE_REFERENCE.md`
 
@@ -50,7 +50,7 @@ MarketingPage
 
 PageBlock
   id, pageId
-  type: hero | richText | image | productGrid | cta | spacer
+  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | articleTeasers | footer | saleStrip
   sortOrder: Int
   props: Json   # Zod-validated per type
 ```
@@ -69,6 +69,7 @@ Money never lives in block props as floats; product prices always come from cata
 | `productGrid` | `title?`, `productSlugs?` **or** `category?` / filter query | Resolve live from catalog |
 | `cta` | `label`, `href`, `variant?` | Link to box / PLP / external |
 | `spacer` | `size: sm\|md\|lg` | Layout only |
+| `saleStrip` | `text`, `ctaLabel?`, `ctaHref?`, `tone?` | Soft Gift promo band (Phase 12) |
 
 Unknown `type` → fail validation on save; public renderer skips unknown types safely (log).
 
@@ -140,6 +141,7 @@ All bodies through Zod. Block `props` validated by discriminated union on `type`
 | **11B** | `@dnd-kit` reorder; full v1 block set; SEO metadata | **DONE 2026-07-21** |
 | **11C** | `productGrid` live catalog; preview; Soft Gift polish | **DONE 2026-07-21** |
 | **11D** | Soft Gift `/gift` on MarketingPage `home` + homepage block types | **DONE 2026-07-21** |
+| **12** | TipTap + saleStrip + media library/upload | **DONE 2026-07-22** |
 
 ### Exit criteria (when coding)
 
@@ -157,12 +159,13 @@ Track here so testers/eng remember gaps. Ship only when Product/phase asks.
 
 | Item | Why | Notes |
 |---|---|---|
-| **TipTap (or toolbar) on `richText` marketing blocks** | Page builder body is raw HTML textarea today | Reuse editorial TipTap; keep DOMPurify |
-| **Custom blocks** e.g. `saleStrip` / promo banner | No freeform “custom section” yet | New Zod type + admin props + Soft Gift renderer |
-| **Media library / image upload** for `image` + hero `imageUrl` | Today: paste HTTPS URL only | Phase 1 media carry-over |
-| **Inline image in richText via upload** | TipTap image = URL prompt only | After media API |
+| **TipTap on `richText` marketing blocks** | **Shipped (Phase 12)** | Admin uses `ArticleEditor`; public DOMPurify |
+| **`saleStrip` promo banner** | **Shipped (Phase 12)** | Zod + admin + Soft Gift `GiftBand` renderer |
+| **Media library / image upload** for `image` + hero `imageUrl` | **Shipped (Phase 12)** | Local disk + `/api/v1/media/:id/content`; CMS picker |
+| **Inline image in richText via upload** | **Shipped (Phase 12)** | TipTap Upload/Library (URL prompt still available) |
 | **11D** `/gift` homepage on block engine | **Shipped** | Edit via `/admin/cms/pages` (slug `home`) |
 | **More block types** (FAQ, testimonials, countdown) | Client may ask | One type at a time + Zod |
+| **Real AWS/MinIO SDK** | Local disk store today | Swap behind `S3StorageAdapter` when ready |
 
 **Editorial TipTap reminder:** Toolbar shows only when article is editable (`ASSIGNED` / `DRAFT` / `CHANGES_REQUESTED`). **PUBLISHED** / review queues = read-only body (by design).
 
@@ -179,4 +182,4 @@ Queued for **later executions** (when human asks):
 
 ---
 
-**End of CMS_PAGE_BUILDER.md v1.0.0**
+**End of CMS_PAGE_BUILDER.md v1.1.0**

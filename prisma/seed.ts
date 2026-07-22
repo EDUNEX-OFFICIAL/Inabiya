@@ -85,6 +85,12 @@ const TEST_USERS: Array<{
     displayName: 'Test Creator',
     roleCodes: ['CREATOR'],
   },
+  {
+    email: 'super@test.inabiya',
+    password: 'Password123!',
+    displayName: 'Test Super Admin',
+    roleCodes: ['SUPER_ADMIN'],
+  },
 ];
 
 async function main() {
@@ -147,6 +153,7 @@ async function main() {
   const toys = await prisma.category.findUniqueOrThrow({ where: { slug: 'toys' } });
   const momCare = await prisma.category.findUniqueOrThrow({ where: { slug: 'mom-care' } });
 
+  // Unsplash demo media — IDs verified HTTP 200 (photo-1515488042361… is 404).
   const demoProducts = [
     {
       slug: 'cloud-soft-swaddle',
@@ -157,7 +164,7 @@ async function main() {
       pricePaise: 129900,
       onHand: 25,
       categoryId: newborn.id,
-      imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e3ddd4e7?w=800',
+      imageUrl: 'https://images.unsplash.com/photo-1522771930-78848d9293e8?w=800',
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn'],
       occasionTags: ['welcome-baby'],
@@ -173,7 +180,7 @@ async function main() {
       pricePaise: 249900,
       onHand: 15,
       categoryId: keepsakes.id,
-      imageUrl: 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800',
+      imageUrl: 'https://inabiya.edunexservices.in/gift/media/personalised-name-blanket.webp',
       recipientTags: ['girl', 'unisex'],
       ageBands: ['newborn', 'infant'],
       occasionTags: ['welcome-baby', 'naming'],
@@ -189,7 +196,7 @@ async function main() {
       pricePaise: 89900,
       onHand: 40,
       categoryId: toys.id,
-      imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800',
+      imageUrl: 'https://inabiya.edunexservices.in/gift/media/wooden-rattle-set.webp',
       recipientTags: ['boy', 'unisex'],
       ageBands: ['infant', 'toddler'],
       occasionTags: ['birthday', 'welcome-baby'],
@@ -205,7 +212,7 @@ async function main() {
       pricePaise: 399900,
       onHand: 12,
       categoryId: newborn.id,
-      imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e3ddd4e7?w=800',
+      imageUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=800',
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn'],
       occasionTags: ['welcome-baby', 'baby-shower'],
@@ -222,7 +229,7 @@ async function main() {
       pricePaise: 179900,
       onHand: 20,
       categoryId: momCare.id,
-      imageUrl: 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800',
+      imageUrl: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=800',
       recipientTags: ['mom'],
       ageBands: ['any'],
       occasionTags: ['baby-shower'],
@@ -290,10 +297,16 @@ async function main() {
       create: { variantId: variant.id, onHand: dp.onHand },
     });
 
-    const existingMedia = await prisma.productMedia.findFirst({
-      where: { productId: product.id, url: dp.imageUrl },
+    const primaryMedia = await prisma.productMedia.findFirst({
+      where: { productId: product.id },
+      orderBy: { sortOrder: 'asc' },
     });
-    if (!existingMedia) {
+    if (primaryMedia) {
+      await prisma.productMedia.update({
+        where: { id: primaryMedia.id },
+        data: { url: dp.imageUrl, altText: dp.title },
+      });
+    } else {
       await prisma.productMedia.create({
         data: { productId: product.id, url: dp.imageUrl, altText: dp.title },
       });
@@ -350,6 +363,7 @@ async function main() {
       sortOrder: 0,
       props: {
         variant: 'storefront',
+        eyebrow: 'Personalised baby gifting',
         headline: 'Little bundles of joy, thoughtfully chosen.',
         subcopy:
           'Build a bespoke baby box in gentle steps — or pick a ready-made hamper. Packed with warmth, shipped across India.',
@@ -357,14 +371,31 @@ async function main() {
         ctaHref: '/gift/box',
         ctaLabel2: 'Browse Hampers',
         ctaHref2: '/gift/products?hamper=1',
-        trustLine: 'Free shipping over ₹2,000 · Baby-safe brands · Curated for new parents',
+        trustLine: 'Baby-safe brands · Free shipping over ₹2,000 · Curated for new parents',
         imageUrl: 'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=900&q=85',
       },
     },
     {
       type: 'brandStrip',
       sortOrder: 1,
-      props: { title: 'Trusted brands we stock' },
+      props: {
+        title: 'Trusted brands we stock',
+        subtitle: 'Curated partners for gentle, baby-safe gifting',
+        showUsps: true,
+        usps: [
+          { icon: 'heart', label: 'Personalised with care' },
+          { icon: 'package', label: 'Ready-made hampers' },
+          { icon: 'gift', label: 'Baby-safe picks' },
+          { icon: 'truck', label: 'Pan-India shipping' },
+        ],
+        brands: [
+          { name: 'The Moms Co.', logoUrl: '/gift/brands/the-moms-co.svg' },
+          { name: 'Inabiya', logoUrl: '/gift/brands/inabiya.svg' },
+          { name: 'Chicco', logoUrl: '/gift/brands/chicco.svg' },
+          { name: 'Mamaearth', logoUrl: '/gift/brands/mamaearth.svg' },
+          { name: 'Soft Nest', logoUrl: '/gift/brands/soft-nest.svg' },
+        ],
+      },
     },
     {
       type: 'recipientSplit',
@@ -396,6 +427,7 @@ async function main() {
         hamper: true,
         limit: 3,
         seeAllHref: '/gift/products?hamper=1',
+        seeAllLabel: 'See all',
       },
     },
     {
@@ -404,6 +436,8 @@ async function main() {
       props: {
         title: 'Featured gifts',
         productSlugs: featuredSlugs,
+        seeAllHref: '/gift/products',
+        seeAllLabel: 'See all',
       },
     },
     {
@@ -423,6 +457,35 @@ async function main() {
         overline: 'Journal',
         title: 'From the parenting journal',
         limit: 3,
+        seeAllHref: '/articles',
+        seeAllLabel: 'All articles →',
+      },
+    },
+    {
+      type: 'footer',
+      sortOrder: 7,
+      props: {
+        brandName: 'Inabiya',
+        tagline: 'Thoughtfully personalised baby essentials & gifting.',
+        columns: [
+          {
+            title: 'Shop',
+            links: [
+              { label: 'Build Your Box', href: '/gift/box' },
+              { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
+              { label: 'Shop by Age', href: '/gift/products?age=newborn' },
+              { label: 'Corporate Gifting', href: '/gift/corporate' },
+            ],
+          },
+          {
+            title: 'Company',
+            links: [
+              { label: 'Parenting Blog', href: '/articles' },
+              { label: 'Our Specialists', href: '/specialists' },
+              { label: 'Contact', href: 'mailto:hello@inabiya.in' },
+            ],
+          },
+        ],
       },
     },
   ];
@@ -467,6 +530,87 @@ async function main() {
     });
   }
   console.log('Seeded Soft Gift homepage MarketingPage (slug=home)');
+
+  await prisma.commerceSetting.upsert({
+    where: { key: 'gift.chrome' },
+    update: {},
+    create: {
+      key: 'gift.chrome',
+      value: {
+        shopLinks: [
+          { href: '/gift/box', label: 'Build Your Box' },
+          { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
+          { href: '/gift/products?category=clothing', label: 'Clothing' },
+          { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
+          { href: '/gift/products?category=toys', label: 'Toys' },
+          { href: '/gift/products?category=mom-care', label: 'Mom Care' },
+          { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
+        ],
+        forWhomLinks: [
+          { href: '/gift/products?recipient=girl', label: 'Baby Girl' },
+          { href: '/gift/products?recipient=boy', label: 'Baby Boy' },
+          { href: '/gift/products?recipient=mom', label: 'Expecting Mom' },
+          { href: '/gift/products?age=newborn', label: 'Newborn' },
+          { href: '/gift/products?age=infant', label: 'Infant' },
+          { href: '/gift/products?age=toddler', label: 'Toddler' },
+        ],
+      },
+    },
+  });
+  console.log('Seeded gift.chrome setting (defaults)');
+
+  const corporateBlocks = [
+    {
+      type: 'hero',
+      sortOrder: 0,
+      props: {
+        variant: 'panel',
+        headline: 'Corporate & bulk gifting',
+        subcopy:
+          'Teams and events — share quantity and occasion; we will reply with pricing. Inquiry form below.',
+        ctaLabel: 'Back to shop',
+        ctaHref: '/gift',
+      },
+    },
+  ];
+  const existingCorporate = await prisma.marketingPage.findUnique({
+    where: { slug: 'corporate-gifting' },
+  });
+  if (existingCorporate) {
+    await prisma.pageBlock.deleteMany({ where: { pageId: existingCorporate.id } });
+    await prisma.marketingPage.update({
+      where: { id: existingCorporate.id },
+      data: {
+        title: 'Corporate & bulk gifting',
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+        blocks: {
+          create: corporateBlocks.map((b) => ({
+            type: b.type,
+            sortOrder: b.sortOrder,
+            props: b.props,
+          })),
+        },
+      },
+    });
+  } else {
+    await prisma.marketingPage.create({
+      data: {
+        slug: 'corporate-gifting',
+        title: 'Corporate & bulk gifting',
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+        blocks: {
+          create: corporateBlocks.map((b) => ({
+            type: b.type,
+            sortOrder: b.sortOrder,
+            props: b.props,
+          })),
+        },
+      },
+    });
+  }
+  console.log('Seeded MarketingPage slug=corporate-gifting');
 
   const coupons = [
     {
@@ -581,6 +725,32 @@ async function main() {
     },
   });
   console.log('Seeded brand@ + creator@ profiles');
+
+  const FLAGS: Array<{ key: string; enabled: boolean; description: string }> = [
+    {
+      key: 'support.impersonation',
+      enabled: false,
+      description: 'Support user impersonation (disabled by default)',
+    },
+    {
+      key: 'checkout.guest',
+      enabled: true,
+      description: 'Allow guest checkout path when wired',
+    },
+    {
+      key: 'media.library',
+      enabled: true,
+      description: 'Admin media library MVP',
+    },
+  ];
+  for (const flag of FLAGS) {
+    await prisma.featureFlag.upsert({
+      where: { key: flag.key },
+      update: { description: flag.description },
+      create: flag,
+    });
+  }
+  console.log(`Seeded ${FLAGS.length} feature flags`);
 }
 
 main()

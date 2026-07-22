@@ -3,7 +3,9 @@ import {
   adminSearchQuerySchema,
   createCouponBodySchema,
   customerStatusBodySchema,
+  giftChromeBodySchema,
   storefrontConfigBodySchema,
+  type GiftChromeBody,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
@@ -83,6 +85,17 @@ export class OpsAdminController {
     return this.storefront.setHomeConfig(body);
   }
 
+  /** Soft Gift nav + default footer chrome (CMS-controllable). */
+  @Get('gift-chrome')
+  getGiftChrome() {
+    return this.storefront.getGiftChrome();
+  }
+
+  @Post('gift-chrome')
+  setGiftChrome(@Body(new ZodValidationPipe(giftChromeBodySchema)) body: GiftChromeBody) {
+    return this.storefront.setGiftChrome(body);
+  }
+
   @Get('coupons')
   listCoupons() {
     return this.coupons.listAdmin();
@@ -129,5 +142,15 @@ export class StorefrontPublicController {
   @Get()
   homeConfig() {
     return this.storefront.getHomeConfig();
+  }
+}
+
+@Controller('catalog/gift-chrome')
+export class GiftChromePublicController {
+  constructor(private readonly storefront: StorefrontConfigService) {}
+
+  @Get()
+  giftChrome() {
+    return this.storefront.getGiftChrome();
   }
 }

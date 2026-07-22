@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 21, 2026 (Dev workflow: pnpm on 3101)
+Last Updated: July 22, 2026 (Phase 12 media library)
 
 ---
 
@@ -71,13 +71,13 @@ Path: `/srv/Inabiya/Docs/` (symlink `docs` → `Docs` for Cursor rules)
 
 | Field | Value |
 |---|---|
-| Phase | **1 carry-over — Password reset MVP** |
-| Status | `DONE` (password reset); Phase 11 **CLOSED** |
-| Milestone | Forgot/reset password live (email stub via worker) |
+| Phase | **Phase 12 — CMS TipTap + saleStrip + media** |
+| Status | **Shipped** (TipTap, saleStrip, media library/upload; real S3 SDK deferred) |
+| Milestone | Page-builder §12 complete |
 | Owner | Eng |
-| Target window | 2026-07-21+ |
+| Target window | 2026-07-22 |
 | Monorepo | `/srv/Inabiya` (GitHub: `EDUNEX-OFFICIAL/Inabiya`) |
-| Prior | Phase 11 CLOSED 2026-07-21 |
+| Prior | Ecommerce marketing CMS / Phase 11 CLOSED |
 
 ### 3.2 Locked production stack
 
@@ -116,7 +116,7 @@ Path: `/srv/Inabiya/Docs/` (symlink `docs` → `Docs` for Cursor rules)
 | B Commerce Admin | Phase 4 leftovers closed | Bulk edits, reports, support |
 | C Editorial | Phase 7 closed | Public publish + TipTap + writer payments |
 | D Creator Collective | Phase 8 closed | Reverse-bid path + brand analytics |
-| Shared Platform | Phase 9 closed | Hardening + runbooks; Phase 1 carry-over remains |
+| Shared Platform | Phase 1 + 9 closed | Mail/S3 stubs; real providers deferred |
 
 ### 3.6 Prototype caveat
 
@@ -138,11 +138,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Ecommerce + CMS deep QA/audit (when ready)
-2. Phase 1 remaining: media library, real email adapter, feature flags
-3. Public domain + Caddy / Razorpay / formal pentest
-4. CMS TipTap / saleStrip (`CMS_PAGE_BUILDER.md` §12)
-5. Creator Collective polish / audit
+1. Cloudflare SSL mode check: **Full (strict)** preferred
+2. Ecommerce + CMS deep QA on public host (TipTap, saleStrip, media upload)
+3. Razorpay / formal pentest
+4. Real AWS/MinIO SDK behind `S3StorageAdapter` (optional)
+5. When ready: real SMTP adapter
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
 
@@ -152,7 +152,7 @@ Q4 (Architecture rewrite) → **Resolved**
 | **2** | Soft Gift UX | **Closed** |
 | **3** | CMS / admin | **Closed** (smoked: SEO/Medical queues, product edit, coupon deactivate; `support@test.inabiya` seeded) |
 
-Phase 10 Soft Gift nav — **Closed**. Phase 11 page builder — **CLOSED** (11A–11D). Phase 1 carry-over: password reset **IN PROGRESS**. Audits still queued.
+Phase 10 Soft Gift nav — **Closed**. Phase 11 page builder — **CLOSED** (11A–11D). Phase 1 leftovers — **CLOSED** (stubs). Audits still queued.
 ---
 
 ## 5. Open questions
@@ -175,6 +175,24 @@ Resolve → move to Decisions Log → remove from this table.
 
 ## 6. Decisions log (append-only, newest first)
 
+### 2026-07-22 — Phase 12 media library COMPLETE
+
+- §12 remainder: upload + library picker for CMS image fields + TipTap
+- Bytes on local disk (not stub-only); public content path for Soft Gift imgs
+- Real S3/MinIO SDK still deferred behind adapter
+
+### 2026-07-22 — Phase 12 CMS TipTap + saleStrip CLOSED
+
+- Shipped TipTap on marketing `richText` (reuse `ArticleEditor`) + new `saleStrip` block
+- Media library / image upload remain deferred (§12 remainder)
+- No Prisma migration — `PageBlock.type` is string + JSON props
+
+### 2026-07-21 — Phase 1 leftovers CLOSED (stubs only)
+
+- **Override:** no real SMTP/SES/S3 — Phase 1 exits on ConsoleMailAdapter + existing S3StorageAdapter stub
+- Shipped: media library API + `/admin/platform/media`; `FeatureFlag` + migration/seed + `/admin/platform/flags`; `MailPort` + test-send; worker via `sendConsoleMail`; `POST /auth/logout-all`; seed `super@test.inabiya`
+- Profile edit already existed (Memory checkbox was stale)
+
 ### 2026-07-21 — Phase 11 Marketing Page Builder (docs only)
 
 - Client DnD “creating pages” → **1B**: full marketing pages `/pages/[slug]` + block builder (not homepage-only, not TipTap replace)
@@ -193,9 +211,9 @@ Resolve → move to Decisions Log → remove from this table.
 
 ### Residual risks (post–Phase 9)
 
-1. No public Caddy/HTTPS — loopback only
+1. ~~No public Caddy/HTTPS~~ — **live** `https://inabiya.edunexservices.in` (Cloudflare proxied + Caddy)
 2. Mock payments (Razorpay deferred)
-3. Phase 1 carry-over: media, password reset, real SMTP
+3. ~~Phase 1 carry-over: media, real SMTP (password reset done)~~ — Phase 1 **CLOSED** on stubs (ConsoleMail + S3 stub); real SMTP/S3 still deferred
 4. Single-node VPS (no HA)
 5. Formal external pentest not executed
 
@@ -350,13 +368,14 @@ Resolve → move to Decisions Log → remove from this table.
 
 | Module | Owner team (TBD names) | Status |
 |---|---|---|
-| identity | Platform | Partial (Phase 1 auth) |
-| media | Platform | Not started |
-| notifications | Platform | Not started |
-| audit | Platform | Partial (auth + catalog) |
-| commerce/* | Commerce | In progress (Phase 2 catalog) |
-| editorial/* | Content | Not started |
-| creator/* | Creator Collective | Not started |
+| identity | Platform | Done (Phase 1 CLOSED) |
+| media | Platform | Done (MVP + S3 stub) |
+| notifications | Platform | Done (ConsoleMail stub) |
+| audit | Platform | Done (privileged paths) |
+| commerce/* | Commerce | Phase 5 closed |
+| editorial/* | Content | Phase 7 closed |
+| creator/* | Creator Collective | Phase 8 closed |
+| feature-flags | Platform | Done (Phase 1) |
 
 Update owners when assigned.
 
@@ -650,7 +669,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ---
 
-## 10f. Archived — Phase 1 checklist (partial)
+## 10f. Archived — Phase 1 checklist (**CLOSED** 2026-07-21)
 
 ### Must-have (P0)
 
@@ -658,21 +677,23 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 - [x] JWT access + refresh strategy
 - [x] RBAC role codes seeded + RolesGuard
 - [x] API guards + commerce admin web gate
-- [ ] Admin shell by role — commerce gated; others open
-- [ ] Media library MVP
+- [x] Admin shell by role — role-gated layouts; empty nav OK
+- [x] Media library MVP (S3 stub + MediaAsset metadata)
 - [x] Audit log for privileged actions (auth)
-- [ ] Notification adapter + email provider
-- [ ] Feature flag primitive
+- [x] Notification adapter + email provider (**ConsoleMail stub** — no real SMTP)
+- [x] Feature flag primitive
 - [x] Password reset flow MVP
 
-### Should (P1) — deferred
+### Should (P1)
 
-- [ ] Session revocation / logout-all devices
-- [ ] Basic profile edit
+- [x] Session revocation / logout-all devices (`POST /auth/logout-all`)
+- [x] Basic profile edit (`PATCH /auth/me` + gift account UI)
 
 ### Explicitly deferred (P2)
 
 - [x] Third-party / social IdP — **not now**
+- [ ] Real SMTP / SES / Resend
+- [ ] Real S3 / MinIO SDK
 
 ---
 
@@ -680,14 +701,14 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ### Phase 1 — Identity & shared platform
 
-- [ ] Register/login/logout/refresh
-- [ ] RBAC roles seeded + enforced
-- [ ] Admin shell
-- [ ] Media upload/signed read
-- [ ] Audit privileged actions
-- [ ] Email adapter + test send
-- [ ] Feature flags primitive
-- [ ] Password reset MVP
+- [x] Register/login/logout/refresh
+- [x] RBAC roles seeded + enforced
+- [x] Admin shell
+- [x] Media upload/signed read
+- [x] Audit privileged actions
+- [x] Email adapter + test send (console stub)
+- [x] Feature flags primitive
+- [x] Password reset MVP
 
 ### Phase 2 — Catalog & gift foundations
 
@@ -773,10 +794,66 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-07-22 (Phase 12 §12 media library)
+
+- Local disk store in `S3StorageAdapter` (`MEDIA_LOCAL_ROOT`); Docker volume `inabiya_media_data`.
+- Public `GET /api/v1/media/:id/content` (images only); assets return `publicUrl`.
+- CMS `CmsMediaField` on image/hero/recipient URLs; TipTap Upload/Library (CMS + editorial).
+- Zod `cmsMediaUrlSchema`; platform media page shows thumbs + copy public URL.
+- Real AWS SDK still deferred.
+
+---
+
+### Session — 2026-07-22 (Phase 12 — CMS TipTap + saleStrip)
+
+- Active phase → Phase 12; Phases.md §25; CMS_PAGE_BUILDER + audit updated.
+- Admin richText: `ArticleEditor` TipTap (key=block id); public sanitize unchanged.
+- New block `saleStrip`: Zod (`text`, cta*, `tone`) + admin EMPTY_PROPS/toPayload + Soft Gift `GiftBand` renderer.
+- No Prisma migration (JSON block type). Media upload still deferred.
+- Files: `packages/validation`, CMS `[id]/page.tsx`, `article-editor.tsx`, `marketing-page-blocks.tsx`.
+
+---
+
+### Session — 2026-07-21 (Journal teasers — no more pill)
+
+- Homepage `articleTeasers`: title-only `clay-card` looked like a pill when one short article.
+- UI: full-width editorial panels (16:9 media + display title + excerpt + meta + Read CTA); single article = featured split layout.
+- API `resolveArticleTeasersProps`: returns description, publishedAt, imageUrl, category, specialist; preserves seeAllHref/Label.
+- Files: `marketing-page-blocks.tsx`, `cms-pages.service.ts`.
+
+---
+
+- DNS: Cloudflare A → `187.127.143.207` (proxied)
+- Caddy: `/srv/automation/deploy/caddy/sites.d/inabiya.caddy` — `/api*` → `inabiya-api:4001`, else `inabiya-web:3001`
+- Compose: `api` + `web` on `vps_edge`; env `APP_URL=https://inabiya.edunexservices.in`, `COOKIE_SECURE=true`, `NEXT_PUBLIC_API_URL=same-origin`
+- Ops: `vps-staggered-boot.sh` + `vps-health.sh` + `PORT_REGISTRY.md` updated
+- Smoke: home/gift/api health **200** on public HTTPS
+- Next: Cloudflare SSL Full (strict); public QA; Razorpay/pentest still deferred
+
+---
+
 ### Session — 2026-07-21 (Dev workflow: pnpm on 3101)
 
 - UI speed coding: `WEB_PORT=3101` + `pnpm --filter @inabiya/web dev`; API via Docker `4001` (or `pnpm dev:api` on 4101).
 - Preview: http://127.0.0.1:3101/gift — Docker prod stays on 3001; final ship via `bash scripts/deploy-vps.sh web`.
+
+### Session — 2026-07-21 (Personalised Name Blanket local image)
+
+- Served `public/personalised-name-blanket.jpeg` as `/gift/media/personalised-name-blanket.jpeg` (not under `/gift/products/` — conflicts with `[slug]` route).
+- Seed + live `product_media` for `personalised-name-blanket` point to that URL; copied into running `inabiya-web` public dir.
+
+### Session — 2026-07-21 (Local WebP product media)
+
+- Converted `public/personalised-name-blanket.jpeg` + `public/wooden-rattle-set.jpg` → WebP under `apps/web/public/gift/media/`.
+- Seed + live URLs: `/gift/media/personalised-name-blanket.webp`, `/gift/media/wooden-rattle-set.webp` (rattle resized to 1200w).
+- Note: Next only serves `public/` files present at process start — `docker restart inabiya-web` after copying new assets.
+
+### Session — 2026-07-21 (Fix broken gift product images)
+
+- Cause: seed Unsplash `photo-1515488042361-ee00e3ddd4e7` → HTTP 404 (swaddle + welcome hamper).
+- Replaced demo product media with verified-200 Unsplash URLs; seed now updates primary `product_media` row on re-seed.
+- Live DB `product_media` updated (4 rows); homepage product grids resolve from catalog — no web redeploy needed.
+- Hero image unchanged (`photo-1635874714425…` still 200).
 
 ### Session — 2026-07-21 (Centered hero + gifting SVG)
 
@@ -832,6 +909,34 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 - Soft Gift nav: shop links left/center; utility cluster (wishlist/cart icons + badge, profile dropdown with Profile/Orders/Sign out); mobile menu icon.
 - Fixes wrap that put “Sign out” under logo.
+
+### Session — 2026-07-21 (Brand strip polish + wordmarks)
+
+- USP/brand hierarchy + spacing; logo tiles with `/gift/brands/*.svg` interim wordmarks (not official trademarks).
+- Deployed `web`. Swap files with brand-approved assets when licensed.
+
+### Session — 2026-07-21 (Ecommerce marketing CMS control)
+
+- Audit: homepage chrome gaps → wired CMS. Hero eyebrow + trustLine chips; brandStrip usps/subtitle/logo brands; footer block; gift chrome API for nav+footer.
+- Admin: `/admin/cms/gift-chrome`; page builder fields for new props; corporate slug `corporate-gifting`.
+- Merchandising KV labeled legacy (does not drive `/gift`).
+- Deployed api+web; seed updated. Still code-owned: PLP filter chips, box wizard labels, cart/checkout chrome (functional UX).
+
+### Session — 2026-07-21 (Soft Gift brand marquee)
+
+- `brandStrip` home: USP first, then seamless infinite brand carousel (duplicated track, `translate3d(-50%)`, soft edge mask).
+- Defaults: The Moms Co. / Inabiya / Chicco / Mamaearth / Soft Nest; seed + live `home` block updated.
+- `prefers-reduced-motion`: static wrap; hover pauses.
+
+### Session — 2026-07-21 (Phase 1 leftovers CLOSED — stubs)
+
+- **Override:** no real SMTP/S3 — ConsoleMail + S3StorageAdapter stub only.
+- Mail: `MailPort` / `ConsoleMailAdapter`, `POST /admin/notifications/test-send`, worker `sendConsoleMail`.
+- Media: upload/list/get/delete on `MediaAsset`, MIME gate + check, `/admin/platform/media`.
+- Flags: `FeatureFlag` migration + seed (`support.impersonation` off, `checkout.guest`/`media.library` on), admin `/admin/platform/flags`, seed `super@test.inabiya`.
+- Auth: `POST /auth/logout-all`; profile edit already present.
+- Verify: migrate deploy, seed, `pnpm --filter @inabiya/api test` + api/web typecheck green.
+- Phase 1 → **CLOSED**.
 
 ### Session — 2026-07-21 (Phase 11 CLOSED → password reset)
 
@@ -1235,7 +1340,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 |---|---|---|
 | Local | Provisioned on VPS path | Compose postgres `5433` / redis `6381`; `.env` present (gitignored) |
 | Staging | Not provisioned | |
-| Production | Partial | Same VPS deploy path; no public domain/Caddy yet |
+| Production | Partial | Public host `https://inabiya.edunexservices.in` via Caddy; Razorpay/pentest still open |
 
 Do not store secret values in this file — only status and key names.
 

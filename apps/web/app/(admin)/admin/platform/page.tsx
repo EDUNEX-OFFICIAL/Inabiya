@@ -85,6 +85,16 @@ export default function PlatformAdminPage() {
       </section>
       <ul className="mt-6 text-sm space-y-1">
         <li>
+          <Link className="underline" href="/admin/platform/media">
+            Media library
+          </Link>
+        </li>
+        <li>
+          <Link className="underline" href="/admin/platform/flags">
+            Feature flags
+          </Link>
+        </li>
+        <li>
           <Link className="underline" href="/admin/commerce">
             Commerce
           </Link>

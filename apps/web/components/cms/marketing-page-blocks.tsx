@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Gift, HeartHandshake, Package, Truck } from 'lucide-react';
 import { formatInr } from '@/lib/catalog';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
+import { GiftStorefrontFooter } from '@/components/cms/gift-storefront-footer';
 
 export type CmsBlockProduct = {
   id: string;
@@ -116,26 +117,50 @@ function WaveAccent({ accent }: { accent: 'pink' | 'sky' | 'mint' | 'lavender' }
   );
 }
 
-const USP_ITEMS = [
-  { icon: HeartHandshake, label: 'Personalised with care' },
-  { icon: Package, label: 'Ready-made hampers' },
-  { icon: Gift, label: 'Baby-safe picks' },
-  { icon: Truck, label: 'Pan-India shipping' },
-] as const;
+const USP_ICON_MAP = {
+  heart: HeartHandshake,
+  package: Package,
+  gift: Gift,
+  truck: Truck,
+} as const;
 
-function UspRow() {
+const DEFAULT_USP_ITEMS = [
+  { icon: 'heart' as const, label: 'Personalised with care' },
+  { icon: 'package' as const, label: 'Ready-made hampers' },
+  { icon: 'gift' as const, label: 'Baby-safe picks' },
+  { icon: 'truck' as const, label: 'Pan-India shipping' },
+];
+
+function UspRow({
+  items,
+}: {
+  items?: Array<{ label: string; icon?: keyof typeof USP_ICON_MAP }>;
+}) {
+  const rows =
+    items?.length && items.some((i) => i.label.trim())
+      ? items
+          .filter((i) => i.label.trim())
+          .map((i, idx) => ({
+            label: i.label.trim(),
+            icon: (i.icon ??
+              DEFAULT_USP_ITEMS[idx % DEFAULT_USP_ITEMS.length]?.icon ??
+              'heart') as keyof typeof USP_ICON_MAP,
+          }))
+      : DEFAULT_USP_ITEMS;
+
   return (
-    <ul className="gift-usp mt-gs-6 list-none border-t border-border-subtle pt-gs-6">
-      {USP_ITEMS.map(({ icon: Icon, label }) => (
-        <li key={label} className="gift-usp__item">
-          <span className="gift-usp__icon" aria-hidden>
-            <Icon className="h-5 w-5" strokeWidth={1.75} />
-          </span>
-          <span className="text-xs font-medium uppercase tracking-wide text-foreground opacity-80">
-            {label}
-          </span>
-        </li>
-      ))}
+    <ul className="gift-usp list-none">
+      {rows.map(({ icon, label }) => {
+        const Icon = USP_ICON_MAP[icon] ?? HeartHandshake;
+        return (
+          <li key={label} className="gift-usp__item">
+            <span className="gift-usp__icon" aria-hidden>
+              <Icon className="h-5 w-5" strokeWidth={1.75} />
+            </span>
+            <span className="gift-usp__label">{label}</span>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -159,6 +184,7 @@ function HeroBlock({
         ctaLabel2={props.ctaLabel2 ? String(props.ctaLabel2) : undefined}
         ctaHref2={props.ctaHref2 ? String(props.ctaHref2) : undefined}
         trustLine={props.trustLine ? String(props.trustLine) : undefined}
+        eyebrow={props.eyebrow ? String(props.eyebrow) : undefined}
         imageUrl={props.imageUrl ? String(props.imageUrl) : undefined}
       />
     );
@@ -280,6 +306,7 @@ function ProductGridBlock({
 }) {
   const title = props.title ? String(props.title) : null;
   const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : null;
+  const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'See all';
   const products = Array.isArray(props.products)
     ? (props.products as CmsBlockProduct[])
     : [];
@@ -290,7 +317,7 @@ function ProductGridBlock({
         {title ? <h2 className="gift-h2">{title}</h2> : <span />}
         {seeAllHref ? (
           <Link href={seeAllHref} className="text-sm font-medium text-primary hover:underline">
-            See all
+            {seeAllLabel}
           </Link>
         ) : null}
       </div>
@@ -365,23 +392,143 @@ function ProductGridBlock({
   return <section className="py-gs-2">{grid}</section>;
 }
 
+/** Local wordmark tiles — swap for brand-approved logos when licensed. */
+const BRAND_LOGO_BY_NAME: Record<string, string> = {
+  'The Moms Co.': '/gift/brands/the-moms-co.svg',
+  Inabiya: '/gift/brands/inabiya.svg',
+  Chicco: '/gift/brands/chicco.svg',
+  Mamaearth: '/gift/brands/mamaearth.svg',
+  'Soft Nest': '/gift/brands/soft-nest.svg',
+};
+
+const DEFAULT_HOME_BRANDS = [
+  'The Moms Co.',
+  'Inabiya',
+  'Chicco',
+  'Mamaearth',
+  'Soft Nest',
+] as const;
+
+type BrandItem = { name: string; logoUrl: string | null };
+
+function normalizeBrands(raw: unknown): BrandItem[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return DEFAULT_HOME_BRANDS.map((name) => ({
+      name,
+      logoUrl: BRAND_LOGO_BY_NAME[name] ?? null,
+    }));
+  }
+  return raw
+    .map((entry): BrandItem | null => {
+      if (typeof entry === 'string' && entry.trim()) {
+        const name = entry.trim();
+        return { name, logoUrl: BRAND_LOGO_BY_NAME[name] ?? null };
+      }
+      if (entry && typeof entry === 'object' && 'name' in entry) {
+        const name = String((entry as { name: unknown }).name).trim();
+        if (!name) return null;
+        const custom =
+          typeof (entry as { logoUrl?: unknown }).logoUrl === 'string'
+            ? String((entry as { logoUrl: string }).logoUrl)
+            : null;
+        return { name, logoUrl: custom ?? BRAND_LOGO_BY_NAME[name] ?? null };
+      }
+      return null;
+    })
+    .filter((b): b is BrandItem => Boolean(b));
+}
+
+/** Seamless infinite brand strip — duplicated track, CSS translate -50%. */
+function BrandMarquee({
+  brands,
+  title,
+  subtitle,
+}: {
+  brands: unknown;
+  title: string;
+  subtitle?: string;
+}) {
+  const base = normalizeBrands(brands);
+  const loop =
+    base.length >= 8 ? base : [...base, ...base, ...(base.length < 5 ? base : [])];
+  const sub =
+    subtitle?.trim() || 'Curated partners for gentle, baby-safe gifting';
+
+  return (
+    <div className="gift-brand-strip">
+      <div className="gift-brand-strip__head">
+        <h2 className="gift-brand-strip__title">{title}</h2>
+        <p className="gift-brand-strip__sub">{sub}</p>
+      </div>
+      <div className="gift-brand-marquee" role="region" aria-label={title}>
+        <div className="gift-brand-marquee__track">
+          {[0, 1].map((copy) => (
+            <ul
+              key={copy}
+              className="gift-brand-marquee__group"
+              aria-hidden={copy === 1 ? true : undefined}
+            >
+              {loop.map((brand, i) => (
+                <li key={`${copy}-${brand.name}-${i}`} className="gift-brand-marquee__tile">
+                  {brand.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={brand.logoUrl}
+                      alt={brand.name}
+                      className="gift-brand-marquee__logo"
+                      width={160}
+                      height={40}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span className="gift-brand-marquee__fallback">{brand.name}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function parseUsps(raw: unknown): Array<{ label: string; icon?: keyof typeof USP_ICON_MAP }> {
+  if (!Array.isArray(raw)) return [];
+  const out: Array<{ label: string; icon?: keyof typeof USP_ICON_MAP }> = [];
+  for (const u of raw) {
+    if (!u || typeof u !== 'object') continue;
+    const label = String((u as { label?: unknown }).label ?? '').trim();
+    if (!label) continue;
+    const iconRaw = (u as { icon?: unknown }).icon;
+    const icon =
+      iconRaw === 'heart' || iconRaw === 'package' || iconRaw === 'gift' || iconRaw === 'truck'
+        ? iconRaw
+        : undefined;
+    out.push({ label, icon });
+  }
+  return out;
+}
+
 function BrandStripBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
-  const brands = Array.isArray(props.brands) ? props.brands.map(String) : [];
-  if (!brands.length && !home) return null;
+  const brands = props.brands;
+  const hasBrands = Array.isArray(brands) && brands.length > 0;
+  if (!hasBrands && !home) return null;
+
+  const title = String(props.title ?? 'Trusted brands we stock');
+  const subtitle = props.subtitle ? String(props.subtitle) : undefined;
+  const usps = parseUsps(props.usps);
+  const showUsps = props.showUsps !== false && home;
 
   const body = (
     <>
-      <h2 className="gift-overline">{String(props.title ?? 'Trusted brands we stock')}</h2>
-      {brands.length ? (
-        <ul className="mt-gs-4 flex flex-wrap gap-gs-2">
-          {brands.map((b) => (
-            <li key={b} className="clay-chip">
-              {b}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {home ? <UspRow /> : null}
+      {showUsps ? <UspRow items={usps} /> : null}
+      <BrandMarquee
+        brands={hasBrands ? brands : DEFAULT_HOME_BRANDS}
+        title={title}
+        subtitle={subtitle}
+      />
     </>
   );
 
@@ -392,8 +539,7 @@ function BrandStripBlock({ props, home }: { props: Record<string, unknown>; home
       </GiftBand>
     );
   }
-  if (!brands.length) return null;
-  return <section>{body}</section>;
+  return <section className="gift-section py-gs-6">{body}</section>;
 }
 
 function RecipientSplitBlock({
@@ -491,6 +637,37 @@ function RecipientSplitBlock({
   return <section>{body}</section>;
 }
 
+type ArticleTeaser = {
+  slug: string;
+  title: string;
+  description?: string | null;
+  publishedAt?: string | Date | null;
+  imageUrl?: string | null;
+  category?: { name: string; slug?: string } | null;
+  specialist?: { name: string; slug?: string } | null;
+};
+
+function formatArticleDate(value: string | Date | null | undefined) {
+  if (!value) return '';
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function ArticleTeaserMeta({ article }: { article: ArticleTeaser }) {
+  const parts = [
+    formatArticleDate(article.publishedAt),
+    article.category?.name,
+    article.specialist?.name,
+  ].filter(Boolean);
+  if (!parts.length) return null;
+  return <p className="mt-gs-3 text-xs opacity-60 sm:text-sm">{parts.join(' · ')}</p>;
+}
+
 function ArticleTeasersBlock({
   props,
   home,
@@ -499,9 +676,13 @@ function ArticleTeasersBlock({
   home?: boolean;
 }) {
   const articles = Array.isArray(props.articles)
-    ? (props.articles as Array<{ slug: string; title: string }>)
+    ? (props.articles as ArticleTeaser[])
     : [];
   if (!articles.length) return null;
+
+  const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : '/articles';
+  const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'All articles →';
+  const featured = articles.length === 1;
 
   const body = (
     <>
@@ -512,15 +693,64 @@ function ArticleTeasersBlock({
           ) : null}
           <h2 className="gift-h2">{String(props.title ?? 'From the parenting journal')}</h2>
         </div>
-        <Link href="/articles" className="text-sm font-medium hover:underline">
-          All articles →
+        <Link href={seeAllHref} className="shrink-0 text-sm font-medium hover:underline">
+          {seeAllLabel}
         </Link>
       </div>
-      <ul className="grid gap-gs-3 sm:grid-cols-3">
+      <ul
+        className={
+          featured
+            ? 'grid gap-gs-4'
+            : 'grid gap-gs-4 sm:grid-cols-2 lg:grid-cols-3'
+        }
+      >
         {articles.map((a) => (
-          <li key={a.slug} className="clay-card p-gs-4">
-            <Link href={`/articles/${a.slug}`} className="font-medium hover:underline">
-              {a.title}
+          <li key={a.slug} className="min-w-0">
+            <Link
+              href={`/articles/${a.slug}`}
+              className={`group clay-panel block w-full overflow-hidden transition hover:-translate-y-0.5 ${
+                featured ? 'sm:grid sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]' : ''
+              }`}
+            >
+              <div
+                className={`relative gift-media-fallback overflow-hidden ${
+                  featured ? 'aspect-[16/9] sm:aspect-auto sm:min-h-[14rem]' : 'aspect-[16/9]'
+                }`}
+              >
+                {a.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={String(a.imageUrl)}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-end p-gs-5">
+                    <p className="font-display text-3xl text-primary/35 sm:text-4xl">Journal</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col justify-center p-gs-5 sm:p-gs-6">
+                {a.category?.name ? (
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-primary">
+                    {a.category.name}
+                  </p>
+                ) : null}
+                <h3
+                  className={`font-display transition-colors group-hover:text-primary ${
+                    featured ? 'mt-gs-2 text-2xl sm:text-3xl' : 'mt-gs-2 text-xl sm:text-2xl'
+                  }`}
+                >
+                  {a.title}
+                </h3>
+                {a.description ? (
+                  <p className="mt-gs-2 line-clamp-2 text-sm opacity-75 sm:text-base">
+                    {a.description}
+                  </p>
+                ) : null}
+                <ArticleTeaserMeta article={a} />
+                <p className="mt-gs-4 text-sm font-medium text-primary">Read article →</p>
+              </div>
             </Link>
           </li>
         ))}
@@ -568,6 +798,39 @@ function RichTextBlock({ html }: { html: string }) {
   );
 }
 
+function SaleStripBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
+  const text = String(props.text ?? '').trim();
+  if (!text) return null;
+
+  const ctaLabel = props.ctaLabel ? String(props.ctaLabel) : '';
+  const ctaHref = props.ctaHref ? String(props.ctaHref) : '';
+  const rawTone = String(props.tone ?? 'blush');
+  const tone = (
+    rawTone === 'mint' || rawTone === 'sky' || rawTone === 'soft' ? rawTone : 'blush'
+  ) as 'blush' | 'mint' | 'sky' | 'soft';
+
+  const inner = (
+    <div className="flex flex-col items-start justify-between gap-gs-3 sm:flex-row sm:items-center">
+      <p className="font-display text-lg leading-snug sm:text-xl">{text}</p>
+      {ctaLabel && ctaHref ? (
+        <Link href={ctaHref} className="clay-btn-secondary shrink-0 text-sm">
+          {ctaLabel}
+        </Link>
+      ) : null}
+    </div>
+  );
+
+  if (home) {
+    return <GiftBand tone={tone}>{inner}</GiftBand>;
+  }
+
+  return (
+    <section className={`gift-band gift-band--${tone}`}>
+      <div className="gift-band-inner">{inner}</div>
+    </section>
+  );
+}
+
 function renderRestBlock(
   b: CmsPageBlock,
   layout: 'page' | 'home',
@@ -598,6 +861,26 @@ function renderRestBlock(
   if (b.type === 'articleTeasers') {
     return <ArticleTeasersBlock key={b.id} props={b.props} home={home} />;
   }
+  if (b.type === 'saleStrip') {
+    return <SaleStripBlock key={b.id} props={b.props} home={home} />;
+  }
+  if (b.type === 'footer') {
+    return (
+      <GiftStorefrontFooter
+        key={b.id}
+        brandName={b.props.brandName ? String(b.props.brandName) : undefined}
+        tagline={b.props.tagline ? String(b.props.tagline) : undefined}
+        columns={
+          Array.isArray(b.props.columns)
+            ? (b.props.columns as Array<{
+                title: string;
+                links: Array<{ label: string; href: string }>;
+              }>)
+            : undefined
+        }
+      />
+    );
+  }
   if (b.type === 'richText') {
     return <RichTextBlock key={b.id} html={String(b.props.html ?? '')} />;
   }
@@ -607,7 +890,8 @@ function renderRestBlock(
 export function MarketingPageBlocks({ blocks, previewBanner, layout = 'page' }: Props) {
   if (layout === 'home') {
     const hero = blocks.filter((b) => b.type === 'hero');
-    const rest = blocks.filter((b) => b.type !== 'hero');
+    const footer = blocks.filter((b) => b.type === 'footer');
+    const rest = blocks.filter((b) => b.type !== 'hero' && b.type !== 'footer');
     const productBandIndex = { current: 0 };
     return (
       <div>
@@ -622,6 +906,7 @@ export function MarketingPageBlocks({ blocks, previewBanner, layout = 'page' }: 
         <div className="space-y-0">
           {rest.map((b) => renderRestBlock(b, 'home', productBandIndex))}
         </div>
+        {footer.map((b) => renderRestBlock(b, 'home', productBandIndex))}
       </div>
     );
   }

@@ -21,10 +21,19 @@ import {
 } from '@/lib/auth-client';
 import { fetchCart } from '@/lib/cart-client';
 import { GiftSearch } from '@/components/gift/gift-search';
+import { apiUrl } from '@/lib/api-base';
 
 type MegaLink = { href: string; label: string };
 
-const SHOP_LINKS: MegaLink[] = [
+type MegaCopy = {
+  headline: string;
+  body: string;
+  ctaHref: string;
+  ctaLabel: string;
+  imageSrc: string;
+};
+
+const DEFAULT_SHOP_LINKS: MegaLink[] = [
   { href: '/gift/box', label: 'Build Your Box' },
   { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
   { href: '/gift/products?category=clothing', label: 'Clothing' },
@@ -34,7 +43,7 @@ const SHOP_LINKS: MegaLink[] = [
   { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
 ];
 
-const FOR_WHOM_LINKS: MegaLink[] = [
+const DEFAULT_FOR_WHOM_LINKS: MegaLink[] = [
   { href: '/gift/products?recipient=girl', label: 'Baby Girl' },
   { href: '/gift/products?recipient=boy', label: 'Baby Boy' },
   { href: '/gift/products?recipient=mom', label: 'Expecting Mom' },
@@ -42,6 +51,22 @@ const FOR_WHOM_LINKS: MegaLink[] = [
   { href: '/gift/products?age=infant', label: 'Infant' },
   { href: '/gift/products?age=toddler', label: 'Toddler' },
 ];
+
+const DEFAULT_SHOP_MEGA: MegaCopy = {
+  headline: 'Build or pick a hamper',
+  body: 'Guided boxes and ready-made packs — soft, safe, gift-ready.',
+  ctaHref: '/gift/box',
+  ctaLabel: 'Start building →',
+  imageSrc: '/gift/nav/shop.svg',
+};
+
+const DEFAULT_WHOM_MEGA: MegaCopy = {
+  headline: 'Gifts by stage',
+  body: 'Girl, boy, expecting mom — and newborn through toddler.',
+  ctaHref: '/gift/products?age=newborn',
+  ctaLabel: 'Shop newborn →',
+  imageSrc: '/gift/nav/for-whom.svg',
+};
 
 type MegaKey = 'shop' | 'forWhom' | null;
 
@@ -149,8 +174,55 @@ export function GiftNav() {
   const [mobileShopOpen, setMobileShopOpen] = useState(true);
   const [mobileWhomOpen, setMobileWhomOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [shopLinks, setShopLinks] = useState<MegaLink[]>(DEFAULT_SHOP_LINKS);
+  const [forWhomLinks, setForWhomLinks] = useState<MegaLink[]>(DEFAULT_FOR_WHOM_LINKS);
+  const [shopMega, setShopMega] = useState<MegaCopy>(DEFAULT_SHOP_MEGA);
+  const [whomMega, setWhomMega] = useState<MegaCopy>(DEFAULT_WHOM_MEGA);
   const profileRef = useRef<HTMLDivElement>(null);
   const megaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(apiUrl('/catalog/gift-chrome'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        if (Array.isArray(data.shopLinks) && data.shopLinks.length) {
+          setShopLinks(data.shopLinks);
+        }
+        if (Array.isArray(data.forWhomLinks) && data.forWhomLinks.length) {
+          setForWhomLinks(data.forWhomLinks);
+        }
+        if (data.shopMega) {
+          setShopMega({
+            ...DEFAULT_SHOP_MEGA,
+            ...data.shopMega,
+            headline: data.shopMega.headline || DEFAULT_SHOP_MEGA.headline,
+            body: data.shopMega.body || DEFAULT_SHOP_MEGA.body,
+            ctaHref: data.shopMega.ctaHref || DEFAULT_SHOP_MEGA.ctaHref,
+            ctaLabel: data.shopMega.ctaLabel || DEFAULT_SHOP_MEGA.ctaLabel,
+            imageSrc: data.shopMega.imageSrc || DEFAULT_SHOP_MEGA.imageSrc,
+          });
+        }
+        if (data.forWhomMega) {
+          setWhomMega({
+            ...DEFAULT_WHOM_MEGA,
+            ...data.forWhomMega,
+            headline: data.forWhomMega.headline || DEFAULT_WHOM_MEGA.headline,
+            body: data.forWhomMega.body || DEFAULT_WHOM_MEGA.body,
+            ctaHref: data.forWhomMega.ctaHref || DEFAULT_WHOM_MEGA.ctaHref,
+            ctaLabel: data.forWhomMega.ctaLabel || DEFAULT_WHOM_MEGA.ctaLabel,
+            imageSrc: data.forWhomMega.imageSrc || DEFAULT_WHOM_MEGA.imageSrc,
+          });
+        }
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     function sync() {
@@ -267,12 +339,12 @@ export function GiftNav() {
             className="absolute left-0 right-0 top-full z-40 mt-gs-2 max-h-[min(70vh,28rem)] overflow-y-auto clay-panel p-gs-5 shadow-clay-hover"
           >
             <MegaPanel
-              links={SHOP_LINKS}
-              imageSrc="/gift/nav/shop.svg"
-              headline="Build or pick a hamper"
-              body="Guided boxes and ready-made packs — soft, safe, gift-ready."
-              ctaHref="/gift/box"
-              ctaLabel="Start building →"
+              links={shopLinks}
+              imageSrc={shopMega.imageSrc}
+              headline={shopMega.headline}
+              body={shopMega.body}
+              ctaHref={shopMega.ctaHref}
+              ctaLabel={shopMega.ctaLabel}
               onNavigate={() => setMega(null)}
             />
           </div>
@@ -283,13 +355,13 @@ export function GiftNav() {
             className="absolute left-0 right-0 top-full z-40 mt-gs-2 max-h-[min(70vh,28rem)] overflow-y-auto clay-panel p-gs-5 shadow-clay-hover"
           >
             <MegaPanel
-              links={FOR_WHOM_LINKS}
-              imageSrc="/gift/nav/for-whom.svg"
+              links={forWhomLinks}
+              imageSrc={whomMega.imageSrc}
               imageClass="gift-panel-sky"
-              headline="Gifts by stage"
-              body="Girl, boy, expecting mom — and newborn through toddler."
-              ctaHref="/gift/products?age=newborn"
-              ctaLabel="Shop newborn →"
+              headline={whomMega.headline}
+              body={whomMega.body}
+              ctaHref={whomMega.ctaHref}
+              ctaLabel={whomMega.ctaLabel}
               onNavigate={() => setMega(null)}
             />
           </div>
@@ -411,7 +483,7 @@ export function GiftNav() {
           </button>
           {mobileShopOpen ? (
             <ul className="mb-gs-2 flex flex-col gap-gs-1 border-b border-border-subtle pb-gs-3">
-              {SHOP_LINKS.map((l) => (
+              {shopLinks.map((l) => (
                 <li key={l.href}>
                   <Link
                     className="block rounded-xl px-gs-3 py-gs-2 hover:bg-white/80"
@@ -436,7 +508,7 @@ export function GiftNav() {
           </button>
           {mobileWhomOpen ? (
             <ul className="mb-gs-2 flex flex-col gap-gs-1 border-b border-border-subtle pb-gs-3">
-              {FOR_WHOM_LINKS.map((l) => (
+              {forWhomLinks.map((l) => (
                 <li key={l.href}>
                   <Link
                     className="block rounded-xl px-gs-3 py-gs-2 hover:bg-white/80"

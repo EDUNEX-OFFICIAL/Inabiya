@@ -1,8 +1,8 @@
 # Inabiya — Implementation Cross-Check
 
-Last verified: **2026-07-21** (Phase 10 closed; Phase 11A–11C page builder shipped)
+Last verified: **2026-07-22** (Phase 12 TipTap + saleStrip)
 
-This document reconciles **Phases 0–9** claims in `Memory.md` against the repo, plus post-GA waves / Phase 10–11.
+This document reconciles **Phases 0–9** claims in `Memory.md` against the repo, plus post-GA waves / Phase 10–12.
 
 ---
 
@@ -22,8 +22,8 @@ This document reconciles **Phases 0–9** claims in `Memory.md` against the repo
 | **9** Hardening | **Closed (VPS-local)** | Rate limits, DR/load scripts, RUNBOOKS, SECURITY |
 | **Waves 1–3** | **Closed** | Money/trust + Soft Gift UX + CMS ops (smoked 2026-07-21) |
 | **10** Soft Gift Nav | **Closed** | Taxonomy, nav IA, 6-step builder, hampers, inquiries — `SOFT_GIFT_HOMEPAGE_REFERENCE.md` |
-| **11** Marketing Page Builder | **11A–11C done** | Live productGrid + draft preview; 11D optional — `CMS_PAGE_BUILDER.md` |
-
+| **11** Marketing Page Builder | **Closed** | 11A–11D; Soft Gift `/gift` on blocks — `CMS_PAGE_BUILDER.md` |
+| **12** CMS TipTap + saleStrip + media | **Shipped** | TipTap, saleStrip, local media library/upload — real S3 SDK deferred |
 ---
 
 ## Phase 9 evidence
@@ -57,7 +57,7 @@ This document reconciles **Phases 0–9** claims in `Memory.md` against the repo
 4. Formal external pentest before public GA  
 5. Real on-call contacts  
 6. Soft Gift homepage pixel polish — **not required**; nav-first functional Phase 10 instead  
-7. Phase 11 marketing page builder — **11A–11C shipped**; 11D optional; see `CMS_PAGE_BUILDER.md` §12 future backlog (TipTap on richText, saleStrip, media upload)  
+7. Phase 11–12 marketing page builder — **closed** (TipTap, saleStrip, media library); real S3 SDK deferred  
 8. Deep re-audit: ecommerce + CMS; then Creator Collective (+ remaining core) — **queued**, not this session  
 9. Soft Gift storefront visual redesign — **Plush Clay Waves 1–3 shipped** (mobile-first customer UI); optional further polish later  
 10. Editorial: TipTap toolbar only on editable statuses — document for QA (not a bug on PUBLISHED)

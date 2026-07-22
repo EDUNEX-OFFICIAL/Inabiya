@@ -131,6 +131,19 @@ model MediaAsset {
   @@map("media_assets")
 }
 
+// --- Feature flags (Phase 1) ---
+
+model FeatureFlag {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  enabled     Boolean  @default(false)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("feature_flags")
+}
+
 // --- Commerce catalog (Phase 2) ---
 
 enum ProductStatus {

@@ -31,6 +31,9 @@ services:
       API_PORT: '4001'
       DATABASE_URL: postgresql://${POSTGRES_USER:-inabiya}:${POSTGRES_PASSWORD:-inabiya}@postgres:5432/${POSTGRES_DB:-inabiya}?schema=public
       REDIS_URL: redis://redis:6379
+      MEDIA_LOCAL_ROOT: /data/media
+    volumes:
+      - inabiya_media_data:/data/media
     ports:
       - '127.0.0.1:4001:4001'
     healthcheck:
@@ -47,6 +50,8 @@ services:
       start_period: 40s
     networks:
       - inabiya_internal
+      # Caddy routes /api* on public host → this service (vps_edge)
+      - vps_edge
 
   worker:
     build:

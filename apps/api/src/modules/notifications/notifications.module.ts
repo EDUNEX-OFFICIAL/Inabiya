@@ -1,5 +1,12 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from '../audit/audit.module';
+import { IdentityModule } from '../identity/identity.module';
+import { NotificationsController } from './notifications.controller';
+import { NotificationsService } from './notifications.service';
 
-/** Phase 0 scaffold — no business logic yet. */
-@Module({})
+@Module({
+  imports: [AuditModule, IdentityModule],
+  controllers: [NotificationsController],
+  providers: [NotificationsService],
+})
 export class NotificationsModule {}

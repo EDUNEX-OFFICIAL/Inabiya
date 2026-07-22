@@ -334,34 +334,62 @@ export class CmsPagesService {
 
   private async resolveBrandStripProps(props: Record<string, unknown>) {
     const title = typeof props.title === 'string' ? props.title : undefined;
-    let brands = Array.isArray(props.brands)
-      ? props.brands.map(String).filter(Boolean).slice(0, 24)
-      : [];
+    const subtitle = typeof props.subtitle === 'string' ? props.subtitle : undefined;
+    const showUsps = props.showUsps !== false;
+    const usps = Array.isArray(props.usps) ? props.usps : undefined;
+    let brands = Array.isArray(props.brands) ? props.brands.slice(0, 24) : [];
     if (!brands.length) {
       const listed = await this.catalog.listPublishedProducts({ sort: 'newest' });
       brands = Array.from(
         new Set(listed.map((p) => p.brandName).filter((b): b is string => Boolean(b))),
       ).slice(0, 8);
     }
-    return { ...(title ? { title } : {}), brands };
+    return {
+      ...(title ? { title } : {}),
+      ...(subtitle ? { subtitle } : {}),
+      brands,
+      ...(usps ? { usps } : {}),
+      showUsps,
+    };
   }
 
   private async resolveArticleTeasersProps(props: Record<string, unknown>) {
     const overline = typeof props.overline === 'string' ? props.overline : undefined;
     const title = typeof props.title === 'string' ? props.title : undefined;
+    const seeAllHref = typeof props.seeAllHref === 'string' ? props.seeAllHref : undefined;
+    const seeAllLabel = typeof props.seeAllLabel === 'string' ? props.seeAllLabel : undefined;
     const limit =
       typeof props.limit === 'number' && props.limit > 0 ? Math.min(props.limit, 12) : 3;
     const rows = await this.prisma.article.findMany({
       where: { status: ArticleStatus.PUBLISHED },
       orderBy: { publishedAt: 'desc' },
       take: limit,
-      select: { slug: true, title: true },
+      select: {
+        slug: true,
+        title: true,
+        seoTitle: true,
+        seoDescription: true,
+        publishedAt: true,
+        ogImageUrl: true,
+        category: { select: { name: true, slug: true } },
+        specialist: { select: { name: true, slug: true } },
+      },
     });
     return {
       ...(overline ? { overline } : {}),
       ...(title ? { title } : {}),
+      ...(seeAllHref ? { seeAllHref } : {}),
+      ...(seeAllLabel ? { seeAllLabel } : {}),
       limit,
-      articles: rows,
+      articles: rows.map((a) => ({
+        slug: a.slug,
+        title: a.seoTitle ?? a.title,
+        description: a.seoDescription,
+        publishedAt: a.publishedAt,
+        imageUrl: a.ogImageUrl,
+        category: a.category,
+        specialist: a.specialist,
+      })),
     };
   }
 
