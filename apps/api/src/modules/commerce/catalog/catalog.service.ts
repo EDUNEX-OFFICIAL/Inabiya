@@ -1,8 +1,17 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, ProductStatus } from '@prisma/client';
-import type { CreateCategoryBody, CreateProductBody, UpdateProductBody } from '@inabiya/validation';
+import type {
+  CreateCategoryBody,
+  CreateProductBody,
+  UpdateProductBody,
+  UpdateVariantBody,
+} from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
+import {
+  isManualStorefrontLabel,
+  resolveStorefrontDisplayLabels,
+} from './storefront-display-labels';
 
 const productInclude = {
   variants: { include: { inventory: true }, orderBy: { createdAt: 'asc' as const } },
@@ -172,13 +181,24 @@ export class CatalogService {
               }
             : undefined,
           variants: {
-            create: body.variants.map((v) => ({
-              sku: v.sku,
-              label: v.label,
-              pricePaise: v.pricePaise,
-              giftBoxEligible: v.giftBoxEligible ?? true,
-              inventory: { create: { onHand: v.onHand ?? 0, reserved: 0 } },
-            })),
+            create: body.variants.map((v) => {
+              const compareAt =
+                v.compareAtPricePaise === undefined ? undefined : v.compareAtPricePaise;
+              if (compareAt != null && compareAt < v.pricePaise) {
+                throw new BadRequestException({
+                  code: 'INVALID_COMPARE_AT',
+                  message: 'MRP (compare-at) must be greater than or equal to price.',
+                });
+              }
+              return {
+                sku: v.sku,
+                label: v.label,
+                pricePaise: v.pricePaise,
+                compareAtPricePaise: compareAt ?? null,
+                giftBoxEligible: v.giftBoxEligible ?? true,
+                inventory: { create: { onHand: v.onHand ?? 0, reserved: 0 } },
+              };
+            }),
           },
         },
         include: productInclude,
@@ -351,6 +371,46 @@ export class CatalogService {
     return inventory;
   }
 
+  async updateVariant(
+    variantId: string,
+    body: UpdateVariantBody,
+    actorId: string,
+    requestId?: string,
+  ) {
+    const variant = await this.prisma.productVariant.findUnique({ where: { id: variantId } });
+    if (!variant) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Variant not found.' });
+    }
+    if (body.compareAtPricePaise != null && body.compareAtPricePaise < variant.pricePaise) {
+      throw new BadRequestException({
+        code: 'INVALID_COMPARE_AT',
+        message: 'MRP (compare-at) must be greater than or equal to price.',
+      });
+    }
+
+    const updated = await this.prisma.productVariant.update({
+      where: { id: variantId },
+      data: { compareAtPricePaise: body.compareAtPricePaise },
+    });
+
+    await this.audit.write({
+      actorId,
+      action: 'catalog.variant.update',
+      resource: 'variant',
+      resourceId: variantId,
+      metadata: { compareAtPricePaise: body.compareAtPricePaise },
+      requestId,
+    });
+    return {
+      id: updated.id,
+      sku: updated.sku,
+      label: updated.label,
+      pricePaise: updated.pricePaise,
+      compareAtPricePaise: updated.compareAtPricePaise,
+      giftBoxEligible: updated.giftBoxEligible,
+    };
+  }
+
   private async resolveCategoryIds(slugs: string[]) {
     if (!slugs.length) return [];
     const cats = await this.prisma.category.findMany({ where: { slug: { in: slugs } } });
@@ -372,12 +432,19 @@ export class CatalogService {
         sku: v.sku,
         label: v.label,
         pricePaise: v.pricePaise,
+        compareAtPricePaise: v.compareAtPricePaise,
         giftBoxEligible: v.giftBoxEligible,
         available: Math.max(0, onHand - reserved),
         onHand,
       };
     });
     const fromPricePaise = variants.length ? Math.min(...variants.map((v) => v.pricePaise)) : 0;
+    const storefrontLabels = (product.storefrontLabels ?? []).filter(isManualStorefrontLabel);
+    const displayLabels = resolveStorefrontDisplayLabels({
+      publishedAt: product.publishedAt,
+      storefrontLabels,
+      variants,
+    });
     return {
       id: product.id,
       slug: product.slug,
@@ -391,9 +458,8 @@ export class CatalogService {
       occasionTags: product.occasionTags,
       isReadyMadeHamper: product.isReadyMadeHamper,
       brandName: product.brandName,
-      storefrontLabels: (product.storefrontLabels ?? []).filter(
-        (l): l is 'NEW' | 'SALE' => l === 'NEW' || l === 'SALE',
-      ),
+      storefrontLabels,
+      displayLabels,
       categories: product.categories.map((pc) => ({
         slug: pc.category.slug,
         name: pc.category.name,

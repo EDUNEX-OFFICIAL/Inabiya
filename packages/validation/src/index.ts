@@ -89,7 +89,7 @@ export const createProductBodySchema = z.object({
   isReadyMadeHamper: z.boolean().optional(),
   brandName: z.string().max(120).optional(),
   storefrontLabels: z
-    .array(z.enum(['NEW', 'SALE']))
+    .array(z.enum(['BESTSELLER', 'EDITORS_PICK', 'GIFT_SET']))
     .max(2)
     .optional(),
   variants: z
@@ -98,6 +98,7 @@ export const createProductBodySchema = z.object({
         sku: z.string().min(1).max(64),
         label: z.string().min(1).max(120),
         pricePaise: z.number().int().min(0),
+        compareAtPricePaise: z.number().int().min(0).nullable().optional(),
         onHand: z.number().int().min(0).default(0),
         giftBoxEligible: z.boolean().optional(),
       }),
@@ -136,13 +137,18 @@ export const updateProductBodySchema = z.object({
   isReadyMadeHamper: z.boolean().optional(),
   brandName: z.string().max(120).nullable().optional(),
   storefrontLabels: z
-    .array(z.enum(['NEW', 'SALE']))
+    .array(z.enum(['BESTSELLER', 'EDITORS_PICK', 'GIFT_SET']))
     .max(2)
     .optional(),
 });
 
 export const updateInventoryBodySchema = z.object({
   onHand: z.number().int().min(0),
+});
+
+/** Admin: set/clear MRP (compare-at) on a variant */
+export const updateVariantBodySchema = z.object({
+  compareAtPricePaise: z.number().int().min(0).nullable(),
 });
 
 export const createCategoryBodySchema = z.object({
@@ -198,6 +204,7 @@ export const giftingInquiryBodySchema = z.object({
 
 export type CreateProductBody = z.infer<typeof createProductBodySchema>;
 export type UpdateProductBody = z.infer<typeof updateProductBodySchema>;
+export type UpdateVariantBody = z.infer<typeof updateVariantBodySchema>;
 export type CreateCategoryBody = z.infer<typeof createCategoryBodySchema>;
 export type GiftingInquiryBody = z.infer<typeof giftingInquiryBodySchema>;
 
@@ -543,6 +550,8 @@ export const pageBlockTypeSchema = z.enum([
   'spacer',
   'brandStrip',
   'recipientSplit',
+  'discoveryChips',
+  'buildYourBoxTeaser',
   'articleTeasers',
   'footer',
   'saleStrip',
@@ -575,6 +584,8 @@ const imagePropsSchema = z.object({
 
 const productGridPropsSchema = z.object({
   title: z.string().max(120).optional(),
+  overline: z.string().max(80).optional(),
+  subtitle: z.string().max(300).optional(),
   productSlugs: z.array(z.string().max(120)).max(24).optional(),
   category: z.string().max(80).optional(),
   hamper: z.boolean().optional(),
@@ -621,9 +632,11 @@ const recipientCardSchema = z.object({
   label: z.string().min(1).max(40),
   href: z.string().min(1).max(500),
   eyebrow: z.string().max(80).optional(),
+  blurb: z.string().max(200).optional(),
   cta: z.string().max(80).optional(),
   accent: z.enum(['pink', 'sky']).optional(),
   imageUrl: cmsMediaUrlSchema.optional(),
+  imageAlt: z.string().max(200).optional(),
 });
 
 const recipientSplitPropsSchema = z.object({
@@ -636,9 +649,39 @@ const recipientSplitPropsSchema = z.object({
 const articleTeasersPropsSchema = z.object({
   overline: z.string().max(80).optional(),
   title: z.string().max(120).optional(),
+  subtitle: z.string().max(300).optional(),
   limit: z.number().int().min(1).max(12).optional(),
   seeAllHref: z.string().max(500).optional(),
   seeAllLabel: z.string().max(80).optional(),
+  /** Default: hide section when no published articles */
+  showEmptyPlaceholder: z.boolean().optional(),
+});
+
+const discoveryChipSchema = z.object({
+  label: z.string().min(1).max(40),
+  href: z.string().min(1).max(500),
+});
+
+const discoveryChipsPropsSchema = z.object({
+  overline: z.string().max(80).optional(),
+  title: z.string().max(120).optional(),
+  subtitle: z.string().max(300).optional(),
+  items: z.array(discoveryChipSchema).min(1).max(8),
+});
+
+const buildYourBoxStepSchema = z.object({
+  title: z.string().min(1).max(80),
+  body: z.string().max(200).optional(),
+});
+
+const buildYourBoxTeaserPropsSchema = z.object({
+  overline: z.string().max(80).optional(),
+  title: z.string().min(1).max(120),
+  body: z.string().max(400).optional(),
+  ctaLabel: z.string().max(80).optional(),
+  ctaHref: z.string().max(500).optional(),
+  imageUrl: cmsMediaUrlSchema.optional(),
+  steps: z.array(buildYourBoxStepSchema).min(1).max(4).optional(),
 });
 
 const footerLinkSchema = z.object({
@@ -651,10 +694,18 @@ const footerColumnSchema = z.object({
   links: z.array(footerLinkSchema).max(12),
 });
 
+const footerSocialLinkSchema = z.object({
+  label: z.string().min(1).max(40),
+  href: z.string().min(1).max(500),
+  network: z.string().max(40).optional(),
+});
+
 const footerPropsSchema = z.object({
   brandName: z.string().max(80).optional(),
   tagline: z.string().max(300).optional(),
   columns: z.array(footerColumnSchema).max(4).optional(),
+  socialLinks: z.array(footerSocialLinkSchema).max(8).optional(),
+  showNewsletter: z.boolean().optional(),
 });
 
 const saleStripPropsSchema = z.object({
@@ -683,6 +734,8 @@ export const pageBlockInputSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('spacer'), props: spacerPropsSchema }),
   z.object({ type: z.literal('brandStrip'), props: brandStripPropsSchema }),
   z.object({ type: z.literal('recipientSplit'), props: recipientSplitPropsSchema }),
+  z.object({ type: z.literal('discoveryChips'), props: discoveryChipsPropsSchema }),
+  z.object({ type: z.literal('buildYourBoxTeaser'), props: buildYourBoxTeaserPropsSchema }),
   z.object({ type: z.literal('articleTeasers'), props: articleTeasersPropsSchema }),
   z.object({ type: z.literal('footer'), props: footerPropsSchema }),
   z.object({ type: z.literal('saleStrip'), props: saleStripPropsSchema }),

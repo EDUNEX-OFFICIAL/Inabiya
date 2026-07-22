@@ -8,6 +8,14 @@ export function formatInr(paise: number): string {
   }).format(paise / 100);
 }
 
+export type ManualStorefrontLabel = 'BESTSELLER' | 'EDITORS_PICK' | 'GIFT_SET';
+
+export type StorefrontDisplayLabel = {
+  code: string;
+  text: string;
+  tone: 'sale' | 'new' | 'stock' | 'manual';
+};
+
 export type CatalogProduct = {
   id: string;
   slug: string;
@@ -20,7 +28,10 @@ export type CatalogProduct = {
   occasionTags?: string[];
   isReadyMadeHamper?: boolean;
   brandName?: string | null;
-  storefrontLabels?: Array<'NEW' | 'SALE'>;
+  /** Manual admin presets only */
+  storefrontLabels?: ManualStorefrontLabel[];
+  /** Resolved hybrid ribbons (max 2) for PLP/PDP */
+  displayLabels?: StorefrontDisplayLabel[];
   media: Array<{ url: string; altText: string | null }>;
   categories: Array<{ slug: string; name: string }>;
   variants: Array<{
@@ -28,6 +39,7 @@ export type CatalogProduct = {
     sku: string;
     label: string;
     pricePaise: number;
+    compareAtPricePaise?: number | null;
     available: number;
     onHand?: number;
     giftBoxEligible: boolean;

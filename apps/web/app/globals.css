@@ -528,6 +528,7 @@ h3 {
   }
 
   [data-theme='gift'] .gift-hero-split__frame {
+    position: relative;
     overflow: hidden;
     border-radius: var(--radius-card);
     box-shadow: var(--clay-shadow);
@@ -894,8 +895,16 @@ h3 {
     will-change: transform;
   }
 
-  [data-theme='gift'] .gift-brand-marquee:hover .gift-brand-marquee__track {
+  [data-theme='gift'] .gift-brand-marquee:hover .gift-brand-marquee__track,
+  [data-theme='gift'] .gift-brand-marquee:focus-within .gift-brand-marquee__track {
     animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-theme='gift'] .gift-brand-marquee__track {
+      animation: none !important;
+      transform: none !important;
+    }
   }
 
   [data-theme='gift'] .gift-brand-marquee__group {

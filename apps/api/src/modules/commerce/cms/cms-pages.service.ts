@@ -289,24 +289,37 @@ export class CmsPagesService {
     slug: string;
     title: string;
     fromPricePaise: number;
+    brandName?: string | null;
+    isReadyMadeHamper?: boolean;
+    displayLabels?: Array<{ code: string; text: string; tone: string }>;
     media: Array<{ url: string; altText: string | null }>;
+    variants?: Array<{ id: string; available: number }>;
   }) {
+    const quick = (p.variants ?? []).find((v) => v.available > 0);
     return {
       id: p.id,
       slug: p.slug,
       title: p.title,
       fromPricePaise: p.fromPricePaise,
+      brandName: p.brandName ?? null,
+      isReadyMadeHamper: Boolean(p.isReadyMadeHamper),
+      displayLabels: p.displayLabels ?? [],
+      quickAddVariantId: quick?.id ?? null,
+      available: quick?.available ?? 0,
       media: p.media.map((m) => ({ url: m.url, altText: m.altText })),
     };
   }
 
   private async resolveProductGridProps(props: Record<string, unknown>) {
     const title = typeof props.title === 'string' ? props.title : undefined;
+    const overline = typeof props.overline === 'string' ? props.overline : undefined;
+    const subtitle = typeof props.subtitle === 'string' ? props.subtitle : undefined;
     const category = typeof props.category === 'string' ? props.category : undefined;
     const hamper = props.hamper === true;
     const limit =
       typeof props.limit === 'number' && props.limit > 0 ? Math.min(props.limit, 24) : undefined;
     const seeAllHref = typeof props.seeAllHref === 'string' ? props.seeAllHref : undefined;
+    const seeAllLabel = typeof props.seeAllLabel === 'string' ? props.seeAllLabel : undefined;
     const slugs = Array.isArray(props.productSlugs)
       ? props.productSlugs.map(String).filter(Boolean)
       : [];
@@ -336,11 +349,14 @@ export class CmsPagesService {
 
     return {
       ...(title ? { title } : {}),
+      ...(overline ? { overline } : {}),
+      ...(subtitle ? { subtitle } : {}),
       ...(slugs.length ? { productSlugs: slugs } : {}),
       ...(category ? { category } : {}),
       ...(hamper ? { hamper: true } : {}),
       ...(limit ? { limit } : {}),
       ...(seeAllHref ? { seeAllHref } : {}),
+      ...(seeAllLabel ? { seeAllLabel } : {}),
       products,
     };
   }
@@ -369,6 +385,7 @@ export class CmsPagesService {
   private async resolveArticleTeasersProps(props: Record<string, unknown>) {
     const overline = typeof props.overline === 'string' ? props.overline : undefined;
     const title = typeof props.title === 'string' ? props.title : undefined;
+    const subtitle = typeof props.subtitle === 'string' ? props.subtitle : undefined;
     const seeAllHref = typeof props.seeAllHref === 'string' ? props.seeAllHref : undefined;
     const seeAllLabel = typeof props.seeAllLabel === 'string' ? props.seeAllLabel : undefined;
     const limit =
@@ -391,6 +408,7 @@ export class CmsPagesService {
     return {
       ...(overline ? { overline } : {}),
       ...(title ? { title } : {}),
+      ...(subtitle ? { subtitle } : {}),
       ...(seeAllHref ? { seeAllHref } : {}),
       ...(seeAllLabel ? { seeAllLabel } : {}),
       limit,

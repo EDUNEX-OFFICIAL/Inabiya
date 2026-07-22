@@ -33,6 +33,8 @@ type BlockType =
   | 'spacer'
   | 'brandStrip'
   | 'recipientSplit'
+  | 'discoveryChips'
+  | 'buildYourBoxTeaser'
   | 'articleTeasers'
   | 'footer'
   | 'saleStrip'
@@ -67,6 +69,8 @@ const ALL_TYPES: BlockType[] = [
   'spacer',
   'brandStrip',
   'recipientSplit',
+  'discoveryChips',
+  'buildYourBoxTeaser',
   'articleTeasers',
   'footer',
   'saleStrip',
@@ -90,6 +94,8 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
   image: { url: '', alt: '', caption: '' },
   productGrid: {
     title: '',
+    overline: '',
+    subtitle: '',
     productSlugs: '',
     category: '',
     hamper: 'false',
@@ -112,19 +118,39 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     leftLabel: 'girl',
     leftHref: '/gift/products?recipient=girl',
     leftEyebrow: 'For the little',
+    leftBlurb: '',
     leftCta: 'Shop girl gifts →',
     leftAccent: 'pink',
     leftImageUrl: '',
+    leftImageAlt: '',
     rightLabel: 'boy',
     rightHref: '/gift/products?recipient=boy',
     rightEyebrow: 'For the little',
+    rightBlurb: '',
     rightCta: 'Shop boy gifts →',
     rightAccent: 'sky',
     rightImageUrl: '',
+    rightImageAlt: '',
+  },
+  discoveryChips: {
+    overline: 'Discover',
+    title: 'Shop by moment',
+    subtitle: '',
+    items: 'Newborn | /gift/products?age=newborn, Naming | /gift/products?occasion=naming',
+  },
+  buildYourBoxTeaser: {
+    overline: 'Personalised',
+    title: 'Build Your Box',
+    body: '',
+    ctaLabel: 'Build your box',
+    ctaHref: '/gift/build-your-box',
+    imageUrl: '',
+    steps: 'Who it’s for | Pick recipient\nAge & occasion | Newborn to toddler\nBudget & picks | Stay on budget',
   },
   articleTeasers: {
     overline: 'Journal',
     title: 'From the parenting journal',
+    subtitle: '',
     limit: '3',
     seeAllHref: '/articles',
     seeAllLabel: 'All articles →',
@@ -195,9 +221,11 @@ function nestCard(
     label,
     href,
     ...(props[`${prefix}Eyebrow`] ? { eyebrow: props[`${prefix}Eyebrow`] } : {}),
+    ...(props[`${prefix}Blurb`] ? { blurb: props[`${prefix}Blurb`] } : {}),
     ...(props[`${prefix}Cta`] ? { cta: props[`${prefix}Cta`] } : {}),
     ...(accent ? { accent } : {}),
     ...(props[`${prefix}ImageUrl`] ? { imageUrl: props[`${prefix}ImageUrl`] } : {}),
+    ...(props[`${prefix}ImageAlt`] ? { imageAlt: props[`${prefix}ImageAlt`] } : {}),
   };
 }
 
@@ -211,9 +239,11 @@ function flattenRecipientCard(
   if (card.label != null) props[`${prefix}Label`] = String(card.label);
   if (card.href != null) props[`${prefix}Href`] = String(card.href);
   if (card.eyebrow != null) props[`${prefix}Eyebrow`] = String(card.eyebrow);
+  if (card.blurb != null) props[`${prefix}Blurb`] = String(card.blurb);
   if (card.cta != null) props[`${prefix}Cta`] = String(card.cta);
   if (card.accent != null) props[`${prefix}Accent`] = String(card.accent);
   if (card.imageUrl != null) props[`${prefix}ImageUrl`] = String(card.imageUrl);
+  if (card.imageAlt != null) props[`${prefix}ImageAlt`] = String(card.imageAlt);
 }
 
 function toEditable(blocks: MarketingPage['blocks']): Block[] {
@@ -291,6 +321,22 @@ function toEditable(blocks: MarketingPage['blocks']): Block[] {
                   answerHtml: String(row.answerHtml ?? ''),
                 })),
             );
+          } else if (k === 'items' && Array.isArray(v) && b.type === 'discoveryChips') {
+            props.items = v
+              .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+              .map((row) => `${String(row.label ?? '')} | ${String(row.href ?? '')}`)
+              .filter((s) => s.includes('|'))
+              .join(', ');
+          } else if (k === 'steps' && Array.isArray(v) && b.type === 'buildYourBoxTeaser') {
+            props.steps = v
+              .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+              .map((row) => {
+                const title = String(row.title ?? '').trim();
+                const body = String(row.body ?? '').trim();
+                return body ? `${title} | ${body}` : title;
+              })
+              .filter(Boolean)
+              .join('\n');
           } else if (v != null && typeof v !== 'object') {
             props[k] = String(v);
           }
@@ -347,6 +393,8 @@ function toPayload(blocks: Block[]) {
         type: 'productGrid' as const,
         props: {
           ...(b.props.title ? { title: b.props.title } : {}),
+          ...(b.props.overline ? { overline: b.props.overline } : {}),
+          ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
           ...(slugs.length ? { productSlugs: slugs } : {}),
           ...(b.props.category ? { category: b.props.category } : {}),
           ...(b.props.hamper === 'true' ? { hamper: true } : {}),
@@ -408,6 +456,49 @@ function toPayload(blocks: Block[]) {
         },
       };
     }
+    if (b.type === 'discoveryChips') {
+      const items = (b.props.items || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((entry) => {
+          const [label, href] = entry.split('|').map((x) => x.trim());
+          return { label: label || href, href: href || label };
+        })
+        .filter((i) => i.href);
+      return {
+        type: 'discoveryChips' as const,
+        props: {
+          ...(b.props.overline ? { overline: b.props.overline } : {}),
+          ...(b.props.title ? { title: b.props.title } : {}),
+          ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
+          items,
+        },
+      };
+    }
+    if (b.type === 'buildYourBoxTeaser') {
+      const steps = (b.props.steps || '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const [title, body] = line.split('|').map((s) => s.trim());
+          return { title: title || body, ...(body ? { body } : {}) };
+        })
+        .filter((s) => s.title);
+      return {
+        type: 'buildYourBoxTeaser' as const,
+        props: {
+          title: b.props.title || 'Build Your Box',
+          ...(b.props.overline ? { overline: b.props.overline } : {}),
+          ...(b.props.body ? { body: b.props.body } : {}),
+          ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
+          ...(b.props.ctaHref ? { ctaHref: b.props.ctaHref } : {}),
+          ...(b.props.imageUrl ? { imageUrl: b.props.imageUrl } : {}),
+          ...(steps.length ? { steps } : {}),
+        },
+      };
+    }
     if (b.type === 'articleTeasers') {
       const limitNum = Number.parseInt(b.props.limit || '', 10);
       return {
@@ -415,6 +506,7 @@ function toPayload(blocks: Block[]) {
         props: {
           ...(b.props.overline ? { overline: b.props.overline } : {}),
           ...(b.props.title ? { title: b.props.title } : {}),
+          ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
           ...(Number.isFinite(limitNum) && limitNum > 0 ? { limit: limitNum } : {}),
           ...(b.props.seeAllHref ? { seeAllHref: b.props.seeAllHref } : {}),
           ...(b.props.seeAllLabel ? { seeAllLabel: b.props.seeAllLabel } : {}),

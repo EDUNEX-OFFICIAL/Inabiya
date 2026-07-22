@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRef, type ReactNode } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -186,9 +187,15 @@ export function GiftStorefrontHero({
         </div>
 
         <div className="gift-hero-split__media order-1 lg:order-2">
-          <div className="gift-hero-split__frame">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photoSrc} alt="" className="gift-hero-split__photo" />
+          <div className="gift-hero-split__frame relative">
+            <Image
+              src={photoSrc}
+              alt={headline}
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="gift-hero-split__photo object-cover"
+            />
           </div>
         </div>
       </div>

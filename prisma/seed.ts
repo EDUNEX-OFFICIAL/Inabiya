@@ -170,7 +170,7 @@ async function main() {
       occasionTags: ['welcome-baby'],
       isReadyMadeHamper: false,
       brandName: 'Soft Nest',
-      storefrontLabels: ['NEW'],
+      storefrontLabels: ['EDITORS_PICK'],
     },
     {
       slug: 'personalised-name-blanket',
@@ -179,6 +179,7 @@ async function main() {
       sku: 'BLNK-001',
       label: 'Default',
       pricePaise: 249900,
+      compareAtPricePaise: 499800,
       onHand: 15,
       categoryId: keepsakes.id,
       imageUrl: 'https://inabiya.edunexservices.in/gift/media/personalised-name-blanket.webp',
@@ -187,7 +188,7 @@ async function main() {
       occasionTags: ['welcome-baby', 'naming'],
       isReadyMadeHamper: false,
       brandName: 'Mamaearth',
-      storefrontLabels: ['SALE'],
+      storefrontLabels: ['BESTSELLER'],
     },
     {
       slug: 'wooden-rattle-set',
@@ -196,7 +197,7 @@ async function main() {
       sku: 'RATT-001',
       label: 'Set of 3',
       pricePaise: 89900,
-      onHand: 40,
+      onHand: 4,
       categoryId: toys.id,
       imageUrl: 'https://inabiya.edunexservices.in/gift/media/wooden-rattle-set.webp',
       recipientTags: ['boy', 'unisex'],
@@ -221,7 +222,7 @@ async function main() {
       occasionTags: ['welcome-baby', 'baby-shower'],
       isReadyMadeHamper: true,
       brandName: 'Inabiya',
-      storefrontLabels: ['NEW', 'SALE'],
+      storefrontLabels: ['GIFT_SET'],
       extraCategoryIds: [clothing.id],
     },
     {
@@ -288,12 +289,18 @@ async function main() {
 
     const variant = await prisma.productVariant.upsert({
       where: { sku: dp.sku },
-      update: { label: dp.label, pricePaise: dp.pricePaise, giftBoxEligible: true },
+      update: {
+        label: dp.label,
+        pricePaise: dp.pricePaise,
+        compareAtPricePaise: dp.compareAtPricePaise ?? null,
+        giftBoxEligible: true,
+      },
       create: {
         productId: product.id,
         sku: dp.sku,
         label: dp.label,
         pricePaise: dp.pricePaise,
+        compareAtPricePaise: dp.compareAtPricePaise ?? null,
         giftBoxEligible: true,
       },
     });
@@ -405,51 +412,103 @@ async function main() {
       },
     },
     {
-      type: 'recipientSplit',
+      type: 'saleStrip',
       sortOrder: 2,
       props: {
+        text: 'Free shipping over ₹2,000 · this week',
+        ctaLabel: 'Shop gifts',
+        ctaHref: '/gift/products',
+        tone: 'mint',
+      },
+    },
+    {
+      type: 'recipientSplit',
+      sortOrder: 3,
+      props: {
         title: 'Shop by baby',
-        subtitle: 'Curated palettes — unisex-safe picks included.',
+        subtitle: 'Soft palettes for little ones — unisex-safe picks are woven into both.',
         left: {
           label: 'girl',
           href: '/gift/products?recipient=girl',
           eyebrow: 'For the little',
+          blurb: 'Blush tones, keepsakes, and gentle firsts.',
           cta: 'Shop girl gifts →',
           accent: 'pink',
+          imageUrl: 'https://images.unsplash.com/photo-1519689373023-dd07c809edd0?w=900&q=80',
+          imageAlt: 'Shop gifts for girl',
         },
         right: {
           label: 'boy',
           href: '/gift/products?recipient=boy',
           eyebrow: 'For the little',
+          blurb: 'Sky hues, playful toys, and everyday comfort.',
           cta: 'Shop boy gifts →',
           accent: 'sky',
+          imageUrl: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=900&q=80',
+          imageAlt: 'Shop gifts for boy',
         },
       },
     },
     {
-      type: 'productGrid',
-      sortOrder: 3,
+      type: 'discoveryChips',
+      sortOrder: 4,
       props: {
-        title: 'Ready-made hampers',
-        hamper: true,
-        limit: 3,
-        seeAllHref: '/gift/products?hamper=1',
-        seeAllLabel: 'See all',
+        overline: 'Discover',
+        title: 'Shop by moment',
+        subtitle: 'Jump into age bands and occasions — filters open on the gift shop.',
+        items: [
+          { label: 'Newborn', href: '/gift/products?age=newborn' },
+          { label: 'Infant', href: '/gift/products?age=infant' },
+          { label: 'Naming', href: '/gift/products?occasion=naming' },
+          { label: 'Baby shower', href: '/gift/products?occasion=baby-shower' },
+          { label: 'Birthday', href: '/gift/products?occasion=birthday' },
+        ],
+      },
+    },
+    {
+      type: 'buildYourBoxTeaser',
+      sortOrder: 5,
+      props: {
+        overline: 'Personalised',
+        title: 'Build Your Box',
+        body: 'A gentle wizard — pick who it’s for, then age, occasion, and budget. We help you fill a thoughtful gift.',
+        ctaLabel: 'Build your box',
+        ctaHref: '/gift/build-your-box',
+        steps: [
+          { title: 'Who it’s for', body: 'Girl, boy, mom, or unisex-safe picks.' },
+          { title: 'Age & occasion', body: 'Newborn through toddler — naming, shower, birthday.' },
+          { title: 'Budget & picks', body: 'Stay on budget while we suggest gift-box eligible items.' },
+        ],
       },
     },
     {
       type: 'productGrid',
-      sortOrder: 4,
+      sortOrder: 6,
       props: {
+        overline: 'Hampers',
+        title: 'Ready-made hampers',
+        subtitle: 'Complete boxes, ready to wrap — less planning, more delight.',
+        hamper: true,
+        limit: 3,
+        seeAllHref: '/gift/products?hamper=1',
+        seeAllLabel: 'Browse all hampers',
+      },
+    },
+    {
+      type: 'productGrid',
+      sortOrder: 7,
+      props: {
+        overline: 'Favourites',
         title: 'Featured gifts',
+        subtitle: 'Hand-picked favourites parents keep coming back for.',
         productSlugs: featuredSlugs,
         seeAllHref: '/gift/products',
-        seeAllLabel: 'See all',
+        seeAllLabel: 'Shop all gifts',
       },
     },
     {
       type: 'cta',
-      sortOrder: 5,
+      sortOrder: 8,
       props: {
         title: 'Corporate & bulk gifting',
         body: 'Teams and events — share quantity and occasion; we will reply with pricing.',
@@ -459,10 +518,11 @@ async function main() {
     },
     {
       type: 'articleTeasers',
-      sortOrder: 6,
+      sortOrder: 9,
       props: {
         overline: 'Journal',
         title: 'From the parenting journal',
+        subtitle: 'Gentle reads from specialists — gifting, newborn care, and early parenthood.',
         limit: 3,
         seeAllHref: '/articles',
         seeAllLabel: 'All articles →',
@@ -470,7 +530,7 @@ async function main() {
     },
     {
       type: 'faq',
-      sortOrder: 7,
+      sortOrder: 10,
       props: {
         title: 'Frequently asked questions',
         items: [
@@ -488,33 +548,6 @@ async function main() {
             question: 'What is your return window?',
             answerHtml:
               '<p>Returns open for 14 days after delivery. Personalised items may have limited return eligibility.</p>',
-          },
-        ],
-      },
-    },
-    {
-      type: 'footer',
-      sortOrder: 8,
-      props: {
-        brandName: 'Inabiya',
-        tagline: 'Thoughtfully personalised baby essentials & gifting.',
-        columns: [
-          {
-            title: 'Shop',
-            links: [
-              { label: 'Build Your Box', href: '/gift/build-your-box' },
-              { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
-              { label: 'Shop by Age', href: '/gift/products?age=newborn' },
-              { label: 'Corporate Gifting', href: '/gift/corporate' },
-            ],
-          },
-          {
-            title: 'Company',
-            links: [
-              { label: 'Parenting Blog', href: '/articles' },
-              { label: 'Our Specialists', href: '/specialists' },
-              { label: 'Contact', href: 'mailto:hello@inabiya.in' },
-            ],
           },
         ],
       },
@@ -568,7 +601,66 @@ async function main() {
 
   await prisma.commerceSetting.upsert({
     where: { key: 'gift.chrome' },
-    update: {},
+    update: {
+      value: {
+        shopLinks: [
+          { href: '/gift/build-your-box', label: 'Build Your Box' },
+          { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
+          { href: '/gift/products?category=clothing', label: 'Clothing' },
+          { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
+          { href: '/gift/products?category=toys', label: 'Toys' },
+          { href: '/gift/products?category=mom-care', label: 'Mom Care' },
+          { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
+        ],
+        forWhomLinks: [
+          { href: '/gift/products?recipient=girl', label: 'Baby Girl' },
+          { href: '/gift/products?recipient=boy', label: 'Baby Boy' },
+          { href: '/gift/products?recipient=mom', label: 'Expecting Mom' },
+          { href: '/gift/products?age=newborn', label: 'Newborn' },
+          { href: '/gift/products?age=infant', label: 'Infant' },
+          { href: '/gift/products?age=toddler', label: 'Toddler' },
+        ],
+        footer: {
+          brandName: 'Inabiya',
+          tagline: 'Thoughtfully personalised baby essentials & gifting.',
+          showNewsletter: true,
+          socialLinks: [
+            { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
+            { label: 'Facebook', href: 'https://facebook.com/inabiya', network: 'facebook' },
+            { label: 'WhatsApp', href: 'https://wa.me/919693940330', network: 'whatsapp' },
+          ],
+          columns: [
+            {
+              title: 'Shop',
+              links: [
+                { label: 'Build Your Box', href: '/gift/build-your-box' },
+                { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
+                { label: 'Shop by Age', href: '/gift/products?age=newborn' },
+                { label: 'Corporate Gifting', href: '/gift/corporate' },
+              ],
+            },
+            {
+              title: 'Help',
+              links: [
+                { label: 'Shipping', href: '/gift#faq' },
+                { label: 'Returns', href: '/gift#faq' },
+                { label: 'FAQ', href: '/gift#faq' },
+                { label: 'WhatsApp', href: 'https://wa.me/919693940330' },
+              ],
+            },
+            {
+              title: 'Company',
+              links: [
+                { label: 'About', href: '/about' },
+                { label: 'Contact', href: '/contact' },
+                { label: 'Parenting Blog', href: '/articles' },
+                { label: 'Our Specialists', href: '/specialists' },
+              ],
+            },
+          ],
+        },
+      },
+    },
     create: {
       key: 'gift.chrome',
       value: {
@@ -589,6 +681,45 @@ async function main() {
           { href: '/gift/products?age=infant', label: 'Infant' },
           { href: '/gift/products?age=toddler', label: 'Toddler' },
         ],
+        footer: {
+          brandName: 'Inabiya',
+          tagline: 'Thoughtfully personalised baby essentials & gifting.',
+          showNewsletter: true,
+          socialLinks: [
+            { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
+            { label: 'Facebook', href: 'https://facebook.com/inabiya', network: 'facebook' },
+            { label: 'WhatsApp', href: 'https://wa.me/919693940330', network: 'whatsapp' },
+          ],
+          columns: [
+            {
+              title: 'Shop',
+              links: [
+                { label: 'Build Your Box', href: '/gift/build-your-box' },
+                { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
+                { label: 'Shop by Age', href: '/gift/products?age=newborn' },
+                { label: 'Corporate Gifting', href: '/gift/corporate' },
+              ],
+            },
+            {
+              title: 'Help',
+              links: [
+                { label: 'Shipping', href: '/gift#faq' },
+                { label: 'Returns', href: '/gift#faq' },
+                { label: 'FAQ', href: '/gift#faq' },
+                { label: 'WhatsApp', href: 'https://wa.me/919693940330' },
+              ],
+            },
+            {
+              title: 'Company',
+              links: [
+                { label: 'About', href: '/about' },
+                { label: 'Contact', href: '/contact' },
+                { label: 'Parenting Blog', href: '/articles' },
+                { label: 'Our Specialists', href: '/specialists' },
+              ],
+            },
+          ],
+        },
       },
     },
   });

@@ -9,7 +9,7 @@
     "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx src/modules/media/media-mime.check.ts && tsx src/modules/commerce/catalog/gift-box-recommendations.check.ts && tsx src/modules/commerce/orders/order-invoice.check.ts"
+    "test": "tsx src/modules/media/media-mime.check.ts && tsx src/modules/commerce/catalog/gift-box-recommendations.check.ts && tsx src/modules/commerce/catalog/storefront-display-labels.check.ts && tsx src/modules/commerce/orders/order-invoice.check.ts"
   },
   "dependencies": {
     "@inabiya/types": "workspace:*",

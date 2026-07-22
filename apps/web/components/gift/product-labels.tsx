@@ -1,19 +1,28 @@
-type StorefrontLabel = 'NEW' | 'SALE';
-
-const LABEL_COPY: Record<StorefrontLabel, string> = {
-  NEW: 'New',
-  SALE: 'Sale',
-};
+import type { StorefrontDisplayLabel } from '@/lib/catalog';
 
 type Props = {
-  labels?: StorefrontLabel[] | string[] | null;
+  labels?: StorefrontDisplayLabel[] | null;
   /** Overlay on media vs inline in buy box */
   placement?: 'overlay' | 'inline';
   className?: string;
 };
 
+function toneClass(tone: StorefrontDisplayLabel['tone']): string {
+  switch (tone) {
+    case 'sale':
+      return 'rounded-full bg-[color:var(--danger)] px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm sm:text-xs';
+    case 'new':
+      return 'rounded-full bg-primary px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground shadow-sm sm:text-xs';
+    case 'stock':
+      return 'rounded-full border border-foreground/20 bg-white/95 px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground shadow-sm sm:text-xs';
+    case 'manual':
+    default:
+      return 'rounded-full bg-foreground px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm sm:text-xs';
+  }
+}
+
 export function ProductLabels({ labels, placement = 'inline', className = '' }: Props) {
-  const list = (labels ?? []).filter((l): l is StorefrontLabel => l === 'NEW' || l === 'SALE');
+  const list = labels ?? [];
   if (list.length === 0) return null;
 
   return (
@@ -23,16 +32,9 @@ export function ProductLabels({ labels, placement = 'inline', className = '' }: 
       } ${className}`.trim()}
       aria-label="Product labels"
     >
-      {list.map((code) => (
-        <li
-          key={code}
-          className={
-            code === 'SALE'
-              ? 'rounded-full bg-[color:var(--danger)] px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm sm:text-xs'
-              : 'rounded-full bg-primary px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground shadow-sm sm:text-xs'
-          }
-        >
-          {LABEL_COPY[code]}
+      {list.map((label) => (
+        <li key={label.code} className={toneClass(label.tone)}>
+          {label.text}
         </li>
       ))}
     </ul>

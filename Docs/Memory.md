@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 22, 2026 (CMS FAQ/SEO edge-case pass)
+Last Updated: July 22, 2026 (homepage chrome roadmap Pass 1–12)
 
 
 ---
@@ -140,7 +140,7 @@ Q4 (Architecture rewrite) → **Resolved**
 ## 4. Next actions (max 5 — keep fresh)
 
 1. Cloudflare SSL mode check: **Full (strict)** preferred
-2. Ecommerce + CMS deep QA on public host (TipTap, saleStrip, media upload)
+2. Ecommerce + CMS deep QA on public host (TipTap, saleStrip, media upload, hybrid labels)
 3. Razorpay / formal pentest
 4. Real AWS/MinIO SDK behind `S3StorageAdapter` (optional)
 5. When ready: real SMTP adapter
@@ -176,6 +176,40 @@ Resolve → move to Decisions Log → remove from this table.
 
 ## 6. Decisions log (append-only, newest first)
 
+### 2026-07-22 — Soft Gift homepage & chrome roadmap (Pass 1–12)
+
+- **Override:** Soft Gift storefront polish outside Phase 12
+- Pass 1: layout-owned footer + nav; home drops CMS footer block
+- Pass 2–4: saleStrip, discoveryChips, buildYourBoxTeaser (+ Zod/admin/seed)
+- Pass 5–6: home quick-add; empty journal hide
+- Pass 7–8: footer Help/social/newsletter; WhatsApp FAB + back-to-top
+- Pass 9: `/about`, `/contact`, creative Soft Gift 404
+- Pass 10–12: marquee a11y, scroll reveal, next/image hero+home cards
+
+### 2026-07-22 — Homepage sections after brand strip
+
+- **Override:** Soft Gift homepage polish outside Phase 12
+- Shared `GiftSectionHeader` (overline + title + subtitle + secondary CTA)
+- Product grids: featured lead card + richer tiles (brand, labels, From ₹)
+- Recipient split: numbered cards, blurbs, photos; journal subtitle
+- CMS product cards pass `brandName` / `displayLabels` / hamper flag
+
+### 2026-07-22 — Hybrid product labels (Phase A)
+
+- **Override:** Gift Commerce merchandising outside Phase 12
+- Manual presets: `BESTSELLER` | `EDITORS_PICK` | `GIFT_SET` (max 2)
+- Auto ribbons: `% off` from `compareAtPricePaise`, `New` ≤30d publish, `Low stock` 1–5; display cap 2
+- Priority: PCT_OFF → LOW_STOCK → manuals → NEW; legacy NEW/SALE ignored on read
+- Admin MRP PATCH; PDP strike-through MRP; `displayLabels` on catalog DTO
+- No CMS label library this pass
+
+### 2026-07-22 — PDP FAQs + accordion ease
+
+- **Override:** Gift Commerce PDP polish outside Phase 12
+- Homepage CMS FAQ stays; PDP also gets product-aware FAQs (personalise / ship / returns / gift|hamper) + FAQPage JSON-LD
+- Shared `FaqAccordion` with height ease (grid 0fr→1fr); CMS + PDP + shipping/returns drawers
+- Per-product CMS FAQ fields still deferred
+
 ### 2026-07-22 — CMS FAQ/SEO edge-case hardening
 
 - `/pages/corporate-gifting` → redirect `/gift/corporate` (canonical duplicate)
@@ -203,6 +237,7 @@ Resolve → move to Decisions Log → remove from this table.
 - **Override:** Gift Commerce merchandising polish outside Phase 12
 - `Product.storefrontLabels` String[] (`NEW`|`SALE`); Commerce Admin checkboxes; PLP overlay + PDP chips
 - Not auto from publish date; no compare-at pricing this pass
+- **Superseded** by Hybrid labels Phase A (same day)
 
 ### 2026-07-22 — Soft Gift PDP modern hierarchy
 
@@ -872,6 +907,16 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-07-22 (PDP FAQ + accordion ease)
+
+- **Override:** Gift Commerce polish outside Phase 12
+- Smooth FAQ accordion (`faq-accordion.tsx`); wired CMS homepage + PDP
+- PDP FAQ after related products; product-aware copy + JSON-LD
+- Shipping/Returns drawers reuse same ease
+- Next: optional admin-editable per-product FAQs later
+
+---
+
 ### Session — 2026-07-22 (CMS FAQ/SEO cross-check + fixes)
 
 - Cross-check: FAQ/SEO live OK; found duplicate `/pages/corporate-gifting`, test pages in sitemap, FAQ placeholder on bad JSON
@@ -901,6 +946,46 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ---
 
+### Session — 2026-07-22 (Homepage roadmap edge-case harden + deploy)
+
+- Skip CMS `footer` blocks under gift layout (no double footer on /pages)
+- Home quick-add: button outside product Link (a11y)
+- Gift chrome admin: Help column + social + newsletter (no wipe on save)
+- Floating top respects prefers-reduced-motion
+- Cross-check typecheck/tests green
+
+---
+
+### Session — 2026-07-22 (Homepage chrome roadmap Pass 1–12)
+
+- **Override:** Soft Gift polish outside Phase 12 — full roadmap shipped in one session per user request
+- Global chrome footer + floats; seed home without CMS footer; saleStrip/discovery/BYB blocks
+- Quick-add + empty journal; newsletter/social footer; about/contact/404
+- A11y marquee pause; GSAP scroll reveal; next/image LCP
+- Files: layout, gift-chrome-footer, marketing-page-blocks, validation, seed, Memory, …
+
+---
+
+### Session — 2026-07-22 (Homepage section polish post–brand strip)
+
+- **Override:** Soft Gift homepage polish outside Phase 12
+- `GiftSectionHeader`; home product featured + card polish; recipient blurbs/images
+- CMS `mapProductCard` richer; seed overlines/subtitles; admin overline/subtitle/blurb fields
+- Files: marketing-page-blocks, cms-pages.service, admin CMS editor, seed, Memory
+
+---
+
+### Session — 2026-07-22 (Hybrid product labels Phase A)
+
+- **Override:** Gift Commerce merchandising outside Phase 12
+- Migration `compare_at_price_paise`; Zod manuals + `updateVariantBodySchema`
+- `resolveStorefrontDisplayLabels` + check; `mapProduct.displayLabels`
+- Admin: manuals + MRP; PLP/PDP ProductLabels; PDP strike-through
+- Seed: blanket 50% off + BESTSELLER; rattle low stock; hamper GIFT_SET; swaddle EDITORS_PICK
+- Files: schema/migration, validation, catalog.service/controller, storefront-display-labels*, product-labels, admin product edit, catalog.ts, seed, Memory
+
+---
+
 ### Session — 2026-07-22 (Product storefront labels NEW/SALE)
 
 - **Override:** Gift Commerce polish outside Phase 12
@@ -908,6 +993,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 - Admin edit checkboxes; `ProductLabels` on ClayProductCard + PDP
 - Seed demo: swaddle NEW, blanket SALE, hamper NEW+SALE
 - Files: schema migration, validation, catalog.service, admin product edit, product-labels.tsx
+- **Superseded** by Hybrid Phase A
 
 ---
 

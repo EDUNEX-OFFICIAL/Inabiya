@@ -3,6 +3,7 @@ import type {
   CreateCategoryBody,
   CreateProductBody,
   UpdateProductBody,
+  UpdateVariantBody,
   BulkProductsBody,
 } from '@inabiya/validation';
 import {
@@ -12,6 +13,7 @@ import {
   createProductBodySchema,
   updateInventoryBodySchema,
   updateProductBodySchema,
+  updateVariantBodySchema,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
@@ -121,6 +123,17 @@ export class CatalogAdminController {
     @Req() req: AuthedRequest,
   ) {
     return this.catalog.updateInventory(variantId, body.onHand, user.id, String(req.id ?? ''));
+  }
+
+  @Patch('variants/:variantId')
+  updateVariant(
+    @Param('variantId') variantId: string,
+    @Body(new ZodValidationPipe(updateVariantBodySchema))
+    body: UpdateVariantBody,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.catalog.updateVariant(variantId, body, user.id, String(req.id ?? ''));
   }
 
   @Get('categories')

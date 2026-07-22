@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
-import { GiftStorefrontFooter } from '@/components/cms/gift-storefront-footer';
 import { apiUrl } from '@/lib/api-base';
 import { GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
 import { marketingPageMetadata, webPageJsonLd, type CmsSeoPage } from '@/lib/cms-seo';
@@ -18,14 +17,6 @@ type CmsHomePage = CmsSeoPage & {
   }>;
 };
 
-type GiftChrome = {
-  footer?: {
-    brandName?: string;
-    tagline?: string;
-    columns?: Array<{ title: string; links: Array<{ label: string; href: string }> }>;
-  };
-};
-
 async function fetchHomepage(): Promise<CmsHomePage | null> {
   try {
     const res = await fetch(apiUrl(`/cms/pages/${GIFT_HOMEPAGE_SLUG}`), {
@@ -33,16 +24,6 @@ async function fetchHomepage(): Promise<CmsHomePage | null> {
     });
     if (res.status === 404 || !res.ok) return null;
     return (await res.json()) as CmsHomePage;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchGiftChrome(): Promise<GiftChrome | null> {
-  try {
-    const res = await fetch(apiUrl('/catalog/gift-chrome'), { cache: 'no-store' });
-    if (!res.ok) return null;
-    return (await res.json()) as GiftChrome;
   } catch {
     return null;
   }
@@ -59,8 +40,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return marketingPageMetadata({ ...page, slug: GIFT_HOMEPAGE_SLUG });
 }
 
-/** Fallback if MarketingPage `home` is missing / unpublished. */
-function LegacyGiftHomeFallback({ chrome }: { chrome: GiftChrome | null }) {
+/** Fallback if MarketingPage `home` is missing / unpublished. Footer comes from layout chrome. */
+function LegacyGiftHomeFallback() {
   return (
     <main>
       <GiftStorefrontHero
@@ -77,26 +58,25 @@ function LegacyGiftHomeFallback({ chrome }: { chrome: GiftChrome | null }) {
           <code className="text-xs">home</code> marketing page in admin.
         </p>
       </div>
-      <GiftStorefrontFooter {...(chrome?.footer ?? {})} />
     </main>
   );
 }
 
 export default async function GiftHomePage() {
-  const [page, chrome] = await Promise.all([fetchHomepage(), fetchGiftChrome()]);
+  const page = await fetchHomepage();
 
   if (!page?.blocks?.length) {
-    return <LegacyGiftHomeFallback chrome={chrome} />;
+    return <LegacyGiftHomeFallback />;
   }
 
-  const hasFooterBlock = page.blocks.some((b) => b.type === 'footer');
+  // Layout owns Soft Gift footer — skip CMS footer blocks on home to avoid double footer.
+  const blocks = page.blocks.filter((b) => b.type !== 'footer');
   const ld = webPageJsonLd({ ...page, slug: GIFT_HOMEPAGE_SLUG });
 
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <MarketingPageBlocks blocks={page.blocks} layout="home" />
-      {!hasFooterBlock ? <GiftStorefrontFooter {...(chrome?.footer ?? {})} /> : null}
+      <MarketingPageBlocks blocks={blocks} layout="home" />
     </main>
   );
 }

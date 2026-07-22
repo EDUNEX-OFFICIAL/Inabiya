@@ -14,6 +14,7 @@ import { PdpGallery } from '@/components/gift/pdp-gallery';
 import { ProductLabels } from '@/components/gift/product-labels';
 import { StarRatingSummary } from '@/components/gift/star-rating-summary';
 import { TrustStrip } from '@/components/gift/trust-strip';
+import { FaqAccordion, faqPageJsonLd } from '@/components/gift/faq-accordion';
 
 function labelTag(value: string): string {
   return value.replaceAll('-', ' ');
@@ -313,7 +314,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
         <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <div className="flex flex-wrap items-center gap-gs-2">
-            <ProductLabels labels={product.storefrontLabels} placement="inline" />
+            <ProductLabels labels={product.displayLabels} placement="inline" />
             {product.brandName ? (
               <span className="clay-chip text-xs">{product.brandName}</span>
             ) : null}
@@ -336,8 +337,14 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           ) : null}
 
           {variant ? (
-            <p className="mt-gs-4 font-display text-3xl font-semibold tracking-tight text-primary">
-              {formatInr(variant.pricePaise)}
+            <p className="mt-gs-4 flex flex-wrap items-baseline gap-gs-3 font-display text-3xl font-semibold tracking-tight text-primary">
+              <span>{formatInr(variant.pricePaise)}</span>
+              {variant.compareAtPricePaise != null &&
+              variant.compareAtPricePaise > variant.pricePaise ? (
+                <span className="text-lg font-normal text-foreground/50 line-through">
+                  {formatInr(variant.compareAtPricePaise)}
+                </span>
+              ) : null}
             </p>
           ) : (
             <p className="mt-gs-4 text-sm text-danger">This gift has no buyable options yet.</p>
@@ -525,6 +532,8 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
         recipient={product.recipientTags?.[0]}
       />
 
+      <ProductFaqSection product={product} />
+
       <ReviewsSection
         slug={params.slug}
         initial={reviewsPayload}
@@ -549,6 +558,88 @@ function HeartIcon() {
     >
       <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
     </svg>
+  );
+}
+
+function buildProductFaqItems(
+  product: CatalogProduct,
+): Array<{ question: string; answerText: string }> {
+  const items: Array<{ question: string; answerText: string }> = [];
+  const canPersonalise = (product.personalization?.length ?? 0) > 0;
+
+  if (canPersonalise) {
+    const labels = product.personalization
+      .map((o) => o.label)
+      .filter(Boolean)
+      .slice(0, 4);
+    items.push({
+      question: 'Can I personalise this gift?',
+      answerText: labels.length
+        ? `Yes — on this product you can set ${labels.join(', ')}. Turn on personalisation in the buy box before adding to cart; required fields must be filled to continue.`
+        : 'Yes — toggle personalisation in the buy box and fill the fields before adding to cart. Required fields must be completed to continue.',
+    });
+  } else {
+    items.push({
+      question: 'Is this gift personalised?',
+      answerText:
+        'This listing ships as shown. For name embroidery or custom options, browse other Soft Gift products with a Personalise toggle, or build a custom box.',
+    });
+  }
+
+  items.push({
+    question: 'How long does shipping take?',
+    answerText:
+      'We prepare Soft Gift orders carefully and ship across India. Delivery timing is confirmed at checkout for your pincode; express options appear when available.',
+  });
+
+  items.push({
+    question: 'What is your return policy?',
+    answerText: canPersonalise
+      ? 'Returns open for 14 days after delivery. Personalised items may have limited return eligibility — check your order page for status and how to request a return.'
+      : 'Returns open for 14 days after delivery. Start a return from your order page once the gift is delivered.',
+  });
+
+  if (product.isReadyMadeHamper) {
+    items.push({
+      question: 'What comes in this hamper?',
+      answerText:
+        product.description?.trim() ||
+        'This is a ready-made Soft Gift hamper — curated pieces packed together. See the description above for what’s included.',
+    });
+  } else {
+    items.push({
+      question: 'Can I send this as a gift?',
+      answerText:
+        'Yes. Add to cart or gift box, then enter the recipient address at checkout. You can also Build Your Box for a custom mix of Soft Gift pieces.',
+    });
+  }
+
+  return items;
+}
+
+function ProductFaqSection({ product }: { product: CatalogProduct }) {
+  const faqItems = useMemo(() => buildProductFaqItems(product), [product]);
+  const ld = useMemo(
+    () => faqPageJsonLd(faqItems.map((f) => ({ question: f.question, answerText: f.answerText }))),
+    [faqItems],
+  );
+
+  return (
+    <>
+      {ld ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+        />
+      ) : null}
+      <FaqAccordion
+        title="Frequently asked questions"
+        items={faqItems.map((f) => ({
+          question: f.question,
+          answer: <p>{f.answerText}</p>,
+        }))}
+      />
+    </>
   );
 }
 
@@ -669,32 +760,30 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
       </div>
 
       <div className="min-w-0 space-y-gs-3">
-        <details className="clay-panel group open:shadow-clay" open>
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-gs-3 px-gs-5 py-gs-4 text-sm font-medium marker:content-none [&::-webkit-details-marker]:hidden">
-            <span>Shipping</span>
-            <span className="shrink-0 opacity-50" aria-hidden>
-              <span className="group-open:hidden">+</span>
-              <span className="hidden group-open:inline">−</span>
-            </span>
-          </summary>
-          <div className="border-t border-border-subtle px-gs-5 pb-gs-4 text-sm leading-relaxed opacity-80">
-            We prepare Soft Gift orders carefully and ship across India. Standard delivery is
-            selected at checkout; express options appear when available for your pincode.
-          </div>
-        </details>
-        <details className="clay-panel group">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-gs-3 px-gs-5 py-gs-4 text-sm font-medium marker:content-none [&::-webkit-details-marker]:hidden">
-            <span>Returns</span>
-            <span className="shrink-0 opacity-50" aria-hidden>
-              <span className="group-open:hidden">+</span>
-              <span className="hidden group-open:inline">−</span>
-            </span>
-          </summary>
-          <div className="border-t border-border-subtle px-gs-5 pb-gs-4 text-sm leading-relaxed opacity-80">
-            Returns open for 14 days after delivery. Personalised items may have limited return
-            eligibility — see your order page for status and how to request a return.
-          </div>
-        </details>
+        <FaqAccordion
+          className="min-w-0"
+          defaultOpenIndex={0}
+          items={[
+            {
+              question: 'Shipping',
+              answer: (
+                <p>
+                  We prepare Soft Gift orders carefully and ship across India. Standard delivery is
+                  selected at checkout; express options appear when available for your pincode.
+                </p>
+              ),
+            },
+            {
+              question: 'Returns',
+              answer: (
+                <p>
+                  Returns open for 14 days after delivery. Personalised items may have limited
+                  return eligibility — see your order page for status and how to request a return.
+                </p>
+              ),
+            },
+          ]}
+        />
         {tags.length > 0 ? (
           <div className="pt-gs-1">
             <p className="text-xs font-medium uppercase tracking-wide opacity-55">Shop similar</p>

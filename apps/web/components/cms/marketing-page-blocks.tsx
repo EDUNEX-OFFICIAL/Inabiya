@@ -1,11 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, type ReactNode } from 'react';
+import Image from 'next/image';
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react';
 import { Gift, HeartHandshake, Package, Truck } from 'lucide-react';
-import { formatInr } from '@/lib/catalog';
+import { formatInr, type StorefrontDisplayLabel } from '@/lib/catalog';
+import { cartApi } from '@/lib/cart-client';
+import { getStoredAccessToken } from '@/lib/auth-client';
+import { trackEvent } from '@/lib/analytics';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
-import { GiftStorefrontFooter } from '@/components/cms/gift-storefront-footer';
+import { FaqAccordion, faqPageJsonLd } from '@/components/gift/faq-accordion';
+import { ProductLabels } from '@/components/gift/product-labels';
+import { GiftHomeMotion } from '@/components/cms/gift-home-motion';
 
 export type CmsBlockProduct = {
   id: string;
@@ -14,6 +20,10 @@ export type CmsBlockProduct = {
   fromPricePaise: number;
   media: Array<{ url: string; altText: string | null }>;
   brandName?: string | null;
+  isReadyMadeHamper?: boolean;
+  displayLabels?: StorefrontDisplayLabel[];
+  quickAddVariantId?: string | null;
+  available?: number;
 };
 
 export type CmsPageBlock = {
@@ -88,9 +98,48 @@ function GiftBand({
 }) {
   const toyVariant = tone === 'sky' ? 'sky' : tone === 'mint' ? 'mint' : 'default';
   return (
-    <div className={`gift-band gift-band--${tone} ${className}`}>
+    <div className={`gift-band gift-band--${tone} ${className}`} data-gift-reveal="">
       {toys ? <GiftToysDecor variant={toyVariant} /> : null}
       <div className="gift-band-inner">{children}</div>
+    </div>
+  );
+}
+
+function GiftSectionHeader({
+  overline,
+  title,
+  subtitle,
+  actionHref,
+  actionLabel,
+}: {
+  overline?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
+  actionHref?: string | null;
+  actionLabel?: string | null;
+}) {
+  if (!title && !subtitle && !overline && !actionHref) return null;
+  return (
+    <div className="mb-gs-6 flex flex-col gap-gs-4 sm:mb-gs-7 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0 max-w-2xl">
+        {overline ? <p className="gift-overline">{overline}</p> : null}
+        {title ? (
+          <h2 className={`gift-h2 ${overline ? 'mt-gs-2' : ''} leading-tight`}>{title}</h2>
+        ) : null}
+        {subtitle ? (
+          <p className="mt-gs-3 max-w-prose text-sm leading-relaxed text-foreground/75 sm:text-base">
+            {subtitle}
+          </p>
+        ) : null}
+      </div>
+      {actionHref && actionLabel ? (
+        <Link
+          href={actionHref}
+          className="clay-btn-secondary shrink-0 self-start text-sm sm:self-auto"
+        >
+          {actionLabel}
+        </Link>
+      ) : null}
     </div>
   );
 }
@@ -284,6 +333,114 @@ function SpacerBlock({ props }: { props: Record<string, unknown> }) {
   return <div className={h} aria-hidden />;
 }
 
+function HomeProductCard({
+  product,
+  featured = false,
+}: {
+  product: CmsBlockProduct;
+  featured?: boolean;
+}) {
+  const img = product.media[0];
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const canQuickAdd =
+    Boolean(product.quickAddVariantId) && (product.available == null || product.available > 0);
+
+  async function quickAdd(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!product.quickAddVariantId || busy) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await cartApi('/cart/items', {
+        method: 'POST',
+        authToken: getStoredAccessToken(),
+        json: { variantId: product.quickAddVariantId, quantity: 1 },
+      });
+      trackEvent('add_to_cart', { productId: product.id });
+      setMsg('Added');
+    } catch {
+      setMsg('Couldn’t add');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      className={`group clay-card relative overflow-hidden ${
+        featured ? 'sm:grid sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]' : ''
+      }`}
+    >
+      <div
+        className={`relative overflow-hidden bg-white/40 ${
+          featured ? 'aspect-[4/3] sm:aspect-auto sm:min-h-[16rem]' : 'aspect-[4/3]'
+        }`}
+      >
+        <Link href={`/gift/products/${product.slug}`} className="absolute inset-0 block">
+          {img?.url ? (
+            <Image
+              src={img.url}
+              alt={img.altText ?? product.title}
+              fill
+              sizes={
+                featured
+                  ? '(max-width: 640px) 100vw, 55vw'
+                  : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+              }
+              className="object-cover transition duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="gift-media-fallback absolute inset-0" />
+          )}
+        </Link>
+        {product.displayLabels?.length ? (
+          <ProductLabels labels={product.displayLabels} placement="overlay" />
+        ) : null}
+        {canQuickAdd ? (
+          <button
+            type="button"
+            onClick={(e) => void quickAdd(e)}
+            disabled={busy}
+            className="absolute bottom-gs-2 right-gs-2 z-10 rounded-full bg-white/95 px-gs-3 py-1.5 text-xs font-semibold text-primary shadow-clay hover:bg-white disabled:opacity-50"
+            aria-label={`Quick add ${product.title} to cart`}
+          >
+            {busy ? '…' : msg === 'Added' ? 'Added ✓' : 'Quick add +'}
+          </button>
+        ) : null}
+      </div>
+      <Link
+        href={`/gift/products/${product.slug}`}
+        className={`flex flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}
+      >
+        <div className="flex flex-wrap items-center gap-gs-2">
+          {product.brandName ? <span className="clay-chip text-xs">{product.brandName}</span> : null}
+          {product.isReadyMadeHamper ? (
+            <span className="clay-chip text-xs">Ready-made hamper</span>
+          ) : null}
+        </div>
+        <p
+          className={`font-medium leading-snug text-foreground transition-colors group-hover:text-primary ${
+            featured ? 'mt-gs-3 font-display text-2xl sm:text-3xl' : 'mt-gs-2'
+          }`}
+        >
+          {product.title}
+        </p>
+        <p
+          className={`font-semibold text-primary ${featured ? 'mt-gs-3 text-lg' : 'mt-gs-2 text-sm'}`}
+        >
+          From {formatInr(product.fromPricePaise)}
+        </p>
+        <p className="mt-gs-3 text-sm font-medium text-primary opacity-90">
+          {featured ? 'Explore this gift →' : 'View gift →'}
+        </p>
+        {msg && msg !== 'Added' ? <p className="mt-gs-1 text-xs text-danger">{msg}</p> : null}
+      </Link>
+    </div>
+  );
+}
+
 function ProductGridBlock({
   props,
   layout,
@@ -294,49 +451,52 @@ function ProductGridBlock({
   bandTone?: 'mint' | 'sky';
 }) {
   const title = props.title ? String(props.title) : null;
+  const overline = props.overline ? String(props.overline) : null;
+  const subtitle = props.subtitle ? String(props.subtitle) : null;
   const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : null;
   const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'See all';
   const products = Array.isArray(props.products) ? (props.products as CmsBlockProduct[]) : [];
+  const home = layout === 'home';
+  const featured = home && products.length >= 2 ? products[0] : null;
+  const rest = featured ? products.slice(1) : products;
 
   const grid = (
     <>
-      <div className="mb-gs-6 flex items-end justify-between gap-gs-4">
-        {title ? <h2 className="gift-h2">{title}</h2> : <span />}
-        {seeAllHref ? (
-          <Link href={seeAllHref} className="text-sm font-medium text-primary hover:underline">
-            {seeAllLabel}
-          </Link>
-        ) : null}
-      </div>
+      <GiftSectionHeader
+        overline={overline ?? (home && props.hamper === true ? 'Hampers' : home ? 'Gifts' : null)}
+        title={title}
+        subtitle={
+          subtitle ??
+          (home && props.hamper === true
+            ? 'Complete boxes, ready to wrap — less planning, more delight.'
+            : home
+              ? 'Hand-picked favourites parents keep coming back for.'
+              : null)
+        }
+        actionHref={seeAllHref}
+        actionLabel={seeAllHref ? seeAllLabel : null}
+      />
       {products.length === 0 ? (
         <p className="clay-panel px-gs-4 py-gs-6 text-center text-sm opacity-70">
           No published products match this grid yet.
         </p>
-      ) : layout === 'home' ? (
-        <ul className="grid gap-gs-5 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p) => (
-            <li key={p.id} className="clay-card list-none overflow-hidden">
-              <Link href={`/gift/products/${p.slug}`} className="block">
-                {p.media[0]?.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.media[0].url}
-                    alt={p.media[0].altText ?? p.title}
-                    className="h-44 w-full object-cover"
-                  />
-                ) : (
-                  <div className="gift-media-fallback h-44 w-full" />
-                )}
-                <div className="p-gs-4">
-                  <p className="font-medium leading-snug text-foreground">{p.title}</p>
-                  <p className="mt-gs-2 text-sm font-semibold text-primary">
-                    {formatInr(p.fromPricePaise)}
-                  </p>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      ) : home ? (
+        <div className="gift-stack">
+          {featured ? <HomeProductCard product={featured} featured /> : null}
+          {rest.length > 0 ? (
+            <ul
+              className={`grid gap-gs-5 ${
+                rest.length === 1 ? 'sm:grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'
+              }`}
+            >
+              {rest.map((p) => (
+                <li key={p.id} className="min-w-0 list-none">
+                  <HomeProductCard product={p} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       ) : (
         <ul className="grid gap-gs-5 sm:grid-cols-2">
           {products.map((p) => (
@@ -445,7 +605,12 @@ function BrandMarquee({
         <h2 className="gift-brand-strip__title">{title}</h2>
         <p className="gift-brand-strip__sub">{sub}</p>
       </div>
-      <div className="gift-brand-marquee" role="region" aria-label={title}>
+      <div
+        className="gift-brand-marquee"
+        role="region"
+        aria-label={title}
+        tabIndex={0}
+      >
         <div className="gift-brand-marquee__track">
           {[0, 1].map((copy) => (
             <ul
@@ -531,23 +696,31 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
   const left = (props.left ?? {}) as Record<string, unknown>;
   const right = (props.right ?? {}) as Record<string, unknown>;
   const cards = [
-    { key: 'left', card: left },
-    { key: 'right', card: right },
+    { key: 'left', card: left, index: '01' },
+    { key: 'right', card: right, index: '02' },
   ] as const;
 
   const body = (
     <>
-      {props.title ? <h2 className="gift-h2">{String(props.title)}</h2> : null}
-      {props.subtitle ? (
-        <p className="mt-gs-2 text-sm opacity-70">{String(props.subtitle)}</p>
-      ) : null}
-      <div className="mt-gs-6 grid gap-gs-6 sm:grid-cols-2">
-        {cards.map(({ key, card }) => {
+      <GiftSectionHeader
+        overline={home ? 'Start here' : null}
+        title={props.title ? String(props.title) : null}
+        subtitle={
+          props.subtitle
+            ? String(props.subtitle)
+            : home
+              ? 'Soft palettes for little ones — unisex-safe picks are woven into both.'
+              : null
+        }
+      />
+      <div className="grid gap-gs-6 sm:grid-cols-2">
+        {cards.map(({ key, card, index }) => {
           const sky = card.accent === 'sky';
           const accent = sky ? 'sky' : 'pink';
           const pillClass = sky ? 'gift-pill-overlap--sky' : '';
           const waveClass = sky ? 'gift-wave-card--sky' : '';
           const mediaClass = sky ? 'gift-panel-sky' : 'gift-media-fallback';
+          const blurb = card.blurb ? String(card.blurb) : null;
 
           if (home) {
             return (
@@ -559,22 +732,35 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
                 <div className={`gift-wave-card shadow-clay ${waveClass}`}>
                   <div className={`gift-wave-card__media ${mediaClass}`}>
                     {card.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={String(card.imageUrl)}
-                        alt=""
-                        className="absolute inset-0 h-full w-full object-cover opacity-80"
+                        alt={String(
+                          card.imageAlt || `Shop gifts for ${String(card.label ?? 'baby')}`,
+                        )}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 50vw"
+                        className="object-cover opacity-85 transition duration-500 group-hover:scale-[1.03]"
                       />
                     ) : null}
-                    <div className="relative flex min-h-[11rem] flex-col justify-end p-gs-5 pb-gs-8">
-                      <p className="text-sm opacity-70">
+                    <div className="relative flex min-h-[13rem] flex-col justify-end p-gs-5 pb-gs-8 sm:min-h-[15rem]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                        {index}
+                      </p>
+                      <p className="mt-gs-2 text-sm opacity-75">
                         {String(card.eyebrow ?? 'For the little')}
                       </p>
                       <p
-                        className={`font-display mt-gs-1 text-4xl ${sky ? 'text-info' : 'text-primary'}`}
+                        className={`font-display mt-gs-1 text-4xl capitalize sm:text-5xl ${
+                          sky ? 'text-info' : 'text-primary'
+                        }`}
                       >
                         {String(card.label ?? '')}
                       </p>
+                      {blurb ? (
+                        <p className="mt-gs-3 max-w-[18rem] text-sm leading-relaxed opacity-80">
+                          {blurb}
+                        </p>
+                      ) : null}
                     </div>
                     <WaveAccent accent={accent} />
                   </div>
@@ -596,6 +782,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
               <p className={`font-display mt-gs-1 text-4xl ${sky ? 'text-info' : 'text-primary'}`}>
                 {String(card.label ?? '')}
               </p>
+              {blurb ? <p className="mt-gs-3 text-sm opacity-75">{blurb}</p> : null}
               <p className="mt-gs-4 text-sm font-medium text-foreground">
                 {String(card.cta ?? 'Shop →')}
               </p>
@@ -649,7 +836,24 @@ function ArticleTeaserMeta({ article }: { article: ArticleTeaser }) {
 
 function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
   const articles = Array.isArray(props.articles) ? (props.articles as ArticleTeaser[]) : [];
-  if (!articles.length) return null;
+  if (!articles.length) {
+    if (props.showEmptyPlaceholder === true) {
+      const body = (
+        <p className="clay-panel px-gs-4 py-gs-6 text-center text-sm opacity-70">
+          Journal stories are on the way — check back soon.
+        </p>
+      );
+      if (home) {
+        return (
+          <GiftBand tone="blush" toys>
+            {body}
+          </GiftBand>
+        );
+      }
+      return <section>{body}</section>;
+    }
+    return null;
+  }
 
   const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : '/articles';
   const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'All articles →';
@@ -657,15 +861,19 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
 
   const body = (
     <>
-      <div className="mb-gs-6 flex items-end justify-between gap-gs-4">
-        <div>
-          {props.overline ? <p className="gift-overline">{String(props.overline)}</p> : null}
-          <h2 className="gift-h2">{String(props.title ?? 'From the parenting journal')}</h2>
-        </div>
-        <Link href={seeAllHref} className="shrink-0 text-sm font-medium hover:underline">
-          {seeAllLabel}
-        </Link>
-      </div>
+      <GiftSectionHeader
+        overline={props.overline ? String(props.overline) : home ? 'Journal' : null}
+        title={String(props.title ?? 'From the parenting journal')}
+        subtitle={
+          props.subtitle
+            ? String(props.subtitle)
+            : home
+              ? 'Gentle reads from specialists — gifting, newborn care, and early parenthood.'
+              : null
+        }
+        actionHref={seeAllHref}
+        actionLabel={seeAllLabel}
+      />
       <ul className={featured ? 'grid gap-gs-4' : 'grid gap-gs-4 sm:grid-cols-2 lg:grid-cols-3'}>
         {articles.map((a) => (
           <li key={a.slug} className="min-w-0">
@@ -834,41 +1042,21 @@ function FaqBlock({ props, home }: { props: Record<string, unknown>; home?: bool
   const items = parseFaqItems(props.items);
   if (items.length === 0) return null;
 
-  const body = (
-    <section className={home ? 'mx-auto max-w-3xl px-gs-4 py-gs-6 sm:px-gs-6' : 'py-gs-2'}>
-      <h2 className="gift-h2">{title}</h2>
-      <div className="mt-gs-4 space-y-gs-3">
-        {items.map((item, i) => (
-          <details
-            key={`${item.question}-${i}`}
-            className="clay-panel group open:shadow-clay"
-            open={i === 0}
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-gs-3 px-gs-5 py-gs-4 text-sm font-medium marker:content-none [&::-webkit-details-marker]:hidden">
-              <span>{item.question}</span>
-              <span className="shrink-0 opacity-50" aria-hidden>
-                <span className="group-open:hidden">+</span>
-                <span className="hidden group-open:inline">−</span>
-              </span>
-            </summary>
-            <div className="border-t border-border-subtle px-gs-5 pb-gs-4 pt-gs-3 text-sm leading-relaxed opacity-85">
-              <FaqAnswer html={item.answerHtml} />
-            </div>
-          </details>
-        ))}
-      </div>
-    </section>
+  return (
+    <FaqAccordion
+      id="faq"
+      title={title}
+      home={home}
+      items={items.map((item) => ({
+        question: item.question,
+        answer: <FaqAnswer html={item.answerHtml} />,
+      }))}
+    />
   );
-
-  return body;
 }
 
 function collectFaqJsonLd(blocks: CmsPageBlock[]): Record<string, unknown> | null {
-  const entities: Array<{
-    '@type': string;
-    name: string;
-    acceptedAnswer: { '@type': string; text: string };
-  }> = [];
+  const rows: Array<{ question: string; answerText: string }> = [];
   for (const b of blocks) {
     if (b.type !== 'faq') continue;
     for (const item of parseFaqItems(b.props.items)) {
@@ -883,19 +1071,10 @@ function collectFaqJsonLd(blocks: CmsPageBlock[]): Record<string, unknown> | nul
         .replace(/\s+/g, ' ')
         .trim();
       if (!text) continue;
-      entities.push({
-        '@type': 'Question',
-        name: item.question,
-        acceptedAnswer: { '@type': 'Answer', text },
-      });
+      rows.push({ question: item.question, answerText: text });
     }
   }
-  if (entities.length === 0) return null;
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: entities,
-  };
+  return faqPageJsonLd(rows);
 }
 
 function FaqJsonLd({ blocks }: { blocks: CmsPageBlock[] }) {
@@ -906,12 +1085,137 @@ function FaqJsonLd({ blocks }: { blocks: CmsPageBlock[] }) {
   );
 }
 
+function DiscoveryChipsBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
+  const items = Array.isArray(props.items)
+    ? (props.items as Array<{ label?: string; href?: string }>)
+        .map((i) => ({
+          label: String(i.label ?? '').trim(),
+          href: String(i.href ?? '').trim(),
+        }))
+        .filter((i) => i.label && i.href)
+    : [];
+  if (!items.length) return null;
+
+  const body = (
+    <>
+      <GiftSectionHeader
+        overline={props.overline ? String(props.overline) : home ? 'Discover' : null}
+        title={props.title ? String(props.title) : 'Shop by moment'}
+        subtitle={
+          props.subtitle
+            ? String(props.subtitle)
+            : home
+              ? 'Jump into age bands and occasions — filters open on the gift shop.'
+              : null
+        }
+      />
+      <ul className="flex flex-wrap gap-gs-2">
+        {items.map((item) => (
+          <li key={`${item.label}-${item.href}`}>
+            <Link href={item.href} className="clay-chip inline-flex text-sm hover:bg-primary/10">
+              {item.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+
+  if (home) {
+    return (
+      <GiftBand tone="soft" toys>
+        {body}
+      </GiftBand>
+    );
+  }
+  return <section className="py-gs-4">{body}</section>;
+}
+
+function BuildYourBoxTeaserBlock({
+  props,
+  home,
+}: {
+  props: Record<string, unknown>;
+  home?: boolean;
+}) {
+  const title = String(props.title ?? 'Build Your Box').trim();
+  const body = props.body ? String(props.body) : null;
+  const ctaLabel = String(props.ctaLabel ?? 'Build your box');
+  const ctaHref = String(props.ctaHref ?? '/gift/build-your-box');
+  const steps = Array.isArray(props.steps)
+    ? (props.steps as Array<{ title?: string; body?: string }>)
+        .map((s) => ({
+          title: String(s.title ?? '').trim(),
+          body: s.body ? String(s.body) : '',
+        }))
+        .filter((s) => s.title)
+        .slice(0, 4)
+    : [];
+
+  const inner = (
+    <div className="grid gap-gs-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
+      <div>
+        <GiftSectionHeader
+          overline={props.overline ? String(props.overline) : 'Personalised'}
+          title={title}
+          subtitle={body}
+        />
+        {steps.length ? (
+          <ol className="mt-gs-2 space-y-gs-4">
+            {steps.map((step, i) => (
+              <li key={`${step.title}-${i}`} className="flex gap-gs-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="font-medium text-foreground">{step.title}</p>
+                  {step.body ? <p className="mt-gs-1 text-sm opacity-75">{step.body}</p> : null}
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : null}
+        <Link href={ctaHref} className="clay-btn mt-gs-6 inline-flex">
+          {ctaLabel}
+        </Link>
+      </div>
+      {props.imageUrl ? (
+        <div className="relative aspect-[4/3] overflow-hidden rounded-clay shadow-clay">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={String(props.imageUrl)}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="gift-media-fallback relative flex aspect-[4/3] items-end rounded-clay p-gs-6 shadow-clay">
+          <p className="font-display text-3xl text-primary/40">Your box, your way</p>
+        </div>
+      )}
+    </div>
+  );
+
+  if (home) {
+    return (
+      <GiftBand tone="lavender" toys>
+        {inner}
+      </GiftBand>
+    );
+  }
+  return <section className="py-gs-4">{inner}</section>;
+}
+
 function renderRestBlock(
   b: CmsPageBlock,
   layout: 'page' | 'home',
   productBandIndex: { current: number },
 ) {
   const home = layout === 'home';
+  if (b.type === 'footer') {
+    // Soft Gift layout owns global chrome footer — avoid double footers on home/CMS pages.
+    return null;
+  }
   if (b.type === 'cta') return <CtaBlock key={b.id} props={b.props} home={home} />;
   if (b.type === 'image') return <ImageBlock key={b.id} props={b.props} />;
   if (b.type === 'spacer') return <SpacerBlock key={b.id} props={b.props} />;
@@ -926,6 +1230,12 @@ function renderRestBlock(
   if (b.type === 'recipientSplit') {
     return <RecipientSplitBlock key={b.id} props={b.props} home={home} />;
   }
+  if (b.type === 'discoveryChips') {
+    return <DiscoveryChipsBlock key={b.id} props={b.props} home={home} />;
+  }
+  if (b.type === 'buildYourBoxTeaser') {
+    return <BuildYourBoxTeaserBlock key={b.id} props={b.props} home={home} />;
+  }
   if (b.type === 'articleTeasers') {
     return <ArticleTeasersBlock key={b.id} props={b.props} home={home} />;
   }
@@ -934,23 +1244,6 @@ function renderRestBlock(
   }
   if (b.type === 'faq') {
     return <FaqBlock key={b.id} props={b.props} home={home} />;
-  }
-  if (b.type === 'footer') {
-    return (
-      <GiftStorefrontFooter
-        key={b.id}
-        brandName={b.props.brandName ? String(b.props.brandName) : undefined}
-        tagline={b.props.tagline ? String(b.props.tagline) : undefined}
-        columns={
-          Array.isArray(b.props.columns)
-            ? (b.props.columns as Array<{
-                title: string;
-                links: Array<{ label: string; href: string }>;
-              }>)
-            : undefined
-        }
-      />
-    );
   }
   if (b.type === 'richText') {
     return <RichTextBlock key={b.id} html={String(b.props.html ?? '')} />;
@@ -961,7 +1254,6 @@ function renderRestBlock(
 export function MarketingPageBlocks({ blocks, previewBanner, layout = 'page' }: Props) {
   if (layout === 'home') {
     const hero = blocks.filter((b) => b.type === 'hero');
-    const footer = blocks.filter((b) => b.type === 'footer');
     const rest = blocks.filter((b) => b.type !== 'hero' && b.type !== 'footer');
     const productBandIndex = { current: 0 };
     return (
@@ -975,10 +1267,11 @@ export function MarketingPageBlocks({ blocks, previewBanner, layout = 'page' }: 
         {hero.map((b) => (
           <HeroBlock key={b.id} props={b.props} layout="home" />
         ))}
-        <div className="space-y-0">
-          {rest.map((b) => renderRestBlock(b, 'home', productBandIndex))}
-        </div>
-        {footer.map((b) => renderRestBlock(b, 'home', productBandIndex))}
+        <GiftHomeMotion>
+          <div className="space-y-0">
+            {rest.map((b) => renderRestBlock(b, 'home', productBandIndex))}
+          </div>
+        </GiftHomeMotion>
       </div>
     );
   }

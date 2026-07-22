@@ -181,7 +181,7 @@ model Product {
   occasionTags         String[]               @default([]) @map("occasion_tags")
   isReadyMadeHamper    Boolean                @default(false) @map("is_ready_made_hamper")
   brandName            String?                @map("brand_name")
-  /// Merchandising chips on PLP/PDP: NEW | SALE (validated in Zod)
+  /// Manual merchandising chips: BESTSELLER | EDITORS_PICK | GIFT_SET (validated in Zod). Auto ribbons computed at map time.
   storefrontLabels     String[]               @default([]) @map("storefront_labels")
   createdAt            DateTime               @default(now()) @map("created_at")
   updatedAt            DateTime               @updatedAt @map("updated_at")
@@ -211,12 +211,14 @@ model ProductVariant {
   id               String          @id @default(uuid()) @db.Uuid
   productId        String          @map("product_id") @db.Uuid
   sku              String          @unique
-  label            String
-  pricePaise       Int             @map("price_paise")
-  giftBoxEligible  Boolean         @default(true) @map("gift_box_eligible")
-  createdAt        DateTime        @default(now()) @map("created_at")
-  updatedAt        DateTime        @updatedAt @map("updated_at")
-  product          Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label               String
+  pricePaise          Int             @map("price_paise")
+  /// Optional MRP / list price; when > pricePaise, storefront shows % off
+  compareAtPricePaise Int?            @map("compare_at_price_paise")
+  giftBoxEligible     Boolean         @default(true) @map("gift_box_eligible")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+  product             Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
   inventory        InventoryItem?
   wishlistItems    WishlistItem[]
   giftBoxItems     GiftBoxItem[]

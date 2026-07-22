@@ -14,6 +14,7 @@ type Mega = {
   imageSrc: string;
 };
 type FooterCol = { title: string; links: LinkRow[] };
+type SocialRow = { label: string; href: string; network?: string };
 
 type Chrome = {
   shopLinks: LinkRow[];
@@ -24,6 +25,8 @@ type Chrome = {
     brandName: string;
     tagline: string;
     columns: FooterCol[];
+    socialLinks?: SocialRow[];
+    showNewsletter?: boolean;
   };
 };
 
@@ -43,6 +46,33 @@ function textToLinks(text: string): LinkRow[] {
       return { label: label || href, href: href || label };
     })
     .filter((l): l is LinkRow => Boolean(l.href && l.label));
+}
+
+function socialToText(links: SocialRow[]) {
+  return links
+    .map((l) =>
+      l.network ? `${l.label} | ${l.href} | ${l.network}` : `${l.label} | ${l.href}`,
+    )
+    .join('\n');
+}
+
+function textToSocial(text: string): SocialRow[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split('|').map((s) => s.trim());
+      const label = parts[0] || '';
+      const href = parts[1] || '';
+      const network = parts[2] || undefined;
+      return { label: label || href, href, ...(network ? { network } : {}) };
+    })
+    .filter((l) => l.href && l.label);
+}
+
+function pickColumn(cols: FooterCol[], re: RegExp, fallbackIndex: number): LinkRow[] {
+  return cols.find((x) => re.test(x.title))?.links ?? cols[fallbackIndex]?.links ?? [];
 }
 
 export default function GiftChromeAdminPage() {
@@ -68,7 +98,10 @@ export default function GiftChromeAdminPage() {
   const [brandName, setBrandName] = useState('Inabiya');
   const [tagline, setTagline] = useState('');
   const [footerShop, setFooterShop] = useState('');
+  const [footerHelp, setFooterHelp] = useState('');
   const [footerCompany, setFooterCompany] = useState('');
+  const [socialText, setSocialText] = useState('');
+  const [showNewsletter, setShowNewsletter] = useState(true);
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
@@ -96,12 +129,11 @@ export default function GiftChromeAdminPage() {
         setBrandName(c.footer?.brandName ?? 'Inabiya');
         setTagline(c.footer?.tagline ?? '');
         const cols = c.footer?.columns ?? [];
-        setFooterShop(
-          linksToText(cols.find((x) => /shop/i.test(x.title))?.links ?? cols[0]?.links ?? []),
-        );
-        setFooterCompany(
-          linksToText(cols.find((x) => /company/i.test(x.title))?.links ?? cols[1]?.links ?? []),
-        );
+        setFooterShop(linksToText(pickColumn(cols, /shop/i, 0)));
+        setFooterHelp(linksToText(pickColumn(cols, /help/i, 1)));
+        setFooterCompany(linksToText(pickColumn(cols, /company/i, cols.length > 2 ? 2 : 1)));
+        setSocialText(socialToText(c.footer?.socialLinks ?? []));
+        setShowNewsletter(c.footer?.showNewsletter !== false);
       })
       .catch((e) => setErr(String(e.message ?? e)));
   }, [router]);
@@ -121,8 +153,11 @@ export default function GiftChromeAdminPage() {
           footer: {
             brandName,
             tagline,
+            showNewsletter,
+            socialLinks: textToSocial(socialText),
             columns: [
               { title: 'Shop', links: textToLinks(footerShop) },
+              { title: 'Help', links: textToLinks(footerHelp) },
               { title: 'Company', links: textToLinks(footerCompany) },
             ],
           },
@@ -144,8 +179,7 @@ export default function GiftChromeAdminPage() {
       </p>
       <h1 className="font-display text-3xl mt-2">Soft Gift nav & footer</h1>
       <p className="mt-2 text-sm opacity-70">
-        Controls mega-menu links and default footer when the homepage has no{' '}
-        <code className="text-xs">footer</code> block. Format:{' '}
+        Controls mega-menu and the global Soft Gift footer (layout chrome). Format:{' '}
         <code className="text-xs">Label | /path</code> per line.
       </p>
       {err ? <p className="mt-4 text-sm text-red-600">{err}</p> : null}
@@ -212,6 +246,14 @@ export default function GiftChromeAdminPage() {
               onChange={(e) => setTagline(e.target.value)}
             />
           </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={showNewsletter}
+              onChange={(e) => setShowNewsletter(e.target.checked)}
+            />
+            Show newsletter in footer
+          </label>
           <label className="block">
             Shop column links
             <textarea
@@ -221,11 +263,27 @@ export default function GiftChromeAdminPage() {
             />
           </label>
           <label className="block">
+            Help column links
+            <textarea
+              className="mt-1 w-full min-h-[6rem] border rounded p-2 font-mono text-xs"
+              value={footerHelp}
+              onChange={(e) => setFooterHelp(e.target.value)}
+            />
+          </label>
+          <label className="block">
             Company column links
             <textarea
               className="mt-1 w-full min-h-[6rem] border rounded p-2 font-mono text-xs"
               value={footerCompany}
               onChange={(e) => setFooterCompany(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            Social links (<code className="text-xs">Label | https://… | network</code>)
+            <textarea
+              className="mt-1 w-full min-h-[5rem] border rounded p-2 font-mono text-xs"
+              value={socialText}
+              onChange={(e) => setSocialText(e.target.value)}
             />
           </label>
         </section>

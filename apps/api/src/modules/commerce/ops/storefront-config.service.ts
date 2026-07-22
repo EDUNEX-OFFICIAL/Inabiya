@@ -49,6 +49,12 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
   footer: {
     brandName: 'Inabiya',
     tagline: 'Thoughtfully personalised baby essentials & gifting.',
+    showNewsletter: true,
+    socialLinks: [
+      { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
+      { label: 'Facebook', href: 'https://facebook.com/inabiya', network: 'facebook' },
+      { label: 'WhatsApp', href: 'https://wa.me/919693940330', network: 'whatsapp' },
+    ],
     columns: [
       {
         title: 'Shop',
@@ -60,11 +66,21 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
         ],
       },
       {
+        title: 'Help',
+        links: [
+          { label: 'Shipping', href: '/gift#faq' },
+          { label: 'Returns', href: '/gift#faq' },
+          { label: 'FAQ', href: '/gift#faq' },
+          { label: 'WhatsApp', href: 'https://wa.me/919693940330' },
+        ],
+      },
+      {
         title: 'Company',
         links: [
+          { label: 'About', href: '/about' },
+          { label: 'Contact', href: '/contact' },
           { label: 'Parenting Blog', href: '/articles' },
           { label: 'Our Specialists', href: '/specialists' },
-          { label: 'Contact', href: 'mailto:hello@inabiya.in' },
         ],
       },
     ],
@@ -140,6 +156,11 @@ export class StorefrontConfigService {
         columns: stored.footer?.columns?.length
           ? stored.footer.columns
           : DEFAULT_GIFT_CHROME.footer?.columns,
+        socialLinks: stored.footer?.socialLinks?.length
+          ? stored.footer.socialLinks
+          : DEFAULT_GIFT_CHROME.footer?.socialLinks,
+        showNewsletter:
+          stored.footer?.showNewsletter ?? DEFAULT_GIFT_CHROME.footer?.showNewsletter ?? true,
       },
     };
   }
@@ -158,6 +179,9 @@ export class StorefrontConfigService {
             ...current.footer,
             ...input.footer,
             columns: input.footer.columns ?? current.footer?.columns,
+            socialLinks: input.footer.socialLinks ?? current.footer?.socialLinks,
+            showNewsletter:
+              input.footer.showNewsletter ?? current.footer?.showNewsletter ?? true,
           }
         : current.footer,
     };
