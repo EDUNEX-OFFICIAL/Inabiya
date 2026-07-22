@@ -149,7 +149,11 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
           ← Back to order
         </Link>
         <div className="flex flex-wrap gap-gs-2">
-          <button type="button" className="clay-btn-secondary text-sm" onClick={() => window.print()}>
+          <button
+            type="button"
+            className="clay-btn-secondary text-sm"
+            onClick={() => window.print()}
+          >
             Print
           </button>
           <button
@@ -197,7 +201,9 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
             <dd className="mt-0.5">{invoice.paidAt ? formatDate(invoice.paidAt) : '—'}</dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-wide opacity-50">Payment</dt>
+            <dt className="text-[10px] font-semibold uppercase tracking-wide opacity-50">
+              Payment
+            </dt>
             <dd className="mt-0.5">
               {paymentLabel(invoice.paymentProvider, invoice.paymentStatus)}
             </dd>
@@ -207,12 +213,16 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
         {/* Parties */}
         <div className="mt-gs-6 grid gap-gs-3 sm:grid-cols-3">
           <section className="rounded-lg border border-[rgba(45,36,48,0.08)] bg-[rgba(255,247,250,0.6)] p-gs-3 text-sm">
-            <h2 className="text-[10px] font-semibold uppercase tracking-wide opacity-50">Bill to</h2>
+            <h2 className="text-[10px] font-semibold uppercase tracking-wide opacity-50">
+              Bill to
+            </h2>
             <p className="mt-gs-2 font-medium">{invoice.customerName ?? invoice.customerEmail}</p>
             <p className="mt-0.5 text-xs opacity-70">{invoice.customerEmail}</p>
           </section>
           <section className="rounded-lg border border-[rgba(45,36,48,0.08)] p-gs-3 text-sm">
-            <h2 className="text-[10px] font-semibold uppercase tracking-wide opacity-50">Ship to</h2>
+            <h2 className="text-[10px] font-semibold uppercase tracking-wide opacity-50">
+              Ship to
+            </h2>
             <div className="mt-gs-2 space-y-0.5 text-xs leading-relaxed opacity-90">
               {shipLines.map((l, i) => (
                 <p key={i} className={i === 0 ? 'font-medium text-sm' : undefined}>
@@ -220,10 +230,14 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
                 </p>
               ))}
             </div>
-            <p className="mt-gs-2 text-[11px] opacity-55">{shippingLabel(invoice.shippingMethod)}</p>
+            <p className="mt-gs-2 text-[11px] opacity-55">
+              {shippingLabel(invoice.shippingMethod)}
+            </p>
           </section>
           <section className="rounded-lg border border-[rgba(45,36,48,0.08)] p-gs-3 text-sm">
-            <h2 className="text-[10px] font-semibold uppercase tracking-wide opacity-50">Billing</h2>
+            <h2 className="text-[10px] font-semibold uppercase tracking-wide opacity-50">
+              Billing
+            </h2>
             <div className="mt-gs-2 space-y-0.5 text-xs leading-relaxed opacity-90">
               {billLines.map((l, i) => (
                 <p key={i} className={i === 0 ? 'font-medium text-sm' : undefined}>
@@ -250,8 +264,7 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
                 <tr key={i} className="border-b border-[rgba(45,36,48,0.06)] align-top">
                   <td className="py-3 pr-2">
                     <p className="font-medium">
-                      {item.title}{' '}
-                      <span className="font-normal opacity-60">({item.label})</span>
+                      {item.title} <span className="font-normal opacity-60">({item.label})</span>
                     </p>
                     <p className="mt-0.5 font-mono text-[11px] opacity-45">SKU {item.sku}</p>
                   </td>

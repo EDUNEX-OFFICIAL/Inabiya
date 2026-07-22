@@ -5,7 +5,6 @@ import { apiUrl } from '@/lib/api-base';
 import { GIFT_CORPORATE_SLUG, GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
 import { marketingPageMetadata, webPageJsonLd, type CmsSeoPage } from '@/lib/cms-seo';
 
-
 export const dynamic = 'force-dynamic';
 
 type MarketingPage = CmsSeoPage & {
@@ -57,15 +56,11 @@ export default async function MarketingPageView({ params }: { params: { slug: st
   const page = await fetchPage(params.slug);
   if (!page) notFound();
 
-
   const ld = webPageJsonLd(page);
 
   return (
     <main className="gift-page max-w-3xl">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <MarketingPageBlocks blocks={page.blocks} />
     </main>
   );

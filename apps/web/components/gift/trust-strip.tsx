@@ -56,10 +56,7 @@ function CueIcon({ name }: { name: (typeof CUES)[number]['icon'] }) {
 
 export function TrustStrip() {
   return (
-    <ul
-      className="grid grid-cols-1 gap-gs-3 sm:grid-cols-3"
-      aria-label="Shopping reassurances"
-    >
+    <ul className="grid grid-cols-1 gap-gs-3 sm:grid-cols-3" aria-label="Shopping reassurances">
       {CUES.map((c) => (
         <li
           key={c.title}

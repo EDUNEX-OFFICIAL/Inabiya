@@ -38,9 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CorporateGiftingPage() {
   const cms = await fetchCorporatePage();
-  const ld = cms
-    ? webPageJsonLd({ ...cms, slug: GIFT_CORPORATE_SLUG })
-    : null;
+  const ld = cms ? webPageJsonLd({ ...cms, slug: GIFT_CORPORATE_SLUG }) : null;
 
   return (
     <main className="gift-page">

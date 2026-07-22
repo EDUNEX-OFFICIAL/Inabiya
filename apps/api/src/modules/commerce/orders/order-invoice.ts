@@ -157,9 +157,7 @@ function pdfText(s: string): string {
 
 export function renderInvoiceHtml(inv: InvoiceInput): string {
   const issued = inv.issuedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-  const paid = inv.paidAt
-    ? inv.paidAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
-    : null;
+  const paid = inv.paidAt ? inv.paidAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : null;
   const rows = inv.items
     .map(
       (i) => `<tr>
@@ -312,12 +310,7 @@ export function renderInvoicePdf(inv: InvoiceInput): Promise<Buffer> {
         align: 'right',
       });
 
-    doc
-      .moveTo(leftX, 96)
-      .lineTo(rightEdge, 96)
-      .strokeColor('#e8dfe4')
-      .lineWidth(1)
-      .stroke();
+    doc.moveTo(leftX, 96).lineTo(rightEdge, 96).strokeColor('#e8dfe4').lineWidth(1).stroke();
 
     // Meta row
     let y = 110;
@@ -364,7 +357,11 @@ export function renderInvoicePdf(inv: InvoiceInput): Promise<Buffer> {
       const linesH = box.lines.length * 11 + 28;
       maxBoxH = Math.max(maxBoxH, linesH);
       doc.roundedRect(x, y, boxW, linesH, 4).strokeColor('#eee6ea').lineWidth(0.8).stroke();
-      doc.fillColor('#999999').fontSize(7).font('Helvetica-Bold').text(box.title, x + 8, y + 8);
+      doc
+        .fillColor('#999999')
+        .fontSize(7)
+        .font('Helvetica-Bold')
+        .text(box.title, x + 8, y + 8);
       let ly = y + 22;
       box.lines.forEach((line, li) => {
         doc
@@ -390,12 +387,7 @@ export function renderInvoicePdf(inv: InvoiceInput): Promise<Buffer> {
     doc.text('PRICE', colPrice, y, { width: 55, align: 'right' });
     doc.text('AMOUNT', colAmt, y, { width: 70, align: 'right' });
     y += 12;
-    doc
-      .moveTo(leftX, y)
-      .lineTo(rightEdge, y)
-      .strokeColor('#d9cfd5')
-      .lineWidth(1.2)
-      .stroke();
+    doc.moveTo(leftX, y).lineTo(rightEdge, y).strokeColor('#d9cfd5').lineWidth(1.2).stroke();
     y += 8;
 
     for (const item of inv.items) {
@@ -408,7 +400,9 @@ export function renderInvoicePdf(inv: InvoiceInput): Promise<Buffer> {
         .fillColor('#2d2430')
         .fontSize(9)
         .font('Helvetica-Bold')
-        .text(pdfText(`${item.title} (${item.label})`), colItem, startY, { width: colQty - colItem - 8 });
+        .text(pdfText(`${item.title} (${item.label})`), colItem, startY, {
+          width: colQty - colItem - 8,
+        });
       const afterTitle = doc.y;
       doc
         .fillColor('#999999')
@@ -425,12 +419,10 @@ export function renderInvoicePdf(inv: InvoiceInput): Promise<Buffer> {
         width: 55,
         align: 'right',
       });
-      doc
-        .font('Helvetica-Bold')
-        .text(formatInvoiceInrPdf(item.lineTotalPaise), colAmt, startY, {
-          width: 70,
-          align: 'right',
-        });
+      doc.font('Helvetica-Bold').text(formatInvoiceInrPdf(item.lineTotalPaise), colAmt, startY, {
+        width: 70,
+        align: 'right',
+      });
       y = rowBottom + 10;
       doc
         .moveTo(leftX, y - 4)
@@ -454,12 +446,7 @@ export function renderInvoicePdf(inv: InvoiceInput): Promise<Buffer> {
       y += bold ? 18 : 14;
     };
 
-    doc
-      .moveTo(totalsX, y)
-      .lineTo(rightEdge, y)
-      .strokeColor('#e8dfe4')
-      .lineWidth(0.8)
-      .stroke();
+    doc.moveTo(totalsX, y).lineTo(rightEdge, y).strokeColor('#e8dfe4').lineWidth(0.8).stroke();
     y += 10;
 
     drawTotal('Subtotal', formatInvoiceInrPdf(inv.subtotalPaise));
@@ -472,22 +459,12 @@ export function renderInvoicePdf(inv: InvoiceInput): Promise<Buffer> {
     drawTotal('Shipping', formatInvoiceInrPdf(inv.shippingPaise));
     if (inv.taxPaise > 0) drawTotal('Tax', formatInvoiceInrPdf(inv.taxPaise));
     y += 2;
-    doc
-      .moveTo(totalsX, y)
-      .lineTo(rightEdge, y)
-      .strokeColor('#d9cfd5')
-      .lineWidth(1.2)
-      .stroke();
+    doc.moveTo(totalsX, y).lineTo(rightEdge, y).strokeColor('#d9cfd5').lineWidth(1.2).stroke();
     y += 8;
     drawTotal('Total', formatInvoiceInrPdf(inv.totalPaise), true);
 
     y += 20;
-    doc
-      .moveTo(leftX, y)
-      .lineTo(rightEdge, y)
-      .strokeColor('#eee6ea')
-      .lineWidth(0.6)
-      .stroke();
+    doc.moveTo(leftX, y).lineTo(rightEdge, y).strokeColor('#eee6ea').lineWidth(0.6).stroke();
     y += 12;
     doc.fillColor('#888888').fontSize(8).font('Helvetica');
     doc.text(

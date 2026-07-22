@@ -62,7 +62,13 @@ const dto = toInvoicePreviewDto(sample);
 assert.equal(dto.invoiceNumber, 'INV-INB-TEST-001');
 assert.equal(typeof dto.issuedAt, 'string');
 
-const addr = asInvoiceAddress({ fullName: 'A', line1: 'B', city: 'C', state: 'D', postalCode: '1' });
+const addr = asInvoiceAddress({
+  fullName: 'A',
+  line1: 'B',
+  city: 'C',
+  state: 'D',
+  postalCode: '1',
+});
 assert.equal(addr?.fullName, 'A');
 assert.equal(asInvoiceAddress(null), null);
 

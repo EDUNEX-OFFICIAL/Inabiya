@@ -94,10 +94,7 @@ export default async function GiftHomePage() {
 
   return (
     <main>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <MarketingPageBlocks blocks={page.blocks} layout="home" />
       {!hasFooterBlock ? <GiftStorefrontFooter {...(chrome?.footer ?? {})} /> : null}
     </main>

@@ -13,9 +13,7 @@ export type CmsSeoPage = {
 
 function siteOrigin(): string {
   const raw =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.APP_URL ||
-    'https://inabiya.edunexservices.in';
+    process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'https://inabiya.edunexservices.in';
   return raw.replace(/\/$/, '');
 }
 
@@ -37,17 +35,13 @@ export function marketingPageMetadata(page: CmsSeoPage): Metadata {
   const canonicalPath = page.canonicalPath?.trim() || defaultPathForCmsSlug(page.slug);
   const canonical = absolutize(canonicalPath);
   const index = page.robotsIndex !== false;
-  const ogImage = page.ogImageUrl?.trim()
-    ? absolutize(page.ogImageUrl.trim())
-    : undefined;
+  const ogImage = page.ogImageUrl?.trim() ? absolutize(page.ogImageUrl.trim()) : undefined;
 
   return {
     title,
     description,
     alternates: { canonical },
-    robots: index
-      ? { index: true, follow: true }
-      : { index: false, follow: false },
+    robots: index ? { index: true, follow: true } : { index: false, follow: false },
     openGraph: {
       title,
       description,

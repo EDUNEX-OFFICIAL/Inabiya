@@ -1,8 +1,5 @@
 import assert from 'node:assert/strict';
-import {
-  buildGiftBoxProductWhere,
-  REC_FILTER_TIERS,
-} from './gift-box-recommendations';
+import { buildGiftBoxProductWhere, REC_FILTER_TIERS } from './gift-box-recommendations';
 
 const prefs = {
   recipient: 'girl',

@@ -829,7 +829,8 @@ function FaqAnswer({ html }: { html: string }) {
 }
 
 function FaqBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
-  const title = String(props.title ?? 'Frequently asked questions').trim() || 'Frequently asked questions';
+  const title =
+    String(props.title ?? 'Frequently asked questions').trim() || 'Frequently asked questions';
   const items = parseFaqItems(props.items);
   if (items.length === 0) return null;
 
@@ -863,8 +864,11 @@ function FaqBlock({ props, home }: { props: Record<string, unknown>; home?: bool
 }
 
 function collectFaqJsonLd(blocks: CmsPageBlock[]): Record<string, unknown> | null {
-  const entities: Array<{ '@type': string; name: string; acceptedAnswer: { '@type': string; text: string } }> =
-    [];
+  const entities: Array<{
+    '@type': string;
+    name: string;
+    acceptedAnswer: { '@type': string; text: string };
+  }> = [];
   for (const b of blocks) {
     if (b.type !== 'faq') continue;
     for (const item of parseFaqItems(b.props.items)) {
@@ -898,10 +902,7 @@ function FaqJsonLd({ blocks }: { blocks: CmsPageBlock[] }) {
   const data = collectFaqJsonLd(blocks);
   if (!data) return null;
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
   );
 }
 

@@ -88,7 +88,10 @@ export const createProductBodySchema = z.object({
   occasionTags: z.array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday'])).optional(),
   isReadyMadeHamper: z.boolean().optional(),
   brandName: z.string().max(120).optional(),
-  storefrontLabels: z.array(z.enum(['NEW', 'SALE'])).max(2).optional(),
+  storefrontLabels: z
+    .array(z.enum(['NEW', 'SALE']))
+    .max(2)
+    .optional(),
   variants: z
     .array(
       z.object({
@@ -132,7 +135,10 @@ export const updateProductBodySchema = z.object({
   occasionTags: z.array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday'])).optional(),
   isReadyMadeHamper: z.boolean().optional(),
   brandName: z.string().max(120).nullable().optional(),
-  storefrontLabels: z.array(z.enum(['NEW', 'SALE'])).max(2).optional(),
+  storefrontLabels: z
+    .array(z.enum(['NEW', 'SALE']))
+    .max(2)
+    .optional(),
 });
 
 export const updateInventoryBodySchema = z.object({
@@ -684,10 +690,8 @@ export const pageBlockInputSchema = z.discriminatedUnion('type', [
 ]);
 
 /** Empty string → null so admin “clear field” does not fail path/URL regex. */
-const emptyToUndefined = (v: unknown) =>
-  typeof v === 'string' && v.trim() === '' ? undefined : v;
-const emptyToNull = (v: unknown) =>
-  typeof v === 'string' && v.trim() === '' ? null : v;
+const emptyToUndefined = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? undefined : v);
+const emptyToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
 
 const marketingCanonicalPathSchema = z
   .string()

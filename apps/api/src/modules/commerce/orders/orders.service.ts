@@ -64,7 +64,10 @@ export class OrdersService {
   }
 
   /** PDF tax receipt for paid (or refunded) orders — ownership scoped. */
-  async getInvoicePdfForCustomer(userId: string, orderId: string): Promise<{
+  async getInvoicePdfForCustomer(
+    userId: string,
+    orderId: string,
+  ): Promise<{
     filename: string;
     pdf: Buffer;
   }> {

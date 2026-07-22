@@ -4,13 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 type Media = { url: string; altText: string | null };
 
-export function PdpGallery({
-  media,
-  title,
-}: {
-  media: Media[];
-  title: string;
-}) {
+export function PdpGallery({ media, title }: { media: Media[]; title: string }) {
   const [active, setActive] = useState(0);
   const mediaKey = useMemo(() => media.map((m) => m.url).join('\0'), [media]);
 
@@ -72,11 +66,7 @@ export function PdpGallery({
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={m.url}
-                  alt=""
-                  className="h-14 w-14 object-cover sm:h-20 sm:w-20"
-                />
+                <img src={m.url} alt="" className="h-14 w-14 object-cover sm:h-20 sm:w-20" />
               </button>
             </li>
           ))}

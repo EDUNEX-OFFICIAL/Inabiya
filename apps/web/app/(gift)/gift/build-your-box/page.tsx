@@ -289,10 +289,7 @@ function GiftBoxWizard() {
             {box.recipient || box.ageBand || box.occasion || box.budgetPaise != null ? (
               <>
                 {' '}
-                (
-                {[box.recipient, box.ageBand, box.occasion]
-                  .filter(Boolean)
-                  .join(' · ')}
+                ({[box.recipient, box.ageBand, box.occasion].filter(Boolean).join(' · ')}
                 {box.budgetPaise != null ? ` · Budget ${formatInr(box.budgetPaise)}` : ''}
                 {box.items.length ? ` · ${box.items.length} item(s)` : ''})
               </>

@@ -148,10 +148,7 @@ export async function apiAuth<T>(
 }
 
 /** Authenticated binary/HTML download (invoice, etc.). Triggers browser save. */
-export async function apiAuthDownload(
-  path: string,
-  fallbackFilename: string,
-): Promise<void> {
+export async function apiAuthDownload(path: string, fallbackFilename: string): Promise<void> {
   const headers = new Headers();
   const token = getStoredAccessToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);

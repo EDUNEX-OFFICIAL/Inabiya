@@ -2,10 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { ProductStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
-import {
-  buildGiftBoxProductWhere,
-  REC_FILTER_TIERS,
-} from './gift-box-recommendations';
+import { buildGiftBoxProductWhere, REC_FILTER_TIERS } from './gift-box-recommendations';
 
 @Injectable()
 export class WishlistService {

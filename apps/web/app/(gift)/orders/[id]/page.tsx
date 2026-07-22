@@ -156,7 +156,9 @@ function OrderDetailView({ params }: { params: { id: string } }) {
           Preview the receipt, then download as PDF or print.
         </p>
       ) : order.status === 'PENDING_PAYMENT' ? (
-        <p className="mt-gs-2 text-sm opacity-70">Invoice will be available after payment is captured.</p>
+        <p className="mt-gs-2 text-sm opacity-70">
+          Invoice will be available after payment is captured.
+        </p>
       ) : null}
 
       <div className="mt-gs-4 flex flex-wrap gap-gs-3">

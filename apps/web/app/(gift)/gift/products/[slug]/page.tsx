@@ -343,11 +343,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             <p className="mt-gs-4 text-sm text-danger">This gift has no buyable options yet.</p>
           )}
 
-          <p
-            className={`mt-gs-2 text-sm font-medium ${
-              inStock ? 'text-success' : 'text-danger'
-            }`}
-          >
+          <p className={`mt-gs-2 text-sm font-medium ${inStock ? 'text-success' : 'text-danger'}`}>
             {inStock
               ? variant && variant.available <= 5
                 ? `Only ${variant.available} left`
@@ -435,9 +431,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                       key={opt.key}
                       opt={opt}
                       value={personalization[opt.key] ?? ''}
-                      onChange={(v) =>
-                        setPersonalization((prev) => ({ ...prev, [opt.key]: v }))
-                      }
+                      onChange={(v) => setPersonalization((prev) => ({ ...prev, [opt.key]: v }))}
                     />
                   ))}
                 </div>
@@ -471,9 +465,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                   +
                 </button>
               </div>
-              {maxQty <= 5 ? (
-                <span className="text-xs opacity-60">Max {maxQty}</span>
-              ) : null}
+              {maxQty <= 5 ? <span className="text-xs opacity-60">Max {maxQty}</span> : null}
             </div>
           ) : null}
 
@@ -744,8 +736,7 @@ function RelatedProducts({
     let cancelled = false;
 
     async function load() {
-      const exclude = (list: CatalogProduct[]) =>
-        list.filter((p) => p.slug !== slug).slice(0, 4);
+      const exclude = (list: CatalogProduct[]) => list.filter((p) => p.slug !== slug).slice(0, 4);
 
       const attempts: URLSearchParams[] = [];
       if (categorySlug) {

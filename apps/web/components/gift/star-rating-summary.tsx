@@ -6,7 +6,12 @@ type Props = {
   className?: string;
 };
 
-export function StarRatingSummary({ rating, count, emptyHref = '#reviews', className = '' }: Props) {
+export function StarRatingSummary({
+  rating,
+  count,
+  emptyHref = '#reviews',
+  className = '',
+}: Props) {
   const filled = count > 0 && rating != null ? Math.round(rating) : 0;
   const label =
     count > 0 && rating != null
@@ -17,11 +22,7 @@ export function StarRatingSummary({ rating, count, emptyHref = '#reviews', class
     <p className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-sm ${className}`.trim()}>
       <span className="inline-flex tracking-tight" aria-label={label} role="img">
         {[1, 2, 3, 4, 5].map((n) => (
-          <span
-            key={n}
-            className={n <= filled ? 'text-primary' : 'text-foreground/25'}
-            aria-hidden
-          >
+          <span key={n} className={n <= filled ? 'text-primary' : 'text-foreground/25'} aria-hidden>
             ★
           </span>
         ))}
