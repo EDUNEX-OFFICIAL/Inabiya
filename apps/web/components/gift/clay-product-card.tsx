@@ -8,8 +8,7 @@ type Props = {
 
 export function ClayProductCard({ product, imageHeightClass = 'h-44' }: Props) {
   const img = product.media[0];
-  const out =
-    product.variants.length > 0 && product.variants.every((v) => v.available <= 0);
+  const out = product.variants.length > 0 && product.variants.every((v) => v.available <= 0);
 
   return (
     <li className="clay-card overflow-hidden list-none">
@@ -22,9 +21,7 @@ export function ClayProductCard({ product, imageHeightClass = 'h-44' }: Props) {
             className={`${imageHeightClass} w-full object-cover`}
           />
         ) : (
-          <div
-            className={`${imageHeightClass} w-full gift-media-fallback`}
-          />
+          <div className={`${imageHeightClass} w-full gift-media-fallback`} />
         )}
         <div className="p-gs-4">
           <p className="font-medium leading-snug text-foreground">{product.title}</p>

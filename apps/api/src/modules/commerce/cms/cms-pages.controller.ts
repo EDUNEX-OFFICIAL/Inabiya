@@ -1,22 +1,6 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
-import type {
-  CreateMarketingPageBody,
-  UpdateMarketingPageBody,
-} from '@inabiya/validation';
-import {
-  createMarketingPageBodySchema,
-  updateMarketingPageBodySchema,
-} from '@inabiya/validation';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import type { CreateMarketingPageBody, UpdateMarketingPageBody } from '@inabiya/validation';
+import { createMarketingPageBodySchema, updateMarketingPageBodySchema } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
 import { CurrentUser } from '../../identity/current-user.decorator';
@@ -77,11 +61,7 @@ export class CmsPagesAdminController {
   }
 
   @Post(':id/publish')
-  publish(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-    @Req() req: AuthedRequest,
-  ) {
+  publish(@Param('id') id: string, @CurrentUser() user: { id: string }, @Req() req: AuthedRequest) {
     return this.pages.publish(id, user.id, String(req.id ?? ''));
   }
 
@@ -95,11 +75,7 @@ export class CmsPagesAdminController {
   }
 
   @Delete(':id')
-  remove(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-    @Req() req: AuthedRequest,
-  ) {
+  remove(@Param('id') id: string, @CurrentUser() user: { id: string }, @Req() req: AuthedRequest) {
     return this.pages.remove(id, user.id, String(req.id ?? ''));
   }
 }

@@ -12,17 +12,11 @@ export default function GiftLayout({ children }: { children: React.ReactNode }) 
   const isAuthPage = AUTH_PATHS.has(pathname);
 
   return (
-    <div
-      data-theme="gift"
-      className="clay-shell min-h-screen text-foreground"
-    >
+    <div data-theme="gift" className="clay-shell min-h-screen text-foreground">
       {isAuthPage ? (
         <header className="px-gs-4 py-gs-4 sm:px-gs-6">
           <div className="mx-auto max-w-md">
-            <Link
-              href="/gift"
-              className="font-display text-lg tracking-tight text-primary"
-            >
+            <Link href="/gift" className="font-display text-lg tracking-tight text-primary">
               Inabiya
             </Link>
           </div>

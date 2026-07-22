@@ -37,14 +37,7 @@ type Suggestion = {
   available: number;
 };
 
-const STEPS = [
-  'Who',
-  'Age',
-  'Occasion',
-  'Budget',
-  'Categories',
-  'Your box',
-] as const;
+const STEPS = ['Who', 'Age', 'Occasion', 'Budget', 'Categories', 'Your box'] as const;
 
 const RECIPIENTS = [
   { value: 'girl', label: 'Baby girl' },
@@ -117,14 +110,16 @@ export default function GiftBoxPage() {
       .catch(() => router.replace('/login?next=/gift/box'));
   }, [router, loadSuggestions]);
 
-  async function savePrefs(patch: Partial<{
-    recipient: string | null;
-    ageBand: string | null;
-    occasion: string | null;
-    budgetPaise: number;
-    categorySlugs: string[];
-    wizardStep: number;
-  }>) {
+  async function savePrefs(
+    patch: Partial<{
+      recipient: string | null;
+      ageBand: string | null;
+      occasion: string | null;
+      budgetPaise: number;
+      categorySlugs: string[];
+      wizardStep: number;
+    }>,
+  ) {
     if (!box) return;
     setError(null);
     try {
@@ -147,10 +142,9 @@ export default function GiftBoxPage() {
 
   async function removeItem(itemId: string) {
     if (!box) return;
-    const updated = await apiAuth<GiftBox>(
-      `/catalog/gift-boxes/${box.id}/items/${itemId}`,
-      { method: 'DELETE' },
-    );
+    const updated = await apiAuth<GiftBox>(`/catalog/gift-boxes/${box.id}/items/${itemId}`, {
+      method: 'DELETE',
+    });
     setBox(updated);
     await loadSuggestions(updated);
   }
@@ -330,11 +324,7 @@ export default function GiftBoxPage() {
                 inputMode="numeric"
               />
             </label>
-            <button
-              type="button"
-              className="clay-btn"
-              onClick={() => void setBudgetOnBox()}
-            >
+            <button type="button" className="clay-btn" onClick={() => void setBudgetOnBox()}>
               Continue
             </button>
           </div>
@@ -407,7 +397,10 @@ export default function GiftBoxPage() {
                 ? ` · Remaining ${formatInr(Math.max(0, box.remainingBudgetPaise))}`
                 : null}
               {over ? (
-                <span className="text-danger"> · Over by {formatInr(box.overBudgetPaise ?? 0)}</span>
+                <span className="text-danger">
+                  {' '}
+                  · Over by {formatInr(box.overBudgetPaise ?? 0)}
+                </span>
               ) : null}
             </p>
           </div>
@@ -417,7 +410,10 @@ export default function GiftBoxPage() {
               <li className="opacity-70">No items yet — add from recommendations below.</li>
             ) : (
               box.items.map((i) => (
-                <li key={i.id} className="flex justify-between gap-gs-4 border-b border-black/5 py-gs-2">
+                <li
+                  key={i.id}
+                  className="flex justify-between gap-gs-4 border-b border-black/5 py-gs-2"
+                >
                   <span>
                     {i.productTitle} ({i.label}) × {i.quantity}
                   </span>
@@ -450,10 +446,15 @@ export default function GiftBoxPage() {
               <ul className="grid gap-gs-3 sm:grid-cols-2">
                 {suggestions.map((s) => (
                   <li key={s.variantId} className="rounded border border-black/10 p-gs-3 text-sm">
-                    <Link href={`/gift/products/${s.productSlug}`} className="font-medium hover:underline">
+                    <Link
+                      href={`/gift/products/${s.productSlug}`}
+                      className="font-medium hover:underline"
+                    >
                       {s.productTitle}
                     </Link>
-                    <p className="opacity-70">{s.label} · {formatInr(s.pricePaise)}</p>
+                    <p className="opacity-70">
+                      {s.label} · {formatInr(s.pricePaise)}
+                    </p>
                     <button
                       type="button"
                       disabled={busy || over}

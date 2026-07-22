@@ -68,10 +68,7 @@ export class PaymentFulfillmentService {
     return { duplicate: false, orderId };
   }
 
-  async applyPaymentStatus(
-    paymentId: string,
-    status: 'CAPTURED' | 'FAILED',
-  ): Promise<string> {
+  async applyPaymentStatus(paymentId: string, status: 'CAPTURED' | 'FAILED'): Promise<string> {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
       include: {

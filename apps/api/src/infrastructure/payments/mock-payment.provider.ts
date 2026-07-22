@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type {
-  PaymentIntent,
-  PaymentProvider,
-  PaymentRefund,
-} from './payment-provider.interface';
+import type { PaymentIntent, PaymentProvider, PaymentRefund } from './payment-provider.interface';
 
 @Injectable()
 export class MockPaymentProvider implements PaymentProvider {

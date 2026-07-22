@@ -104,7 +104,10 @@ export default function CreatorStudioPage() {
         <ul className="mt-4 space-y-3 text-sm font-body">
           {rows.map((p) => (
             <li key={p.id} className="border border-[var(--border)] rounded p-3">
-              <Link href={`/creator/campaigns/${p.campaign.slug}`} className="underline font-medium">
+              <Link
+                href={`/creator/campaigns/${p.campaign.slug}`}
+                className="underline font-medium"
+              >
                 {p.campaign.title}
               </Link>
               <p className="opacity-70 mt-1">

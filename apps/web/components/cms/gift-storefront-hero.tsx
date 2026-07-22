@@ -113,7 +113,11 @@ export function GiftStorefrontHero({
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
       <div className="gift-hero-split__svg absolute inset-0" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/gift/gifting-bg.svg" alt="" className="h-full w-full object-cover object-center" />
+        <img
+          src="/gift/gifting-bg.svg"
+          alt=""
+          className="h-full w-full object-cover object-center"
+        />
       </div>
 
       <div className="gift-hero-split__grid relative z-10 mx-auto grid max-w-6xl items-center gap-gs-6 px-gs-4 py-gs-7 sm:px-gs-6 sm:py-gs-8 lg:grid-cols-2 lg:gap-gs-8 lg:py-gs-8">

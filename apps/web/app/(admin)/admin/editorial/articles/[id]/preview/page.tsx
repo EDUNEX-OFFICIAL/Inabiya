@@ -26,10 +26,15 @@ export default function ArticlePreviewPage({ params }: { params: { id: string } 
 
   return (
     <main className="min-h-screen p-8 max-w-2xl">
-      <Link href={`/admin/editorial/articles/${params.id}`} className="text-sm underline opacity-70">
+      <Link
+        href={`/admin/editorial/articles/${params.id}`}
+        className="text-sm underline opacity-70"
+      >
         ← Back to editor
       </Link>
-      <p className="mt-2 text-xs uppercase tracking-wide text-amber-700">Internal preview · not published</p>
+      <p className="mt-2 text-xs uppercase tracking-wide text-amber-700">
+        Internal preview · not published
+      </p>
       <h1 className="font-display text-3xl mt-4">{preview.title}</h1>
       <p className="text-sm opacity-60 mt-1">
         /{preview.slug} · {preview.status}

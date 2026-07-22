@@ -125,7 +125,11 @@ export default function CorporateGiftingPage() {
             </label>
             <label className="block">
               Phone
-              <input className="clay-input" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <input
+                className="clay-input"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
             </label>
             <label className="block">
               Company

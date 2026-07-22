@@ -31,7 +31,9 @@ export default async function MarketplacePage() {
           </li>
         ))}
         {rows.length === 0 ? (
-          <li className="text-sm opacity-70">No open campaigns yet — brands can publish from dashboard.</li>
+          <li className="text-sm opacity-70">
+            No open campaigns yet — brands can publish from dashboard.
+          </li>
         ) : null}
       </ul>
     </main>

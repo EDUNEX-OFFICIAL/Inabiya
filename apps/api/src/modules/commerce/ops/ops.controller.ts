@@ -80,7 +80,11 @@ export class OpsAdminController {
   @Post('storefront')
   setStorefront(
     @Body(new ZodValidationPipe(storefrontConfigBodySchema))
-    body: { featuredSlugs: string[]; heroTitle?: string; heroSubtitle?: string },
+    body: {
+      featuredSlugs: string[];
+      heroTitle?: string;
+      heroSubtitle?: string;
+    },
   ) {
     return this.storefront.setHomeConfig(body);
   }
@@ -102,15 +106,15 @@ export class OpsAdminController {
   }
 
   @Post('coupons')
-  createCoupon(@Body(new ZodValidationPipe(createCouponBodySchema)) body: Parameters<CouponService['createAdmin']>[0]) {
+  createCoupon(
+    @Body(new ZodValidationPipe(createCouponBodySchema))
+    body: Parameters<CouponService['createAdmin']>[0],
+  ) {
     return this.coupons.createAdmin(body);
   }
 
   @Patch('coupons/:code')
-  setCouponActive(
-    @Param('code') code: string,
-    @Body() body: { active: boolean },
-  ) {
+  setCouponActive(@Param('code') code: string, @Body() body: { active: boolean }) {
     return this.coupons.setActive(code, Boolean(body.active));
   }
 

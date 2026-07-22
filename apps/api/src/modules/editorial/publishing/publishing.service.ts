@@ -126,9 +126,7 @@ export class PublishingService {
     const rows = await this.prisma.article.findMany({
       where: {
         status: ArticleStatus.PUBLISHED,
-        ...(query?.category
-          ? { category: { slug: query.category } }
-          : {}),
+        ...(query?.category ? { category: { slug: query.category } } : {}),
         ...(query?.tag ? { tags: { some: { tag: { slug: query.tag } } } } : {}),
       },
       orderBy: { publishedAt: 'desc' },
@@ -324,19 +322,14 @@ export class PublishingService {
     medicalGateRequired: boolean;
     statusHistory: Array<{ status: ArticleStatus }>;
   }) {
-    if (
-      article.status !== ArticleStatus.APPROVED &&
-      article.status !== ArticleStatus.SCHEDULED
-    ) {
+    if (article.status !== ArticleStatus.APPROVED && article.status !== ArticleStatus.SCHEDULED) {
       throw new BadRequestException({
         code: 'NOT_APPROVED',
         message: 'Only APPROVED (or already SCHEDULED) articles can be published.',
       });
     }
     if (article.medicalGateRequired) {
-      const passed = article.statusHistory.some(
-        (h) => h.status === ArticleStatus.MEDICAL_REVIEW,
-      );
+      const passed = article.statusHistory.some((h) => h.status === ArticleStatus.MEDICAL_REVIEW);
       if (!passed) {
         throw new ForbiddenException({
           code: 'MEDICAL_GATE_REQUIRED',

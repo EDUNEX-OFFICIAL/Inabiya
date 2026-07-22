@@ -57,10 +57,7 @@ export function normalizeArticleBody(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return '<p></p>';
   if (/^\s*</.test(trimmed)) return sanitizeArticleHtml(trimmed);
-  const escaped = trimmed
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const escaped = trimmed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return escaped
     .split(/\n{2,}/)
     .map((block) => `<p>${block.replace(/\n/g, '<br>')}</p>`)

@@ -30,10 +30,7 @@ export type PasswordResetJob = {
 };
 
 type NotificationJob =
-  | OrderConfirmationJob
-  | CartAbandonmentJob
-  | AssignmentDueReminderJob
-  | PasswordResetJob;
+  OrderConfirmationJob | CartAbandonmentJob | AssignmentDueReminderJob | PasswordResetJob;
 
 @Injectable()
 export class NotificationsQueueService {

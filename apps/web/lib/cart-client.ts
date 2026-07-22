@@ -74,7 +74,9 @@ export async function cartApi<T>(
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(
-      typeof data?.error?.message === 'string' ? data.error.message : `Request failed (${res.status})`,
+      typeof data?.error?.message === 'string'
+        ? data.error.message
+        : `Request failed (${res.status})`,
     );
   }
   if ((data as CartDto).guestToken) setCartToken((data as CartDto).guestToken!);

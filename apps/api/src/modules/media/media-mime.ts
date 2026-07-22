@@ -11,9 +11,7 @@ export const ALLOWED_MEDIA_MIMES = new Set([
 /** ~5 MiB */
 export const MAX_MEDIA_BYTES = 5 * 1024 * 1024;
 
-export type MediaUploadValidation =
-  | { ok: true }
-  | { ok: false; code: string; message: string };
+export type MediaUploadValidation = { ok: true } | { ok: false; code: string; message: string };
 
 export function validateMediaUpload(
   mimeType: string | undefined,

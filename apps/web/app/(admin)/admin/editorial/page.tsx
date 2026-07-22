@@ -44,28 +44,25 @@ export default function EditorialAdminPage() {
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [stats, setStats] = useState<Turnaround | null>(null);
 
-  const load = useCallback(
-    async (u: AuthUser, st: string, overdue: boolean) => {
-      const params = new URLSearchParams();
-      const isOps = u.roles.includes('CONTENT_ADMIN') || u.roles.includes('SUPER_ADMIN');
-      const isWriterOnly =
-        u.roles.includes('WRITER') &&
-        !isOps &&
-        !u.roles.includes('SEO_EDITOR') &&
-        !u.roles.includes('MEDICAL_REVIEWER');
-      if (isWriterOnly) {
-        params.set('mine', '1');
-      }
-      if (st) params.set('status', st);
-      if (overdue) params.set('overdue', '1');
-      const q = params.toString() ? `?${params}` : '';
-      setRows(await apiAuth<ArticleRow[]>(`/editorial/articles${q}`));
-      if (isOps) {
-        setStats(await apiAuth<Turnaround>('/editorial/analytics/turnaround'));
-      }
-    },
-    [],
-  );
+  const load = useCallback(async (u: AuthUser, st: string, overdue: boolean) => {
+    const params = new URLSearchParams();
+    const isOps = u.roles.includes('CONTENT_ADMIN') || u.roles.includes('SUPER_ADMIN');
+    const isWriterOnly =
+      u.roles.includes('WRITER') &&
+      !isOps &&
+      !u.roles.includes('SEO_EDITOR') &&
+      !u.roles.includes('MEDICAL_REVIEWER');
+    if (isWriterOnly) {
+      params.set('mine', '1');
+    }
+    if (st) params.set('status', st);
+    if (overdue) params.set('overdue', '1');
+    const q = params.toString() ? `?${params}` : '';
+    setRows(await apiAuth<ArticleRow[]>(`/editorial/articles${q}`));
+    if (isOps) {
+      setStats(await apiAuth<Turnaround>('/editorial/analytics/turnaround'));
+    }
+  }, []);
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
@@ -86,7 +83,14 @@ export default function EditorialAdminPage() {
           throw new Error('Editorial role required');
         }
         setUser(u);
-        if (u.roles.includes('FINANCE') && !u.roles.some((r) => ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'SUPER_ADMIN'].includes(r))) {
+        if (
+          u.roles.includes('FINANCE') &&
+          !u.roles.some((r) =>
+            ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'SUPER_ADMIN'].includes(
+              r,
+            ),
+          )
+        ) {
           router.replace('/admin/editorial/payments');
           return;
         }
@@ -106,7 +110,9 @@ export default function EditorialAdminPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl">Editorial</h1>
-          <p className="mt-1 text-sm opacity-70">{user.email} · {user.roles.join(', ')}</p>
+          <p className="mt-1 text-sm opacity-70">
+            {user.email} · {user.roles.join(', ')}
+          </p>
         </div>
         <button
           type="button"
@@ -154,8 +160,8 @@ export default function EditorialAdminPage() {
         <section className="mt-6 rounded border p-4 text-sm max-w-2xl">
           <h2 className="font-medium">Turnaround</h2>
           <p className="mt-1 opacity-80">
-            Avg hours to approve: {stats.avgHoursToApprove ?? '—'} · Overdue:{' '}
-            {stats.overdueCount} · Approved sample: {stats.approvedSample}
+            Avg hours to approve: {stats.avgHoursToApprove ?? '—'} · Overdue: {stats.overdueCount} ·
+            Approved sample: {stats.approvedSample}
           </p>
           <ul className="mt-2 flex flex-wrap gap-2">
             {stats.byStatus.map((s) => (
@@ -195,7 +201,10 @@ export default function EditorialAdminPage() {
       <ul className="mt-4 space-y-2 max-w-2xl">
         {rows.map((a) => (
           <li key={a.id} className="rounded border p-3 text-sm">
-            <Link href={`/admin/editorial/articles/${a.id}`} className="font-medium hover:underline">
+            <Link
+              href={`/admin/editorial/articles/${a.id}`}
+              className="font-medium hover:underline"
+            >
               {a.title}
             </Link>
             <p className="opacity-70 mt-1">

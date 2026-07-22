@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, ProductStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
@@ -35,7 +31,10 @@ export class WishlistService {
       sku: r.variant.sku,
       label: r.variant.label,
       pricePaise: r.variant.pricePaise,
-      available: Math.max(0, (r.variant.inventory?.onHand ?? 0) - (r.variant.inventory?.reserved ?? 0)),
+      available: Math.max(
+        0,
+        (r.variant.inventory?.onHand ?? 0) - (r.variant.inventory?.reserved ?? 0),
+      ),
     }));
   }
 
@@ -121,10 +120,7 @@ export class GiftBoxService {
       },
     });
     if (active && input.budgetPaise != null) {
-      const subtotal = active.items.reduce(
-        (s, i) => s + i.variant.pricePaise * i.quantity,
-        0,
-      );
+      const subtotal = active.items.reduce((s, i) => s + i.variant.pricePaise * i.quantity, 0);
       if (input.budgetPaise < subtotal) {
         throw new BadRequestException({
           code: 'BUDGET_TOO_LOW',
@@ -138,9 +134,7 @@ export class GiftBoxService {
       ...(input.recipient !== undefined ? { recipient: input.recipient } : {}),
       ...(input.ageBand !== undefined ? { ageBand: input.ageBand } : {}),
       ...(input.occasion !== undefined ? { occasion: input.occasion } : {}),
-      ...(input.categorySlugs !== undefined
-        ? { categorySlugs: input.categorySlugs }
-        : {}),
+      ...(input.categorySlugs !== undefined ? { categorySlugs: input.categorySlugs } : {}),
       ...(input.wizardStep != null ? { wizardStep: input.wizardStep } : {}),
     };
     if (active) {
@@ -262,10 +256,7 @@ export class GiftBoxService {
     for (const p of products) {
       for (const v of p.variants) {
         if (!v.giftBoxEligible || inBox.has(v.id)) continue;
-        const available = Math.max(
-          0,
-          (v.inventory?.onHand ?? 0) - (v.inventory?.reserved ?? 0),
-        );
+        const available = Math.max(0, (v.inventory?.onHand ?? 0) - (v.inventory?.reserved ?? 0));
         if (available < 1) continue;
         if (v.pricePaise > remaining) continue;
         suggestions.push({
@@ -280,7 +271,10 @@ export class GiftBoxService {
       }
     }
     suggestions.sort((a, b) => a.pricePaise - b.pricePaise);
-    return { remainingBudgetPaise: mapped.remainingBudgetPaise, suggestions: suggestions.slice(0, 12) };
+    return {
+      remainingBudgetPaise: mapped.remainingBudgetPaise,
+      suggestions: suggestions.slice(0, 12),
+    };
   }
 
   async addItem(
@@ -312,8 +306,7 @@ export class GiftBoxService {
         message: 'Variant is not eligible for gift box.',
       });
     }
-    const available =
-      (variant.inventory?.onHand ?? 0) - (variant.inventory?.reserved ?? 0);
+    const available = (variant.inventory?.onHand ?? 0) - (variant.inventory?.reserved ?? 0);
     if (available < input.quantity) {
       throw new BadRequestException({
         code: 'INSUFFICIENT_STOCK',
@@ -435,12 +428,9 @@ export class GiftBoxService {
     }));
     const subtotalPaise = items.reduce((s, i) => s + i.lineTotalPaise, 0);
     const budgetPaise = box.budgetPaise;
-    const remainingBudgetPaise =
-      budgetPaise != null ? budgetPaise - subtotalPaise : null;
+    const remainingBudgetPaise = budgetPaise != null ? budgetPaise - subtotalPaise : null;
     const overBudgetPaise =
-      budgetPaise != null && subtotalPaise > budgetPaise
-        ? subtotalPaise - budgetPaise
-        : 0;
+      budgetPaise != null && subtotalPaise > budgetPaise ? subtotalPaise - budgetPaise : 0;
     return {
       id: box.id,
       name: box.name,

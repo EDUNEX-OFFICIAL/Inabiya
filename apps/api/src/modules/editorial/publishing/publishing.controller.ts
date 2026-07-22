@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   createEditorialCategoryBodySchema,
   createSpecialistBodySchema,
@@ -60,9 +51,7 @@ export class PublishingPublicController {
   }
 
   @Post('newsletter')
-  newsletter(
-    @Body(new ZodValidationPipe(newsletterSignupBodySchema)) body: NewsletterSignupBody,
-  ) {
+  newsletter(@Body(new ZodValidationPipe(newsletterSignupBodySchema)) body: NewsletterSignupBody) {
     return this.publishing.newsletterSignup(body.email);
   }
 }

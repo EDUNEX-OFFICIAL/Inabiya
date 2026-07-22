@@ -101,7 +101,11 @@ export default function NewArticlePage() {
           onChange={(e) => setBrief(e.target.value)}
         />
       </label>
-      <button type="button" className="mt-4 rounded border px-3 py-1 text-sm" onClick={() => void create()}>
+      <button
+        type="button"
+        className="mt-4 rounded border px-3 py-1 text-sm"
+        onClick={() => void create()}
+      >
         Create
       </button>
       {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}

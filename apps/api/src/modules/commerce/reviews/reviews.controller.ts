@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ReviewStatus } from '@prisma/client';
 import {
   createReviewBodySchema,
@@ -53,8 +43,7 @@ export class ReviewsAdminController {
   @Get()
   list(@Query('status') status?: string) {
     const allowed = Object.values(ReviewStatus) as string[];
-    const parsed =
-      status && allowed.includes(status) ? (status as ReviewStatus) : undefined;
+    const parsed = status && allowed.includes(status) ? (status as ReviewStatus) : undefined;
     return this.reviews.listAdmin(parsed);
   }
 

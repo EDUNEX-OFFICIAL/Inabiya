@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   articleCommentBodySchema,
   articleTransitionBodySchema,
@@ -32,13 +22,7 @@ type EditorialUser = { id: string; roles: RoleCode[] };
 
 @Controller('editorial')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(
-  'CONTENT_ADMIN',
-  'WRITER',
-  'SEO_EDITOR',
-  'MEDICAL_REVIEWER',
-  'SUPER_ADMIN',
-)
+@Roles('CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'SUPER_ADMIN')
 export class ArticlesController {
   constructor(private readonly articles: ArticlesService) {}
 
@@ -62,8 +46,7 @@ export class ArticlesController {
     @Query('overdue') overdue?: string,
   ) {
     const allowed = Object.values(ArticleStatus) as string[];
-    const parsed =
-      status && allowed.includes(status) ? (status as ArticleStatus) : undefined;
+    const parsed = status && allowed.includes(status) ? (status as ArticleStatus) : undefined;
     return this.articles.list(user, {
       mineOnly: mine === '1' || mine === 'true',
       status: parsed,

@@ -36,7 +36,10 @@ export default function WriterDashboardPage() {
       <ul className="mt-6 space-y-2">
         {rows.map((a) => (
           <li key={a.id} className="rounded border p-3 text-sm">
-            <Link href={`/admin/editorial/articles/${a.id}`} className="font-medium hover:underline">
+            <Link
+              href={`/admin/editorial/articles/${a.id}`}
+              className="font-medium hover:underline"
+            >
               {a.title}
             </Link>
             <p className="opacity-70 mt-1">{a.status}</p>

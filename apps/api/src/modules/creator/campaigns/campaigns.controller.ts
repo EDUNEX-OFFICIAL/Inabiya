@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import {
   campaignMessageBodySchema,
   campaignRatingBodySchema,
@@ -86,21 +78,13 @@ export class CampaignsAuthController {
 
   @Post('campaigns/:id/publish')
   @Roles('BRAND', 'SUPER_ADMIN')
-  publish(
-    @CurrentUser() user: Actor,
-    @Param('id') id: string,
-    @Req() req: AuthedRequest,
-  ) {
+  publish(@CurrentUser() user: Actor, @Param('id') id: string, @Req() req: AuthedRequest) {
     return this.campaigns.publish(user, id, String(req.id ?? ''));
   }
 
   @Post('campaigns/:id/close')
   @Roles('BRAND', 'SUPER_ADMIN')
-  close(
-    @CurrentUser() user: Actor,
-    @Param('id') id: string,
-    @Req() req: AuthedRequest,
-  ) {
+  close(@CurrentUser() user: Actor, @Param('id') id: string, @Req() req: AuthedRequest) {
     return this.campaigns.close(user, id, String(req.id ?? ''));
   }
 
@@ -128,11 +112,7 @@ export class CampaignsAuthController {
 
   @Post('campaigns/:id/start-delivery')
   @Roles('BRAND', 'SUPER_ADMIN')
-  startDelivery(
-    @CurrentUser() user: Actor,
-    @Param('id') id: string,
-    @Req() req: AuthedRequest,
-  ) {
+  startDelivery(@CurrentUser() user: Actor, @Param('id') id: string, @Req() req: AuthedRequest) {
     return this.campaigns.startDelivery(user, id, String(req.id ?? ''));
   }
 
@@ -167,22 +147,12 @@ export class CampaignsAuthController {
     @Body(new ZodValidationPipe(reviewDeliverableBodySchema)) body: ReviewDeliverableBody,
     @Req() req: AuthedRequest,
   ) {
-    return this.campaigns.reviewDeliverable(
-      user,
-      id,
-      deliverableId,
-      body,
-      String(req.id ?? ''),
-    );
+    return this.campaigns.reviewDeliverable(user, id, deliverableId, body, String(req.id ?? ''));
   }
 
   @Post('campaigns/:id/payment/release')
   @Roles('BRAND', 'FINANCE', 'SUPER_ADMIN')
-  release(
-    @CurrentUser() user: Actor,
-    @Param('id') id: string,
-    @Req() req: AuthedRequest,
-  ) {
+  release(@CurrentUser() user: Actor, @Param('id') id: string, @Req() req: AuthedRequest) {
     return this.campaigns.releasePayment(user, id, String(req.id ?? ''));
   }
 

@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CartStatus, OrderStatus } from '@prisma/client';
 import type { CheckoutPlaceOrderBody } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';

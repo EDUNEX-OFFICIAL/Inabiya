@@ -3,11 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  apiAuth,
-  getStoredAccessToken,
-  type AuthUser,
-} from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
 
 type Address = {
   id: string;
@@ -32,10 +28,7 @@ export default function AccountPage() {
       router.replace('/login?next=/account');
       return;
     }
-    Promise.all([
-      apiAuth<AuthUser>('/auth/me'),
-      apiAuth<Address[]>('/addresses'),
-    ])
+    Promise.all([apiAuth<AuthUser>('/auth/me'), apiAuth<Address[]>('/addresses')])
       .then(([u, a]) => {
         setUser(u);
         setDisplayName(u.displayName ?? '');

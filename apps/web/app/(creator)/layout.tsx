@@ -2,7 +2,10 @@ import Link from 'next/link';
 
 export default function CreatorLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div data-theme="creator" className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <div
+      data-theme="creator"
+      className="min-h-screen bg-[var(--background)] text-[var(--foreground)]"
+    >
       <header className="border-b border-[var(--border)] px-6 py-4 flex flex-wrap items-center justify-between gap-3">
         <Link href="/creator" className="font-display text-xl text-[var(--primary)]">
           Creator Collective

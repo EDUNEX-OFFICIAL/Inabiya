@@ -443,7 +443,9 @@ h3 {
   [data-theme='gift'] .gift-link {
     color: inherit;
     opacity: 0.7;
-    transition: color 160ms ease, opacity 160ms ease;
+    transition:
+      color 160ms ease,
+      opacity 160ms ease;
   }
 
   [data-theme='gift'] .gift-link:hover {
@@ -881,20 +883,8 @@ h3 {
   [data-theme='gift'] .gift-brand-marquee {
     overflow: hidden;
     width: 100%;
-    mask-image: linear-gradient(
-      to right,
-      transparent,
-      #000 5%,
-      #000 95%,
-      transparent
-    );
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent,
-      #000 5%,
-      #000 95%,
-      transparent
-    );
+    mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
   }
 
   [data-theme='gift'] .gift-brand-marquee__track {

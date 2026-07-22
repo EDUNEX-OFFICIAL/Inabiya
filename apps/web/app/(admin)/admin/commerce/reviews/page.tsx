@@ -67,7 +67,10 @@ export default function AdminReviewsPage() {
             <p className="font-medium">
               {r.rating}★ {r.product.title} — {r.status}
             </p>
-            <p className="opacity-80 mt-1">{r.headline ? `${r.headline}: ` : ''}{r.body}</p>
+            <p className="opacity-80 mt-1">
+              {r.headline ? `${r.headline}: ` : ''}
+              {r.body}
+            </p>
             <p className="text-xs opacity-60 mt-1">{r.customerEmail}</p>
             {r.status === 'PENDING' ? (
               <div className="mt-2 flex gap-2">

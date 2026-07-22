@@ -206,8 +206,13 @@ export default function CheckoutPage() {
       <main className="gift-page max-w-md">
         <div className="clay-panel p-gs-5 text-center sm:p-gs-6">
           <h1 className="gift-h2 sm:text-3xl">Cart is empty</h1>
-          <p className="mt-gs-3 text-sm opacity-80">Add something from the gift shop before checkout.</p>
-          <Link href="/gift/products" className="clay-btn mt-gs-6 inline-flex w-full justify-center sm:w-auto">
+          <p className="mt-gs-3 text-sm opacity-80">
+            Add something from the gift shop before checkout.
+          </p>
+          <Link
+            href="/gift/products"
+            className="clay-btn mt-gs-6 inline-flex w-full justify-center sm:w-auto"
+          >
             Browse gifts
           </Link>
         </div>
@@ -316,7 +321,11 @@ export default function CheckoutPage() {
 
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-        <button type="submit" disabled={busy} className="clay-btn w-full sm:w-auto disabled:opacity-60">
+        <button
+          type="submit"
+          disabled={busy}
+          className="clay-btn w-full sm:w-auto disabled:opacity-60"
+        >
           {busy ? 'Placing order…' : 'Pay & place order'}
         </button>
       </form>

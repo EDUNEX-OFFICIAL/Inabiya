@@ -36,7 +36,9 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
 
   return (
     <main className="min-h-screen p-8 max-w-lg">
-      <Link href="/admin/commerce/customers" className="text-sm underline opacity-70">← Customers</Link>
+      <Link href="/admin/commerce/customers" className="text-sm underline opacity-70">
+        ← Customers
+      </Link>
       <h1 className="text-2xl font-semibold mt-4">{data.profile.email}</h1>
       <p className="text-sm opacity-70">{data.profile.isActive ? 'Active' : 'Suspended'}</p>
       <button type="button" className="mt-2 text-sm underline" onClick={() => void toggleActive()}>
@@ -46,8 +48,10 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
       <ul className="mt-2 text-sm space-y-1">
         {data.orders.map((o) => (
           <li key={o.id}>
-            <Link href={`/admin/commerce/orders/${o.id}`} className="underline">{o.orderNumber}</Link>
-            {' '}— {o.status} — {formatInr(o.totalPaise)}
+            <Link href={`/admin/commerce/orders/${o.id}`} className="underline">
+              {o.orderNumber}
+            </Link>{' '}
+            — {o.status} — {formatInr(o.totalPaise)}
           </li>
         ))}
       </ul>

@@ -96,7 +96,9 @@ export default function GiftChromeAdminPage() {
         setBrandName(c.footer?.brandName ?? 'Inabiya');
         setTagline(c.footer?.tagline ?? '');
         const cols = c.footer?.columns ?? [];
-        setFooterShop(linksToText(cols.find((x) => /shop/i.test(x.title))?.links ?? cols[0]?.links ?? []));
+        setFooterShop(
+          linksToText(cols.find((x) => /shop/i.test(x.title))?.links ?? cols[0]?.links ?? []),
+        );
         setFooterCompany(
           linksToText(cols.find((x) => /company/i.test(x.title))?.links ?? cols[1]?.links ?? []),
         );
@@ -143,8 +145,8 @@ export default function GiftChromeAdminPage() {
       <h1 className="font-display text-3xl mt-2">Soft Gift nav & footer</h1>
       <p className="mt-2 text-sm opacity-70">
         Controls mega-menu links and default footer when the homepage has no{' '}
-        <code className="text-xs">footer</code> block. Format: <code className="text-xs">Label | /path</code> per
-        line.
+        <code className="text-xs">footer</code> block. Format:{' '}
+        <code className="text-xs">Label | /path</code> per line.
       </p>
       {err ? <p className="mt-4 text-sm text-red-600">{err}</p> : null}
       {msg ? <p className="mt-4 text-sm text-green-700">{msg}</p> : null}
@@ -152,7 +154,11 @@ export default function GiftChromeAdminPage() {
       <form onSubmit={(e) => void onSave(e)} className="mt-8 space-y-6 text-sm">
         <section className="space-y-2">
           <h2 className="font-medium">Shop mega links</h2>
-          <textarea className="w-full min-h-[8rem] border rounded p-2 font-mono text-xs" value={shopText} onChange={(e) => setShopText(e.target.value)} />
+          <textarea
+            className="w-full min-h-[8rem] border rounded p-2 font-mono text-xs"
+            value={shopText}
+            onChange={(e) => setShopText(e.target.value)}
+          />
         </section>
         <section className="space-y-2">
           <h2 className="font-medium">Shop mega panel</h2>
@@ -169,7 +175,11 @@ export default function GiftChromeAdminPage() {
         </section>
         <section className="space-y-2">
           <h2 className="font-medium">For Whom mega links</h2>
-          <textarea className="w-full min-h-[8rem] border rounded p-2 font-mono text-xs" value={whomText} onChange={(e) => setWhomText(e.target.value)} />
+          <textarea
+            className="w-full min-h-[8rem] border rounded p-2 font-mono text-xs"
+            value={whomText}
+            onChange={(e) => setWhomText(e.target.value)}
+          />
         </section>
         <section className="space-y-2">
           <h2 className="font-medium">For Whom mega panel</h2>
@@ -188,19 +198,35 @@ export default function GiftChromeAdminPage() {
           <h2 className="font-medium">Footer</h2>
           <label className="block">
             Brand name
-            <input className="mt-1 w-full border rounded px-2 py-1" value={brandName} onChange={(e) => setBrandName(e.target.value)} />
+            <input
+              className="mt-1 w-full border rounded px-2 py-1"
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
+            />
           </label>
           <label className="block">
             Tagline
-            <input className="mt-1 w-full border rounded px-2 py-1" value={tagline} onChange={(e) => setTagline(e.target.value)} />
+            <input
+              className="mt-1 w-full border rounded px-2 py-1"
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+            />
           </label>
           <label className="block">
             Shop column links
-            <textarea className="mt-1 w-full min-h-[6rem] border rounded p-2 font-mono text-xs" value={footerShop} onChange={(e) => setFooterShop(e.target.value)} />
+            <textarea
+              className="mt-1 w-full min-h-[6rem] border rounded p-2 font-mono text-xs"
+              value={footerShop}
+              onChange={(e) => setFooterShop(e.target.value)}
+            />
           </label>
           <label className="block">
             Company column links
-            <textarea className="mt-1 w-full min-h-[6rem] border rounded p-2 font-mono text-xs" value={footerCompany} onChange={(e) => setFooterCompany(e.target.value)} />
+            <textarea
+              className="mt-1 w-full min-h-[6rem] border rounded p-2 font-mono text-xs"
+              value={footerCompany}
+              onChange={(e) => setFooterCompany(e.target.value)}
+            />
           </label>
         </section>
         <button type="submit" className="rounded border px-4 py-2 font-medium">

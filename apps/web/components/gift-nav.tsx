@@ -3,16 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import {
-  ChevronDown,
-  Heart,
-  LogOut,
-  Menu,
-  Package,
-  ShoppingBag,
-  UserRound,
-  X,
-} from 'lucide-react';
+import { ChevronDown, Heart, LogOut, Menu, Package, ShoppingBag, UserRound, X } from 'lucide-react';
 import {
   clearSession,
   getStoredAccessToken,
@@ -137,7 +128,9 @@ function MegaPanel({
           </li>
         ))}
       </ul>
-      <aside className={`overflow-hidden rounded-clay border border-border-subtle ${imageClass ?? ''}`}>
+      <aside
+        className={`overflow-hidden rounded-clay border border-border-subtle ${imageClass ?? ''}`}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imageSrc}
@@ -299,7 +292,10 @@ export function GiftNav() {
       aria-label="Gift shop"
     >
       {/* Desktop primary — search leftmost of links */}
-      <div className="relative hidden min-w-0 flex-1 items-center justify-end gap-gs-2 md:flex" ref={megaRef}>
+      <div
+        className="relative hidden min-w-0 flex-1 items-center justify-end gap-gs-2 md:flex"
+        ref={megaRef}
+      >
         <GiftSearch onExpand={closeOverlays} />
         <button
           type="button"
@@ -321,9 +317,7 @@ export function GiftNav() {
           onClick={() => toggleMega('forWhom')}
         >
           For Whom
-          <ChevronDown
-            className={`h-4 w-4 transition ${mega === 'forWhom' ? 'rotate-180' : ''}`}
-          />
+          <ChevronDown className={`h-4 w-4 transition ${mega === 'forWhom' ? 'rotate-180' : ''}`} />
         </button>
         <Link
           href="/articles"

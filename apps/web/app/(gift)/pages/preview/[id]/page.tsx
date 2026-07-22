@@ -48,11 +48,7 @@ export default function MarketingPagePreview({ params }: { params: { id: string 
   }
 
   if (!page) {
-    return (
-      <main className="gift-page max-w-3xl text-sm opacity-70">
-        Loading preview…
-      </main>
-    );
+    return <main className="gift-page max-w-3xl text-sm opacity-70">Loading preview…</main>;
   }
 
   return (

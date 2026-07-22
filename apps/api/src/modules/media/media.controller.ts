@@ -33,17 +33,11 @@ export class MediaPublicController {
 
   @Get(':id/content')
   @Header('Cache-Control', 'public, max-age=86400')
-  async content(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async content(@Param('id', ParseUUIDPipe) id: string, @Res({ passthrough: true }) res: Response) {
     const { buffer, mimeType, originalName } = await this.media.getPublicContent(id);
     res.setHeader('Content-Type', mimeType);
     if (originalName) {
-      res.setHeader(
-        'Content-Disposition',
-        `inline; filename="${originalName.replace(/"/g, '')}"`,
-      );
+      res.setHeader('Content-Disposition', `inline; filename="${originalName.replace(/"/g, '')}"`);
     }
     return new StreamableFile(buffer);
   }
@@ -83,7 +77,10 @@ export class MediaController {
   @Roles('COMMERCE_ADMIN', 'CONTENT_ADMIN', 'SUPER_ADMIN')
   async list(
     @Query(new ZodValidationPipe(mediaListQuerySchema))
-    query: { cursor?: string; limit: number },
+    query: {
+      cursor?: string;
+      limit: number;
+    },
   ) {
     return this.media.list(query);
   }

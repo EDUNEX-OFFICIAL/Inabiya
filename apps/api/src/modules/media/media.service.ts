@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { S3StorageAdapter } from '../../infrastructure/storage/s3-storage.adapter';
@@ -22,10 +18,7 @@ export class MediaService {
     return `/api/v1/media/${id}/content`;
   }
 
-  private mapAsset<T extends { id: string; storageKey: string }>(
-    asset: T,
-    signedUrl?: string,
-  ) {
+  private mapAsset<T extends { id: string; storageKey: string }>(asset: T, signedUrl?: string) {
     return {
       ...asset,
       publicUrl: this.publicUrlFor(asset.id),
@@ -33,11 +26,7 @@ export class MediaService {
     };
   }
 
-  async upload(input: {
-    file: Express.Multer.File;
-    actorId: string;
-    requestId?: string;
-  }) {
+  async upload(input: { file: Express.Multer.File; actorId: string; requestId?: string }) {
     const check = validateMediaUpload(input.file.mimetype, input.file.size);
     if (!check.ok) {
       throw new BadRequestException({

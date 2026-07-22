@@ -3,12 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  apiAuth,
-  clearSession,
-  getStoredAccessToken,
-  type AuthUser,
-} from '@/lib/auth-client';
+import { apiAuth, clearSession, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 
 type Dashboard = {
@@ -56,7 +51,9 @@ export default function CommerceAdminPage() {
     return (
       <main className="min-h-screen p-8">
         <p className="text-red-600">{error}</p>
-        <Link className="underline" href="/login">Sign in</Link>
+        <Link className="underline" href="/login">
+          Sign in
+        </Link>
       </main>
     );
   }

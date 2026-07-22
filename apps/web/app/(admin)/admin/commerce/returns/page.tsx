@@ -65,7 +65,9 @@ export default function AdminReturnsPage() {
 
       <section className="mt-4 rounded border p-4 text-sm">
         <h2 className="font-medium">Return window (customisable)</h2>
-        <p className="text-xs opacity-60 mt-1">Days after delivery customers may request a return.</p>
+        <p className="text-xs opacity-60 mt-1">
+          Days after delivery customers may request a return.
+        </p>
         <div className="mt-2 flex gap-2 items-center">
           <input
             type="number"
@@ -76,7 +78,11 @@ export default function AdminReturnsPage() {
             onChange={(e) => setWindowDays(Number(e.target.value))}
           />
           <span>days</span>
-          <button type="button" className="rounded border px-3 py-1" onClick={() => void savePolicy()}>
+          <button
+            type="button"
+            className="rounded border px-3 py-1"
+            onClick={() => void savePolicy()}
+          >
             Save
           </button>
         </div>

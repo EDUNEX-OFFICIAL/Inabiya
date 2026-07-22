@@ -205,7 +205,9 @@ export class CampaignsService {
       include: {
         brand: true,
         proposals: {
-          include: { creator: { select: { id: true, slug: true, displayName: true, userId: true } } },
+          include: {
+            creator: { select: { id: true, slug: true, displayName: true, userId: true } },
+          },
           orderBy: { createdAt: 'asc' },
         },
         messages: {
@@ -224,14 +226,17 @@ export class CampaignsService {
     return c;
   }
 
-  async submitProposal(actor: Actor, campaignId: string, body: SubmitProposalBody, requestId?: string) {
+  async submitProposal(
+    actor: Actor,
+    campaignId: string,
+    body: SubmitProposalBody,
+    requestId?: string,
+  ) {
     const creator = await this.requireCreator(actor.id);
     const campaign = await this.prisma.campaign.findUnique({ where: { id: campaignId } });
-    if (!campaign) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found.' });
-    if (
-      campaign.status !== CampaignStatus.OPEN &&
-      campaign.status !== CampaignStatus.REVIEWING
-    ) {
+    if (!campaign)
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found.' });
+    if (campaign.status !== CampaignStatus.OPEN && campaign.status !== CampaignStatus.REVIEWING) {
       throw new ConflictException({
         code: 'CAMPAIGN_CLOSED',
         message: 'Closed/awarded campaigns reject new proposals.',
@@ -277,10 +282,7 @@ export class CampaignsService {
 
   async award(actor: Actor, campaignId: string, proposalId: string, requestId?: string) {
     const campaign = await this.getOwnedCampaign(actor, campaignId);
-    if (
-      campaign.status !== CampaignStatus.OPEN &&
-      campaign.status !== CampaignStatus.REVIEWING
-    ) {
+    if (campaign.status !== CampaignStatus.OPEN && campaign.status !== CampaignStatus.REVIEWING) {
       throw new BadRequestException({
         code: 'INVALID_STATUS',
         message: 'Can only award from OPEN/REVIEWING.',
@@ -383,7 +385,8 @@ export class CampaignsService {
       where: { id: campaignId },
       include: { winnerProposal: true },
     });
-    if (!campaign) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found.' });
+    if (!campaign)
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found.' });
     if (
       campaign.status !== CampaignStatus.AWARDED &&
       campaign.status !== CampaignStatus.IN_DELIVERY
@@ -503,7 +506,8 @@ export class CampaignsService {
       where: { id: campaignId },
       include: { payment: true, deliverables: true },
     });
-    if (!campaign) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found.' });
+    if (!campaign)
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found.' });
     if (campaign.status !== CampaignStatus.COMPLETED) {
       throw new BadRequestException({
         code: 'NOT_COMPLETED',
@@ -605,7 +609,8 @@ export class CampaignsService {
   private async getOwnedCampaign(actor: Actor, id: string) {
     const brand = await this.requireBrand(actor.id);
     const campaign = await this.prisma.campaign.findUnique({ where: { id } });
-    if (!campaign) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found.' });
+    if (!campaign)
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found.' });
     if (campaign.brandId !== brand.id && !actor.roles.includes('SUPER_ADMIN')) {
       throw new ForbiddenException({ code: 'FORBIDDEN', message: 'Not your campaign.' });
     }

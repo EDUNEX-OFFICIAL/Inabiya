@@ -74,19 +74,13 @@ export class CartController {
   }
 
   @Delete('coupon')
-  removeCoupon(
-    @Req() req: AuthedRequest,
-    @Headers('x-cart-token') cartHeader: string | undefined,
-  ) {
+  removeCoupon(@Req() req: AuthedRequest, @Headers('x-cart-token') cartHeader: string | undefined) {
     return this.cart.removeCoupon(req.user?.id, guestToken(req, cartHeader));
   }
 
   @Post('merge')
   @UseGuards(JwtAuthGuard)
-  merge(
-    @CurrentUser() user: { id: string },
-    @Headers('x-cart-token') cartHeader: string,
-  ) {
+  merge(@CurrentUser() user: { id: string }, @Headers('x-cart-token') cartHeader: string) {
     if (!cartHeader?.trim()) {
       return this.cart.getOrCreate(user.id);
     }

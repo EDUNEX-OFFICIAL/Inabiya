@@ -1,14 +1,6 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, ProductStatus } from '@prisma/client';
-import type {
-  CreateCategoryBody,
-  CreateProductBody,
-  UpdateProductBody,
-} from '@inabiya/validation';
+import type { CreateCategoryBody, CreateProductBody, UpdateProductBody } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 
@@ -78,9 +70,7 @@ export class CatalogService {
             ],
           }
         : {}),
-      ...(query.category
-        ? { categories: { some: { category: { slug: query.category } } } }
-        : {}),
+      ...(query.category ? { categories: { some: { category: { slug: query.category } } } } : {}),
       ...(query.recipient === 'girl' || query.recipient === 'boy'
         ? { recipientTags: { hasSome: [query.recipient, 'unisex'] } }
         : query.recipient
@@ -205,12 +195,7 @@ export class CatalogService {
     return this.mapProduct(product);
   }
 
-  async updateProduct(
-    id: string,
-    body: UpdateProductBody,
-    actorId: string,
-    requestId?: string,
-  ) {
+  async updateProduct(id: string, body: UpdateProductBody, actorId: string, requestId?: string) {
     const existing = await this.prisma.product.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Product not found.' });
@@ -235,13 +220,9 @@ export class CatalogService {
         data: {
           title: body.title,
           description: body.description,
-          ...(body.recipientTags !== undefined
-            ? { recipientTags: body.recipientTags }
-            : {}),
+          ...(body.recipientTags !== undefined ? { recipientTags: body.recipientTags } : {}),
           ...(body.ageBands !== undefined ? { ageBands: body.ageBands } : {}),
-          ...(body.occasionTags !== undefined
-            ? { occasionTags: body.occasionTags }
-            : {}),
+          ...(body.occasionTags !== undefined ? { occasionTags: body.occasionTags } : {}),
           ...(body.isReadyMadeHamper !== undefined
             ? { isReadyMadeHamper: body.isReadyMadeHamper }
             : {}),
@@ -340,12 +321,7 @@ export class CatalogService {
     return this.mapProduct(updated);
   }
 
-  async updateInventory(
-    variantId: string,
-    onHand: number,
-    actorId: string,
-    requestId?: string,
-  ) {
+  async updateInventory(variantId: string, onHand: number, actorId: string, requestId?: string) {
     const variant = await this.prisma.productVariant.findUnique({
       where: { id: variantId },
       include: { inventory: true },
@@ -383,9 +359,7 @@ export class CatalogService {
     return cats.map((c) => c.id);
   }
 
-  mapProduct(
-    product: Prisma.ProductGetPayload<{ include: typeof productInclude }>,
-  ) {
+  mapProduct(product: Prisma.ProductGetPayload<{ include: typeof productInclude }>) {
     const variants = product.variants.map((v) => {
       const onHand = v.inventory?.onHand ?? 0;
       const reserved = v.inventory?.reserved ?? 0;
@@ -399,9 +373,7 @@ export class CatalogService {
         onHand,
       };
     });
-    const fromPricePaise = variants.length
-      ? Math.min(...variants.map((v) => v.pricePaise))
-      : 0;
+    const fromPricePaise = variants.length ? Math.min(...variants.map((v) => v.pricePaise)) : 0;
     return {
       id: product.id,
       slug: product.slug,

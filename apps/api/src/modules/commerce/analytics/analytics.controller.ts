@@ -1,8 +1,5 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import {
-  trackAnalyticsBodySchema,
-  type TrackAnalyticsBody,
-} from '@inabiya/validation';
+import { trackAnalyticsBodySchema, type TrackAnalyticsBody } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../../identity/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../identity/optional-jwt-auth.guard';

@@ -60,7 +60,10 @@ export default function AdminCmsPagesListPage() {
           <li className="opacity-70">No pages yet.</li>
         ) : (
           rows.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-3">
+            <li
+              key={r.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded border p-3"
+            >
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Link href={`/admin/cms/pages/${r.id}`} className="font-medium underline">

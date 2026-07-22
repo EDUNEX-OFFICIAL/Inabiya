@@ -61,7 +61,10 @@ function ResetPasswordForm() {
           .
         </p>
       ) : (
-        <form onSubmit={(e) => void onSubmit(e)} className="clay-panel flex flex-col gap-gs-4 p-gs-5">
+        <form
+          onSubmit={(e) => void onSubmit(e)}
+          className="clay-panel flex flex-col gap-gs-4 p-gs-5"
+        >
           <label className="flex flex-col gap-gs-1 text-sm">
             New password
             <input

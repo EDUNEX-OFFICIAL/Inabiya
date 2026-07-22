@@ -13,11 +13,14 @@ export class AssignmentDueReminderScheduler implements OnModuleInit, OnModuleDes
   ) {}
 
   onModuleInit() {
-    this.timer = setInterval(() => {
-      void this.articles
-        .scanDueReminders((job) => this.notifications.enqueueAssignmentDueReminder(job))
-        .catch((err) => this.logger.warn(`due reminder scan failed: ${String(err)}`));
-    }, 30 * 60 * 1000);
+    this.timer = setInterval(
+      () => {
+        void this.articles
+          .scanDueReminders((job) => this.notifications.enqueueAssignmentDueReminder(job))
+          .catch((err) => this.logger.warn(`due reminder scan failed: ${String(err)}`));
+      },
+      30 * 60 * 1000,
+    );
   }
 
   onModuleDestroy() {

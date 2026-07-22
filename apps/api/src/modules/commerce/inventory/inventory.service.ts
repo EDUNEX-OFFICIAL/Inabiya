@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
@@ -12,9 +8,7 @@ type Tx = Prisma.TransactionClient;
 export class InventoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async assertAvailable(
-    items: Array<{ variantId: string; quantity: number }>,
-  ): Promise<void> {
+  async assertAvailable(items: Array<{ variantId: string; quantity: number }>): Promise<void> {
     for (const item of items) {
       const inv = await this.prisma.inventoryItem.findUnique({
         where: { variantId: item.variantId },

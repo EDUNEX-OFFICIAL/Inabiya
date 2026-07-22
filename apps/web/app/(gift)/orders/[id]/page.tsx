@@ -78,10 +78,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   return (
     <main className="gift-page max-w-lg">
       {placed ? (
-        <p
-          className="gift-banner gift-banner--success mb-gs-4"
-          role="status"
-        >
+        <p className="gift-banner gift-banner--success mb-gs-4" role="status">
           Thank you! Your order was placed successfully.
         </p>
       ) : null}
@@ -99,9 +96,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
       <section className="clay-panel mt-gs-6 p-gs-5" aria-label="Order tracking">
         <h2 className="font-display text-xl">Tracking</h2>
         {special ? (
-          <p className="gift-banner gift-banner--warning mt-gs-3">
-            {order.status}
-          </p>
+          <p className="gift-banner gift-banner--warning mt-gs-3">{order.status}</p>
         ) : (
           <ol className="mt-gs-4 space-y-gs-3">
             {steps.map((step, i) => {
@@ -191,7 +186,11 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                   value={returnReason}
                   onChange={(e) => setReturnReason(e.target.value)}
                 />
-                <button type="button" className="clay-btn mt-gs-3" onClick={() => void submitReturn()}>
+                <button
+                  type="button"
+                  className="clay-btn mt-gs-3"
+                  onClick={() => void submitReturn()}
+                >
                   Request return
                 </button>
               </div>

@@ -7,7 +7,11 @@ import { PromotionsModule } from '../promotions/promotions.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { CommercePolicyService } from './commerce-policy.service';
 import { OpsDashboardService } from './ops-dashboard.service';
-import { OpsAdminController, StorefrontPublicController, GiftChromePublicController } from './ops.controller';
+import {
+  OpsAdminController,
+  StorefrontPublicController,
+  GiftChromePublicController,
+} from './ops.controller';
 import { StorefrontConfigService } from './storefront-config.service';
 
 @Module({

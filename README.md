@@ -133,25 +133,25 @@ Public domain / Caddy site is not wired yet (`web` already joins `vps_edge`).
 
 ## Workspace scripts
 
-| Script            | Purpose             |
-| ----------------- | ------------------- |
-| `pnpm dev:web`    | Next.js             |
-| `pnpm dev:api`    | NestJS              |
-| `pnpm dev:worker` | BullMQ worker       |
-| `pnpm lint`       | ESLint all packages |
-| `pnpm typecheck`  | `tsc --noEmit`      |
-| `pnpm db:migrate` | Prisma migrate dev  |
+| Script            | Purpose                         |
+| ----------------- | ------------------------------- |
+| `pnpm dev:web`    | Next.js                         |
+| `pnpm dev:api`    | NestJS                          |
+| `pnpm dev:worker` | BullMQ worker                   |
+| `pnpm lint`       | ESLint all packages             |
+| `pnpm typecheck`  | `tsc --noEmit`                  |
+| `pnpm db:migrate` | Prisma migrate dev              |
 | `pnpm db:seed`    | Seed roles + Phase 1 test users |
 
 ## Auth (Phase 1 — email/password only)
 
 No Google/OAuth. JWT access + refresh. Test in browser: `/login`, `/register`.
 
-| User | Password | Role |
-| --- | --- | --- |
-| `customer@test.inabiya` | `Password123!` | CUSTOMER |
+| User                    | Password       | Role           |
+| ----------------------- | -------------- | -------------- |
+| `customer@test.inabiya` | `Password123!` | CUSTOMER       |
 | `commerce@test.inabiya` | `Password123!` | COMMERCE_ADMIN |
-| `writer@test.inabiya` | `Password123!` | WRITER |
+| `writer@test.inabiya`   | `Password123!` | WRITER         |
 
 ```bash
 curl -s -X POST http://127.0.0.1:4001/api/v1/auth/login \

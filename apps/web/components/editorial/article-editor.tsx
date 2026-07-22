@@ -143,7 +143,9 @@ export function ArticleEditor({
   }
 
   return (
-    <div className={`rounded border border-black/15 bg-white/90 overflow-hidden ${className ?? ''}`}>
+    <div
+      className={`rounded border border-black/15 bg-white/90 overflow-hidden ${className ?? ''}`}
+    >
       {editable ? (
         <div className="flex flex-wrap gap-1 border-b border-black/10 p-2 bg-[var(--background)]">
           <ToolbarButton

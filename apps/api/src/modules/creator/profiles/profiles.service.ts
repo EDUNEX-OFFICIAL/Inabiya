@@ -1,13 +1,5 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import type {
-  UpsertBrandProfileBody,
-  UpsertCreatorProfileBody,
-} from '@inabiya/validation';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import type { UpsertBrandProfileBody, UpsertCreatorProfileBody } from '@inabiya/validation';
 import type { RoleCode } from '@inabiya/types';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
@@ -95,9 +87,7 @@ export class ProfilesService {
 
   listCreators(niche?: string) {
     return this.prisma.creatorProfile.findMany({
-      where: niche
-        ? { niches: { has: niche.toLowerCase().trim() } }
-        : undefined,
+      where: niche ? { niches: { has: niche.toLowerCase().trim() } } : undefined,
       orderBy: { displayName: 'asc' },
       take: 50,
     });

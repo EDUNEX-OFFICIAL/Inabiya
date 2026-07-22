@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Patch,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import {
   loginBodySchema,
@@ -78,9 +68,7 @@ export class AuthController {
   ) {
     const raw =
       body.refreshToken ??
-      (req as AuthedRequest & { cookies?: Record<string, string> }).cookies?.[
-        COOKIE_REFRESH
-      ];
+      (req as AuthedRequest & { cookies?: Record<string, string> }).cookies?.[COOKIE_REFRESH];
     if (!raw) {
       return res.status(401).json({
         error: {
@@ -105,9 +93,7 @@ export class AuthController {
   ) {
     const raw =
       body.refreshToken ??
-      (req as AuthedRequest & { cookies?: Record<string, string> }).cookies?.[
-        COOKIE_REFRESH
-      ];
+      (req as AuthedRequest & { cookies?: Record<string, string> }).cookies?.[COOKIE_REFRESH];
     await this.auth.logout(raw);
     clearAuthCookies(res);
     return { ok: true };
@@ -116,10 +102,7 @@ export class AuthController {
   @Post('logout-all')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
-  async logoutAll(
-    @CurrentUser() user: { id: string },
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async logoutAll(@CurrentUser() user: { id: string }, @Res({ passthrough: true }) res: Response) {
     await this.auth.logoutAll(user.id);
     clearAuthCookies(res);
     return { ok: true };
@@ -179,11 +162,7 @@ export class AuthController {
   }
 }
 
-function setAuthCookies(
-  res: Response,
-  accessToken: string,
-  refreshToken: string,
-): void {
+function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
   // Prefer COOKIE_SECURE=true behind HTTPS; default off so loopback http testing works.
   const secure = process.env.COOKIE_SECURE === 'true';
   const common = {

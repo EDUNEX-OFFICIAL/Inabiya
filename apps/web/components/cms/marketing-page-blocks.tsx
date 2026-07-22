@@ -131,11 +131,7 @@ const DEFAULT_USP_ITEMS = [
   { icon: 'truck' as const, label: 'Pan-India shipping' },
 ];
 
-function UspRow({
-  items,
-}: {
-  items?: Array<{ label: string; icon?: keyof typeof USP_ICON_MAP }>;
-}) {
+function UspRow({ items }: { items?: Array<{ label: string; icon?: keyof typeof USP_ICON_MAP }> }) {
   const rows =
     items?.length && items.some((i) => i.label.trim())
       ? items
@@ -165,13 +161,7 @@ function UspRow({
   );
 }
 
-function HeroBlock({
-  props,
-  layout,
-}: {
-  props: Record<string, unknown>;
-  layout: 'page' | 'home';
-}) {
+function HeroBlock({ props, layout }: { props: Record<string, unknown>; layout: 'page' | 'home' }) {
   const storefront = props.variant === 'storefront' || layout === 'home';
 
   if (storefront) {
@@ -229,30 +219,29 @@ function HeroBlock({
 
 function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
   const secondary = props.variant === 'secondary';
-  const inner =
-    props.title ? (
-      <>
-        <h2 className="gift-h2">{String(props.title)}</h2>
-        {props.body ? (
-          <p className="mt-gs-3 max-w-prose text-sm opacity-80">{String(props.body)}</p>
-        ) : null}
-        <Link
-          href={String(props.href ?? '/gift')}
-          className={`mt-gs-6 ${secondary ? 'clay-btn-secondary' : 'clay-btn'}`}
-        >
-          {String(props.label ?? 'Continue')}
-        </Link>
-      </>
-    ) : (
-      <div className="flex justify-center py-gs-2">
-        <Link
-          href={String(props.href ?? '/gift')}
-          className={secondary ? 'clay-btn-secondary' : 'clay-btn'}
-        >
-          {String(props.label ?? 'Continue')}
-        </Link>
-      </div>
-    );
+  const inner = props.title ? (
+    <>
+      <h2 className="gift-h2">{String(props.title)}</h2>
+      {props.body ? (
+        <p className="mt-gs-3 max-w-prose text-sm opacity-80">{String(props.body)}</p>
+      ) : null}
+      <Link
+        href={String(props.href ?? '/gift')}
+        className={`mt-gs-6 ${secondary ? 'clay-btn-secondary' : 'clay-btn'}`}
+      >
+        {String(props.label ?? 'Continue')}
+      </Link>
+    </>
+  ) : (
+    <div className="flex justify-center py-gs-2">
+      <Link
+        href={String(props.href ?? '/gift')}
+        className={secondary ? 'clay-btn-secondary' : 'clay-btn'}
+      >
+        {String(props.label ?? 'Continue')}
+      </Link>
+    </div>
+  );
 
   if (home) {
     return (
@@ -307,9 +296,7 @@ function ProductGridBlock({
   const title = props.title ? String(props.title) : null;
   const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : null;
   const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'See all';
-  const products = Array.isArray(props.products)
-    ? (props.products as CmsBlockProduct[])
-    : [];
+  const products = Array.isArray(props.products) ? (props.products as CmsBlockProduct[]) : [];
 
   const grid = (
     <>
@@ -449,10 +436,8 @@ function BrandMarquee({
   subtitle?: string;
 }) {
   const base = normalizeBrands(brands);
-  const loop =
-    base.length >= 8 ? base : [...base, ...base, ...(base.length < 5 ? base : [])];
-  const sub =
-    subtitle?.trim() || 'Curated partners for gentle, baby-safe gifting';
+  const loop = base.length >= 8 ? base : [...base, ...base, ...(base.length < 5 ? base : [])];
+  const sub = subtitle?.trim() || 'Curated partners for gentle, baby-safe gifting';
 
   return (
     <div className="gift-brand-strip">
@@ -542,13 +527,7 @@ function BrandStripBlock({ props, home }: { props: Record<string, unknown>; home
   return <section className="gift-section py-gs-6">{body}</section>;
 }
 
-function RecipientSplitBlock({
-  props,
-  home,
-}: {
-  props: Record<string, unknown>;
-  home?: boolean;
-}) {
+function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
   const left = (props.left ?? {}) as Record<string, unknown>;
   const right = (props.right ?? {}) as Record<string, unknown>;
   const cards = [
@@ -588,7 +567,9 @@ function RecipientSplitBlock({
                       />
                     ) : null}
                     <div className="relative flex min-h-[11rem] flex-col justify-end p-gs-5 pb-gs-8">
-                      <p className="text-sm opacity-70">{String(card.eyebrow ?? 'For the little')}</p>
+                      <p className="text-sm opacity-70">
+                        {String(card.eyebrow ?? 'For the little')}
+                      </p>
                       <p
                         className={`font-display mt-gs-1 text-4xl ${sky ? 'text-info' : 'text-primary'}`}
                       >
@@ -612,9 +593,7 @@ function RecipientSplitBlock({
               className={`${sky ? 'gift-panel-sky ' : ''}clay-panel block overflow-hidden p-gs-6 transition hover:-translate-y-0.5`}
             >
               <p className="text-sm opacity-70">{String(card.eyebrow ?? 'For the little')}</p>
-              <p
-                className={`font-display mt-gs-1 text-4xl ${sky ? 'text-info' : 'text-primary'}`}
-              >
+              <p className={`font-display mt-gs-1 text-4xl ${sky ? 'text-info' : 'text-primary'}`}>
                 {String(card.label ?? '')}
               </p>
               <p className="mt-gs-4 text-sm font-medium text-foreground">
@@ -668,16 +647,8 @@ function ArticleTeaserMeta({ article }: { article: ArticleTeaser }) {
   return <p className="mt-gs-3 text-xs opacity-60 sm:text-sm">{parts.join(' · ')}</p>;
 }
 
-function ArticleTeasersBlock({
-  props,
-  home,
-}: {
-  props: Record<string, unknown>;
-  home?: boolean;
-}) {
-  const articles = Array.isArray(props.articles)
-    ? (props.articles as ArticleTeaser[])
-    : [];
+function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
+  const articles = Array.isArray(props.articles) ? (props.articles as ArticleTeaser[]) : [];
   if (!articles.length) return null;
 
   const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : '/articles';
@@ -688,22 +659,14 @@ function ArticleTeasersBlock({
     <>
       <div className="mb-gs-6 flex items-end justify-between gap-gs-4">
         <div>
-          {props.overline ? (
-            <p className="gift-overline">{String(props.overline)}</p>
-          ) : null}
+          {props.overline ? <p className="gift-overline">{String(props.overline)}</p> : null}
           <h2 className="gift-h2">{String(props.title ?? 'From the parenting journal')}</h2>
         </div>
         <Link href={seeAllHref} className="shrink-0 text-sm font-medium hover:underline">
           {seeAllLabel}
         </Link>
       </div>
-      <ul
-        className={
-          featured
-            ? 'grid gap-gs-4'
-            : 'grid gap-gs-4 sm:grid-cols-2 lg:grid-cols-3'
-        }
-      >
+      <ul className={featured ? 'grid gap-gs-4' : 'grid gap-gs-4 sm:grid-cols-2 lg:grid-cols-3'}>
         {articles.map((a) => (
           <li key={a.slug} className="min-w-0">
             <Link
@@ -843,14 +806,7 @@ function renderRestBlock(
   if (b.type === 'productGrid') {
     const tones = ['mint', 'sky'] as const;
     const bandTone = home ? tones[productBandIndex.current++ % 2] : undefined;
-    return (
-      <ProductGridBlock
-        key={b.id}
-        props={b.props}
-        layout={layout}
-        bandTone={bandTone}
-      />
-    );
+    return <ProductGridBlock key={b.id} props={b.props} layout={layout} bandTone={bandTone} />;
   }
   if (b.type === 'brandStrip') {
     return <BrandStripBlock key={b.id} props={b.props} home={home} />;

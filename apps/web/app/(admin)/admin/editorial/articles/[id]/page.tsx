@@ -19,8 +19,19 @@ type ArticleDetail = {
   canEditBody: boolean;
   allowedTransitions: string[];
   assignee: { email: string; displayName: string | null } | null;
-  comments: Array<{ id: string; kind: string; body: string; authorName: string; createdAt: string }>;
-  statusHistory: Array<{ status: string; note: string | null; actorEmail: string | null; createdAt: string }>;
+  comments: Array<{
+    id: string;
+    kind: string;
+    body: string;
+    authorName: string;
+    createdAt: string;
+  }>;
+  statusHistory: Array<{
+    status: string;
+    note: string | null;
+    actorEmail: string | null;
+    createdAt: string;
+  }>;
   revisions: Array<{
     id: string;
     title: string;
@@ -62,9 +73,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
     setSeoTitle(a.title);
     const [cats, specs] = await Promise.all([
       fetch(apiUrl('/articles/categories')).then((r) => r.json() as Promise<Category[]>),
-      fetch(apiUrl('/articles/specialists')).then((r) =>
-        r.json() as Promise<Specialist[]>,
-      ),
+      fetch(apiUrl('/articles/specialists')).then((r) => r.json() as Promise<Specialist[]>),
     ]);
     setCategories(cats);
     setSpecialists(specs);
@@ -208,11 +217,11 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
         <div className="mt-1">
           {!article.canEditBody ? (
             <p className="mb-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-              Body is <strong>read-only</strong> in status <strong>{article.status}</strong> — TipTap
-              toolbar (Bold, headings, image URL, …) only appears when the article is{' '}
-              <strong>ASSIGNED</strong>, <strong>DRAFT</strong>, or <strong>CHANGES_REQUESTED</strong>{' '}
-              and you are allowed to edit. Ask Content Admin to send it back for changes if you need
-              to edit.
+              Body is <strong>read-only</strong> in status <strong>{article.status}</strong> —
+              TipTap toolbar (Bold, headings, image URL, …) only appears when the article is{' '}
+              <strong>ASSIGNED</strong>, <strong>DRAFT</strong>, or{' '}
+              <strong>CHANGES_REQUESTED</strong> and you are allowed to edit. Ask Content Admin to
+              send it back for changes if you need to edit.
             </p>
           ) : null}
           <ArticleEditor
@@ -228,7 +237,11 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
         </div>
       </div>
       {article.canEditBody ? (
-        <button type="button" className="mt-2 rounded border px-3 py-1 text-sm" onClick={() => void save()}>
+        <button
+          type="button"
+          className="mt-2 rounded border px-3 py-1 text-sm"
+          onClick={() => void save()}
+        >
           Save draft
         </button>
       ) : null}
@@ -357,7 +370,11 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
             onChange={(e) => setComment(e.target.value)}
           />
           <div className="flex gap-2">
-            <button type="button" className="rounded border px-2 py-1 text-sm" onClick={() => void addComment()}>
+            <button
+              type="button"
+              className="rounded border px-2 py-1 text-sm"
+              onClick={() => void addComment()}
+            >
               Comment
             </button>
             <button

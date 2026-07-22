@@ -1,10 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../../audit/audit.module';
 import { IdentityModule } from '../../identity/identity.module';
-import {
-  ProfilesAuthController,
-  ProfilesPublicController,
-} from './profiles.controller';
+import { ProfilesAuthController, ProfilesPublicController } from './profiles.controller';
 import { ProfilesService } from './profiles.service';
 
 @Module({

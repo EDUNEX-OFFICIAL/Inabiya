@@ -43,14 +43,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         <Link href="/articles" className="gift-link text-sm">
           ← Articles
         </Link>
-        {article.category ? (
-          <p className="mt-gs-6 gift-overline">
-            {article.category.name}
-          </p>
-        ) : null}
-        <h1 className="gift-h1 mt-gs-3 ">
-          {article.title}
-        </h1>
+        {article.category ? <p className="mt-gs-6 gift-overline">{article.category.name}</p> : null}
+        <h1 className="gift-h1 mt-gs-3 ">{article.title}</h1>
         <p className="mt-gs-4 text-sm opacity-60">
           {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : ''}
           {article.specialist ? (

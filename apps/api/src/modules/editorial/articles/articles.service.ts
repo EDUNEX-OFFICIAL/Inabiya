@@ -112,10 +112,7 @@ export class ArticlesService {
       where.status = filters.status ?? ArticleStatus.SEO_REVIEW;
     } else if (actor.roles.includes('MEDICAL_REVIEWER') && !actor.roles.includes('SEO_EDITOR')) {
       where.status = filters.status ?? ArticleStatus.MEDICAL_REVIEW;
-    } else if (
-      actor.roles.includes('SEO_EDITOR') &&
-      actor.roles.includes('MEDICAL_REVIEWER')
-    ) {
+    } else if (actor.roles.includes('SEO_EDITOR') && actor.roles.includes('MEDICAL_REVIEWER')) {
       if (filters.status) {
         where.status = filters.status;
       } else {
@@ -158,9 +155,7 @@ export class ArticlesService {
       status: a.status,
       medicalGateRequired: a.medicalGateRequired,
       dueAt: a.dueAt,
-      overdue: Boolean(
-        a.dueAt && a.dueAt < new Date() && a.status !== ArticleStatus.APPROVED,
-      ),
+      overdue: Boolean(a.dueAt && a.dueAt < new Date() && a.status !== ArticleStatus.APPROVED),
       updatedAt: a.updatedAt,
       assignee: a.assignee,
     }));
@@ -259,17 +254,12 @@ export class ArticlesService {
     }
     if (body.title != null) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN', 'WRITER']);
-      if (
-        actor.roles.includes('WRITER') &&
-        !this.isOps(actor) &&
-        article.assigneeId !== actor.id
-      ) {
+      if (actor.roles.includes('WRITER') && !this.isOps(actor) && article.assigneeId !== actor.id) {
         throw new ForbiddenException({ code: 'FORBIDDEN', message: 'Not your assignment.' });
       }
     }
 
     const nextTitle = body.title ?? article.title;
-    const nextBody = body.body ?? article.body;
     const bodyChanged = body.body != null && body.body !== article.body;
     const titleChanged = body.title != null && body.title !== article.title;
     const dueAt = parseDueAt(body.dueAt);
@@ -292,9 +282,7 @@ export class ArticlesService {
           body: body.body,
           assigneeId: body.assigneeId === undefined ? undefined : body.assigneeId,
           dueAt: dueAt === undefined ? undefined : dueAt,
-          ...(dueAt !== undefined
-            ? { dueReminderSentAt: null }
-            : {}),
+          ...(dueAt !== undefined ? { dueReminderSentAt: null } : {}),
         },
       });
     });
@@ -358,12 +346,14 @@ export class ArticlesService {
   }
 
   /** Due within 24h or overdue — enqueue reminder once. */
-  async scanDueReminders(enqueue: (job: {
-    articleId: string;
-    title: string;
-    dueAt: string;
-    assigneeEmail: string | null;
-  }) => Promise<void>) {
+  async scanDueReminders(
+    enqueue: (job: {
+      articleId: string;
+      title: string;
+      dueAt: string;
+      assigneeEmail: string | null;
+    }) => Promise<void>,
+  ) {
     const soon = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const rows = await this.prisma.article.findMany({
       where: {
@@ -392,17 +382,9 @@ export class ArticlesService {
     return { scanned: rows.length, enqueued };
   }
 
-  async transition(
-    id: string,
-    actor: Actor,
-    body: ArticleTransitionBody,
-    requestId?: string,
-  ) {
+  async transition(id: string, actor: Actor, body: ArticleTransitionBody, requestId?: string) {
     // Publish/schedule only via PublishingService (not workflow transition)
-    if (
-      (body.status as string) === 'PUBLISHED' ||
-      (body.status as string) === 'SCHEDULED'
-    ) {
+    if ((body.status as string) === 'PUBLISHED' || (body.status as string) === 'SCHEDULED') {
       throw new ForbiddenException({
         code: 'USE_PUBLISHING_API',
         message: 'Use POST /editorial/articles/:id/publish or /schedule.',
@@ -448,12 +430,7 @@ export class ArticlesService {
     return this.get(id, actor);
   }
 
-  async addComment(
-    id: string,
-    actor: Actor,
-    body: ArticleCommentBody,
-    requestId?: string,
-  ) {
+  async addComment(id: string, actor: Actor, body: ArticleCommentBody, requestId?: string) {
     const article = await this.prisma.article.findUnique({ where: { id } });
     if (!article) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Article not found.' });
@@ -464,12 +441,7 @@ export class ArticlesService {
         ? ArticleCommentKind.CHANGE_REQUEST
         : ArticleCommentKind.COMMENT;
     if (kind === ArticleCommentKind.CHANGE_REQUEST) {
-      this.assertAnyRole(actor, [
-        'CONTENT_ADMIN',
-        'SEO_EDITOR',
-        'MEDICAL_REVIEWER',
-        'SUPER_ADMIN',
-      ]);
+      this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'SUPER_ADMIN']);
     }
     const comment = await this.prisma.articleComment.create({
       data: { articleId: id, authorId: actor.id, kind, body: body.body },
@@ -502,8 +474,7 @@ export class ArticlesService {
     assigneeId?: string | null,
   ): ArticleStatus[] {
     const isWriter =
-      this.isOps(actor) ||
-      (actor.roles.includes('WRITER') && assigneeId === actor.id);
+      this.isOps(actor) || (actor.roles.includes('WRITER') && assigneeId === actor.id);
     const isSeo = actor.roles.includes('SEO_EDITOR') || this.isOps(actor);
     // Independent medical gate: CONTENT_ADMIN cannot self-approve medical
     const isMed = actor.roles.includes('MEDICAL_REVIEWER');
@@ -564,10 +535,7 @@ export class ArticlesService {
 
   private assertCanRead(actor: Actor, assigneeId: string | null) {
     if (this.isOps(actor)) return;
-    if (
-      actor.roles.includes('SEO_EDITOR') ||
-      actor.roles.includes('MEDICAL_REVIEWER')
-    ) {
+    if (actor.roles.includes('SEO_EDITOR') || actor.roles.includes('MEDICAL_REVIEWER')) {
       return;
     }
     if (actor.roles.includes('WRITER') && assigneeId === actor.id) return;

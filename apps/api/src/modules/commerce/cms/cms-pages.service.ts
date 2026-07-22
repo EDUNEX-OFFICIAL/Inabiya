@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ArticleStatus, MarketingPageStatus, Prisma } from '@prisma/client';
 import {
   GIFT_HOMEPAGE_SLUG,
@@ -140,12 +136,7 @@ export class CmsPagesService {
     return this.mapPage(page);
   }
 
-  async update(
-    id: string,
-    body: UpdateMarketingPageBody,
-    actorId: string,
-    requestId?: string,
-  ) {
+  async update(id: string, body: UpdateMarketingPageBody, actorId: string, requestId?: string) {
     const existing = await this.prisma.marketingPage.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Page not found.' });
@@ -170,9 +161,7 @@ export class CmsPagesService {
         data: {
           ...(body.title !== undefined ? { title: body.title } : {}),
           ...(body.seoTitle !== undefined ? { seoTitle: body.seoTitle } : {}),
-          ...(body.seoDescription !== undefined
-            ? { seoDescription: body.seoDescription }
-            : {}),
+          ...(body.seoDescription !== undefined ? { seoDescription: body.seoDescription } : {}),
         },
         include: { blocks: { orderBy: { sortOrder: 'asc' } } },
       });

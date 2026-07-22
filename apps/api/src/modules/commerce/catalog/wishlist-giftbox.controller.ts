@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
   giftBoxAddItemBodySchema,
   giftBoxCreateBodySchema,
@@ -69,10 +61,7 @@ export class GiftBoxController {
   }
 
   @Get(':boxId/recommendations')
-  recommendations(
-    @CurrentUser() user: { id: string },
-    @Param('boxId') boxId: string,
-  ) {
+  recommendations(@CurrentUser() user: { id: string }, @Param('boxId') boxId: string) {
     return this.giftBoxes.recommendations(boxId, user.id);
   }
 

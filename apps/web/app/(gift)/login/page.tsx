@@ -87,9 +87,7 @@ function LoginForm() {
       <div>
         <h1 className="gift-h1">Sign in</h1>
         <p className="mt-gs-2 text-sm opacity-75">
-          {nextPath
-            ? `Continue to ${nextPath}`
-            : 'Email and password — Soft Gift storefront.'}
+          {nextPath ? `Continue to ${nextPath}` : 'Email and password — Soft Gift storefront.'}
         </p>
         {resetOk ? (
           <p className="gift-banner gift-banner--success mt-gs-3" role="status">

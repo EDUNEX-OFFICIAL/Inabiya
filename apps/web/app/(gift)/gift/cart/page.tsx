@@ -128,9 +128,7 @@ export default function CartPage() {
                     onChange={(e) => void updateQty(item.id, Number(e.target.value) || 1)}
                     className="clay-input !mt-0 w-16"
                   />
-                  <span className="font-medium text-primary">
-                    {formatInr(item.lineTotalPaise)}
-                  </span>
+                  <span className="font-medium text-primary">{formatInr(item.lineTotalPaise)}</span>
                   <button
                     type="button"
                     onClick={() => void remove(item.id)}

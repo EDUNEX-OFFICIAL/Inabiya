@@ -17,9 +17,7 @@ export class AnalyticsService {
         productId: body.productId ?? null,
         orderId: body.orderId ?? null,
         metadata:
-          body.metadata === undefined
-            ? undefined
-            : (body.metadata as Prisma.InputJsonValue),
+          body.metadata === undefined ? undefined : (body.metadata as Prisma.InputJsonValue),
       },
     });
     return { id: row.id, name: row.name, createdAt: row.createdAt };
@@ -28,13 +26,7 @@ export class AnalyticsService {
   async funnelSummary(days = 7) {
     const since = new Date();
     since.setDate(since.getDate() - days);
-    const names = [
-      'view_plp',
-      'view_pdp',
-      'add_to_cart',
-      'begin_checkout',
-      'purchase',
-    ] as const;
+    const names = ['view_plp', 'view_pdp', 'add_to_cart', 'begin_checkout', 'purchase'] as const;
     const counts = await Promise.all(
       names.map(async (name) => ({
         name,

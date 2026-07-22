@@ -53,11 +53,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function MarketingPageView({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function MarketingPageView({ params }: { params: { slug: string } }) {
   if (params.slug === GIFT_HOMEPAGE_SLUG) {
     redirect('/gift');
   }

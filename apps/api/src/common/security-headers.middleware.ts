@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  MiddlewareConsumer,
-  Module,
-  NestMiddleware,
-  NestModule,
-} from '@nestjs/common';
+import { Injectable, MiddlewareConsumer, Module, NestMiddleware, NestModule } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
 
 /** Baseline security headers for API responses (Phase 9). */

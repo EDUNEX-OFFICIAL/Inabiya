@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import type { RoleCode } from '@inabiya/types';
@@ -54,8 +49,7 @@ export function extractAccessToken(req: Request): string | undefined {
   if (typeof header === 'string' && header.startsWith('Bearer ')) {
     return header.slice(7).trim();
   }
-  const cookie = (req as Request & { cookies?: Record<string, string> }).cookies
-    ?.access_token;
+  const cookie = (req as Request & { cookies?: Record<string, string> }).cookies?.access_token;
   if (typeof cookie === 'string' && cookie.length > 0) {
     return cookie;
   }

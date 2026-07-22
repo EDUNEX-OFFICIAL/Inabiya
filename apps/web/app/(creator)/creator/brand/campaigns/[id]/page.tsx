@@ -20,7 +20,11 @@ type Detail = {
     status: string;
     creator: { displayName: string; slug: string };
   }>;
-  messages: Array<{ id: string; body: string; sender: { displayName: string | null; email: string } }>;
+  messages: Array<{
+    id: string;
+    body: string;
+    sender: { displayName: string | null; email: string };
+  }>;
   deliverables: Array<{ id: string; title: string; status: string; url: string | null }>;
   payment: { id: string; amountPaise: number; status: string } | null;
 };
@@ -94,7 +98,11 @@ export default function BrandCampaignDetailPage({ params }: { params: { id: stri
       {note ? <p className="mt-2 text-sm opacity-70">{note}</p> : null}
 
       {(c.status === 'OPEN' || c.status === 'REVIEWING') && (
-        <button type="button" className="mt-4 rounded border px-3 py-1 text-sm" onClick={() => void close()}>
+        <button
+          type="button"
+          className="mt-4 rounded border px-3 py-1 text-sm"
+          onClick={() => void close()}
+        >
           Close (reject further bids)
         </button>
       )}
@@ -180,7 +188,8 @@ export default function BrandCampaignDetailPage({ params }: { params: { id: stri
         <ul className="mt-2 space-y-2">
           {c.messages.map((m) => (
             <li key={m.id} className="opacity-80">
-              <span className="font-medium">{m.sender.displayName ?? m.sender.email}:</span> {m.body}
+              <span className="font-medium">{m.sender.displayName ?? m.sender.email}:</span>{' '}
+              {m.body}
             </li>
           ))}
         </ul>

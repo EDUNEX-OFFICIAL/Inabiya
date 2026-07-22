@@ -1,9 +1,5 @@
 import { randomUUID } from 'crypto';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CartStatus, ProductStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CouponService } from '../promotions/coupon.service';
@@ -81,8 +77,7 @@ export class CartService {
         message: 'Product is not available.',
       });
     }
-    const available =
-      (variant.inventory?.onHand ?? 0) - (variant.inventory?.reserved ?? 0);
+    const available = (variant.inventory?.onHand ?? 0) - (variant.inventory?.reserved ?? 0);
     const existing = await this.prisma.cartItem.findUnique({
       where: { cartId_variantId: { cartId: cart.id, variantId: input.variantId } },
     });
@@ -140,11 +135,7 @@ export class CartService {
     return this.getOrCreate(userId, cartDto.guestToken ?? guestToken);
   }
 
-  async removeItem(
-    userId: string | undefined,
-    guestToken: string | undefined,
-    itemId: string,
-  ) {
+  async removeItem(userId: string | undefined, guestToken: string | undefined, itemId: string) {
     const cartDto = await this.getOrCreate(userId, guestToken);
     await this.prisma.cartItem.deleteMany({
       where: { id: itemId, cartId: cartDto.id },
@@ -152,11 +143,7 @@ export class CartService {
     return this.getOrCreate(userId, cartDto.guestToken ?? guestToken);
   }
 
-  async applyCoupon(
-    userId: string | undefined,
-    guestToken: string | undefined,
-    code: string,
-  ) {
+  async applyCoupon(userId: string | undefined, guestToken: string | undefined, code: string) {
     const cartDto = await this.getOrCreate(userId, guestToken);
     await this.coupons.validate(code, cartDto.subtotalPaise);
     await this.prisma.cart.update({
@@ -235,10 +222,7 @@ export class CartService {
   }
 
   /** Cart DTO with live coupon discount (same rules as checkout preview). */
-  private async toCartDto(
-    cart: Parameters<CartService['mapCart']>[0],
-    guestToken?: string,
-  ) {
+  private async toCartDto(cart: Parameters<CartService['mapCart']>[0], guestToken?: string) {
     const mapped = this.mapCart(cart, guestToken);
     let discountPaise = 0;
     let couponCode = mapped.couponCode;

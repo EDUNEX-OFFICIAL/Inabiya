@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ReturnStatus } from '@prisma/client';
 import {
   createReturnBodySchema,
@@ -73,8 +63,7 @@ export class ReturnsAdminController {
   @Get('returns')
   list(@Query('status') status?: string) {
     const allowed = Object.values(ReturnStatus) as string[];
-    const parsed =
-      status && allowed.includes(status) ? (status as ReturnStatus) : undefined;
+    const parsed = status && allowed.includes(status) ? (status as ReturnStatus) : undefined;
     return this.returns.listAdmin(parsed);
   }
 
@@ -94,9 +83,7 @@ export class ReturnsAdminController {
   }
 
   @Post('policy/returns')
-  setPolicy(
-    @Body(new ZodValidationPipe(returnPolicyBodySchema)) body: { windowDays: number },
-  ) {
+  setPolicy(@Body(new ZodValidationPipe(returnPolicyBodySchema)) body: { windowDays: number }) {
     return this.policy.setReturnPolicy(body);
   }
 }

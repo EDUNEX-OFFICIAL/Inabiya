@@ -29,9 +29,7 @@ export default async function ArticlesIndexPage({
           aria-hidden
         />
         <div className="relative mx-auto max-w-3xl">
-          <p className="gift-overline">
-            Inabiya Journal
-          </p>
+          <p className="gift-overline">Inabiya Journal</p>
           <h1 className="font-display mt-gs-3 text-4xl leading-tight sm:text-5xl md:text-6xl">
             Articles
           </h1>

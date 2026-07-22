@@ -85,9 +85,7 @@ export const createProductBodySchema = z.object({
   categorySlugs: z.array(z.string()).optional(),
   recipientTags: z.array(z.enum(['girl', 'boy', 'mom', 'unisex'])).optional(),
   ageBands: z.array(z.enum(['newborn', 'infant', 'toddler', 'any'])).optional(),
-  occasionTags: z
-    .array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']))
-    .optional(),
+  occasionTags: z.array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday'])).optional(),
   isReadyMadeHamper: z.boolean().optional(),
   brandName: z.string().max(120).optional(),
   variants: z
@@ -130,9 +128,7 @@ export const updateProductBodySchema = z.object({
   categorySlugs: z.array(z.string()).optional(),
   recipientTags: z.array(z.enum(['girl', 'boy', 'mom', 'unisex'])).optional(),
   ageBands: z.array(z.enum(['newborn', 'infant', 'toddler', 'any'])).optional(),
-  occasionTags: z
-    .array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']))
-    .optional(),
+  occasionTags: z.array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday'])).optional(),
   isReadyMadeHamper: z.boolean().optional(),
   brandName: z.string().max(120).nullable().optional(),
 });
@@ -171,10 +167,7 @@ export const giftBoxCreateBodySchema = z.object({
   budgetPaise: z.number().int().min(0).optional(),
   recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).nullable().optional(),
   ageBand: z.enum(['newborn', 'infant', 'toddler', 'any']).nullable().optional(),
-  occasion: z
-    .enum(['welcome-baby', 'baby-shower', 'naming', 'birthday'])
-    .nullable()
-    .optional(),
+  occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).nullable().optional(),
   categorySlugs: z.array(z.string().max(80)).max(12).optional(),
   wizardStep: z.number().int().min(1).max(6).optional(),
 });
@@ -262,7 +255,11 @@ export const adminOrderStatusSchema = z.object({
 });
 
 export const createCouponBodySchema = z.object({
-  code: z.string().min(2).max(40).regex(/^[A-Z0-9_-]+$/i),
+  code: z
+    .string()
+    .min(2)
+    .max(40)
+    .regex(/^[A-Z0-9_-]+$/i),
   description: z.string().max(200).optional(),
   discountPaise: z.number().int().min(0).optional(),
   discountPercent: z.number().int().min(1).max(100).optional(),
@@ -419,13 +416,7 @@ export type UpdateProfileBody = z.infer<typeof updateProfileBodySchema>;
 
 /** Leftovers closeout */
 export const trackAnalyticsBodySchema = z.object({
-  name: z.enum([
-    'view_plp',
-    'view_pdp',
-    'add_to_cart',
-    'begin_checkout',
-    'purchase',
-  ]),
+  name: z.enum(['view_plp', 'view_pdp', 'add_to_cart', 'begin_checkout', 'purchase']),
   sessionId: z.string().min(8).max(80).optional(),
   path: z.string().max(300).optional(),
   productId: z.string().uuid().optional(),
@@ -517,7 +508,11 @@ export const cmsMediaUrlSchema = z
   .max(500)
   .refine(
     (s) => {
-      if (/^\/api\/v1\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/content$/i.test(s)) {
+      if (
+        /^\/api\/v1\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/content$/i.test(
+          s,
+        )
+      ) {
         return true;
       }
       try {
@@ -716,4 +711,3 @@ export const giftChromeBodySchema = z.object({
 });
 
 export type GiftChromeBody = z.infer<typeof giftChromeBodySchema>;
-

@@ -24,7 +24,9 @@ export default function OrdersPage() {
       router.replace('/login');
       return;
     }
-    apiAuth<Order[]>('/orders/me').then(setOrders).catch(() => router.replace('/login'));
+    apiAuth<Order[]>('/orders/me')
+      .then(setOrders)
+      .catch(() => router.replace('/login'));
   }, [router]);
 
   return (
@@ -44,10 +46,7 @@ export default function OrdersPage() {
         ) : (
           orders.map((o) => (
             <li key={o.id} className="clay-card p-gs-5 text-sm">
-              <Link
-                href={`/orders/${o.id}`}
-                className="font-medium hover:text-primary"
-              >
+              <Link href={`/orders/${o.id}`} className="font-medium hover:text-primary">
                 {o.orderNumber}
               </Link>
               <p className="mt-gs-1 opacity-70">

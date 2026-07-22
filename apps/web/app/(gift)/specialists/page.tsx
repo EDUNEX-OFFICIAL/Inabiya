@@ -27,9 +27,7 @@ export default async function SpecialistsIndexPage() {
             </Link>
           </li>
         ))}
-        {specialists.length === 0 ? (
-          <li className="gift-muted">No specialists yet.</li>
-        ) : null}
+        {specialists.length === 0 ? <li className="gift-muted">No specialists yet.</li> : null}
       </ul>
       <p className="mt-gs-7 text-sm">
         <Link href="/articles" className="gift-link underline">

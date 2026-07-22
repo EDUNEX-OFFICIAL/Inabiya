@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, ReturnStatus } from '@prisma/client';
 import type { CreateReturnBody, ModerateReturnBody } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
@@ -35,8 +31,9 @@ export class ReturnsService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Order not found.' });
     }
     const { windowDays } = await this.policy.getReturnPolicy();
-    const deliveredAt = order.statusHistory.find((h) => h.status === OrderStatus.DELIVERED)
-      ?.createdAt;
+    const deliveredAt = order.statusHistory.find(
+      (h) => h.status === OrderStatus.DELIVERED,
+    )?.createdAt;
     const open = order.returnRequests.find(
       (r) =>
         r.status === ReturnStatus.REQUESTED ||
@@ -137,12 +134,7 @@ export class ReturnsService {
     }));
   }
 
-  async moderate(
-    returnId: string,
-    body: ModerateReturnBody,
-    actorId: string,
-    requestId?: string,
-  ) {
+  async moderate(returnId: string, body: ModerateReturnBody, actorId: string, requestId?: string) {
     const row = await this.prisma.returnRequest.findUnique({
       where: { id: returnId },
       include: {

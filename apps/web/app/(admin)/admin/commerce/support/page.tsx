@@ -48,7 +48,11 @@ export default function SupportLookupPage() {
       <h1 className="text-2xl font-semibold mt-4">Support lookup</h1>
       <p className="text-sm opacity-70 mt-1">Search by order number or customer email.</p>
 
-      <form className="mt-4 flex gap-2" onSubmit={(e) => void lookup(e)} aria-label="Support search">
+      <form
+        className="mt-4 flex gap-2"
+        onSubmit={(e) => void lookup(e)}
+        aria-label="Support search"
+      >
         <label className="sr-only" htmlFor="support-q">
           Order number or email
         </label>

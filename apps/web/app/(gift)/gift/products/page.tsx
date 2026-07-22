@@ -43,11 +43,7 @@ const FILTERS = [
   { href: '/gift/products?category=toys', label: 'Toys' },
 ] as const;
 
-export default async function ProductListPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function ProductListPage({ searchParams }: { searchParams: SearchParams }) {
   const recipient = first(searchParams.recipient);
   const age = first(searchParams.age);
   const hamper = first(searchParams.hamper);
@@ -85,11 +81,7 @@ export default async function ProductListPage({
         <h1 className="gift-h1 mt-gs-3">{heading}</h1>
         <div className="-mx-gs-1 mt-gs-4 flex gap-gs-2 overflow-x-auto px-gs-1 pb-gs-1 sm:mt-gs-5 sm:flex-wrap sm:overflow-visible">
           {FILTERS.map((f) => (
-            <Link
-              key={f.href}
-              className="clay-chip shrink-0 hover:text-primary"
-              href={f.href}
-            >
+            <Link key={f.href} className="clay-chip shrink-0 hover:text-primary" href={f.href}>
               {f.label}
             </Link>
           ))}

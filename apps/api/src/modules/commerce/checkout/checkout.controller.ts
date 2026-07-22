@@ -50,9 +50,8 @@ export class CheckoutController {
   placeOrder(
     @CurrentUser() user: { id: string },
     @Headers('x-cart-token') cartHeader: string | undefined,
-    @Body(new ZodValidationPipe(checkoutPlaceOrderBodySchema)) body: Parameters<
-      CheckoutService['placeOrder']
-    >[2],
+    @Body(new ZodValidationPipe(checkoutPlaceOrderBodySchema))
+    body: Parameters<CheckoutService['placeOrder']>[2],
     @Req() req: AuthedRequest,
   ) {
     return this.checkout.placeOrder(user.id, cartHeader?.trim(), body, String(req.id ?? ''));
@@ -60,10 +59,7 @@ export class CheckoutController {
 
   @Post('payments/:paymentId/confirm')
   @UseGuards(JwtAuthGuard)
-  confirmPayment(
-    @CurrentUser() user: { id: string },
-    @Param('paymentId') paymentId: string,
-  ) {
+  confirmPayment(@CurrentUser() user: { id: string }, @Param('paymentId') paymentId: string) {
     return this.fulfillment.confirmMockPayment(paymentId, user.id);
   }
 }

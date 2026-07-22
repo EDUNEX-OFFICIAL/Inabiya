@@ -29,11 +29,20 @@ export default function AdminSearchPage() {
 
   return (
     <main className="min-h-screen p-8 max-w-lg">
-      <Link href="/admin/commerce" className="text-sm underline opacity-70">← Dashboard</Link>
+      <Link href="/admin/commerce" className="text-sm underline opacity-70">
+        ← Dashboard
+      </Link>
       <h1 className="text-2xl font-semibold mt-4">Search</h1>
       <form onSubmit={onSearch} className="mt-4 flex gap-2">
-        <input className="flex-1 rounded border px-2 py-1 text-sm" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Order, email, product…" />
-        <button type="submit" className="rounded border px-3 py-1 text-sm">Go</button>
+        <input
+          className="flex-1 rounded border px-2 py-1 text-sm"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Order, email, product…"
+        />
+        <button type="submit" className="rounded border px-3 py-1 text-sm">
+          Go
+        </button>
       </form>
       {result ? (
         <div className="mt-6 text-sm space-y-4">
@@ -41,8 +50,10 @@ export default function AdminSearchPage() {
             <h2 className="font-medium">Orders</h2>
             {result.orders.map((o) => (
               <p key={o.id}>
-                <Link href={`/admin/commerce/orders/${o.id}`} className="underline">{o.orderNumber}</Link>
-                {' '}— {o.customerEmail} — {formatInr(o.totalPaise)}
+                <Link href={`/admin/commerce/orders/${o.id}`} className="underline">
+                  {o.orderNumber}
+                </Link>{' '}
+                — {o.customerEmail} — {formatInr(o.totalPaise)}
               </p>
             ))}
           </div>
@@ -50,7 +61,9 @@ export default function AdminSearchPage() {
             <h2 className="font-medium">Customers</h2>
             {result.customers.map((c) => (
               <p key={c.id}>
-                <Link href={`/admin/commerce/customers/${c.id}`} className="underline">{c.email}</Link>
+                <Link href={`/admin/commerce/customers/${c.id}`} className="underline">
+                  {c.email}
+                </Link>
               </p>
             ))}
           </div>
@@ -58,7 +71,9 @@ export default function AdminSearchPage() {
             <h2 className="font-medium">Products</h2>
             {result.products.map((p) => (
               <p key={p.id}>
-                <Link href={`/gift/products/${p.slug}`} className="underline">{p.title}</Link>
+                <Link href={`/gift/products/${p.slug}`} className="underline">
+                  {p.title}
+                </Link>
               </p>
             ))}
           </div>

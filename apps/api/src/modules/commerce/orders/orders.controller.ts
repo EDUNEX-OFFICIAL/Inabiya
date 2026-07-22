@@ -50,11 +50,7 @@ export class OrdersAdminController {
   }
 
   @Post(':id/cancel')
-  cancel(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-    @Req() req: AuthedRequest,
-  ) {
+  cancel(@Param('id') id: string, @CurrentUser() user: { id: string }, @Req() req: AuthedRequest) {
     return this.orders.cancelAndRefundAdmin(id, user.id, String(req.id ?? ''));
   }
 

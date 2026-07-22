@@ -12,13 +12,16 @@ export class PendingPaymentScheduler implements OnModuleInit, OnModuleDestroy {
   onModuleInit() {
     const everyMs = 5 * 60 * 1000;
     this.timer = setInterval(() => {
-      void this.fulfillment.expireStalePendingPayments().then((r) => {
-        if (r.expired > 0) {
-          this.logger.log(`Expired ${r.expired} stale pending payment(s)`);
-        }
-      }).catch((err) => {
-        this.logger.warn(`pending payment expire failed: ${String(err)}`);
-      });
+      void this.fulfillment
+        .expireStalePendingPayments()
+        .then((r) => {
+          if (r.expired > 0) {
+            this.logger.log(`Expired ${r.expired} stale pending payment(s)`);
+          }
+        })
+        .catch((err) => {
+          this.logger.warn(`pending payment expire failed: ${String(err)}`);
+        });
     }, everyMs);
   }
 

@@ -237,12 +237,13 @@ function toEditable(blocks: MarketingPage['blocks']): Block[] {
               .filter(Boolean)
               .join(', ');
           } else if (k === 'columns' && Array.isArray(v) && b.type === 'footer') {
-            const cols = v as Array<{ title?: string; links?: Array<{ label: string; href: string }> }>;
+            const cols = v as Array<{
+              title?: string;
+              links?: Array<{ label: string; href: string }>;
+            }>;
             const shop = cols.find((c) => /shop/i.test(String(c.title ?? ''))) ?? cols[0];
             const company = cols.find((c) => /company/i.test(String(c.title ?? ''))) ?? cols[1];
-            props.shopLinks = (shop?.links ?? [])
-              .map((l) => `${l.label} | ${l.href}`)
-              .join('\n');
+            props.shopLinks = (shop?.links ?? []).map((l) => `${l.label} | ${l.href}`).join('\n');
             props.companyLinks = (company?.links ?? [])
               .map((l) => `${l.label} | ${l.href}`)
               .join('\n');
@@ -520,7 +521,18 @@ function PropField({
     return <CmsMediaField value={value} onChange={onChange} />;
   }
 
-  if (fieldKey === 'html' || fieldKey === 'subcopy' || fieldKey === 'productSlugs' || fieldKey === 'brands' || fieldKey === 'usps' || fieldKey === 'body' || fieldKey === 'subtitle' || fieldKey === 'shopLinks' || fieldKey === 'companyLinks' || fieldKey === 'trustLine') {
+  if (
+    fieldKey === 'html' ||
+    fieldKey === 'subcopy' ||
+    fieldKey === 'productSlugs' ||
+    fieldKey === 'brands' ||
+    fieldKey === 'usps' ||
+    fieldKey === 'body' ||
+    fieldKey === 'subtitle' ||
+    fieldKey === 'shopLinks' ||
+    fieldKey === 'companyLinks' ||
+    fieldKey === 'trustLine'
+  ) {
     return (
       <textarea
         className="mt-1 block w-full rounded border px-2 py-1 min-h-[80px] font-mono text-xs"
@@ -697,9 +709,7 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
 
   function updateProp(key: string, value: string) {
     setBlocks((prev) =>
-      prev.map((b, i) =>
-        i === selected ? { ...b, props: { ...b.props, [key]: value } } : b,
-      ),
+      prev.map((b, i) => (i === selected ? { ...b, props: { ...b.props, [key]: value } } : b)),
     );
   }
 

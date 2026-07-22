@@ -61,12 +61,16 @@ export default function AdminOrdersPage() {
               <td className="py-2 pr-4">{o.customerEmail}</td>
               <td className="py-2 pr-4">{o.status}</td>
               <td className="py-2 pr-4">{formatInr(o.totalPaise)}</td>
-                <td className="py-2">
-                  <Link href={`/admin/commerce/orders/${o.id}`} className="underline mr-3">
-                    View
-                  </Link>
-                  {o.status === 'PAID' ? (
-                  <button type="button" className="underline" onClick={() => void markProcessing(o.id)}>
+              <td className="py-2">
+                <Link href={`/admin/commerce/orders/${o.id}`} className="underline mr-3">
+                  View
+                </Link>
+                {o.status === 'PAID' ? (
+                  <button
+                    type="button"
+                    className="underline"
+                    onClick={() => void markProcessing(o.id)}
+                  >
                     Mark processing
                   </button>
                 ) : null}

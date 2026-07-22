@@ -147,12 +147,7 @@ export class ReviewsService {
     }));
   }
 
-  async moderate(
-    reviewId: string,
-    body: ModerateReviewBody,
-    actorId: string,
-    requestId?: string,
-  ) {
+  async moderate(reviewId: string, body: ModerateReviewBody, actorId: string, requestId?: string) {
     const review = await this.prisma.productReview.findUnique({ where: { id: reviewId } });
     if (!review) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Review not found.' });

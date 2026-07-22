@@ -81,7 +81,11 @@ export default function AdminProductsPage() {
         </Link>
       </div>
       <div className="mb-3 flex gap-2 text-sm">
-        <button type="button" className="rounded border px-2 py-1" onClick={() => void bulk('publish')}>
+        <button
+          type="button"
+          className="rounded border px-2 py-1"
+          onClick={() => void bulk('publish')}
+        >
           Bulk publish
         </button>
         <button
@@ -112,9 +116,7 @@ export default function AdminProductsPage() {
                     type="checkbox"
                     aria-label={`Select ${p.title}`}
                     checked={Boolean(selected[p.id])}
-                    onChange={(e) =>
-                      setSelected((prev) => ({ ...prev, [p.id]: e.target.checked }))
-                    }
+                    onChange={(e) => setSelected((prev) => ({ ...prev, [p.id]: e.target.checked }))}
                   />
                 </td>
                 <td className="py-2 pr-4">{p.title}</td>

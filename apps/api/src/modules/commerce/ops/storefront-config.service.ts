@@ -13,9 +13,7 @@ export type StorefrontHomeConfig = {
   heroSubtitle: string;
 };
 
-export const DEFAULT_GIFT_CHROME: Required<
-  Pick<GiftChromeBody, 'shopLinks' | 'forWhomLinks'>
-> &
+export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'forWhomLinks'>> &
   GiftChromeBody = {
   shopLinks: [
     { href: '/gift/box', label: 'Build Your Box' },

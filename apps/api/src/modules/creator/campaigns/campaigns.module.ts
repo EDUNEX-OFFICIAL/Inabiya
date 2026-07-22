@@ -1,10 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../../audit/audit.module';
 import { IdentityModule } from '../../identity/identity.module';
-import {
-  CampaignsAuthController,
-  CampaignsPublicController,
-} from './campaigns.controller';
+import { CampaignsAuthController, CampaignsPublicController } from './campaigns.controller';
 import { CampaignsService } from './campaigns.service';
 
 @Module({

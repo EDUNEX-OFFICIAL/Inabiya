@@ -62,12 +62,9 @@ export function GiftSearch({
     const controller = new AbortController();
     setBusy(true);
     setError(null);
-    fetch(
-      apiUrl(
-        `/catalog/products?q=${encodeURIComponent(debounced)}&sort=newest`,
-      ),
-      { signal: controller.signal },
-    )
+    fetch(apiUrl(`/catalog/products?q=${encodeURIComponent(debounced)}&sort=newest`), {
+      signal: controller.signal,
+    })
       .then(async (res) => {
         if (!res.ok) throw new Error('Search failed');
         return res.json() as Promise<Suggestion[]>;
@@ -193,9 +190,7 @@ export function GiftSearch({
           {busy ? <p className="gift-muted px-gs-2 py-gs-2">Searching…</p> : null}
           {error ? <p className="px-gs-2 py-gs-2 text-sm text-danger">{error}</p> : null}
           {!busy && !error && debounced.length >= MIN_Q && items.length === 0 ? (
-            <p className="gift-muted break-all px-gs-2 py-gs-2">
-              No gifts match “{debounced}”.
-            </p>
+            <p className="gift-muted break-all px-gs-2 py-gs-2">No gifts match “{debounced}”.</p>
           ) : null}
           {items.length > 0 ? (
             <ul className="max-h-72 overflow-y-auto">

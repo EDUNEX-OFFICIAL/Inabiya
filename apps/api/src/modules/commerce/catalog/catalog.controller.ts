@@ -1,15 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
-import type { CreateCategoryBody, CreateProductBody, UpdateProductBody, BulkProductsBody } from '@inabiya/validation';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import type {
+  CreateCategoryBody,
+  CreateProductBody,
+  UpdateProductBody,
+  BulkProductsBody,
+} from '@inabiya/validation';
 import {
   bulkProductsBodySchema,
   catalogListQuerySchema,
@@ -35,15 +30,18 @@ export class CatalogPublicController {
   }
 
   @Get('products')
-  listProducts(@Query(new ZodValidationPipe(catalogListQuerySchema)) query: {
-    q?: string;
-    category?: string;
-    recipient?: string;
-    age?: string;
-    occasion?: string;
-    hamper?: '0' | '1';
-    sort?: 'newest' | 'price_asc' | 'price_desc';
-  }) {
+  listProducts(
+    @Query(new ZodValidationPipe(catalogListQuerySchema))
+    query: {
+      q?: string;
+      category?: string;
+      recipient?: string;
+      age?: string;
+      occasion?: string;
+      hamper?: '0' | '1';
+      sort?: 'newest' | 'price_asc' | 'price_desc';
+    },
+  ) {
     return this.catalog.listPublishedProducts(query);
   }
 
@@ -101,11 +99,7 @@ export class CatalogAdminController {
   }
 
   @Post('products/:id/publish')
-  publish(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-    @Req() req: AuthedRequest,
-  ) {
+  publish(@Param('id') id: string, @CurrentUser() user: { id: string }, @Req() req: AuthedRequest) {
     return this.catalog.publishProduct(id, user.id, String(req.id ?? ''));
   }
 
@@ -126,12 +120,7 @@ export class CatalogAdminController {
     @CurrentUser() user: { id: string },
     @Req() req: AuthedRequest,
   ) {
-    return this.catalog.updateInventory(
-      variantId,
-      body.onHand,
-      user.id,
-      String(req.id ?? ''),
-    );
+    return this.catalog.updateInventory(variantId, body.onHand, user.id, String(req.id ?? ''));
   }
 
   @Get('categories')

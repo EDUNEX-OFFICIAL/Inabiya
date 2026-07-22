@@ -11,9 +11,7 @@ export class GiftingInquiryPublicController {
   constructor(private readonly inquiries: GiftingInquiryService) {}
 
   @Post()
-  create(
-    @Body(new ZodValidationPipe(giftingInquiryBodySchema)) body: GiftingInquiryBody,
-  ) {
+  create(@Body(new ZodValidationPipe(giftingInquiryBodySchema)) body: GiftingInquiryBody) {
     return this.inquiries.create(body);
   }
 }

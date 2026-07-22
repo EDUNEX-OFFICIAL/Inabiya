@@ -2,10 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { AuditModule } from '../../audit/audit.module';
 import { IdentityModule } from '../../identity/identity.module';
 import { CartModule } from '../cart/cart.module';
-import {
-  CatalogAdminController,
-  CatalogPublicController,
-} from './catalog.controller';
+import { CatalogAdminController, CatalogPublicController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
 import {
   GiftingInquiryAdminController,
