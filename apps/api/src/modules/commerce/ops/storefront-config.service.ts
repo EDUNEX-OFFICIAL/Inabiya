@@ -180,8 +180,7 @@ export class StorefrontConfigService {
             ...input.footer,
             columns: input.footer.columns ?? current.footer?.columns,
             socialLinks: input.footer.socialLinks ?? current.footer?.socialLinks,
-            showNewsletter:
-              input.footer.showNewsletter ?? current.footer?.showNewsletter ?? true,
+            showNewsletter: input.footer.showNewsletter ?? current.footer?.showNewsletter ?? true,
           }
         : current.footer,
     };

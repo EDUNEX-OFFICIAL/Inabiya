@@ -12,14 +12,17 @@ export default function ContactPage() {
       <p className="gift-overline">Hello</p>
       <h1 className="gift-h1 mt-gs-2">We’d love to hear from you</h1>
       <p className="mt-gs-4 max-w-prose text-body opacity-90">
-        Questions about an order, personalisation, or corporate gifting? Pick the channel that
-        feels easiest.
+        Questions about an order, personalisation, or corporate gifting? Pick the channel that feels
+        easiest.
       </p>
 
       <ul className="mt-gs-7 space-y-gs-4">
         <li className="clay-panel p-gs-5">
           <p className="font-semibold text-foreground">Email</p>
-          <a href="mailto:hello@inabiya.in" className="mt-gs-2 inline-block text-primary hover:underline">
+          <a
+            href="mailto:hello@inabiya.in"
+            className="mt-gs-2 inline-block text-primary hover:underline"
+          >
             hello@inabiya.in
           </a>
         </li>
@@ -36,7 +39,10 @@ export default function ContactPage() {
         </li>
         <li className="clay-panel p-gs-5">
           <p className="font-semibold text-foreground">Corporate gifting</p>
-          <Link href="/gift/corporate" className="mt-gs-2 inline-block text-primary hover:underline">
+          <Link
+            href="/gift/corporate"
+            className="mt-gs-2 inline-block text-primary hover:underline"
+          >
             Request a quote →
           </Link>
         </li>

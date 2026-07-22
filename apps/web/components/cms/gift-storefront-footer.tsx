@@ -115,7 +115,9 @@ export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
           ))}
         </div>
         {props.showNewsletter && props.newsletterSlot ? (
-          <div className="mt-gs-7 border-t border-border-subtle pt-gs-6">{props.newsletterSlot}</div>
+          <div className="mt-gs-7 border-t border-border-subtle pt-gs-6">
+            {props.newsletterSlot}
+          </div>
         ) : null}
       </footer>
     </div>

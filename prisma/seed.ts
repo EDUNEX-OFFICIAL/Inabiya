@@ -477,7 +477,10 @@ async function main() {
         steps: [
           { title: 'Who it’s for', body: 'Girl, boy, mom, or unisex-safe picks.' },
           { title: 'Age & occasion', body: 'Newborn through toddler — naming, shower, birthday.' },
-          { title: 'Budget & picks', body: 'Stay on budget while we suggest gift-box eligible items.' },
+          {
+            title: 'Budget & picks',
+            body: 'Stay on budget while we suggest gift-box eligible items.',
+          },
         ],
       },
     },

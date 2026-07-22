@@ -145,7 +145,8 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     ctaLabel: 'Build your box',
     ctaHref: '/gift/build-your-box',
     imageUrl: '',
-    steps: 'Who it’s for | Pick recipient\nAge & occasion | Newborn to toddler\nBudget & picks | Stay on budget',
+    steps:
+      'Who it’s for | Pick recipient\nAge & occasion | Newborn to toddler\nBudget & picks | Stay on budget',
   },
   articleTeasers: {
     overline: 'Journal',

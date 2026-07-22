@@ -22,14 +22,7 @@ type Props = {
  * Soft Gift FAQ accordion — height eases open/close (grid 0fr→1fr).
  * Prefer over raw `<details>` which cannot animate smoothly.
  */
-export function FaqAccordion({
-  title,
-  items,
-  defaultOpenIndex = 0,
-  className,
-  home,
-  id,
-}: Props) {
+export function FaqAccordion({ title, items, defaultOpenIndex = 0, className, home, id }: Props) {
   const uid = useId();
   const [openIndex, setOpenIndex] = useState<number | null>(
     defaultOpenIndex == null || items.length === 0

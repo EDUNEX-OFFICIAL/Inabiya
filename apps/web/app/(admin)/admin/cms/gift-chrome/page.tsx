@@ -50,9 +50,7 @@ function textToLinks(text: string): LinkRow[] {
 
 function socialToText(links: SocialRow[]) {
   return links
-    .map((l) =>
-      l.network ? `${l.label} | ${l.href} | ${l.network}` : `${l.label} | ${l.href}`,
-    )
+    .map((l) => (l.network ? `${l.label} | ${l.href} | ${l.network}` : `${l.label} | ${l.href}`))
     .join('\n');
 }
 

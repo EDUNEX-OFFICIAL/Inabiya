@@ -30,9 +30,7 @@ export function GiftFloatingActions() {
           type="button"
           className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-foreground text-background shadow-clay transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           aria-label="Back to top"
-          onClick={() =>
-            window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' })
-          }
+          onClick={() => window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' })}
         >
           <ArrowUp className="h-5 w-5" aria-hidden />
         </button>

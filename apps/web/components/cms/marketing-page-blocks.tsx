@@ -415,7 +415,9 @@ function HomeProductCard({
         className={`flex flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}
       >
         <div className="flex flex-wrap items-center gap-gs-2">
-          {product.brandName ? <span className="clay-chip text-xs">{product.brandName}</span> : null}
+          {product.brandName ? (
+            <span className="clay-chip text-xs">{product.brandName}</span>
+          ) : null}
           {product.isReadyMadeHamper ? (
             <span className="clay-chip text-xs">Ready-made hamper</span>
           ) : null}
@@ -605,12 +607,7 @@ function BrandMarquee({
         <h2 className="gift-brand-strip__title">{title}</h2>
         <p className="gift-brand-strip__sub">{sub}</p>
       </div>
-      <div
-        className="gift-brand-marquee"
-        role="region"
-        aria-label={title}
-        tabIndex={0}
-      >
+      <div className="gift-brand-marquee" role="region" aria-label={title} tabIndex={0}>
         <div className="gift-brand-marquee__track">
           {[0, 1].map((copy) => (
             <ul

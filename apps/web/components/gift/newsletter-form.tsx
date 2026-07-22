@@ -34,9 +34,7 @@ export function NewsletterForm({ compact = false }: Props) {
 
   return (
     <div className={compact ? '' : 'max-w-lg'}>
-      {!compact ? (
-        <p className="mb-gs-2 font-semibold text-foreground">Newsletter</p>
-      ) : null}
+      {!compact ? <p className="mb-gs-2 font-semibold text-foreground">Newsletter</p> : null}
       <form
         onSubmit={(e) => void onSubmit(e)}
         className="flex w-full flex-col gap-gs-2 sm:flex-row sm:flex-wrap"
