@@ -459,8 +459,15 @@ function ProductGridBlock({
   const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'See all';
   const products = Array.isArray(props.products) ? (props.products as CmsBlockProduct[]) : [];
   const home = layout === 'home';
-  const featured = home && products.length >= 2 ? products[0] : null;
+  // Featured row only when enough remain for a balanced grid (avoids one full-width giant card).
+  const featured = home && products.length >= 3 ? products[0] : null;
   const rest = featured ? products.slice(1) : products;
+  const restCols =
+    rest.length <= 1
+      ? 'sm:grid-cols-1 sm:max-w-md'
+      : rest.length === 2
+        ? 'sm:grid-cols-2'
+        : 'sm:grid-cols-2 lg:grid-cols-3';
 
   const grid = (
     <>
@@ -486,11 +493,7 @@ function ProductGridBlock({
         <div className="gift-stack">
           {featured ? <HomeProductCard product={featured} featured /> : null}
           {rest.length > 0 ? (
-            <ul
-              className={`grid gap-gs-5 ${
-                rest.length === 1 ? 'sm:grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'
-              }`}
-            >
+            <ul className={`grid gap-gs-5 ${restCols}`}>
               {rest.map((p) => (
                 <li key={p.id} className="min-w-0 list-none">
                   <HomeProductCard product={p} />

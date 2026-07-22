@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 22, 2026 (homepage chrome roadmap Pass 1–12)
+Last Updated: July 22, 2026 (hamper grid + WhatsApp FAB icon)
 
 
 ---
@@ -906,6 +906,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-22 (Ready-made hampers card size + WhatsApp FAB)
+- **Override:** Soft Gift polish outside Phase 12.
+- Home `productGrid`: featured row only when ≥3 products (2-item hamper grids stay equal `sm:grid-cols-2`); rest cols by count.
+- WhatsApp FAB: real WhatsApp glyph SVG (was Lucide `MessageCircle`).
+- Next: push/CI deploy; smoke `/gift` hampers + FAB.
 
 ### Session — 2026-07-22 (PDP FAQ + accordion ease)
 
