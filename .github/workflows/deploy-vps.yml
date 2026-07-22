@@ -37,6 +37,9 @@ jobs:
       - name: Validate Prisma schema
         run: pnpm exec prisma validate --schema=prisma/schema.prisma
 
+      - name: Build workspace packages
+        run: pnpm --filter @inabiya/types build && pnpm --filter @inabiya/validation build
+
       - name: Lint
         run: pnpm lint
 
