@@ -884,11 +884,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
                   <img
                     src={String(a.imageUrl)}
                     alt=""
-                    className={`absolute inset-0 h-full w-full transition duration-300 group-hover:scale-[1.02] ${
-                      /\.svg(\?|#|$)/i.test(String(a.imageUrl))
-                        ? 'object-contain p-gs-4 sm:p-gs-6'
-                        : 'object-cover'
-                    }`}
+                    className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-end p-gs-5">
