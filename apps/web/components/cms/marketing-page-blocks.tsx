@@ -696,8 +696,8 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
   const left = (props.left ?? {}) as Record<string, unknown>;
   const right = (props.right ?? {}) as Record<string, unknown>;
   const cards = [
-    { key: 'left', card: left, index: '01' },
-    { key: 'right', card: right, index: '02' },
+    { key: 'left', card: left },
+    { key: 'right', card: right },
   ] as const;
 
   const body = (
@@ -705,16 +705,10 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
       <GiftSectionHeader
         overline={home ? 'Start here' : null}
         title={props.title ? String(props.title) : null}
-        subtitle={
-          props.subtitle
-            ? String(props.subtitle)
-            : home
-              ? 'Soft palettes for little ones — unisex-safe picks are woven into both.'
-              : null
-        }
+        subtitle={props.subtitle ? String(props.subtitle) : null}
       />
       <div className="grid gap-gs-6 sm:grid-cols-2">
-        {cards.map(({ key, card, index }) => {
+        {cards.map(({ key, card }) => {
           const sky = card.accent === 'sky';
           const accent = sky ? 'sky' : 'pink';
           const pillClass = sky ? 'gift-pill-overlap--sky' : '';
@@ -731,7 +725,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
               >
                 <div className={`gift-wave-card shadow-clay ${waveClass}`}>
                   <div
-                    className={`gift-wave-card__media relative ${mediaClass} min-h-[13rem] sm:min-h-[15rem]`}
+                    className={`gift-wave-card__media relative ${mediaClass} min-h-[12rem] sm:min-h-[14rem]`}
                   >
                     {card.imageUrl ? (
                       <div
@@ -750,25 +744,14 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
                         />
                       </div>
                     ) : null}
-                    <div className="relative z-[1] flex h-full min-h-[13rem] max-w-[58%] flex-col justify-end p-gs-5 pb-gs-8 sm:min-h-[15rem] sm:max-w-[55%]">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                        {index}
-                      </p>
-                      <p className="mt-gs-2 text-sm opacity-75">
-                        {String(card.eyebrow ?? 'For the little')}
-                      </p>
+                    <div className="relative z-[1] flex h-full min-h-[12rem] max-w-[50%] flex-col justify-end p-gs-5 pb-gs-8 sm:min-h-[14rem]">
                       <p
-                        className={`font-display mt-gs-1 text-4xl capitalize sm:text-5xl ${
+                        className={`font-display text-4xl capitalize sm:text-5xl ${
                           sky ? 'text-info' : 'text-primary'
                         }`}
                       >
                         {String(card.label ?? '')}
                       </p>
-                      {blurb ? (
-                        <p className="mt-gs-3 max-w-[18rem] text-sm leading-relaxed opacity-80">
-                          {blurb}
-                        </p>
-                      ) : null}
                     </div>
                     <WaveAccent accent={accent} />
                   </div>

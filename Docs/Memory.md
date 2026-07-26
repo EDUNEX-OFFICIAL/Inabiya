@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 26, 2026 (recipient split photo fade)
+Last Updated: July 26, 2026 (recipient local photos + simpler cards)
 
 
 ---
@@ -906,6 +906,11 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-26 (Shop by baby — local girl/boy photos)
+- **Override:** Soft Gift polish outside Phase 12.
+- Local `/gift/media/girl.jpg` + `boy.jpg` (from repo `public/`); seed + admin defaults; home cards show only label + short CTA (no 01/eyebrow/blurb).
+- Next: push + deploy web; patch live `page_blocks` recipientSplit props.
 
 ### Session — 2026-07-26 (Shop by baby — right-half fade photo)
 - **Override:** Soft Gift polish outside Phase 12.
