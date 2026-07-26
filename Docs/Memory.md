@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 26, 2026 (Build Your Box gift-box SVG + CMS media)
+Last Updated: July 26, 2026 (journal cover SVG + CMS ogImage)
 
 
 ---
@@ -906,6 +906,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-26 (Journal cover SVG + CMS editable)
+- **Override:** Soft Gift polish outside Phase 12.
+- Article `ogImageUrl` → homepage `articleTeasers` image; seeded `/gift/media/sleep-cues-for-newborn.svg`.
+- Editorial CMS: Cover image field (CmsMediaField) + PATCH for published; publish/schedule accept relative/media URLs.
+- Next: DB update + deploy web/api.
 
 ### Session — 2026-07-26 (Build Your Box right panel SVG + CMS media)
 - **Override:** Soft Gift polish outside Phase 12.

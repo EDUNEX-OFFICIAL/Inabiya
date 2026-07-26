@@ -330,6 +330,37 @@ export const returnPolicyBodySchema = z.object({
 export type CreateReturnBody = z.infer<typeof createReturnBodySchema>;
 export type ModerateReturnBody = z.infer<typeof moderateReturnBodySchema>;
 
+/** HTTP(S), media library content path, or same-origin public asset path (jpg/png/webp/gif/avif/svg…). */
+export const cmsMediaUrlSchema = z
+  .string()
+  .min(1)
+  .max(500)
+  .refine(
+    (s) => {
+      if (
+        /^\/api\/v1\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/content$/i.test(
+          s,
+        )
+      ) {
+        return true;
+      }
+      // Same-origin static / public paths (e.g. /gift/media/gift-box.svg) — no // or ..
+      if (s.startsWith('/') && !s.startsWith('//') && !s.includes('..') && s.length <= 500) {
+        return /^\/[\w./@%~+-]+$/i.test(s);
+      }
+      try {
+        const u = new URL(s);
+        return u.protocol === 'http:' || u.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    },
+    {
+      message:
+        'Must be http(s) URL, /api/v1/media/{id}/content, or a same-origin path like /gift/media/…',
+    },
+  );
+
 /** Phase 6 — editorial */
 export const createArticleBodySchema = z.object({
   title: z.string().trim().min(3).max(200),
@@ -351,6 +382,11 @@ export const updateArticleBodySchema = z.object({
   body: z.string().max(200_000).optional(),
   assigneeId: z.string().uuid().nullable().optional(),
   dueAt: z.string().min(8).max(40).nullable().optional(),
+  /** Cover / OG image — media library, https, or same-origin /gift/media/… (incl. SVG). */
+  ogImageUrl: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+    cmsMediaUrlSchema.nullable().optional(),
+  ),
 });
 
 export const articleTransitionBodySchema = z.object({
@@ -383,7 +419,7 @@ export const scheduleArticleBodySchema = z.object({
   categorySlug: z.string().min(2).max(80).optional(),
   tagSlugs: z.array(z.string().min(2).max(80)).max(12).optional(),
   specialistSlug: z.string().min(2).max(80).optional(),
-  ogImageUrl: z.string().url().max(500).optional(),
+  ogImageUrl: cmsMediaUrlSchema.optional(),
 });
 
 export const publishArticleBodySchema = z.object({
@@ -392,7 +428,7 @@ export const publishArticleBodySchema = z.object({
   categorySlug: z.string().min(2).max(80).optional(),
   tagSlugs: z.array(z.string().min(2).max(80)).max(12).optional(),
   specialistSlug: z.string().min(2).max(80).optional(),
-  ogImageUrl: z.string().url().max(500).optional(),
+  ogImageUrl: cmsMediaUrlSchema.optional(),
 });
 
 export const newsletterSignupBodySchema = z.object({
@@ -515,37 +551,6 @@ export const GIFT_HOMEPAGE_SLUG = 'home';
 
 /** Reserved MarketingPage.slug for Soft Gift corporate landing. */
 export const GIFT_CORPORATE_SLUG = 'corporate-gifting';
-
-/** HTTP(S), media library content path, or same-origin public asset path (jpg/png/webp/gif/avif/svg…). */
-export const cmsMediaUrlSchema = z
-  .string()
-  .min(1)
-  .max(500)
-  .refine(
-    (s) => {
-      if (
-        /^\/api\/v1\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/content$/i.test(
-          s,
-        )
-      ) {
-        return true;
-      }
-      // Same-origin static / public paths (e.g. /gift/media/gift-box.svg) — no // or ..
-      if (s.startsWith('/') && !s.startsWith('//') && !s.includes('..') && s.length <= 500) {
-        return /^\/[\w./@%~+-]+$/i.test(s);
-      }
-      try {
-        const u = new URL(s);
-        return u.protocol === 'http:' || u.protocol === 'https:';
-      } catch {
-        return false;
-      }
-    },
-    {
-      message:
-        'Must be http(s) URL, /api/v1/media/{id}/content, or a same-origin path like /gift/media/…',
-    },
-  );
 
 /** Phase 11 — Marketing page builder */
 export const pageBlockTypeSchema = z.enum([

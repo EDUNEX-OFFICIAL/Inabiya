@@ -194,6 +194,9 @@ export class ArticlesService {
       status: article.status,
       medicalGateRequired: article.medicalGateRequired,
       dueAt: article.dueAt,
+      ogImageUrl: article.ogImageUrl,
+      seoTitle: article.seoTitle,
+      seoDescription: article.seoDescription,
       assignee: article.assignee,
       createdBy: article.createdBy,
       comments: article.comments.map((c) => ({
@@ -252,6 +255,9 @@ export class ArticlesService {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
       if (body.assigneeId) await this.assertWriter(body.assigneeId);
     }
+    if (body.ogImageUrl !== undefined) {
+      this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
+    }
     if (body.title != null) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN', 'WRITER']);
       if (actor.roles.includes('WRITER') && !this.isOps(actor) && article.assigneeId !== actor.id) {
@@ -283,6 +289,7 @@ export class ArticlesService {
           assigneeId: body.assigneeId === undefined ? undefined : body.assigneeId,
           dueAt: dueAt === undefined ? undefined : dueAt,
           ...(dueAt !== undefined ? { dueReminderSentAt: null } : {}),
+          ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
         },
       });
     });

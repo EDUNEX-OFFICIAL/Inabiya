@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { apiUrl } from '@/lib/api-base';
 import { ArticleEditor } from '@/components/editorial/article-editor';
+import { CmsMediaField } from '@/components/cms/cms-media-field';
 import { sanitizeArticleHtml, normalizeArticleBody } from '@/lib/article-html';
 
 type ArticleDetail = {
@@ -16,6 +17,9 @@ type ArticleDetail = {
   status: string;
   medicalGateRequired: boolean;
   dueAt: string | null;
+  ogImageUrl?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   canEditBody: boolean;
   allowedTransitions: string[];
   assignee: { email: string; displayName: string | null } | null;
@@ -53,6 +57,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   const [msg, setMsg] = useState<string | null>(null);
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
+  const [ogImageUrl, setOgImageUrl] = useState('');
   const [categorySlug, setCategorySlug] = useState('');
   const [specialistSlug, setSpecialistSlug] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
@@ -70,7 +75,9 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
     setArticle(a);
     setBody(a.body);
     setTitle(a.title);
-    setSeoTitle(a.title);
+    setSeoTitle(a.seoTitle ?? a.title);
+    setSeoDescription(a.seoDescription ?? '');
+    setOgImageUrl(a.ogImageUrl ?? '');
     const [cats, specs] = await Promise.all([
       fetch(apiUrl('/articles/categories')).then((r) => r.json() as Promise<Category[]>),
       fetch(apiUrl('/articles/specialists')).then((r) => r.json() as Promise<Specialist[]>),
@@ -146,7 +153,18 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
       seoDescription: seoDescription || undefined,
       categorySlug: categorySlug || undefined,
       specialistSlug: specialistSlug || undefined,
+      ogImageUrl: ogImageUrl.trim() || undefined,
     };
+  }
+
+  async function saveCoverImage() {
+    const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}`, {
+      method: 'PATCH',
+      json: { ogImageUrl: ogImageUrl.trim() || null },
+    });
+    setArticle(a);
+    setOgImageUrl(a.ogImageUrl ?? '');
+    setMsg('Cover image saved');
   }
 
   async function publishNow() {
@@ -259,11 +277,16 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
         ))}
       </div>
 
-      {isContent && (article.status === 'APPROVED' || article.status === 'SCHEDULED') ? (
+      {isContent &&
+      (article.status === 'APPROVED' ||
+        article.status === 'SCHEDULED' ||
+        article.status === 'PUBLISHED') ? (
         <section className="mt-8 rounded border p-4 text-sm space-y-3">
-          <h2 className="font-medium">Publish (Phase 7)</h2>
+          <h2 className="font-medium">
+            {article.status === 'PUBLISHED' ? 'SEO & cover image' : 'Publish (Phase 7)'}
+          </h2>
           <p className="opacity-70">
-            Public URL after publish:{' '}
+            Public URL:{' '}
             <Link href={`/articles/${article.slug}`} className="underline">
               /articles/{article.slug}
             </Link>
@@ -284,6 +307,22 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
               onChange={(e) => setSeoDescription(e.target.value)}
             />
           </label>
+          <div>
+            <p className="mb-1">Cover / journal image</p>
+            <CmsMediaField value={ogImageUrl} onChange={setOgImageUrl} />
+            <p className="mt-1 text-xs opacity-60">
+              JPEG, PNG, WebP, GIF, AVIF, or SVG — homepage journal card uses this.
+            </p>
+            {article.status === 'PUBLISHED' ? (
+              <button
+                type="button"
+                className="mt-2 rounded border px-3 py-1"
+                onClick={() => void saveCoverImage()}
+              >
+                Save cover image
+              </button>
+            ) : null}
+          </div>
           <label className="block">
             Category
             <select
@@ -314,31 +353,33 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
               ))}
             </select>
           </label>
-          <div className="flex flex-wrap gap-2 items-end">
-            <button
-              type="button"
-              className="rounded border px-3 py-1"
-              onClick={() => void publishNow()}
-            >
-              Publish now
-            </button>
-            <label>
-              Schedule
-              <input
-                type="datetime-local"
-                className="mt-1 block rounded border px-2 py-1"
-                value={scheduledAt}
-                onChange={(e) => setScheduledAt(e.target.value)}
-              />
-            </label>
-            <button
-              type="button"
-              className="rounded border px-3 py-1"
-              onClick={() => void schedule()}
-            >
-              Schedule
-            </button>
-          </div>
+          {article.status !== 'PUBLISHED' ? (
+            <div className="flex flex-wrap gap-2 items-end">
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={() => void publishNow()}
+              >
+                Publish now
+              </button>
+              <label>
+                Schedule
+                <input
+                  type="datetime-local"
+                  className="mt-1 block rounded border px-2 py-1"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={() => void schedule()}
+              >
+                Schedule
+              </button>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
