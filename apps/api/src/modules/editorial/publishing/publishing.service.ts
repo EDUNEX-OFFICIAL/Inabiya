@@ -404,6 +404,7 @@ export class PublishingService {
     seoDescription: string | null;
     publishedAt: Date | null;
     viewCount: number;
+    ogImageUrl: string | null;
     category: { slug: string; name: string } | null;
     specialist: { slug: string; name: string } | null;
     tags: Array<{ tag: { slug: string; name: string } }>;
@@ -415,6 +416,7 @@ export class PublishingService {
       description: a.seoDescription,
       publishedAt: a.publishedAt,
       viewCount: a.viewCount,
+      imageUrl: a.ogImageUrl,
       category: a.category,
       specialist: a.specialist,
       tags: a.tags.map((t) => t.tag),

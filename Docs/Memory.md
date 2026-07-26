@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 26, 2026 (journal cover SVG + CMS ogImage)
+Last Updated: July 26, 2026 (/blog → /articles journal sync)
 
 
 ---
@@ -906,6 +906,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-26 (/blog stub → real journal)
+- **Override:** Soft Gift polish outside Phase 12.
+- `/blog` redirects to `/articles` (editorial PUBLISHED list). Homepage journal teaser = same articles (e.g. Sleep cues).
+- `/articles` index shows cover + Journal branding; public list API includes `imageUrl` from `ogImageUrl`.
+- Next: deploy web+api.
 
 ### Session — 2026-07-26 (Journal cover SVG + CMS editable)
 - **Override:** Soft Gift polish outside Phase 12.

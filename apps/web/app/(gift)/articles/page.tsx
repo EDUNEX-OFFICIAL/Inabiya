@@ -31,10 +31,11 @@ export default async function ArticlesIndexPage({
         <div className="relative mx-auto max-w-3xl">
           <p className="gift-overline">Inabiya Journal</p>
           <h1 className="font-display mt-gs-3 text-4xl leading-tight sm:text-5xl md:text-6xl">
-            Articles
+            Parenting journal
           </h1>
           <p className="mt-gs-4 max-w-xl text-base opacity-80 sm:text-lg">
-            Soft, trusted guidance for gifting and early parenthood.
+            Soft, trusted guidance for gifting and early parenthood — same stories as Editorial
+            publishes.
           </p>
           <Link href="/gift" className="clay-btn-secondary mt-gs-6 inline-flex">
             Shop gifts
@@ -46,19 +47,42 @@ export default async function ArticlesIndexPage({
         <h2 className="gift-h2 sm:text-3xl">Latest</h2>
         <ul className="mt-gs-6 space-y-gs-4">
           {articles.map((a) => (
-            <li key={a.id} className="clay-card p-gs-5 sm:p-gs-6">
-              <Link href={`/articles/${a.slug}`} className="group block">
-                <h3 className="font-display text-xl transition-colors group-hover:text-primary sm:text-2xl">
-                  {a.title}
-                </h3>
-                {a.description ? (
-                  <p className="mt-gs-2 text-sm opacity-75 sm:text-base">{a.description}</p>
-                ) : null}
-                <p className="mt-gs-3 text-xs opacity-60 sm:text-sm">
-                  {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString() : ''}
-                  {a.specialist ? ` · ${a.specialist.name}` : ''}
-                  {a.category ? ` · ${a.category.name}` : ''}
-                </p>
+            <li key={a.id} className="clay-card overflow-hidden">
+              <Link
+                href={`/articles/${a.slug}`}
+                className="group block sm:grid sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
+              >
+                <div className="relative aspect-[16/9] bg-white sm:aspect-auto sm:min-h-[9rem]">
+                  {a.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={a.imageUrl}
+                      alt=""
+                      className={`absolute inset-0 h-full w-full ${
+                        /\.svg(\?|#|$)/i.test(a.imageUrl) ? 'object-contain p-gs-3' : 'object-cover'
+                      }`}
+                    />
+                  ) : (
+                    <div className="gift-media-fallback absolute inset-0" />
+                  )}
+                </div>
+                <div className="p-gs-5 sm:p-gs-6">
+                  {a.category?.name ? (
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-primary">
+                      {a.category.name}
+                    </p>
+                  ) : null}
+                  <h3 className="font-display mt-gs-2 text-xl transition-colors group-hover:text-primary sm:text-2xl">
+                    {a.title}
+                  </h3>
+                  {a.description ? (
+                    <p className="mt-gs-2 text-sm opacity-75 sm:text-base">{a.description}</p>
+                  ) : null}
+                  <p className="mt-gs-3 text-xs opacity-60 sm:text-sm">
+                    {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString() : ''}
+                    {a.specialist ? ` · ${a.specialist.name}` : ''}
+                  </p>
+                </div>
               </Link>
             </li>
           ))}

@@ -23,6 +23,17 @@ const nextConfig = {
         destination: '/gift/build-your-box',
         permanent: true,
       },
+      // Legacy System A shell — real journal is Soft Gift /articles (editorial publishes here).
+      {
+        source: '/blog',
+        destination: '/articles',
+        permanent: true,
+      },
+      {
+        source: '/blog/:slug',
+        destination: '/articles/:slug',
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

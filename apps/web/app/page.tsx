@@ -17,7 +17,7 @@ export default function HomePage() {
           <Link href="/gift">Gift storefront (System A)</Link>
         </li>
         <li>
-          <Link href="/blog">Blog (System A)</Link>
+          <Link href="/articles">Journal / Articles</Link>
         </li>
         <li>
           <Link href="/creator">Creator Collective (System B)</Link>

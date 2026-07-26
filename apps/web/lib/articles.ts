@@ -7,6 +7,7 @@ export type PublicArticleSummary = {
   description: string | null;
   publishedAt: string | null;
   viewCount: number;
+  imageUrl?: string | null;
   category: { slug: string; name: string } | null;
   specialist: { slug: string; name: string } | null;
   tags: Array<{ slug: string; name: string }>;
