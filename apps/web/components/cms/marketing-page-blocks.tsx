@@ -875,7 +875,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
               }`}
             >
               <div
-                className={`relative gift-media-fallback overflow-hidden ${
+                className={`relative overflow-hidden bg-white ${
                   featured ? 'aspect-[16/9] sm:aspect-auto sm:min-h-[14rem]' : 'aspect-[16/9]'
                 }`}
               >
@@ -884,10 +884,14 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
                   <img
                     src={String(a.imageUrl)}
                     alt=""
-                    className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                    className={`absolute inset-0 h-full w-full transition duration-300 group-hover:scale-[1.02] ${
+                      /\.svg(\?|#|$)/i.test(String(a.imageUrl))
+                        ? 'object-contain p-gs-3 sm:p-gs-4'
+                        : 'object-cover'
+                    }`}
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-end p-gs-5">
+                  <div className="gift-media-fallback absolute inset-0 flex items-end p-gs-5">
                     <p className="font-display text-3xl text-primary/35 sm:text-4xl">Journal</p>
                   </div>
                 )}
