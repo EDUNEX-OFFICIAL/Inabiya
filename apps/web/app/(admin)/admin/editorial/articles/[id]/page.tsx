@@ -311,7 +311,8 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
             <p className="mb-1">Cover / journal image</p>
             <CmsMediaField value={ogImageUrl} onChange={setOgImageUrl} />
             <p className="mt-1 text-xs opacity-60">
-              JPEG, PNG, WebP, GIF, AVIF, or SVG — homepage journal card uses this.
+              Use a warm photo or clean illustration (~4:3 / square). Skip tiny logos and busy
+              screenshots — JPG fills the card; SVG illustrations show in full.
             </p>
             {article.status === 'PUBLISHED' ? (
               <button
