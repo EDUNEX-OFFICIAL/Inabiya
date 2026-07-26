@@ -19,6 +19,9 @@ type Props = {
   imagesOnly?: boolean;
 };
 
+const CMS_IMAGE_ACCEPT =
+  'image/jpeg,image/png,image/webp,image/gif,image/avif,image/svg+xml,.svg,.jpg,.jpeg,.png,.webp,.gif,.avif';
+
 export async function uploadCmsMediaFile(file: File): Promise<MediaAsset> {
   const token = getStoredAccessToken();
   const form = new FormData();
@@ -107,7 +110,7 @@ export function MediaLibraryModal({
           <input
             type="file"
             className="hidden"
-            accept={imagesOnly ? 'image/jpeg,image/png,image/webp,image/gif' : undefined}
+            accept={imagesOnly ? CMS_IMAGE_ACCEPT : undefined}
             disabled={busy}
             onChange={(e) => void onUpload(e.target.files?.[0] ?? null)}
           />
@@ -127,7 +130,11 @@ export function MediaLibraryModal({
                 >
                   {row.mimeType.startsWith('image/') ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={url} alt="" className="aspect-square w-full object-cover" />
+                    <img
+                      src={url}
+                      alt=""
+                      className="aspect-square w-full object-contain bg-black/[0.03]"
+                    />
                   ) : (
                     <div className="aspect-square bg-black/5 p-2 text-[10px]">PDF</div>
                   )}
@@ -173,11 +180,15 @@ export function CmsMediaField({ value, onChange, imagesOnly = true }: Props) {
         className="block w-full rounded border px-2 py-1 text-sm"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="/api/v1/media/…/content or https://…"
+        placeholder="/gift/media/…, /api/v1/media/…/content, or https://…"
       />
       {value ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={value} alt="" className="h-20 max-w-full rounded border object-cover" />
+        <img
+          src={value}
+          alt=""
+          className="h-20 max-w-full rounded border object-contain bg-black/[0.03]"
+        />
       ) : null}
       <div className="flex flex-wrap gap-2">
         <label className="cursor-pointer rounded border px-2 py-1 text-xs hover:bg-black/5">
@@ -185,7 +196,7 @@ export function CmsMediaField({ value, onChange, imagesOnly = true }: Props) {
           <input
             type="file"
             className="hidden"
-            accept={imagesOnly ? 'image/jpeg,image/png,image/webp,image/gif' : undefined}
+            accept={imagesOnly ? CMS_IMAGE_ACCEPT : undefined}
             disabled={busy}
             onChange={(e) => void onUpload(e.target.files?.[0] ?? null)}
           />

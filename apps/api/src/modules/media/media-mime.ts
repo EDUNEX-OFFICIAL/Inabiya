@@ -5,6 +5,8 @@ export const ALLOWED_MEDIA_MIMES = new Set([
   'image/png',
   'image/webp',
   'image/gif',
+  'image/avif',
+  'image/svg+xml',
   'application/pdf',
 ]);
 
@@ -21,7 +23,7 @@ export function validateMediaUpload(
     return {
       ok: false,
       code: 'MEDIA_MIME_REJECTED',
-      message: 'File type not allowed. Use jpeg, png, webp, gif, or pdf.',
+      message: 'File type not allowed. Use jpeg, png, webp, gif, avif, svg, or pdf.',
     };
   }
   if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {

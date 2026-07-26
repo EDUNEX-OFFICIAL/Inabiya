@@ -470,6 +470,9 @@ async function main() {
         body: 'A gentle wizard — pick who it’s for, then age, occasion, and budget. We help you fill a thoughtful gift.',
         ctaLabel: 'Build your box',
         ctaHref: '/gift/build-your-box',
+        imageUrl: '/gift/media/gift-box.svg',
+        imageAlt: 'Build your own gift box',
+        imageFit: 'contain',
         steps: [
           { title: 'Who it’s for', body: 'Girl, boy, mom, or unisex-safe picks.' },
           { title: 'Age & occasion', body: 'Newborn through toddler — naming, shower, birthday.' },

@@ -144,7 +144,9 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     body: '',
     ctaLabel: 'Build your box',
     ctaHref: '/gift/build-your-box',
-    imageUrl: '',
+    imageUrl: '/gift/media/gift-box.svg',
+    imageAlt: 'Build your own gift box',
+    imageFit: 'contain',
     steps:
       'Who it’s for | Pick recipient\nAge & occasion | Newborn to toddler\nBudget & picks | Stay on budget',
   },
@@ -496,6 +498,10 @@ function toPayload(blocks: Block[]) {
           ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
           ...(b.props.ctaHref ? { ctaHref: b.props.ctaHref } : {}),
           ...(b.props.imageUrl ? { imageUrl: b.props.imageUrl } : {}),
+          ...(b.props.imageAlt ? { imageAlt: b.props.imageAlt } : {}),
+          ...(b.props.imageFit === 'contain' || b.props.imageFit === 'cover'
+            ? { imageFit: b.props.imageFit }
+            : {}),
           ...(steps.length ? { steps } : {}),
         },
       };
@@ -743,6 +749,19 @@ function PropField({
         <option value="mint">mint</option>
         <option value="sky">sky</option>
         <option value="soft">soft</option>
+      </select>
+    );
+  }
+
+  if (fieldKey === 'imageFit' && blockType === 'buildYourBoxTeaser') {
+    return (
+      <select
+        className="mt-1 block w-full rounded border px-2 py-1"
+        value={value || 'contain'}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="contain">contain (best for SVG / logo art)</option>
+        <option value="cover">cover (fill the panel)</option>
       </select>
     );
   }

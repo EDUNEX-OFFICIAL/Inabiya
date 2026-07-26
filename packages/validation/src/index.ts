@@ -516,7 +516,7 @@ export const GIFT_HOMEPAGE_SLUG = 'home';
 /** Reserved MarketingPage.slug for Soft Gift corporate landing. */
 export const GIFT_CORPORATE_SLUG = 'corporate-gifting';
 
-/** HTTP(S) or same-origin media content path from Media library. */
+/** HTTP(S), media library content path, or same-origin public asset path (jpg/png/webp/gif/avif/svg…). */
 export const cmsMediaUrlSchema = z
   .string()
   .min(1)
@@ -530,6 +530,10 @@ export const cmsMediaUrlSchema = z
       ) {
         return true;
       }
+      // Same-origin static / public paths (e.g. /gift/media/gift-box.svg) — no // or ..
+      if (s.startsWith('/') && !s.startsWith('//') && !s.includes('..') && s.length <= 500) {
+        return /^\/[\w./@%~+-]+$/i.test(s);
+      }
       try {
         const u = new URL(s);
         return u.protocol === 'http:' || u.protocol === 'https:';
@@ -537,7 +541,10 @@ export const cmsMediaUrlSchema = z
         return false;
       }
     },
-    { message: 'Must be http(s) URL or /api/v1/media/{id}/content' },
+    {
+      message:
+        'Must be http(s) URL, /api/v1/media/{id}/content, or a same-origin path like /gift/media/…',
+    },
   );
 
 /** Phase 11 — Marketing page builder */
@@ -680,7 +687,11 @@ const buildYourBoxTeaserPropsSchema = z.object({
   body: z.string().max(400).optional(),
   ctaLabel: z.string().max(80).optional(),
   ctaHref: z.string().max(500).optional(),
+  /** Visual for the right panel — JPEG/PNG/WebP/GIF/AVIF/SVG via URL, media library, or /public path. */
   imageUrl: cmsMediaUrlSchema.optional(),
+  imageAlt: z.string().max(200).optional(),
+  /** How the media fills the right panel. SVG defaults to contain in the storefront. */
+  imageFit: z.enum(['contain', 'cover']).optional(),
   steps: z.array(buildYourBoxStepSchema).min(1).max(4).optional(),
 });
 

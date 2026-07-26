@@ -1133,6 +1133,12 @@ function BuildYourBoxTeaserBlock({
   const body = props.body ? String(props.body) : null;
   const ctaLabel = String(props.ctaLabel ?? 'Build your box');
   const ctaHref = String(props.ctaHref ?? '/gift/build-your-box');
+  const imageUrl = props.imageUrl ? String(props.imageUrl).trim() : '';
+  const imageAlt = props.imageAlt ? String(props.imageAlt) : '';
+  const fitProp =
+    props.imageFit === 'cover' || props.imageFit === 'contain' ? props.imageFit : null;
+  const likelySvg = /\.svg(\?|#|$)/i.test(imageUrl);
+  const objectFit = fitProp ?? (likelySvg ? 'contain' : 'cover');
   const steps = Array.isArray(props.steps)
     ? (props.steps as Array<{ title?: string; body?: string }>)
         .map((s) => ({
@@ -1170,13 +1176,15 @@ function BuildYourBoxTeaserBlock({
           {ctaLabel}
         </Link>
       </div>
-      {props.imageUrl ? (
-        <div className="relative aspect-[4/3] overflow-hidden rounded-clay shadow-clay">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+      {imageUrl ? (
+        <div className="gift-media-fallback relative aspect-[4/3] overflow-hidden rounded-clay shadow-clay">
+          {/* eslint-disable-next-line @next/next/no-img-element -- CMS may serve SVG / any allowed mime */}
           <img
-            src={String(props.imageUrl)}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
+            src={imageUrl}
+            alt={imageAlt}
+            className={`absolute inset-0 h-full w-full p-gs-4 sm:p-gs-6 ${
+              objectFit === 'contain' ? 'object-contain' : 'object-cover p-0'
+            }`}
           />
         </div>
       ) : (

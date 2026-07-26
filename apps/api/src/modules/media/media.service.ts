@@ -160,6 +160,10 @@ function extensionForMime(mime: string): string {
       return '.webp';
     case 'image/gif':
       return '.gif';
+    case 'image/avif':
+      return '.avif';
+    case 'image/svg+xml':
+      return '.svg';
     case 'application/pdf':
       return '.pdf';
     default:

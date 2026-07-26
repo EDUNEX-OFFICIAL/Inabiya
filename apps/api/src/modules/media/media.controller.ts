@@ -36,6 +36,14 @@ export class MediaPublicController {
   async content(@Param('id', ParseUUIDPipe) id: string, @Res({ passthrough: true }) res: Response) {
     const { buffer, mimeType, originalName } = await this.media.getPublicContent(id);
     res.setHeader('Content-Type', mimeType);
+    // SVG can embed script — sandbox so inline use stays display-only.
+    if (mimeType === 'image/svg+xml') {
+      res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
+      );
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    }
     if (originalName) {
       res.setHeader('Content-Disposition', `inline; filename="${originalName.replace(/"/g, '')}"`);
     }

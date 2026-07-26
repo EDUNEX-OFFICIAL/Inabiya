@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 26, 2026 (recipient local photos + simpler cards)
+Last Updated: July 26, 2026 (Build Your Box gift-box SVG + CMS media)
 
 
 ---
@@ -906,6 +906,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-26 (Build Your Box right panel SVG + CMS media)
+- **Override:** Soft Gift polish outside Phase 12.
+- `/gift/media/gift-box.svg` on BYB teaser; CMS `imageUrl` / `imageAlt` / `imageFit`; relative public paths in `cmsMediaUrlSchema`.
+- Media upload allows jpeg/png/webp/gif/avif/svg (+ PDF); SVG content served with CSP sandbox.
+- Next: patch live `buildYourBoxTeaser` props + deploy web/api.
 
 ### Session — 2026-07-26 (Shop by baby — local girl/boy photos)
 - **Override:** Soft Gift polish outside Phase 12.
