@@ -730,19 +730,27 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
                 className="group relative block pb-gs-5 transition hover:-translate-y-0.5"
               >
                 <div className={`gift-wave-card shadow-clay ${waveClass}`}>
-                  <div className={`gift-wave-card__media ${mediaClass}`}>
+                  <div
+                    className={`gift-wave-card__media relative ${mediaClass} min-h-[13rem] sm:min-h-[15rem]`}
+                  >
                     {card.imageUrl ? (
-                      <Image
-                        src={String(card.imageUrl)}
-                        alt={String(
-                          card.imageAlt || `Shop gifts for ${String(card.label ?? 'baby')}`,
-                        )}
-                        fill
-                        sizes="(max-width: 640px) 100vw, 50vw"
-                        className="object-cover opacity-85 transition duration-500 group-hover:scale-[1.03]"
-                      />
+                      <div
+                        className={`gift-wave-card__photo ${
+                          sky ? 'gift-wave-card__photo--sky' : 'gift-wave-card__photo--pink'
+                        }`}
+                      >
+                        <Image
+                          src={String(card.imageUrl)}
+                          alt={String(
+                            card.imageAlt || `Shop gifts for ${String(card.label ?? 'baby')}`,
+                          )}
+                          fill
+                          sizes="(max-width: 640px) 55vw, 28vw"
+                          className="object-cover object-center transition duration-500 group-hover:scale-[1.03]"
+                        />
+                      </div>
                     ) : null}
-                    <div className="relative flex min-h-[13rem] flex-col justify-end p-gs-5 pb-gs-8 sm:min-h-[15rem]">
+                    <div className="relative z-[1] flex h-full min-h-[13rem] max-w-[58%] flex-col justify-end p-gs-5 pb-gs-8 sm:min-h-[15rem] sm:max-w-[55%]">
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                         {index}
                       </p>

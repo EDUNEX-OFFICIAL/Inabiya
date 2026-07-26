@@ -750,6 +750,67 @@ h3 {
     overflow: hidden;
   }
 
+  /* Recipient cards: photo sits on the right half, soft-fades into the left copy panel. */
+  [data-theme='gift'] .gift-wave-card__photo {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    width: 58%;
+    z-index: 0;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      rgb(0 0 0 / 0.28) 18%,
+      rgb(0 0 0 / 0.75) 42%,
+      black 62%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      rgb(0 0 0 / 0.28) 18%,
+      rgb(0 0 0 / 0.75) 42%,
+      black 62%
+    );
+  }
+
+  [data-theme='gift'] .gift-wave-card__photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--inabiya-soft) 88%, transparent) 0%,
+      color-mix(in srgb, var(--inabiya-blush) 35%, transparent) 38%,
+      transparent 72%
+    );
+  }
+
+  [data-theme='gift'] .gift-wave-card__photo--sky::after {
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--inabiya-sky) 55%, var(--inabiya-soft)) 0%,
+      color-mix(in srgb, var(--inabiya-sky) 22%, transparent) 40%,
+      transparent 72%
+    );
+  }
+
+  [data-theme='gift'] .gift-wave-card__photo--pink::after {
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--inabiya-pink) 28%, var(--inabiya-soft)) 0%,
+      color-mix(in srgb, var(--inabiya-blush) 40%, transparent) 40%,
+      transparent 72%
+    );
+  }
+
+  @media (min-width: 640px) {
+    [data-theme='gift'] .gift-wave-card__photo {
+      width: 52%;
+    }
+  }
+
   [data-theme='gift'] .gift-wave-card__wave {
     position: absolute;
     bottom: -1px;

@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 22, 2026 (hamper grid + WhatsApp FAB icon)
+Last Updated: July 26, 2026 (recipient split photo fade)
 
 
 ---
@@ -906,6 +906,11 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-26 (Shop by baby — right-half fade photo)
+- **Override:** Soft Gift polish outside Phase 12.
+- `recipientSplit` home cards: photo on right ~52–58% width; CSS mask + soft wash so left edge fades into copy panel (pink/sky).
+- Next: push/deploy if human wants live; girl Unsplash URL may 403 on VPS — consider local media.
 
 ### Session — 2026-07-22 (Ready-made hampers card size + WhatsApp FAB)
 - **Override:** Soft Gift polish outside Phase 12.
