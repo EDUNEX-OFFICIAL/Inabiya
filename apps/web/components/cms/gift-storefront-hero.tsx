@@ -121,7 +121,7 @@ export function GiftStorefrontHero({
         />
       </div>
 
-      <div className="gift-hero-split__grid relative z-10 mx-auto grid max-w-6xl items-center gap-gs-6 px-gs-4 py-gs-7 sm:px-gs-6 sm:py-gs-8 lg:grid-cols-2 lg:gap-gs-8 lg:py-gs-8">
+      <div className="gift-hero-split__grid relative z-10 mx-auto grid max-w-7xl items-center gap-gs-6 px-gs-4 py-gs-8 sm:px-gs-6 sm:py-gs-8 lg:grid-cols-2 lg:gap-gs-8 lg:py-gs-8">
         <div className="gift-hero-split__copy order-2 flex flex-col text-left lg:order-1">
           <p data-hero-anim="eyebrow" className="gift-hero-split__eyebrow gift-overline">
             {eyebrowText}
@@ -129,7 +129,7 @@ export function GiftStorefrontHero({
 
           <h1
             data-hero-anim="headline"
-            className="gift-hero-split__headline gift-h1 mt-gs-4 max-w-xl text-balance sm:text-5xl md:text-6xl"
+            className="gift-hero-split__headline gift-h1 mt-gs-4 max-w-2xl text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
           >
             <AccentHeadline text={headline} />
           </h1>

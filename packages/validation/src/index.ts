@@ -568,6 +568,8 @@ export const pageBlockTypeSchema = z.enum([
   'footer',
   'saleStrip',
   'faq',
+  'exclusiveOffers',
+  'testimonials',
 ]);
 
 const heroPropsSchema = z.object({
@@ -628,7 +630,8 @@ const brandEntrySchema = z.union([
 
 const uspItemSchema = z.object({
   label: z.string().min(1).max(80),
-  icon: z.enum(['heart', 'package', 'gift', 'truck']).optional(),
+  icon: z.enum(['heart', 'package', 'gift', 'truck', 'shield', 'sparkles']).optional(),
+  body: z.string().max(200).optional(),
 });
 
 const brandStripPropsSchema = z.object({
@@ -672,12 +675,16 @@ const articleTeasersPropsSchema = z.object({
 const discoveryChipSchema = z.object({
   label: z.string().min(1).max(40),
   href: z.string().min(1).max(500),
+  imageUrl: cmsMediaUrlSchema.optional(),
+  imageAlt: z.string().max(200).optional(),
 });
 
 const discoveryChipsPropsSchema = z.object({
   overline: z.string().max(80).optional(),
   title: z.string().max(120).optional(),
   subtitle: z.string().max(300).optional(),
+  seeAllHref: z.string().max(500).optional(),
+  seeAllLabel: z.string().max(80).optional(),
   items: z.array(discoveryChipSchema).min(1).max(8),
 });
 
@@ -697,7 +704,7 @@ const buildYourBoxTeaserPropsSchema = z.object({
   imageAlt: z.string().max(200).optional(),
   /** How the media fills the right panel. SVG defaults to contain in the storefront. */
   imageFit: z.enum(['contain', 'cover']).optional(),
-  steps: z.array(buildYourBoxStepSchema).min(1).max(4).optional(),
+  steps: z.array(buildYourBoxStepSchema).min(1).max(6).optional(),
 });
 
 const footerLinkSchema = z.object({
@@ -741,6 +748,37 @@ const faqPropsSchema = z.object({
   items: z.array(faqItemSchema).min(1).max(20),
 });
 
+const exclusiveOfferCardSchema = z.object({
+  tag: z.string().min(1).max(60),
+  title: z.string().min(1).max(80),
+  subtitle: z.string().max(120).optional(),
+  body: z.string().max(400).optional(),
+  ctaLabel: z.string().min(1).max(80),
+  ctaHref: z.string().min(1).max(500),
+  tone: z.enum(['blush', 'sky', 'lavender']).optional(),
+  icon: z.enum(['heart', 'briefcase', 'box']).optional(),
+});
+
+const exclusiveOffersPropsSchema = z.object({
+  overline: z.string().max(80).optional(),
+  title: z.string().max(160).optional(),
+  subtitle: z.string().max(200).optional(),
+  cards: z.array(exclusiveOfferCardSchema).min(1).max(3),
+});
+
+const testimonialItemSchema = z.object({
+  quote: z.string().min(1).max(500),
+  author: z.string().min(1).max(80),
+  role: z.string().max(120).optional(),
+  rating: z.number().int().min(1).max(5).optional(),
+});
+
+const testimonialsPropsSchema = z.object({
+  title: z.string().max(160).optional(),
+  subtitle: z.string().max(300).optional(),
+  items: z.array(testimonialItemSchema).min(1).max(6),
+});
+
 export const pageBlockInputSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('hero'), props: heroPropsSchema }),
   z.object({ type: z.literal('richText'), props: richTextPropsSchema }),
@@ -756,6 +794,8 @@ export const pageBlockInputSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('footer'), props: footerPropsSchema }),
   z.object({ type: z.literal('saleStrip'), props: saleStripPropsSchema }),
   z.object({ type: z.literal('faq'), props: faqPropsSchema }),
+  z.object({ type: z.literal('exclusiveOffers'), props: exclusiveOffersPropsSchema }),
+  z.object({ type: z.literal('testimonials'), props: testimonialsPropsSchema }),
 ]);
 
 /** Empty string → null so admin “clear field” does not fail path/URL regex. */

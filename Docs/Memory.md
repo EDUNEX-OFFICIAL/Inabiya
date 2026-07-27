@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 26, 2026 (/blog → /articles journal sync)
+Last Updated: July 27, 2026 (Inabiya homepage client-reference parity)
 
 
 ---
@@ -906,6 +906,16 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-27 (Inabiya homepage client parity)
+- **Override:** Soft Gift storefront polish outside Phase 12 (Phase 12 remains shipped).
+- Brand copy: public-facing name is **Inabiya** (not “Inabiya Soft Gift”); Soft Gift = theme/system only.
+- `/gift` hero size bump (larger H1 + image frame); navbar untouched; footer dark tone on gift layout chrome.
+- New CMS blocks: `exclusiveOffers`, `testimonials`; `discoveryChips` image cards; BYB steps max 6.
+- Seed home order: hero → brands → shop-by-baby → USP cards → offers → categories → BYB → hampers → testimonials → journal (unchanged) → faq.
+- Assets: `/gift/media/{girl.jpeg,baby-clothes.jpg,baby-cues.jpg,train-toy.jpg}`.
+- Re-seed or admin republish `home` required for live DB.
+- Next: visual QA on `/gift`; optional Mom Care dedicated image.
 
 ### Session — 2026-07-26 (/blog stub → real journal)
 - **Override:** Soft Gift polish outside Phase 12.

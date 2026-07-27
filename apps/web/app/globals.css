@@ -477,7 +477,7 @@ h3 {
   /* Soft Gift hero — client layout intent, System A tokens (not a clone) */
   [data-theme='gift'] .gift-hero-split {
     background: var(--inabiya-soft);
-    min-height: min(88vh, 52rem);
+    min-height: min(92vh, 58rem);
   }
 
   [data-theme='gift'] .gift-hero-split__wash {
@@ -535,13 +535,13 @@ h3 {
     border: 1px solid var(--border-subtle);
     background: var(--surface);
     aspect-ratio: 4 / 5;
-    max-height: min(36rem, 72vh);
+    max-height: min(42rem, 78vh);
   }
 
   @media (min-width: 1024px) {
     [data-theme='gift'] .gift-hero-split__frame {
-      aspect-ratio: 5 / 6;
-      max-height: min(40rem, 78vh);
+      aspect-ratio: 4 / 5;
+      max-height: min(48rem, 85vh);
     }
   }
 
@@ -647,6 +647,15 @@ h3 {
 
   [data-theme='gift'] .gift-band--soft {
     background: color-mix(in srgb, var(--inabiya-soft) 88%, white);
+  }
+
+  [data-theme='gift'] .gift-footer-dark {
+    background: #1a1228;
+    color: #f8f4fb;
+  }
+
+  [data-theme='gift'] .gift-footer-dark .gift-band-inner {
+    color: inherit;
   }
 
   [data-theme='gift'] .gift-doodle {
@@ -908,6 +917,446 @@ h3 {
     line-height: 1.35;
     color: color-mix(in srgb, var(--foreground) 78%, var(--primary));
   }
+
+  /* Client-parity USP cards */
+  [data-theme='gift'] .gift-usp-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    margin: 0 0 var(--space-6);
+    padding: 0;
+  }
+
+  @media (min-width: 640px) {
+    [data-theme='gift'] .gift-usp-cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    [data-theme='gift'] .gift-usp-cards {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  [data-theme='gift'] .gift-usp-cards__item {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+    padding: var(--space-5);
+    border-radius: var(--radius-card);
+    background: #fff;
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--clay-shadow);
+  }
+
+  [data-theme='gift'] .gift-usp-cards__icon {
+    display: inline-flex;
+    height: 2.5rem;
+    width: 2.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--inabiya-pink) 14%, white);
+    color: var(--primary);
+  }
+
+  [data-theme='gift'] .gift-usp-cards__label {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--inabiya-heading);
+  }
+
+  [data-theme='gift'] .gift-usp-cards__body {
+    margin: 0.25rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--inabiya-body);
+    opacity: 0.78;
+  }
+
+  [data-theme='gift'] .gift-recipient-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: calc(var(--radius-card) + 4px);
+    background: #fff;
+    box-shadow: var(--clay-shadow);
+    transition: transform 0.25s ease;
+  }
+
+  [data-theme='gift'] .gift-recipient-card:hover {
+    transform: translateY(-2px);
+  }
+
+  [data-theme='gift'] .gift-recipient-card__media {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    min-height: 18rem;
+    overflow: hidden;
+  }
+
+  [data-theme='gift'] .gift-recipient-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 35%, rgba(20, 12, 36, 0.62) 100%);
+    pointer-events: none;
+  }
+
+  [data-theme='gift'] .gift-recipient-card__copy {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    padding: var(--space-5);
+    color: #fff;
+  }
+
+  [data-theme='gift'] .gift-recipient-card__eyebrow {
+    margin: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.9;
+  }
+
+  [data-theme='gift'] .gift-recipient-card__label {
+    margin: 0.15rem 0 0;
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    line-height: 1;
+    text-transform: lowercase;
+  }
+
+  [data-theme='gift'] .gift-recipient-card__blurb {
+    margin: 0.5rem 0 0;
+    max-width: 18rem;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    opacity: 0.9;
+  }
+
+  [data-theme='gift'] .gift-recipient-card__cta {
+    display: block;
+    padding: 0.9rem var(--space-4);
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  [data-theme='gift'] .gift-recipient-card--pink .gift-recipient-card__cta {
+    background: var(--inabiya-pink);
+  }
+
+  [data-theme='gift'] .gift-recipient-card--sky .gift-recipient-card__cta {
+    background: color-mix(in srgb, var(--inabiya-sky) 70%, #3b82a8);
+  }
+
+  [data-theme='gift'] .gift-category-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (min-width: 768px) {
+    [data-theme='gift'] .gift-category-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--space-5);
+    }
+  }
+
+  [data-theme='gift'] .gift-category-card {
+    display: block;
+  }
+
+  [data-theme='gift'] .gift-category-card__media {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background: #fff;
+    box-shadow: var(--clay-shadow);
+  }
+
+  [data-theme='gift'] .gift-category-card__label {
+    margin: var(--space-3) 0 0;
+    font-family: var(--font-display), Georgia, serif;
+    font-size: 1.125rem;
+    color: var(--inabiya-heading);
+  }
+
+  [data-theme='gift'] .gift-byb-banner {
+    color: #fff;
+    padding: var(--space-6);
+    border-radius: calc(var(--radius-card) + 6px);
+    background: linear-gradient(
+      115deg,
+      #ff7aa8 0%,
+      #e879b8 35%,
+      #8eb8e8 72%,
+      #6ec4d8 100%
+    );
+    box-shadow: var(--clay-shadow);
+  }
+
+  [data-theme='gift'] .gift-byb-banner__grid {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 1024px) {
+    [data-theme='gift'] .gift-byb-banner__grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      align-items: center;
+      gap: var(--space-7);
+    }
+  }
+
+  [data-theme='gift'] .gift-byb-banner__overline {
+    display: inline-flex;
+    margin: 0;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  [data-theme='gift'] .gift-byb-banner__title {
+    margin: var(--space-4) 0 0;
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+    line-height: 1.15;
+  }
+
+  [data-theme='gift'] .gift-byb-banner__body {
+    margin: var(--space-3) 0 0;
+    max-width: 28rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    opacity: 0.92;
+  }
+
+  [data-theme='gift'] .gift-byb-banner__cta {
+    margin-top: var(--space-5);
+    padding: 0.85rem 1.25rem;
+    border-radius: 9999px;
+    background: #fff;
+    color: var(--inabiya-pink-dark, #c44d7a);
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(20, 12, 36, 0.18);
+  }
+
+  [data-theme='gift'] .gift-byb-banner__trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-5);
+    margin: var(--space-5) 0 0;
+    padding: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  [data-theme='gift'] .gift-byb-steps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (min-width: 640px) {
+    [data-theme='gift'] .gift-byb-steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  [data-theme='gift'] .gift-byb-steps__item {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    padding: var(--space-4);
+    border-radius: var(--radius-card);
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(10px);
+  }
+
+  [data-theme='gift'] .gift-byb-steps__num {
+    display: inline-flex;
+    height: 1.5rem;
+    width: 1.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.25);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  [data-theme='gift'] .gift-byb-steps__title {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  [data-theme='gift'] .gift-byb-steps__body {
+    margin: 0.2rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    opacity: 0.85;
+  }
+
+  [data-theme='gift'] .gift-offers-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (min-width: 768px) {
+    [data-theme='gift'] .gift-offers-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  [data-theme='gift'] .gift-offer-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 16rem;
+    padding: var(--space-5);
+    border-radius: calc(var(--radius-card) + 4px);
+    color: #fff;
+    box-shadow: var(--clay-shadow);
+  }
+
+  [data-theme='gift'] .gift-offer-card--blush {
+    background: linear-gradient(145deg, #ff7aa8 0%, #f06292 55%, #e85a8c 100%);
+  }
+
+  [data-theme='gift'] .gift-offer-card--sky {
+    background: linear-gradient(145deg, #6ec4d8 0%, #4da8c4 55%, #3b9bb8 100%);
+  }
+
+  [data-theme='gift'] .gift-offer-card--lavender {
+    background: linear-gradient(145deg, #b39ddb 0%, #9575cd 55%, #7e57c2 100%);
+  }
+
+  [data-theme='gift'] .gift-offer-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  [data-theme='gift'] .gift-offer-card__icon {
+    display: inline-flex;
+    height: 2rem;
+    width: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  [data-theme='gift'] .gift-offer-card__tag {
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.22);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  [data-theme='gift'] .gift-offer-card__title {
+    margin: var(--space-5) 0 0;
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(1.75rem, 2.5vw, 2.25rem);
+    line-height: 1.1;
+  }
+
+  [data-theme='gift'] .gift-offer-card__subtitle {
+    margin: 0.35rem 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  [data-theme='gift'] .gift-offer-card__body {
+    margin: var(--space-3) 0 0;
+    flex: 1;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    opacity: 0.92;
+  }
+
+  [data-theme='gift'] .gift-offer-card__cta {
+    margin-top: var(--space-5);
+    align-self: flex-start;
+    padding: 0.65rem 1rem;
+    border-radius: 9999px;
+    background: #fff;
+    color: var(--inabiya-heading);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  [data-theme='gift'] .gift-testimonials-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (min-width: 768px) {
+    [data-theme='gift'] .gift-testimonials-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  [data-theme='gift'] .gift-testimonial-card {
+    padding: var(--space-5);
+    border-radius: var(--radius-card);
+    background: #fff;
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--clay-shadow);
+  }
+
+  [data-theme='gift'] .gift-testimonial-card__stars {
+    display: flex;
+    gap: 0.2rem;
+    color: #f5b942;
+  }
+
+  [data-theme='gift'] .gift-testimonial-card__quote {
+    margin: var(--space-3) 0 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--inabiya-body);
+  }
+
+  [data-theme='gift'] .gift-testimonial-card__author {
+    margin: var(--space-4) 0 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--inabiya-heading);
+  }
+
 
   /* Brand strip — hierarchy + breathing room below USP */
   [data-theme='gift'] .gift-brand-strip {

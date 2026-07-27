@@ -50,7 +50,7 @@ MarketingPage
 
 PageBlock
   id, pageId
-  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | articleTeasers | footer | saleStrip | faq
+  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | discoveryChips | buildYourBoxTeaser | articleTeasers | footer | saleStrip | faq | exclusiveOffers | testimonials
   sortOrder: Int
   props: Json   # Zod-validated per type
 ```
@@ -71,6 +71,9 @@ Money never lives in block props as floats; product prices always come from cata
 | `spacer` | `size: sm\|md\|lg` | Layout only |
 | `saleStrip` | `text`, `ctaLabel?`, `ctaHref?`, `tone?` | Soft Gift promo band (Phase 12) |
 | `faq` | `title?`, `items[{ question, answerHtml }]` | Accordion + FAQPage JSON-LD |
+| `exclusiveOffers` | `overline?`, `title?`, `subtitle?`, `cards[{ tag, title, subtitle?, body?, ctaLabel, ctaHref, tone?, icon? }]` | 3 gradient offer cards |
+| `testimonials` | `title?`, `subtitle?`, `items[{ quote, author, role?, rating? }]` | Quote cards with stars |
+| `discoveryChips` | `title?`, `items[{ label, href, imageUrl?, imageAlt? }]`, `seeAll*` | Chips or category image cards |
 
 Unknown `type` → fail validation on save; public renderer skips unknown types safely (log).
 

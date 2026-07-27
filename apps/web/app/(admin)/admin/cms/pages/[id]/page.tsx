@@ -38,7 +38,9 @@ type BlockType =
   | 'articleTeasers'
   | 'footer'
   | 'saleStrip'
-  | 'faq';
+  | 'faq'
+  | 'exclusiveOffers'
+  | 'testimonials';
 
 type Block = {
   clientId: string;
@@ -75,6 +77,8 @@ const ALL_TYPES: BlockType[] = [
   'footer',
   'saleStrip',
   'faq',
+  'exclusiveOffers',
+  'testimonials',
 ];
 
 const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
@@ -114,41 +118,44 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
   },
   recipientSplit: {
     title: 'Shop by baby',
-    subtitle: 'Gifts for little girls and boys.',
+    subtitle: 'Curated palettes, unisex-safe products.',
     leftLabel: 'girl',
     leftHref: '/gift/products?recipient=girl',
-    leftEyebrow: '',
-    leftBlurb: '',
-    leftCta: 'Shop girl →',
+    leftEyebrow: 'For the little',
+    leftBlurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
+    leftCta: 'Shop girl gifts →',
     leftAccent: 'pink',
-    leftImageUrl: '/gift/media/girl.jpg',
+    leftImageUrl: '/gift/media/girl.jpeg',
     leftImageAlt: 'Baby girl',
     rightLabel: 'boy',
     rightHref: '/gift/products?recipient=boy',
-    rightEyebrow: '',
-    rightBlurb: '',
-    rightCta: 'Shop boy →',
+    rightEyebrow: 'For the little',
+    rightBlurb: 'Sky ribbons, soft brights, gender-neutral picks.',
+    rightCta: 'Shop boy gifts →',
     rightAccent: 'sky',
     rightImageUrl: '/gift/media/boy.jpg',
     rightImageAlt: 'Baby boy',
   },
   discoveryChips: {
-    overline: 'Discover',
-    title: 'Shop by moment',
+    overline: '',
+    title: 'Shop by category',
     subtitle: '',
-    items: 'Newborn | /gift/products?age=newborn, Naming | /gift/products?occasion=naming',
+    seeAllHref: '/gift/products',
+    seeAllLabel: 'See all',
+    items:
+      'Clothing | /gift/products?category=clothing | /gift/media/baby-clothes.jpg | Clothing\nBath & Skin | /gift/products?category=bath-skin | /gift/media/baby-cues.jpg | Bath\nToys | /gift/products?category=toys | /gift/media/train-toy.jpg | Toys\nMom Care | /gift/products?category=mom-care | /gift/media/baby-cues.jpg | Mom care',
   },
   buildYourBoxTeaser: {
-    overline: 'Personalised',
-    title: 'Build Your Box',
-    body: '',
-    ctaLabel: 'Build your box',
+    overline: '6-step gift builder',
+    title: 'Customise a box just for them.',
+    body: 'Choose recipient, age, occasion, budget and categories — we curate a perfect box that never goes over budget.',
+    ctaLabel: 'Build Your Box',
     ctaHref: '/gift/build-your-box',
-    imageUrl: '/gift/media/gift-box.svg',
-    imageAlt: 'Build your own gift box',
+    imageUrl: '',
+    imageAlt: '',
     imageFit: 'contain',
     steps:
-      'Who it’s for | Pick recipient\nAge & occasion | Newborn to toddler\nBudget & picks | Stay on budget',
+      'Who is it for? | Girl, boy, mom, or unisex\nBaby age | Newborn to toddler\nOccasion | Shower, naming, birthday\nBudget | Stay on budget\nCategories | Clothing, toys, care\nYour box | Review and checkout',
   },
   articleTeasers: {
     overline: 'Journal',
@@ -177,7 +184,7 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
         {
           question: 'How long does shipping take?',
           answerHtml:
-            '<p>We prepare Soft Gift orders carefully. Standard delivery timing is confirmed at checkout for your pincode.</p>',
+            '<p>We prepare orders carefully. Standard delivery timing is confirmed at checkout for your pincode.</p>',
         },
         {
           question: 'Can I personalise my gift?',
@@ -188,6 +195,76 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
           question: 'What is your return window?',
           answerHtml:
             '<p>Returns open for 14 days after delivery. Personalised items may have limited return eligibility.</p>',
+        },
+      ],
+      null,
+      0,
+    ),
+  },
+  exclusiveOffers: {
+    overline: 'Limited-time benefits',
+    title: 'Exclusive Offers for Every Occasion',
+    subtitle: 'Curated for every occasion',
+    cardsJson: JSON.stringify(
+      [
+        {
+          tag: 'Welcome Baby',
+          title: 'Save 10%',
+          subtitle: 'Welcome Baby',
+          body: 'Celebrate every newborn with curated hampers, gift wrapping and a personalised message.',
+          ctaLabel: 'Order Now',
+          ctaHref: '/gift/products?hamper=1',
+          tone: 'blush',
+          icon: 'heart',
+        },
+        {
+          tag: 'Corporate Gifting',
+          title: 'Save up to 15%',
+          subtitle: 'Corporate Gifting',
+          body: 'Thoughtful welcome-baby gifts for your team with branded cards and PAN-India delivery.',
+          ctaLabel: 'Get a Quote',
+          ctaHref: '/gift/corporate',
+          tone: 'sky',
+          icon: 'briefcase',
+        },
+        {
+          tag: 'Bulk & Event Gifting',
+          title: 'Save up to 20%',
+          subtitle: 'Bulk & Event Gifting',
+          body: 'Perfect for baby showers, naming ceremonies and celebrations with 20+ hampers.',
+          ctaLabel: 'Enquire',
+          ctaHref: '/gift/corporate',
+          tone: 'lavender',
+          icon: 'box',
+        },
+      ],
+      null,
+      0,
+    ),
+  },
+  testimonials: {
+    title: 'Loved by new parents across India',
+    subtitle: '',
+    itemsJson: JSON.stringify(
+      [
+        {
+          quote: 'The box felt personal in a way Amazon never could. My sister cried happy tears.',
+          author: 'Anaya',
+          role: 'Bengaluru',
+          rating: 5,
+        },
+        {
+          quote:
+            'As a corporate gifter, Inabiya makes it feel human. Our team’s new-parent gift is sorted.',
+          author: 'Rohan',
+          role: 'HR Lead',
+          rating: 5,
+        },
+        {
+          quote: 'Loved that the builder respected my ₹1,499 budget. No upsell tricks.',
+          author: 'Kavya',
+          role: 'Mumbai',
+          rating: 5,
         },
       ],
       null,
@@ -293,8 +370,10 @@ function toEditable(blocks: MarketingPage['blocks']): Block[] {
                 if (!item || typeof item !== 'object') return '';
                 const label = String((item as { label?: unknown }).label ?? '').trim();
                 const icon = String((item as { icon?: unknown }).icon ?? '').trim();
+                const body = String((item as { body?: unknown }).body ?? '').trim();
                 if (!label) return '';
-                return icon ? `${icon}:${label}` : label;
+                const head = icon ? `${icon}:${label}` : label;
+                return body ? `${head}|${body}` : head;
               })
               .filter(Boolean)
               .join(', ');
@@ -327,9 +406,25 @@ function toEditable(blocks: MarketingPage['blocks']): Block[] {
           } else if (k === 'items' && Array.isArray(v) && b.type === 'discoveryChips') {
             props.items = v
               .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
-              .map((row) => `${String(row.label ?? '')} | ${String(row.href ?? '')}`)
-              .filter((s) => s.includes('|'))
-              .join(', ');
+              .map((row) => {
+                const label = String(row.label ?? '').trim();
+                const href = String(row.href ?? '').trim();
+                const imageUrl = String(row.imageUrl ?? '').trim();
+                const imageAlt = String(row.imageAlt ?? '').trim();
+                if (!label || !href) return '';
+                if (imageUrl) {
+                  return imageAlt
+                    ? `${label} | ${href} | ${imageUrl} | ${imageAlt}`
+                    : `${label} | ${href} | ${imageUrl}`;
+                }
+                return `${label} | ${href}`;
+              })
+              .filter(Boolean)
+              .join('\n');
+          } else if (k === 'cards' && Array.isArray(v) && b.type === 'exclusiveOffers') {
+            props.cardsJson = JSON.stringify(v);
+          } else if (k === 'items' && Array.isArray(v) && b.type === 'testimonials') {
+            props.itemsJson = JSON.stringify(v);
           } else if (k === 'steps' && Array.isArray(v) && b.type === 'buildYourBoxTeaser') {
             props.steps = v
               .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
@@ -428,14 +523,27 @@ function toPayload(blocks: Block[]) {
         .map((s) => s.trim())
         .filter(Boolean)
         .map((entry) => {
-          const m = entry.match(/^(heart|package|gift|truck)\s*:\s*(.+)$/i);
+          const m = entry.match(
+            /^(heart|package|gift|truck|shield|sparkles)\s*:\s*([^|]+)(?:\|(.+))?$/i,
+          );
           if (m?.[1] && m[2]) {
             return {
-              icon: m[1].toLowerCase() as 'heart' | 'package' | 'gift' | 'truck',
+              icon: m[1].toLowerCase() as
+                | 'heart'
+                | 'package'
+                | 'gift'
+                | 'truck'
+                | 'shield'
+                | 'sparkles',
               label: m[2].trim(),
+              ...(m[3]?.trim() ? { body: m[3].trim() } : {}),
             };
           }
-          return { label: entry };
+          const [labelPart, bodyPart] = entry.split('|').map((x) => x.trim());
+          return {
+            label: labelPart,
+            ...(bodyPart ? { body: bodyPart } : {}),
+          };
         });
       return {
         type: 'brandStrip' as const,
@@ -460,13 +568,25 @@ function toPayload(blocks: Block[]) {
       };
     }
     if (b.type === 'discoveryChips') {
-      const items = (b.props.items || '')
-        .split(',')
+      const rawItems = b.props.items || '';
+      const itemLines = rawItems.includes('\n')
+        ? rawItems.split('\n')
+        : rawItems.split(',');
+      const items = itemLines
         .map((s) => s.trim())
         .filter(Boolean)
         .map((entry) => {
-          const [label, href] = entry.split('|').map((x) => x.trim());
-          return { label: label || href, href: href || label };
+          const parts = entry.split('|').map((x) => x.trim());
+          const label = parts[0] || parts[1];
+          const href = parts[1] || parts[0];
+          const imageUrl = parts[2] || '';
+          const imageAlt = parts[3] || '';
+          return {
+            label,
+            href,
+            ...(imageUrl ? { imageUrl } : {}),
+            ...(imageAlt ? { imageAlt } : {}),
+          };
         })
         .filter((i) => i.href);
       return {
@@ -475,6 +595,8 @@ function toPayload(blocks: Block[]) {
           ...(b.props.overline ? { overline: b.props.overline } : {}),
           ...(b.props.title ? { title: b.props.title } : {}),
           ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
+          ...(b.props.seeAllHref ? { seeAllHref: b.props.seeAllHref } : {}),
+          ...(b.props.seeAllLabel ? { seeAllLabel: b.props.seeAllLabel } : {}),
           items,
         },
       };
@@ -584,6 +706,84 @@ function toPayload(blocks: Block[]) {
         type: 'faq' as const,
         props: {
           ...(b.props.title ? { title: b.props.title } : {}),
+          items,
+        },
+      };
+    }
+    if (b.type === 'exclusiveOffers') {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(b.props.cardsJson || '[]') as unknown;
+      } catch {
+        throw new Error('Exclusive offers cards JSON is invalid.');
+      }
+      if (!Array.isArray(parsed)) {
+        throw new Error('Exclusive offers cards must be a JSON array.');
+      }
+      const cards = parsed
+        .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+        .map((row) => ({
+          tag: String(row.tag ?? '').trim(),
+          title: String(row.title ?? '').trim(),
+          ...(row.subtitle ? { subtitle: String(row.subtitle) } : {}),
+          ...(row.body ? { body: String(row.body) } : {}),
+          ctaLabel: String(row.ctaLabel ?? '').trim(),
+          ctaHref: String(row.ctaHref ?? '').trim(),
+          ...(row.tone === 'blush' || row.tone === 'sky' || row.tone === 'lavender'
+            ? { tone: row.tone }
+            : {}),
+          ...(row.icon === 'heart' || row.icon === 'briefcase' || row.icon === 'box'
+            ? { icon: row.icon }
+            : {}),
+        }))
+        .filter((row) => row.tag && row.title && row.ctaLabel && row.ctaHref)
+        .slice(0, 3);
+      if (cards.length === 0) {
+        throw new Error('Exclusive offers needs at least one card.');
+      }
+      return {
+        type: 'exclusiveOffers' as const,
+        props: {
+          ...(b.props.overline ? { overline: b.props.overline } : {}),
+          ...(b.props.title ? { title: b.props.title } : {}),
+          ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
+          cards,
+        },
+      };
+    }
+    if (b.type === 'testimonials') {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(b.props.itemsJson || '[]') as unknown;
+      } catch {
+        throw new Error('Testimonials items JSON is invalid.');
+      }
+      if (!Array.isArray(parsed)) {
+        throw new Error('Testimonials must be a JSON array.');
+      }
+      const items = parsed
+        .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+        .map((row) => {
+          const ratingNum = Number(row.rating);
+          return {
+            quote: String(row.quote ?? '').trim(),
+            author: String(row.author ?? '').trim(),
+            ...(row.role ? { role: String(row.role) } : {}),
+            ...(Number.isFinite(ratingNum) && ratingNum >= 1 && ratingNum <= 5
+              ? { rating: Math.round(ratingNum) }
+              : {}),
+          };
+        })
+        .filter((row) => row.quote && row.author)
+        .slice(0, 6);
+      if (items.length === 0) {
+        throw new Error('Testimonials needs at least one quote.');
+      }
+      return {
+        type: 'testimonials' as const,
+        props: {
+          ...(b.props.title ? { title: b.props.title } : {}),
+          ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
           items,
         },
       };
@@ -698,7 +898,10 @@ function PropField({
     fieldKey === 'shopLinks' ||
     fieldKey === 'companyLinks' ||
     fieldKey === 'trustLine' ||
-    fieldKey === 'itemsJson'
+    fieldKey === 'items' ||
+    fieldKey === 'steps' ||
+    fieldKey === 'itemsJson' ||
+    fieldKey === 'cardsJson'
   ) {
     return (
       <textarea
@@ -709,16 +912,22 @@ function PropField({
           fieldKey === 'brands'
             ? 'Name | /gift/brands/x.svg, …'
             : fieldKey === 'usps'
-              ? 'heart:Personalised with care, package:Ready-made hampers'
+              ? 'gift:Personalised gifts|Baby name & wrap, shield:Trusted quality|Baby-safe'
               : fieldKey === 'shopLinks' || fieldKey === 'companyLinks'
                 ? 'Label | /path (one per line)'
                 : fieldKey === 'trustLine'
                   ? 'Chip A · Chip B · Chip C'
                   : fieldKey === 'productSlugs'
                     ? 'one, two, three'
-                    : fieldKey === 'itemsJson'
-                      ? '[{"question":"…","answerHtml":"<p>…</p>"}]'
-                      : undefined
+                    : fieldKey === 'items'
+                      ? 'Label | /href | /image.jpg | Alt (one per line)'
+                      : fieldKey === 'steps'
+                        ? 'Title | Body (one per line)'
+                        : fieldKey === 'itemsJson'
+                          ? '[{"quote":"…","author":"…","role":"…","rating":5}] or FAQ [{question,answerHtml}]'
+                          : fieldKey === 'cardsJson'
+                            ? '[{"tag":"…","title":"Save 10%","ctaLabel":"…","ctaHref":"/gift","tone":"blush"}]'
+                            : undefined
         }
       />
     );

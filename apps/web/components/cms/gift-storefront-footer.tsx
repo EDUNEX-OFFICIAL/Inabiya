@@ -54,17 +54,18 @@ export const DEFAULT_FOOTER_COLUMNS: GiftFooterColumn[] = [
 
 const DEFAULT_FOOTER = {
   brandName: 'Inabiya',
-  tagline: 'Thoughtfully personalised baby essentials & gifting.',
+  tagline: 'Thoughtfully personalised baby essentials & gifting for the tiny humans (and their moms) you love.',
   columns: DEFAULT_FOOTER_COLUMNS,
 };
 
 function FooterAnchor({ href, label }: { href: string; label: string }) {
   const external = href.startsWith('mailto:') || href.startsWith('http') || href.startsWith('tel:');
+  const className = 'transition-colors hover:text-[var(--inabiya-pink)]';
   if (external) {
     return (
       <a
         href={href}
-        className="hover:text-primary"
+        className={className}
         {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
       >
         {label}
@@ -72,7 +73,7 @@ function FooterAnchor({ href, label }: { href: string; label: string }) {
     );
   }
   return (
-    <Link href={href} className="hover:text-primary">
+    <Link href={href} className={className}>
       {label}
     </Link>
   );
@@ -85,14 +86,14 @@ export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
   const socialLinks = props.socialLinks ?? [];
 
   return (
-    <div className="gift-band gift-band--soft">
-      <footer className="gift-band-inner border-t border-border-subtle pt-gs-7 text-sm opacity-80">
+    <div className="gift-footer-dark">
+      <footer className="gift-band-inner pt-gs-8 pb-gs-8 text-sm">
         <div className="grid gap-gs-6 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="font-display text-xl text-foreground">{brandName}</p>
-            <p className="mt-gs-2 max-w-xs">{tagline}</p>
+            <p className="font-display text-xl text-white">{brandName}</p>
+            <p className="mt-gs-2 max-w-xs text-white/70">{tagline}</p>
             {socialLinks.length > 0 ? (
-              <ul className="mt-gs-4 flex flex-wrap gap-gs-3">
+              <ul className="mt-gs-4 flex flex-wrap gap-gs-3 text-white/75">
                 {socialLinks.map((s) => (
                   <li key={`${s.network ?? s.label}-${s.href}`}>
                     <FooterAnchor href={s.href} label={s.label} />
@@ -103,8 +104,8 @@ export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
           </div>
           {columns.map((col) => (
             <div key={col.title}>
-              <p className="font-semibold text-foreground">{col.title}</p>
-              <ul className="mt-gs-2 space-y-gs-2">
+              <p className="font-semibold text-white">{col.title}</p>
+              <ul className="mt-gs-2 space-y-gs-2 text-white/70">
                 {col.links.map((link) => (
                   <li key={`${col.title}-${link.href}-${link.label}`}>
                     <FooterAnchor href={link.href} label={link.label} />
@@ -115,7 +116,7 @@ export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
           ))}
         </div>
         {props.showNewsletter && props.newsletterSlot ? (
-          <div className="mt-gs-7 border-t border-border-subtle pt-gs-6">
+          <div className="mt-gs-7 border-t border-white/15 pt-gs-6 text-white/80">
             {props.newsletterSlot}
           </div>
         ) : null}

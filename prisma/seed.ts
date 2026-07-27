@@ -364,13 +364,6 @@ async function main() {
   });
   console.log('Seeded homepage featured products');
 
-  const featuredSlugs = [
-    'cloud-soft-swaddle',
-    'personalised-name-blanket',
-    'wooden-rattle-set',
-    'welcome-baby-hamper',
-  ];
-
   const homeBlocks = [
     {
       type: 'hero',
@@ -380,28 +373,22 @@ async function main() {
         eyebrow: 'Personalised baby gifting',
         headline: 'Little bundles of joy, thoughtfully chosen.',
         subcopy:
-          'Build a bespoke baby box in gentle steps — or pick a ready-made hamper. Packed with warmth, shipped across India.',
+          'Build a bespoke baby box in six gentle steps, or pick one of our ready-made hampers. Every gift is packed with warmth and shipped across India.',
         ctaLabel: 'Build Your Box',
         ctaHref: '/gift/build-your-box',
         ctaLabel2: 'Browse Hampers',
         ctaHref2: '/gift/products?hamper=1',
-        trustLine: 'Baby-safe brands · Free shipping over ₹2,000 · Curated for new parents',
-        imageUrl: 'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=900&q=85',
+        trustLine: 'Baby-safe brands · Free shipping over ₹2,000 · 4.9 / 5 (2,400+ parents)',
+        imageUrl: 'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=1200&q=85',
       },
     },
     {
       type: 'brandStrip',
       sortOrder: 1,
       props: {
-        title: 'Trusted brands we stock',
+        title: 'Trusted baby & kids brands we stock',
         subtitle: 'Curated partners for gentle, baby-safe gifting',
-        showUsps: true,
-        usps: [
-          { icon: 'heart', label: 'Personalised with care' },
-          { icon: 'package', label: 'Ready-made hampers' },
-          { icon: 'gift', label: 'Baby-safe picks' },
-          { icon: 'truck', label: 'Pan-India shipping' },
-        ],
+        showUsps: false,
         brands: [
           { name: 'The Moms Co.', logoUrl: '/gift/brands/the-moms-co.svg' },
           { name: 'Inabiya', logoUrl: '/gift/brands/inabiya.svg' },
@@ -412,33 +399,27 @@ async function main() {
       },
     },
     {
-      type: 'saleStrip',
+      type: 'recipientSplit',
       sortOrder: 2,
       props: {
-        text: 'Free shipping over ₹2,000 · this week',
-        ctaLabel: 'Shop gifts',
-        ctaHref: '/gift/products',
-        tone: 'mint',
-      },
-    },
-    {
-      type: 'recipientSplit',
-      sortOrder: 3,
-      props: {
         title: 'Shop by baby',
-        subtitle: 'Gifts for little girls and boys.',
+        subtitle: 'Curated palettes, unisex-safe products.',
         left: {
           label: 'girl',
           href: '/gift/products?recipient=girl',
-          cta: 'Shop girl →',
+          eyebrow: 'For the little',
+          blurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
+          cta: 'Shop girl gifts →',
           accent: 'pink',
-          imageUrl: '/gift/media/girl.jpg',
+          imageUrl: '/gift/media/girl.jpeg',
           imageAlt: 'Baby girl',
         },
         right: {
           label: 'boy',
           href: '/gift/products?recipient=boy',
-          cta: 'Shop boy →',
+          eyebrow: 'For the little',
+          blurb: 'Sky ribbons, soft brights, gender-neutral picks.',
+          cta: 'Shop boy gifts →',
           accent: 'sky',
           imageUrl: '/gift/media/boy.jpg',
           imageAlt: 'Baby boy',
@@ -446,46 +427,134 @@ async function main() {
       },
     },
     {
-      type: 'discoveryChips',
-      sortOrder: 4,
+      type: 'brandStrip',
+      sortOrder: 3,
       props: {
-        overline: 'Discover',
-        title: 'Shop by moment',
-        subtitle: 'Jump into age bands and occasions — filters open on the gift shop.',
-        items: [
-          { label: 'Newborn', href: '/gift/products?age=newborn' },
-          { label: 'Infant', href: '/gift/products?age=infant' },
-          { label: 'Naming', href: '/gift/products?occasion=naming' },
-          { label: 'Baby shower', href: '/gift/products?occasion=baby-shower' },
-          { label: 'Birthday', href: '/gift/products?occasion=birthday' },
-        ],
-      },
-    },
-    {
-      type: 'buildYourBoxTeaser',
-      sortOrder: 5,
-      props: {
-        overline: 'Personalised',
-        title: 'Build Your Box',
-        body: 'A gentle wizard — pick who it’s for, then age, occasion, and budget. We help you fill a thoughtful gift.',
-        ctaLabel: 'Build your box',
-        ctaHref: '/gift/build-your-box',
-        imageUrl: '/gift/media/gift-box.svg',
-        imageAlt: 'Build your own gift box',
-        imageFit: 'contain',
-        steps: [
-          { title: 'Who it’s for', body: 'Girl, boy, mom, or unisex-safe picks.' },
-          { title: 'Age & occasion', body: 'Newborn through toddler — naming, shower, birthday.' },
+        title: '',
+        showUsps: true,
+        brands: [],
+        usps: [
           {
-            title: 'Budget & picks',
-            body: 'Stay on budget while we suggest gift-box eligible items.',
+            icon: 'gift',
+            label: 'Personalised gifts',
+            body: 'Baby name, gift note, ribbon & wrap.',
+          },
+          {
+            icon: 'package',
+            label: 'Ready-made hampers',
+            body: 'Curated for every occasion.',
+          },
+          {
+            icon: 'heart',
+            label: 'Made with love',
+            body: 'From new-parent friendly brands.',
+          },
+          {
+            icon: 'shield',
+            label: 'Trusted quality',
+            body: 'Baby-safe, tested, thoughtful.',
           },
         ],
       },
     },
     {
-      type: 'productGrid',
+      type: 'exclusiveOffers',
+      sortOrder: 4,
+      props: {
+        overline: 'Limited-time benefits',
+        title: 'Exclusive Offers for Every Occasion',
+        subtitle: 'Curated for every occasion',
+        cards: [
+          {
+            tag: 'Welcome Baby',
+            title: 'Save 10%',
+            subtitle: 'Welcome Baby',
+            body: 'Celebrate every newborn with beautifully curated hampers, complimentary gift wrapping and a personalised message.',
+            ctaLabel: 'Order Now',
+            ctaHref: '/gift/products?hamper=1',
+            tone: 'blush',
+            icon: 'heart',
+          },
+          {
+            tag: 'Corporate Gifting',
+            title: 'Save up to 15%',
+            subtitle: 'Corporate Gifting',
+            body: 'Thoughtful welcome-baby gifts for your team with branded cards, bulk pricing and PAN-India delivery.',
+            ctaLabel: 'Get a Quote',
+            ctaHref: '/gift/corporate',
+            tone: 'sky',
+            icon: 'briefcase',
+          },
+          {
+            tag: 'Bulk & Event Gifting',
+            title: 'Save up to 20%',
+            subtitle: 'Bulk & Event Gifting',
+            body: 'Perfect for baby showers, naming ceremonies and celebrations with 20+ hampers.',
+            ctaLabel: 'Enquire',
+            ctaHref: '/gift/corporate',
+            tone: 'lavender',
+            icon: 'box',
+          },
+        ],
+      },
+    },
+    {
+      type: 'discoveryChips',
+      sortOrder: 5,
+      props: {
+        title: 'Shop by category',
+        seeAllHref: '/gift/products',
+        seeAllLabel: 'See all',
+        items: [
+          {
+            label: 'Clothing',
+            href: '/gift/products?category=clothing',
+            imageUrl: '/gift/media/baby-clothes.jpg',
+            imageAlt: 'Baby clothing',
+          },
+          {
+            label: 'Bath & Skin',
+            href: '/gift/products?category=bath-skin',
+            imageUrl: '/gift/media/baby-cues.jpg',
+            imageAlt: 'Bath and skin care',
+          },
+          {
+            label: 'Toys',
+            href: '/gift/products?category=toys',
+            imageUrl: '/gift/media/train-toy.jpg',
+            imageAlt: 'Wooden toys',
+          },
+          {
+            label: 'Mom Care',
+            href: '/gift/products?category=mom-care',
+            imageUrl: '/gift/media/baby-cues.jpg',
+            imageAlt: 'Mom care',
+          },
+        ],
+      },
+    },
+    {
+      type: 'buildYourBoxTeaser',
       sortOrder: 6,
+      props: {
+        overline: '6-step gift builder',
+        title: 'Customise a box just for them.',
+        body: 'Choose recipient, age, occasion, budget and categories — we curate a perfect box that never goes over budget.',
+        ctaLabel: 'Build Your Box',
+        ctaHref: '/gift/build-your-box',
+        steps: [
+          { title: 'Who is it for?', body: 'Girl, boy, mom, or unisex' },
+          { title: 'Baby age', body: 'Newborn to toddler' },
+          { title: 'Occasion', body: 'Shower, naming, birthday' },
+          { title: 'Budget', body: 'Stay on budget' },
+          { title: 'Categories', body: 'Clothing, toys, care' },
+          { title: 'Your box', body: 'Review and checkout' },
+        ],
+      },
+    },
+    {
+      type: 'productGrid',
+      sortOrder: 7,
       props: {
         overline: 'Hampers',
         title: 'Ready-made hampers',
@@ -493,29 +562,35 @@ async function main() {
         hamper: true,
         limit: 3,
         seeAllHref: '/gift/products?hamper=1',
-        seeAllLabel: 'Browse all hampers',
+        seeAllLabel: 'See all',
       },
     },
     {
-      type: 'productGrid',
-      sortOrder: 7,
-      props: {
-        overline: 'Favourites',
-        title: 'Featured gifts',
-        subtitle: 'Hand-picked favourites parents keep coming back for.',
-        productSlugs: featuredSlugs,
-        seeAllHref: '/gift/products',
-        seeAllLabel: 'Shop all gifts',
-      },
-    },
-    {
-      type: 'cta',
+      type: 'testimonials',
       sortOrder: 8,
       props: {
-        title: 'Corporate & bulk gifting',
-        body: 'Teams and events — share quantity and occasion; we will reply with pricing.',
-        label: 'Get a quote',
-        href: '/gift/corporate',
+        title: 'Loved by new parents across India',
+        items: [
+          {
+            quote: 'The box felt personal in a way Amazon never could. My sister cried happy tears.',
+            author: 'Anaya',
+            role: 'Bengaluru',
+            rating: 5,
+          },
+          {
+            quote:
+              'As a corporate gifter, Inabiya makes it feel human. Our team’s new-parent gift is sorted.',
+            author: 'Rohan',
+            role: 'HR Lead',
+            rating: 5,
+          },
+          {
+            quote: 'Loved that the builder respected my ₹1,499 budget. No upsell tricks.',
+            author: 'Kavya',
+            role: 'Mumbai',
+            rating: 5,
+          },
+        ],
       },
     },
     {
@@ -524,7 +599,7 @@ async function main() {
       props: {
         overline: 'Journal',
         title: 'From the parenting journal',
-        subtitle: 'Gentle reads from specialists — gifting, newborn care, and early parenthood.',
+        subtitle: 'Warm, honest reads from real parents & pediatric experts.',
         limit: 3,
         seeAllHref: '/articles',
         seeAllLabel: 'All articles →',
@@ -539,7 +614,7 @@ async function main() {
           {
             question: 'How long does shipping take?',
             answerHtml:
-              '<p>We prepare Soft Gift orders carefully. Standard delivery timing is confirmed at checkout for your pincode.</p>',
+              '<p>We prepare orders carefully. Standard delivery timing is confirmed at checkout for your pincode.</p>',
           },
           {
             question: 'Can I personalise my gift?',
@@ -562,8 +637,8 @@ async function main() {
     await prisma.marketingPage.update({
       where: { id: existingHome.id },
       data: {
-        title: 'Soft Gift homepage',
-        seoTitle: 'Inabiya Soft Gift',
+        title: 'Inabiya homepage',
+        seoTitle: 'Inabiya',
         seoDescription: 'Thoughtfully personalised baby essentials & gifting.',
         canonicalPath: '/gift',
         robotsIndex: true,
@@ -582,8 +657,8 @@ async function main() {
     await prisma.marketingPage.create({
       data: {
         slug: 'home',
-        title: 'Soft Gift homepage',
-        seoTitle: 'Inabiya Soft Gift',
+        title: 'Inabiya homepage',
+        seoTitle: 'Inabiya',
         seoDescription: 'Thoughtfully personalised baby essentials & gifting.',
         canonicalPath: '/gift',
         robotsIndex: true,
@@ -599,7 +674,7 @@ async function main() {
       },
     });
   }
-  console.log('Seeded Soft Gift homepage MarketingPage (slug=home)');
+  console.log('Seeded Inabiya homepage MarketingPage (slug=home)');
 
   await prisma.commerceSetting.upsert({
     where: { key: 'gift.chrome' },
@@ -624,7 +699,8 @@ async function main() {
         ],
         footer: {
           brandName: 'Inabiya',
-          tagline: 'Thoughtfully personalised baby essentials & gifting.',
+          tagline:
+            'Thoughtfully personalised baby essentials & gifting for the tiny humans (and their moms) you love.',
           showNewsletter: true,
           socialLinks: [
             { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
@@ -685,7 +761,8 @@ async function main() {
         ],
         footer: {
           brandName: 'Inabiya',
-          tagline: 'Thoughtfully personalised baby essentials & gifting.',
+          tagline:
+            'Thoughtfully personalised baby essentials & gifting for the tiny humans (and their moms) you love.',
           showNewsletter: true,
           socialLinks: [
             { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
