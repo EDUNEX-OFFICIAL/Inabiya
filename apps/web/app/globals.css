@@ -1284,30 +1284,60 @@ h3 {
   }
 
   [data-theme='gift'] .gift-offer-card--blush {
-    background: linear-gradient(135deg, #ff6b9d 0%, #ff9eb8 38%, #ffd0df 100%);
-    color: #6b1f3a;
+    /* Capture 007 — pink → soft peach */
+    background: linear-gradient(145deg, #ff8eb4 0%, #ffb6cd 45%, #ffe3ec 100%);
+    color: #2d2640;
   }
 
   [data-theme='gift'] .gift-offer-card--sky {
-    background: linear-gradient(135deg, #4db8d4 0%, #7ddec8 42%, #c8f0e8 100%);
-    color: #0f4a52;
+    /* Capture 007 — cyan/teal → seafoam */
+    background: linear-gradient(145deg, #5ec9e3 0%, #8fdfd2 48%, #dff7f1 100%);
+    color: #2d2640;
   }
 
   [data-theme='gift'] .gift-offer-card--lavender {
-    background: linear-gradient(135deg, #9b7ad4 0%, #c9a0e0 42%, #f0c4d4 100%);
-    color: #3a2060;
+    /* Capture 007 — lavender → soft lilac/pink */
+    background: linear-gradient(145deg, #b894e0 0%, #d2b0e6 48%, #f0d8e6 100%);
+    color: #2d2640;
   }
 
   [data-theme='gift'] .gift-offer-card--blush .gift-offer-card__tag {
-    color: #c44d7a;
+    color: #d4537e;
   }
 
   [data-theme='gift'] .gift-offer-card--sky .gift-offer-card__tag {
-    color: #1a7a88;
+    color: #1f7f8c;
   }
 
   [data-theme='gift'] .gift-offer-card--lavender .gift-offer-card__tag {
-    color: #6b4a9a;
+    color: #6e4fa0;
+  }
+
+  [data-theme='gift'] .gift-offer-card--blush .gift-offer-card__icon {
+    color: #d4537e;
+  }
+
+  [data-theme='gift'] .gift-offer-card--sky .gift-offer-card__icon {
+    color: #1f7f8c;
+  }
+
+  [data-theme='gift'] .gift-offer-card--lavender .gift-offer-card__icon {
+    color: #6e4fa0;
+  }
+
+  [data-theme='gift'] .gift-offer-card--blush .gift-offer-card__watermark {
+    color: #e8789c;
+    opacity: 0.22;
+  }
+
+  [data-theme='gift'] .gift-offer-card--sky .gift-offer-card__watermark {
+    color: #4eb8c8;
+    opacity: 0.22;
+  }
+
+  [data-theme='gift'] .gift-offer-card--lavender .gift-offer-card__watermark {
+    color: #9b78c8;
+    opacity: 0.22;
   }
 
   [data-theme='gift'] .gift-offer-card__top {
