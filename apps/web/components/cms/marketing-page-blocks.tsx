@@ -119,16 +119,19 @@ function GiftSectionHeader({
   overline,
   title,
   subtitle,
+  aside,
   actionHref,
   actionLabel,
 }: {
   overline?: string | null;
   title?: string | null;
   subtitle?: string | null;
+  /** Right-aligned muted line (client “Curated…” style) */
+  aside?: string | null;
   actionHref?: string | null;
   actionLabel?: string | null;
 }) {
-  if (!title && !subtitle && !overline && !actionHref) return null;
+  if (!title && !subtitle && !overline && !actionHref && !aside) return null;
   return (
     <div className="mb-gs-6 flex flex-col gap-gs-4 sm:mb-gs-7 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0 max-w-2xl">
@@ -142,6 +145,11 @@ function GiftSectionHeader({
           </p>
         ) : null}
       </div>
+      {aside ? (
+        <p className="shrink-0 self-start text-sm text-foreground/55 sm:self-end sm:text-right">
+          {aside}
+        </p>
+      ) : null}
       {actionHref && actionLabel ? (
         <Link
           href={actionHref}
@@ -626,56 +634,43 @@ function normalizeBrands(raw: unknown): BrandItem[] {
     .filter((b): b is BrandItem => Boolean(b));
 }
 
-/** Seamless infinite brand strip — duplicated track, CSS translate -50%. */
-function BrandMarquee({
+/** Client-style static brand pills in a soft panel (not infinite marquee). */
+function BrandPillPanel({
   brands,
   title,
-  subtitle,
 }: {
   brands: unknown;
   title: string;
-  subtitle?: string;
 }) {
-  const base = normalizeBrands(brands);
-  const loop = base.length >= 8 ? base : [...base, ...base, ...(base.length < 5 ? base : [])];
-  const sub = subtitle?.trim() || 'Curated partners for gentle, baby-safe gifting';
+  const items = normalizeBrands(brands);
+  const heading = title.trim() || 'Trusted baby & kids brands we stock';
 
   return (
-    <div className="gift-brand-strip">
-      <div className="gift-brand-strip__head">
-        <h2 className="gift-brand-strip__title">{title}</h2>
-        <p className="gift-brand-strip__sub">{sub}</p>
-      </div>
-      <div className="gift-brand-marquee" role="region" aria-label={title} tabIndex={0}>
-        <div className="gift-brand-marquee__track">
-          {[0, 1].map((copy) => (
-            <ul
-              key={copy}
-              className="gift-brand-marquee__group"
-              aria-hidden={copy === 1 ? true : undefined}
-            >
-              {loop.map((brand, i) => (
-                <li key={`${copy}-${brand.name}-${i}`} className="gift-brand-marquee__tile">
-                  {brand.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={brand.logoUrl}
-                      alt={brand.name}
-                      className="gift-brand-marquee__logo"
-                      width={160}
-                      height={40}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  ) : (
-                    <span className="gift-brand-marquee__fallback">{brand.name}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ))}
-        </div>
-      </div>
+    <div className="gift-brand-panel">
+      <h2 className="gift-brand-panel__title">{heading}</h2>
+      <ul className="gift-brand-panel__grid list-none">
+        {items.map((brand) => (
+          <li key={brand.name} className="gift-brand-panel__pill">
+            {brand.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={brand.logoUrl}
+                alt={brand.name}
+                className="gift-brand-panel__logo"
+                width={120}
+                height={32}
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <span className="gift-brand-panel__name">{brand.name}</span>
+            )}
+          </li>
+        ))}
+        <li className="gift-brand-panel__pill gift-brand-panel__pill--more" aria-hidden>
+          <span className="gift-brand-panel__name">+ more</span>
+        </li>
+      </ul>
     </div>
   );
 }
@@ -710,33 +705,33 @@ function BrandStripBlock({ props, home }: { props: Record<string, unknown>; home
   const brands = props.brands;
   const hasBrands = Array.isArray(brands) && brands.length > 0;
   const usps = parseUsps(props.usps);
-  const showUsps =
-    props.showUsps === true || (home && props.showUsps !== false && usps.length > 0);
-  const showMarquee =
-    hasBrands || (home && props.showUsps !== true && usps.length === 0 && !hasBrands);
+  const showUsps = props.showUsps === true || (props.showUsps !== false && usps.length > 0 && home);
+  /** Never invent a second brand grid when this block is USP-only. */
+  const showBrands = hasBrands;
 
-  if (!showMarquee && !showUsps && !home) return null;
-  if (!showMarquee && !showUsps) return null;
+  if (!showBrands && !showUsps) {
+    if (home && props.showUsps !== true) {
+      return (
+        <GiftBand tone="soft">
+          <BrandPillPanel brands={DEFAULT_HOME_BRANDS} title="Trusted baby & kids brands we stock" />
+        </GiftBand>
+      );
+    }
+    return null;
+  }
 
   const title = String(props.title ?? 'Trusted baby & kids brands we stock');
-  const subtitle = props.subtitle ? String(props.subtitle) : undefined;
 
   const body = (
     <>
       {showUsps ? <UspRow items={usps} /> : null}
-      {showMarquee ? (
-        <BrandMarquee
-          brands={hasBrands ? brands : DEFAULT_HOME_BRANDS}
-          title={title}
-          subtitle={subtitle}
-        />
-      ) : null}
+      {showBrands ? <BrandPillPanel brands={brands} title={title} /> : null}
     </>
   );
 
   if (home) {
     return (
-      <GiftBand tone="soft" toys={!showUsps || showMarquee}>
+      <GiftBand tone={showBrands ? 'sky' : 'soft'} toys={false}>
         {body}
       </GiftBand>
     );
@@ -756,7 +751,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
     <>
       <GiftSectionHeader
         title={props.title ? String(props.title) : null}
-        subtitle={props.subtitle ? String(props.subtitle) : null}
+        aside={props.subtitle ? String(props.subtitle) : null}
       />
       <div className="grid gap-gs-5 sm:grid-cols-2 sm:gap-gs-6">
         {cards.map(({ key, card }) => {
@@ -790,9 +785,9 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
                     <p className="gift-recipient-card__eyebrow">{eyebrow}</p>
                     <p className="gift-recipient-card__label">{label}</p>
                     {blurb ? <p className="gift-recipient-card__blurb">{blurb}</p> : null}
+                    <span className="gift-recipient-card__cta">{cta}</span>
                   </div>
                 </div>
-                <span className="gift-recipient-card__cta">{cta}</span>
               </Link>
             );
           }
@@ -1293,15 +1288,18 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
   const body = (
     <>
       <GiftSectionHeader
-        overline={props.overline ? String(props.overline) : 'Limited-time benefits'}
+        overline={props.overline ? String(props.overline) : '✨ Limited-time benefits'}
         title={props.title ? String(props.title) : 'Exclusive Offers for Every Occasion'}
-        subtitle={props.subtitle ? String(props.subtitle) : 'Curated for every occasion'}
+        aside={props.subtitle ? String(props.subtitle) : 'Curated for Every Occasion'}
       />
       <ul className="gift-offers-grid list-none">
         {cards.map((card) => {
           const Icon = iconMap[card.icon];
           return (
-            <li key={`${card.tag}-${card.title}`} className={`gift-offer-card gift-offer-card--${card.tone}`}>
+            <li
+              key={`${card.tag}-${card.title}`}
+              className={`gift-offer-card gift-offer-card--${card.tone}`}
+            >
               <div className="gift-offer-card__top">
                 <span className="gift-offer-card__icon" aria-hidden>
                   <Icon className="h-4 w-4" strokeWidth={1.75} />
@@ -1311,10 +1309,16 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
               <p className="gift-offer-card__title">{card.title}</p>
               {card.subtitle ? <p className="gift-offer-card__subtitle">{card.subtitle}</p> : null}
               {card.body ? <p className="gift-offer-card__body">{card.body}</p> : null}
-              <Link href={card.ctaHref} className="gift-offer-card__cta inline-flex items-center gap-1">
+              <Link
+                href={card.ctaHref}
+                className="gift-offer-card__cta inline-flex items-center gap-1.5"
+              >
                 {card.ctaLabel}
                 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
               </Link>
+              <span className="gift-offer-card__watermark" aria-hidden>
+                <Icon className="h-full w-full" strokeWidth={1} />
+              </span>
             </li>
           );
         })}

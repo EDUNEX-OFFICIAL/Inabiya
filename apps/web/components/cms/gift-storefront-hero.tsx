@@ -129,7 +129,7 @@ export function GiftStorefrontHero({
 
           <h1
             data-hero-anim="headline"
-            className="gift-hero-split__headline gift-h1 mt-gs-4 max-w-2xl text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
+            className="gift-hero-split__headline gift-h1 mt-gs-4 max-w-2xl text-balance"
           >
             <AccentHeadline text={headline} />
           </h1>

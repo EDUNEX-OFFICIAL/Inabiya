@@ -238,11 +238,16 @@ h3 {
   }
 
   [data-theme='gift'] .gift-overline {
-    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--inabiya-pink) 12%, white);
+    font-size: 0.6875rem;
     font-weight: 600;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--primary);
+    color: var(--inabiya-pink-dark, var(--primary));
   }
 
   /* Surfaces */
@@ -508,6 +513,20 @@ h3 {
   [data-theme='gift'] .gift-hero-split__headline {
     line-height: 1.12;
     color: var(--inabiya-heading);
+    /* Sole page H1 on /gift — mobile → desktop scale to reference 60px */
+    font-size: 2rem; /* 32px */
+  }
+
+  @media (min-width: 640px) {
+    [data-theme='gift'] .gift-hero-split__headline {
+      font-size: 2.5rem; /* 40px */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    [data-theme='gift'] .gift-hero-split__headline {
+      font-size: 60px;
+    }
   }
 
   [data-theme='gift'] .gift-hero-split__accent {
@@ -978,10 +997,9 @@ h3 {
   }
 
   [data-theme='gift'] .gift-recipient-card {
-    display: flex;
-    flex-direction: column;
+    display: block;
     overflow: hidden;
-    border-radius: calc(var(--radius-card) + 4px);
+    border-radius: 1.5rem;
     background: #fff;
     box-shadow: var(--clay-shadow);
     transition: transform 0.25s ease;
@@ -993,16 +1011,32 @@ h3 {
 
   [data-theme='gift'] .gift-recipient-card__media {
     position: relative;
-    aspect-ratio: 4 / 5;
-    min-height: 18rem;
+    aspect-ratio: 8 / 5;
+    min-height: 10rem;
+    max-height: 14rem;
     overflow: hidden;
   }
 
   [data-theme='gift'] .gift-recipient-card__overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 35%, rgba(20, 12, 36, 0.62) 100%);
     pointer-events: none;
+  }
+
+  [data-theme='gift'] .gift-recipient-card--pink .gift-recipient-card__overlay {
+    background: linear-gradient(
+      180deg,
+      transparent 42%,
+      color-mix(in srgb, var(--inabiya-pink) 55%, rgba(20, 12, 36, 0.55)) 100%
+    );
+  }
+
+  [data-theme='gift'] .gift-recipient-card--sky .gift-recipient-card__overlay {
+    background: linear-gradient(
+      180deg,
+      transparent 42%,
+      color-mix(in srgb, var(--inabiya-sky) 50%, rgba(20, 40, 60, 0.55)) 100%
+    );
   }
 
   [data-theme='gift'] .gift-recipient-card__copy {
@@ -1011,7 +1045,7 @@ h3 {
     right: 0;
     bottom: 0;
     z-index: 1;
-    padding: var(--space-5);
+    padding: var(--space-5) var(--space-5) var(--space-6);
     color: #fff;
   }
 
@@ -1019,54 +1053,55 @@ h3 {
     margin: 0;
     font-size: 0.6875rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    opacity: 0.9;
+    opacity: 0.92;
   }
 
   [data-theme='gift'] .gift-recipient-card__label {
-    margin: 0.15rem 0 0;
+    margin: 0.1rem 0 0;
     font-family: var(--font-display), Georgia, serif;
-    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    font-size: clamp(2.75rem, 6vw, 3.75rem);
+    font-style: italic;
+    font-weight: 500;
     line-height: 1;
     text-transform: lowercase;
   }
 
   [data-theme='gift'] .gift-recipient-card__blurb {
-    margin: 0.5rem 0 0;
+    margin: 0.55rem 0 0;
     max-width: 18rem;
     font-size: 0.875rem;
     line-height: 1.45;
-    opacity: 0.9;
+    opacity: 0.92;
   }
 
   [data-theme='gift'] .gift-recipient-card__cta {
-    display: block;
-    padding: 0.9rem var(--space-4);
-    text-align: center;
+    display: inline-flex;
+    margin-top: var(--space-4);
     font-size: 0.875rem;
     font-weight: 600;
     color: #fff;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
   }
 
-  [data-theme='gift'] .gift-recipient-card--pink .gift-recipient-card__cta {
-    background: var(--inabiya-pink);
-  }
-
-  [data-theme='gift'] .gift-recipient-card--sky .gift-recipient-card__cta {
-    background: color-mix(in srgb, var(--inabiya-sky) 70%, #3b82a8);
+  [data-theme='gift'] .gift-recipient-card:hover .gift-recipient-card__cta {
+    opacity: 0.88;
   }
 
   [data-theme='gift'] .gift-category-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-4);
+    width: 100%;
     margin: 0;
     padding: 0;
   }
 
   @media (min-width: 768px) {
     [data-theme='gift'] .gift-category-grid {
+      /* Full band width ÷ 4 equal cards */
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: var(--space-5);
     }
@@ -1074,10 +1109,12 @@ h3 {
 
   [data-theme='gift'] .gift-category-card {
     display: block;
+    min-width: 0;
   }
 
   [data-theme='gift'] .gift-category-card__media {
     position: relative;
+    width: 100%;
     aspect-ratio: 1;
     overflow: hidden;
     border-radius: var(--radius-card);
@@ -1235,28 +1272,47 @@ h3 {
   }
 
   [data-theme='gift'] .gift-offer-card {
+    position: relative;
     display: flex;
     flex-direction: column;
-    min-height: 16rem;
+    min-height: 18rem;
+    overflow: hidden;
     padding: var(--space-5);
-    border-radius: calc(var(--radius-card) + 4px);
-    color: #fff;
-    box-shadow: var(--clay-shadow);
+    border-radius: 1.5rem;
+    color: var(--inabiya-heading);
+    box-shadow: 0 10px 28px rgba(45, 38, 64, 0.08);
   }
 
   [data-theme='gift'] .gift-offer-card--blush {
-    background: linear-gradient(145deg, #ff7aa8 0%, #f06292 55%, #e85a8c 100%);
+    background: linear-gradient(135deg, #ff6b9d 0%, #ff9eb8 38%, #ffd0df 100%);
+    color: #6b1f3a;
   }
 
   [data-theme='gift'] .gift-offer-card--sky {
-    background: linear-gradient(145deg, #6ec4d8 0%, #4da8c4 55%, #3b9bb8 100%);
+    background: linear-gradient(135deg, #4db8d4 0%, #7ddec8 42%, #c8f0e8 100%);
+    color: #0f4a52;
   }
 
   [data-theme='gift'] .gift-offer-card--lavender {
-    background: linear-gradient(145deg, #b39ddb 0%, #9575cd 55%, #7e57c2 100%);
+    background: linear-gradient(135deg, #9b7ad4 0%, #c9a0e0 42%, #f0c4d4 100%);
+    color: #3a2060;
+  }
+
+  [data-theme='gift'] .gift-offer-card--blush .gift-offer-card__tag {
+    color: #c44d7a;
+  }
+
+  [data-theme='gift'] .gift-offer-card--sky .gift-offer-card__tag {
+    color: #1a7a88;
+  }
+
+  [data-theme='gift'] .gift-offer-card--lavender .gift-offer-card__tag {
+    color: #6b4a9a;
   }
 
   [data-theme='gift'] .gift-offer-card__top {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1265,54 +1321,84 @@ h3 {
 
   [data-theme='gift'] .gift-offer-card__icon {
     display: inline-flex;
-    height: 2rem;
-    width: 2rem;
+    height: 2.25rem;
+    width: 2.25rem;
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.22);
+    background: #fff;
+    color: inherit;
+    box-shadow: 0 2px 8px rgba(45, 38, 64, 0.06);
   }
 
   [data-theme='gift'] .gift-offer-card__tag {
-    padding: 0.25rem 0.65rem;
+    padding: 0.35rem 0.75rem;
     border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.22);
+    background: #fff;
     font-size: 0.625rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    color: inherit;
+    box-shadow: 0 2px 8px rgba(45, 38, 64, 0.05);
   }
 
   [data-theme='gift'] .gift-offer-card__title {
+    position: relative;
+    z-index: 1;
     margin: var(--space-5) 0 0;
     font-family: var(--font-display), Georgia, serif;
-    font-size: clamp(1.75rem, 2.5vw, 2.25rem);
+    font-size: clamp(1.85rem, 2.6vw, 2.4rem);
+    font-style: italic;
+    font-weight: 600;
     line-height: 1.1;
+    color: inherit;
   }
 
   [data-theme='gift'] .gift-offer-card__subtitle {
-    margin: 0.35rem 0 0;
+    position: relative;
+    z-index: 1;
+    margin: 0.4rem 0 0;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
+    color: inherit;
   }
 
   [data-theme='gift'] .gift-offer-card__body {
+    position: relative;
+    z-index: 1;
     margin: var(--space-3) 0 0;
     flex: 1;
+    max-width: 18rem;
     font-size: 0.875rem;
-    line-height: 1.5;
-    opacity: 0.92;
+    line-height: 1.55;
+    color: inherit;
+    opacity: 0.88;
   }
 
   [data-theme='gift'] .gift-offer-card__cta {
+    position: relative;
+    z-index: 1;
     margin-top: var(--space-5);
     align-self: flex-start;
-    padding: 0.65rem 1rem;
+    padding: 0.7rem 1.1rem;
     border-radius: 9999px;
     background: #fff;
     color: var(--inabiya-heading);
     font-size: 0.8125rem;
     font-weight: 600;
+    box-shadow: 0 4px 14px rgba(45, 38, 64, 0.08);
+  }
+
+  [data-theme='gift'] .gift-offer-card__watermark {
+    position: absolute;
+    right: -0.5rem;
+    bottom: -0.75rem;
+    width: 7.5rem;
+    height: 7.5rem;
+    color: inherit;
+    opacity: 0.12;
+    pointer-events: none;
   }
 
   [data-theme='gift'] .gift-testimonials-grid {
@@ -1363,6 +1449,71 @@ h3 {
     margin-top: var(--space-8);
     padding-top: var(--space-7);
     border-top: 1px solid color-mix(in srgb, var(--border-subtle) 85%, transparent);
+  }
+
+  /* Client-style static brand pill panel */
+  [data-theme='gift'] .gift-brand-panel {
+    padding: var(--space-5) var(--space-4);
+    border-radius: 1.5rem;
+    background: color-mix(in srgb, var(--inabiya-sky) 28%, #f4fbfc);
+    border: 1px solid color-mix(in srgb, var(--inabiya-sky) 35%, white);
+  }
+
+  @media (min-width: 640px) {
+    [data-theme='gift'] .gift-brand-panel {
+      padding: var(--space-6) var(--space-5);
+    }
+  }
+
+  [data-theme='gift'] .gift-brand-panel__title {
+    margin: 0 0 var(--space-5);
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--inabiya-body) 70%, #6b7280);
+  }
+
+  [data-theme='gift'] .gift-brand-panel__grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+  }
+
+  [data-theme='gift'] .gift-brand-panel__pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 7.5rem;
+    min-height: 2.75rem;
+    padding: 0.55rem 1rem;
+    border-radius: 9999px;
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--border-subtle) 80%, white);
+    box-shadow: 0 1px 3px rgba(45, 38, 64, 0.05);
+  }
+
+  [data-theme='gift'] .gift-brand-panel__pill--more {
+    background: color-mix(in srgb, var(--inabiya-soft) 70%, white);
+  }
+
+  [data-theme='gift'] .gift-brand-panel__logo {
+    display: block;
+    width: auto;
+    max-width: 6.5rem;
+    height: 1.5rem;
+    object-fit: contain;
+  }
+
+  [data-theme='gift'] .gift-brand-panel__name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--inabiya-heading);
+    white-space: nowrap;
   }
 
   [data-theme='gift'] .gift-brand-strip__head {
