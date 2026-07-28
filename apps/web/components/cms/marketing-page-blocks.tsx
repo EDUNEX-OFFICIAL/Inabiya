@@ -588,7 +588,27 @@ function ProductGridBlock({
   return <section className="py-gs-2">{grid}</section>;
 }
 
-/** Local wordmark tiles — swap for brand-approved logos when licensed. */
+/** Local brand marks — interim icons + accent (not official trademarks). */
+const BRAND_MARK: Record<string, { color: string; initials: string }> = {
+  Chicco: { color: '#1B4F72', initials: 'Ch' },
+  "Johnson’s Baby": { color: '#D81B60', initials: 'JB' },
+  "Johnson's Baby": { color: '#D81B60', initials: 'JB' },
+  Mothercare: { color: '#1565C0', initials: 'Mc' },
+  Pigeon: { color: '#0277BD', initials: 'Pi' },
+  Himalaya: { color: '#2E7D32', initials: 'Hi' },
+  'The Moms Co.': { color: '#C2185B', initials: 'TM' },
+  Mamaearth: { color: '#2E7D4F', initials: 'Ma' },
+  Pampers: { color: '#F9A825', initials: 'Pa' },
+  'Mee Mee': { color: '#7B1FA2', initials: 'MM' },
+  Sebamed: { color: '#00838F', initials: 'Se' },
+  Cetaphil: { color: '#1565C0', initials: 'Ce' },
+  'Mother Sparsh': { color: '#6A1B9A', initials: 'MS' },
+  'Baby Hug': { color: '#E65100', initials: 'BH' },
+  'Philips Avent': { color: '#0D47A1', initials: 'PA' },
+  Inabiya: { color: '#C44D7A', initials: 'In' },
+  'Soft Nest': { color: '#6B4F7A', initials: 'SN' },
+};
+
 const BRAND_LOGO_BY_NAME: Record<string, string> = {
   'The Moms Co.': '/gift/brands/the-moms-co.svg',
   Inabiya: '/gift/brands/inabiya.svg',
@@ -606,6 +626,20 @@ const DEFAULT_HOME_BRANDS = [
 ] as const;
 
 type BrandItem = { name: string; logoUrl: string | null };
+
+function brandMarkFor(name: string) {
+  return (
+    BRAND_MARK[name] ?? {
+      color: 'var(--inabiya-pink, #FF6B9D)',
+      initials: name
+        .split(/\s+/)
+        .map((w) => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase(),
+    }
+  );
+}
 
 function normalizeBrands(raw: unknown): BrandItem[] {
   if (!Array.isArray(raw)) {
@@ -635,7 +669,7 @@ function normalizeBrands(raw: unknown): BrandItem[] {
     .filter((b): b is BrandItem => Boolean(b));
 }
 
-/** Client-style static brand pills in a soft panel (not infinite marquee). */
+/** Client-style static brand pills: icon + name (Capture 004). */
 function BrandPillPanel({
   brands,
   title,
@@ -650,24 +684,23 @@ function BrandPillPanel({
     <div className="gift-brand-panel">
       <h2 className="gift-brand-panel__title">{heading}</h2>
       <ul className="gift-brand-panel__grid list-none">
-        {items.map((brand) => (
-          <li key={brand.name} className="gift-brand-panel__pill">
-            {brand.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={brand.logoUrl}
-                alt={brand.name}
-                className="gift-brand-panel__logo"
-                width={120}
-                height={32}
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <span className="gift-brand-panel__name">{brand.name}</span>
-            )}
-          </li>
-        ))}
+        {items.map((brand) => {
+          const mark = brandMarkFor(brand.name);
+          return (
+            <li key={brand.name} className="gift-brand-panel__pill">
+              <span
+                className="gift-brand-panel__icon"
+                style={{ background: `color-mix(in srgb, ${mark.color} 16%, white)`, color: mark.color }}
+                aria-hidden
+              >
+                {mark.initials}
+              </span>
+              <span className="gift-brand-panel__name" style={{ color: mark.color }}>
+                {brand.name}
+              </span>
+            </li>
+          );
+        })}
         <li className="gift-brand-panel__pill gift-brand-panel__pill--more" aria-hidden>
           <span className="gift-brand-panel__name">+ more</span>
         </li>
