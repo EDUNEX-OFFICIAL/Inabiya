@@ -189,9 +189,9 @@ Exact HSL conversions should live in theme CSS; hex above is brand source.
   --radius-pill: 9999px;
   --radius: 1rem;
 
-  --shadow-brand: 0 8px 30px rgba(255, 107, 157, 0.18);
-  --shadow-soft: 0 10px 40px rgba(45, 38, 64, 0.08);
-  --shadow-card: 0 4px 20px rgba(45, 38, 64, 0.06);
+  --shadow-brand: 0 2px 8px rgba(255, 107, 157, 0.10);
+  --shadow-soft: 0 2px 10px rgba(45, 38, 64, 0.04);
+  --shadow-card: 0 1px 3px rgba(45, 38, 64, 0.05);
 
   --glass-bg: rgba(255, 255, 255, 0.85);
   --glass-blur: 20px;
@@ -241,7 +241,7 @@ Line length for reading: aim ~60–75ch on article pages.
 |---|---|
 | Card radius | `rounded-2xl` / `rounded-3xl` |
 | Pill controls | `rounded-full` |
-| Shadows | ambient soft / pink-tint brand shadow |
+| Shadows | minimal ambient / light pink-tint brand shadow |
 | Sticky chrome | `bg-white/85 backdrop-blur-xl` |
 
 ### 4.7 Spacing & layout

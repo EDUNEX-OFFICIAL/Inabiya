@@ -891,7 +891,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
             <Link
               key={key}
               href={String(card.href ?? '/gift/products')}
-              className={`${sky ? 'gift-panel-sky ' : ''}clay-panel block overflow-hidden p-gs-6 transition hover:-translate-y-0.5`}
+              className={`${sky ? 'gift-panel-sky ' : ''}clay-panel block overflow-hidden p-gs-6 transition hover:-translate-y-px`}
             >
               <p className="text-sm opacity-70">{eyebrow}</p>
               <p className={`font-display mt-gs-1 text-4xl ${sky ? 'text-info' : 'text-primary'}`}>
@@ -992,7 +992,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
           <li key={a.slug} className="min-w-0">
             <Link
               href={`/articles/${a.slug}`}
-              className={`group clay-panel block w-full overflow-hidden transition hover:-translate-y-0.5 ${
+              className={`group clay-panel block w-full overflow-hidden transition hover:-translate-y-px ${
                 featured ? 'sm:grid sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]' : ''
               }`}
             >

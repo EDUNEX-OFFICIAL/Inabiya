@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 28, 2026 (demo login one-click fill)
+Last Updated: July 28, 2026 (Soft Gift minimal shadows + hero pastel)
 
 
 ---
@@ -924,6 +924,14 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-28 (Soft Gift shadows + hero polish)
+- **Override:** Soft Gift visual polish (client: too many clay shadows) outside Phase 12.
+- Reduced gift `--clay-shadow*` / brand / chip / nav elevation to minimal single-layer; hardcoded homepage card shadows → tokens.
+- Hero: removed `/gift/gifting-bg.svg`; pastel wash gradient only; grid padding aligned to `.gift-band` via `--gift-pad-*` (was `py-gs-6` vs band `space-5` on mobile).
+- Hover lift minimal: cards/buttons `-3px/-2px` → `-1px`; CTA nudge `2px` → `1px`.
+- Files: `globals.css`, `gift-storefront-hero.tsx`, `corporate-hero.tsx`, `marketing-page-blocks.tsx`, `gift-floating-actions.tsx`, `Design.md` shadow notes.
+- Next: hard-refresh `/gift` + `/gift/corporate` visual QA
 
 ### Session — 2026-07-28 (gift footer COMPANY ↔ REACH US align)
 - Shipped: Desktop Soft Gift footer uses shared CSS subgrid tracks so row-1 COMPANY and row-2 REACH US share the same right-edge column; Shop/Help/Company pack right of a flexible spacer after brand.

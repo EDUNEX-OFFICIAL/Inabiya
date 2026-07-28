@@ -134,16 +134,8 @@ export function GiftStorefrontHero({
   return (
     <section ref={containerRef} className="gift-hero-split relative overflow-hidden">
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
-      <div className="gift-hero-split__svg absolute inset-0" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/gift/gifting-bg.svg"
-          alt=""
-          className="h-full w-full object-cover object-center"
-        />
-      </div>
 
-      <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full max-w-page items-center gap-gs-6 px-gs-4 py-gs-6 sm:px-gs-6 sm:py-gs-6 lg:grid-cols-2 lg:gap-gs-8">
+      <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full max-w-page items-center gap-gs-6 lg:grid-cols-2 lg:gap-gs-8">
         <div className="gift-hero-split__copy order-2 flex flex-col text-left lg:order-1">
           <p data-hero-anim="eyebrow" className="gift-hero-split__eyebrow gift-overline">
             {eyebrowText}
