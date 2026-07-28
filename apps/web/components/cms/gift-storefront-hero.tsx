@@ -7,8 +7,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ArrowRight, Gift, HeartHandshake, ShieldCheck, Truck } from 'lucide-react';
 
-const DEFAULT_HERO_IMAGE =
-  'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=1200&q=85';
+const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.jpg';
 
 const DEFAULT_TRUST = [
   'Baby-safe brands',

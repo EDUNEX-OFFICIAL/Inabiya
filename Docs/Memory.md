@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 28, 2026 (CMS productGrid sources + homepage merchandising)
+Last Updated: July 28, 2026 (relevant Soft Gift media pass)
 
 
 ---

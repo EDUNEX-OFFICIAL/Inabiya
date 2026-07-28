@@ -18,25 +18,25 @@ const OCCASION_PRESET: DiscoveryChipCard[] = [
   {
     label: 'Welcome baby',
     href: '/gift/products?occasion=welcome-baby',
-    imageUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=600&q=85',
+    imageUrl: '/gift/media/baby-boy-soft.jpg',
     imageAlt: 'Newborn welcome',
   },
   {
     label: 'Baby shower',
     href: '/gift/products?occasion=baby-shower',
-    imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=85',
+    imageUrl: '/gift/media/baby-girl-soft.jpg',
     imageAlt: 'Baby shower gifts',
   },
   {
     label: 'Naming',
     href: '/gift/products?occasion=naming',
-    imageUrl: 'https://images.unsplash.com/photo-1492725764893-90b379c2b6e7?w=600&q=85',
+    imageUrl: '/gift/media/personalised-name-blanket.webp',
     imageAlt: 'Naming ceremony',
   },
   {
     label: 'Birthday',
     href: '/gift/products?occasion=birthday',
-    imageUrl: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&q=85',
+    imageUrl: '/gift/media/train-toy.jpg',
     imageAlt: 'Birthday toys',
   },
 ];
@@ -45,19 +45,19 @@ const AGE_PRESET: DiscoveryChipCard[] = [
   {
     label: 'Newborn',
     href: '/gift/products?age=newborn',
-    imageUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=600&q=85',
+    imageUrl: '/gift/media/baby-boy-soft.jpg',
     imageAlt: 'Newborn essentials',
   },
   {
     label: 'Infant',
     href: '/gift/products?age=infant',
-    imageUrl: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600&q=85',
+    imageUrl: '/gift/media/baby-girl-soft.jpg',
     imageAlt: 'Infant gifts',
   },
   {
     label: 'Toddler',
     href: '/gift/products?age=toddler',
-    imageUrl: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=600&q=85',
+    imageUrl: '/gift/media/train-toy.jpg',
     imageAlt: 'Toddler play',
   },
 ];

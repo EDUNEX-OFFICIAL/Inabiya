@@ -1468,13 +1468,27 @@ h3 {
 
   @media (min-width: 1024px) {
     [data-theme='gift'] .gift-footer__grid {
-      grid-template-columns: minmax(15rem, 1.35fr) repeat(3, minmax(0, 1fr));
-      gap: var(--space-5) var(--space-6);
+      /* Brand | flexible spacer | Shop | Help | Company (flush right) */
+      grid-template-columns: minmax(15rem, max-content) minmax(0, 1fr) repeat(3, max-content);
+      column-gap: clamp(1.5rem, 3.5vw, 2.75rem);
+      row-gap: var(--space-5);
       align-items: start;
     }
 
     [data-theme='gift'] .gift-footer__brand {
-      grid-column: auto;
+      grid-column: 1;
+    }
+
+    [data-theme='gift'] .gift-footer__col:nth-child(2) {
+      grid-column: 3;
+    }
+
+    [data-theme='gift'] .gift-footer__col:nth-child(3) {
+      grid-column: 4;
+    }
+
+    [data-theme='gift'] .gift-footer__col:nth-child(4) {
+      grid-column: 5;
     }
   }
 
@@ -1594,6 +1608,25 @@ h3 {
 
   [data-theme='gift'] .gift-footer__reach {
     flex: 0 0 auto;
+  }
+
+  /* Desktop: match upper row tracks so REACH US sits under COMPANY */
+  @media (min-width: 1024px) {
+    [data-theme='gift'] .gift-footer__lower:not(.gift-footer__lower--reach-only) {
+      display: grid;
+      grid-template-columns: minmax(15rem, max-content) minmax(0, 1fr) repeat(3, max-content);
+      column-gap: clamp(1.5rem, 3.5vw, 2.75rem);
+      row-gap: var(--space-5);
+      align-items: start;
+    }
+
+    [data-theme='gift'] .gift-footer__newsletter {
+      grid-column: 1;
+    }
+
+    [data-theme='gift'] .gift-footer__reach {
+      grid-column: 5;
+    }
   }
 
   [data-theme='gift'] .gift-newsletter {

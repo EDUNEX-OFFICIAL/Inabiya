@@ -134,8 +134,8 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     leftBlurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
     leftCta: 'Shop girl gifts →',
     leftAccent: 'pink',
-    leftImageUrl: '/gift/media/girl.jpeg',
-    leftImageAlt: 'Baby girl',
+    leftImageUrl: '/gift/media/baby-girl-soft.jpg',
+    leftImageAlt: 'Baby girl with soft toys',
     rightLabel: 'boy',
     rightHref: '/gift/products?recipient=boy',
     rightEyebrow: 'For the little',
@@ -143,7 +143,7 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     rightCta: 'Shop boy gifts →',
     rightAccent: 'sky',
     rightImageUrl: '/gift/media/boy.jpg',
-    rightImageAlt: 'Baby boy',
+    rightImageAlt: 'Baby boy in stroller',
   },
   discoveryChips: {
     overline: '',
@@ -152,7 +152,7 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     seeAllHref: '/gift/products',
     seeAllLabel: 'See all',
     items:
-      'Clothing | /gift/products?category=clothing | /gift/media/baby-clothes.jpg | Clothing\nBath & Skin | /gift/products?category=bath-skin | /gift/media/baby-cues.jpg | Bath\nToys | /gift/products?category=toys | /gift/media/train-toy.jpg | Toys\nMom Care | /gift/products?category=mom-care | /gift/media/baby-cues.jpg | Mom care',
+      'Clothing | /gift/products?category=clothing | /gift/media/baby-clothes.jpg | Clothing\nBath & Skin | /gift/products?category=bath-skin | /gift/media/baby-cues.jpg | Bath\nToys | /gift/products?category=toys | /gift/media/train-toy.jpg | Toys\nMom Care | /gift/products?category=mom-care | /gift/media/baby-mom.jpg | Mom care',
   },
   buildYourBoxTeaser: {
     overline: '6-step gift builder',
