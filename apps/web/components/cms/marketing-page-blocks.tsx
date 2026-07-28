@@ -608,12 +608,13 @@ const DEFAULT_HOME_BRANDS = [
 type BrandItem = { name: string; logoUrl: string | null };
 
 function normalizeBrands(raw: unknown): BrandItem[] {
-  if (!Array.isArray(raw) || raw.length === 0) {
+  if (!Array.isArray(raw)) {
     return DEFAULT_HOME_BRANDS.map((name) => ({
       name,
       logoUrl: BRAND_LOGO_BY_NAME[name] ?? null,
     }));
   }
+  if (raw.length === 0) return [];
   return raw
     .map((entry): BrandItem | null => {
       if (typeof entry === 'string' && entry.trim()) {
@@ -705,20 +706,12 @@ function BrandStripBlock({ props, home }: { props: Record<string, unknown>; home
   const brands = props.brands;
   const hasBrands = Array.isArray(brands) && brands.length > 0;
   const usps = parseUsps(props.usps);
-  const showUsps = props.showUsps === true || (props.showUsps !== false && usps.length > 0 && home);
-  /** Never invent a second brand grid when this block is USP-only. */
-  const showBrands = hasBrands;
+  const uspsOnly = props.showUsps === true;
+  const showUsps = uspsOnly || (props.showUsps !== false && usps.length > 0 && home);
+  /** USP-only strips never render a brand pill panel (avoids a second carousel). */
+  const showBrands = hasBrands && !uspsOnly;
 
-  if (!showBrands && !showUsps) {
-    if (home && props.showUsps !== true) {
-      return (
-        <GiftBand tone="soft">
-          <BrandPillPanel brands={DEFAULT_HOME_BRANDS} title="Trusted baby & kids brands we stock" />
-        </GiftBand>
-      );
-    }
-    return null;
-  }
+  if (!showBrands && !showUsps) return null;
 
   const title = String(props.title ?? 'Trusted baby & kids brands we stock');
 

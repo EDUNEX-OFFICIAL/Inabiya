@@ -439,9 +439,7 @@ async function main() {
       type: 'brandStrip',
       sortOrder: 3,
       props: {
-        title: '',
         showUsps: true,
-        brands: [],
         usps: [
           {
             icon: 'gift',
