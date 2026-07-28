@@ -142,8 +142,8 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     rightBlurb: 'Sky ribbons, soft brights, gender-neutral picks.',
     rightCta: 'Shop boy gifts →',
     rightAccent: 'sky',
-    rightImageUrl: '/gift/media/boy.jpg',
-    rightImageAlt: 'Baby boy in stroller',
+    rightImageUrl: '/gift/media/train-toy.jpg',
+    rightImageAlt: 'Wooden train set for little boys',
   },
   discoveryChips: {
     overline: '',

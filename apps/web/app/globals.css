@@ -1467,12 +1467,30 @@ h3 {
   }
 
   @media (min-width: 1024px) {
-    [data-theme='gift'] .gift-footer__grid {
-      /* Brand | flexible spacer | Shop | Help | Company (flush right) */
+    /* Shared tracks across footer rows so COMPANY ↔ REACH US align */
+    [data-theme='gift'] .gift-footer {
+      display: grid;
       grid-template-columns: minmax(15rem, max-content) minmax(0, 1fr) repeat(3, max-content);
       column-gap: clamp(1.5rem, 3.5vw, 2.75rem);
-      row-gap: var(--space-5);
+      row-gap: 0;
+    }
+
+    [data-theme='gift'] .gift-footer__grid,
+    [data-theme='gift'] .gift-footer__lower:not(.gift-footer__lower--reach-only),
+    [data-theme='gift'] .gift-footer__bar {
+      grid-column: 1 / -1;
+    }
+
+    [data-theme='gift'] .gift-footer__grid,
+    [data-theme='gift'] .gift-footer__lower:not(.gift-footer__lower--reach-only) {
+      display: grid;
+      grid-template-columns: subgrid;
+      column-gap: inherit;
       align-items: start;
+    }
+
+    [data-theme='gift'] .gift-footer__grid {
+      row-gap: var(--space-5);
     }
 
     [data-theme='gift'] .gift-footer__brand {
@@ -1488,6 +1506,14 @@ h3 {
     }
 
     [data-theme='gift'] .gift-footer__col:nth-child(4) {
+      grid-column: 5;
+    }
+
+    [data-theme='gift'] .gift-footer__newsletter {
+      grid-column: 1;
+    }
+
+    [data-theme='gift'] .gift-footer__reach {
       grid-column: 5;
     }
   }
@@ -1608,25 +1634,6 @@ h3 {
 
   [data-theme='gift'] .gift-footer__reach {
     flex: 0 0 auto;
-  }
-
-  /* Desktop: match upper row tracks so REACH US sits under COMPANY */
-  @media (min-width: 1024px) {
-    [data-theme='gift'] .gift-footer__lower:not(.gift-footer__lower--reach-only) {
-      display: grid;
-      grid-template-columns: minmax(15rem, max-content) minmax(0, 1fr) repeat(3, max-content);
-      column-gap: clamp(1.5rem, 3.5vw, 2.75rem);
-      row-gap: var(--space-5);
-      align-items: start;
-    }
-
-    [data-theme='gift'] .gift-footer__newsletter {
-      grid-column: 1;
-    }
-
-    [data-theme='gift'] .gift-footer__reach {
-      grid-column: 5;
-    }
   }
 
   [data-theme='gift'] .gift-newsletter {
@@ -2083,8 +2090,7 @@ h3 {
   }
 
   [data-theme='gift'] .gift-recipient-card {
-    display: flex;
-    flex-direction: column;
+    display: block;
     overflow: hidden;
     border-radius: var(--radius-card);
     background: #fff;
@@ -2098,12 +2104,10 @@ h3 {
 
   [data-theme='gift'] .gift-recipient-card__media {
     position: relative;
-    /* Capture 005 — taller portrait cards (not short landscape) */
     aspect-ratio: 4 / 5;
     min-height: 22rem;
-    max-height: 32rem;
+    max-height: 34rem;
     overflow: hidden;
-    flex: 1 1 auto;
   }
 
   @media (min-width: 640px) {
@@ -2116,31 +2120,34 @@ h3 {
     position: absolute;
     inset: 0;
     pointer-events: none;
+    z-index: 1;
   }
 
   [data-theme='gift'] .gift-recipient-card--pink .gift-recipient-card__overlay {
     background: linear-gradient(
       180deg,
-      transparent 38%,
-      color-mix(in srgb, var(--inabiya-pink) 45%, rgba(20, 12, 36, 0.5)) 100%
+      transparent 32%,
+      color-mix(in srgb, var(--inabiya-pink) 42%, rgba(20, 12, 36, 0.55)) 100%
     );
   }
 
   [data-theme='gift'] .gift-recipient-card--sky .gift-recipient-card__overlay {
     background: linear-gradient(
       180deg,
-      transparent 38%,
-      color-mix(in srgb, var(--inabiya-sky) 45%, rgba(20, 40, 60, 0.5)) 100%
+      transparent 32%,
+      color-mix(in srgb, var(--inabiya-sky) 48%, rgba(16, 40, 64, 0.58)) 100%
     );
   }
 
+  /* Full-bleed copy: absolute inset + justify-end (reference layout) */
   [data-theme='gift'] .gift-recipient-card__copy {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    padding: var(--space-5) var(--space-5) var(--space-5);
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.5rem;
     color: #fff;
   }
 
@@ -2150,11 +2157,11 @@ h3 {
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    opacity: 0.92;
+    opacity: 0.95;
   }
 
   [data-theme='gift'] .gift-recipient-card__label {
-    margin: 0.1rem 0 0;
+    margin: 0.15rem 0 0;
     font-family: var(--font-display), Georgia, serif;
     font-size: clamp(2.75rem, 6vw, 3.75rem);
     font-style: italic;
@@ -2171,29 +2178,28 @@ h3 {
     opacity: 0.92;
   }
 
-  /* Capture 005 — full-width colored CTA bar under image */
   [data-theme='gift'] .gift-recipient-card__cta {
-    display: block;
-    flex-shrink: 0;
-    padding: 0.95rem var(--space-4);
-    text-align: center;
+    display: inline-block;
+    margin-top: 0.85rem;
+    width: fit-content;
+    padding: 0;
+    background: transparent;
     font-size: 0.875rem;
     font-weight: 600;
     color: #fff;
     text-decoration: none;
-    transition: filter 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
   }
 
-  [data-theme='gift'] .gift-recipient-card--pink .gift-recipient-card__cta {
-    background: var(--inabiya-pink);
-  }
-
+  [data-theme='gift'] .gift-recipient-card--pink .gift-recipient-card__cta,
   [data-theme='gift'] .gift-recipient-card--sky .gift-recipient-card__cta {
-    background: color-mix(in srgb, var(--inabiya-sky) 65%, #3a8fb0);
+    background: transparent;
   }
 
   [data-theme='gift'] .gift-recipient-card:hover .gift-recipient-card__cta {
-    filter: brightness(0.96);
+    filter: none;
+    opacity: 0.9;
+    transform: translateX(2px);
   }
 
   [data-theme='gift'] .gift-category-grid {

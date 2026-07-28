@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 28, 2026 (relevant Soft Gift media pass)
+Last Updated: July 28, 2026 (gift footer column alignment)
 
 
 ---
@@ -924,6 +924,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-28 (gift footer COMPANY ↔ REACH US align)
+- Shipped: Desktop Soft Gift footer uses shared CSS subgrid tracks so row-1 COMPANY and row-2 REACH US share the same right-edge column; Shop/Help/Company pack right of a flexible spacer after brand.
+- Files: `apps/web/app/globals.css`
+- Risks: none (CSS-only; mobile/tablet flex+2-col grid unchanged)
+- Next: Browser QA at ≥1024px width
 
 ### Session — 2026-07-28 (Soft Gift ecommerce + CMS leftovers)
 - Waves 0–5 shipped (dev-only; third-party still post-dev).

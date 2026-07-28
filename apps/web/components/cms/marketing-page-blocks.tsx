@@ -875,14 +875,14 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
                   ) : (
                     <div className={`h-full w-full ${sky ? 'gift-panel-sky' : 'gift-media-fallback'}`} />
                   )}
-                  <div className="gift-recipient-card__overlay" />
+                  <div className="gift-recipient-card__overlay" aria-hidden />
                   <div className="gift-recipient-card__copy">
                     <p className="gift-recipient-card__eyebrow">{eyebrow}</p>
                     <p className="gift-recipient-card__label">{label}</p>
                     {blurb ? <p className="gift-recipient-card__blurb">{blurb}</p> : null}
+                    <span className="gift-recipient-card__cta">{cta}</span>
                   </div>
                 </div>
-                <span className="gift-recipient-card__cta">{cta}</span>
               </Link>
             );
           }
