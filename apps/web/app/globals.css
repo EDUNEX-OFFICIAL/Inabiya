@@ -2104,15 +2104,17 @@ h3 {
 
   [data-theme='gift'] .gift-recipient-card__media {
     position: relative;
-    aspect-ratio: 4 / 5;
-    min-height: 22rem;
-    max-height: 34rem;
+    /* Landscape — reference Shop by baby cards */
+    aspect-ratio: 16 / 10;
+    min-height: 14rem;
+    max-height: 22rem;
     overflow: hidden;
   }
 
   @media (min-width: 640px) {
     [data-theme='gift'] .gift-recipient-card__media {
-      min-height: 26rem;
+      min-height: 16rem;
+      max-height: 24rem;
     }
   }
 
