@@ -60,7 +60,10 @@ export default function WishlistPage() {
 
   return (
     <main className="gift-page max-w-2xl">
-      <h1 className="gift-h1">Wishlist</h1>
+      <Link href="/gift/products" className="gift-link text-sm">
+        ← Continue shopping
+      </Link>
+      <h1 className="gift-h1 mt-gs-4">Wishlist</h1>
       <p className="mt-gs-2 text-sm opacity-80">Saved gifts — move to cart when ready.</p>
       {msg ? <p className="mt-gs-3 text-sm text-success">{msg}</p> : null}
 

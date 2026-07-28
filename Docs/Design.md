@@ -170,7 +170,7 @@ Exact HSL conversions should live in theme CSS; hex above is brand source.
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
-  --radius-card: 1.5rem;
+  --radius-card: 1.75rem;
   --radius-panel: 1rem;
   --radius-pill: 9999px;
   --radius: 1rem;

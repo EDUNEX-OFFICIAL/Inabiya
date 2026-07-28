@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <main className="gift-page mx-auto max-w-3xl px-gs-4 py-gs-7 sm:px-gs-6">
+    <main className="gift-page max-w-3xl">
       <p className="gift-overline">Hello</p>
       <h1 className="gift-h1 mt-gs-2">We’d love to hear from you</h1>
       <p className="mt-gs-4 max-w-prose text-body opacity-90">
@@ -39,19 +39,16 @@ export default function ContactPage() {
         </li>
         <li className="clay-panel p-gs-5">
           <p className="font-semibold text-foreground">Corporate gifting</p>
-          <Link
-            href="/gift/corporate"
-            className="mt-gs-2 inline-block text-primary hover:underline"
-          >
-            Request a quote →
+          <Link href="/gift/corporate" className="clay-btn-secondary mt-gs-3 inline-flex">
+            Request a quote
           </Link>
         </li>
       </ul>
 
       <p className="mt-gs-7 text-sm opacity-70">
         Prefer browsing first?{' '}
-        <Link href="/gift" className="text-primary hover:underline">
-          Back to Soft Gift
+        <Link href="/gift" className="gift-link">
+          Back to gifts
         </Link>
       </p>
     </main>

@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 27, 2026 (Inabiya homepage client-reference parity)
+Last Updated: July 28, 2026 (cross-check storefront fixes)
 
 
 ---
@@ -906,6 +906,81 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-28 (footer WhatsApp icon)
+- Replaced Lucide `MessageCircle` with official WhatsApp glyph in footer social + Reach us.
+- Shared `components/gift/whatsapp-icon.tsx` (floating CTA reuses it).
+- Next: hard-refresh `/gift` footer.
+
+### Session — 2026-07-28 (cross-check storefront page fixes)
+- Verified routes 200; register copy OK (client chunk); PLP/auth/articles/footer markers OK.
+- Fixed: login seed passwords tree-shaken from prod bundle; corporate hero CTA → `#inquiry` + Browse shop (re-seeded); PDP label cap + hamper chip vs Gift set; View cart match tightened; specialist detail clay cards; articles newsletter flush margin.
+- Confirmed: `Password123!` / seed emails absent from `.next/static`.
+- Next: spot-check PDP add-to-cart + corporate quote scroll on mobile.
+
+### Session — 2026-07-28 (storefront pages audit + Wave A/B fixes)
+- **Override:** Soft Gift polish outside Phase 12.
+- Audit canvas: `gift-storefront-pages-audit.canvas.tsx` (14 findings; plan waves).
+- Auth: login seed panel `NODE_ENV===development` only; empty defaults; customer copy on forgot/register.
+- PLP: active filter chips, sort chips, overline + count, empty clay-panel.
+- BYB: clay tokens, Remaining-first summary, gift-h2 steps.
+- PDP: split busyCart/Wish/Box; FAQ dedupe (details → #faq); View cart link.
+- Checkout: city/state grid + PIN narrow; tax line when >0.
+- About/contact padding; specialists clay-cards; corporate bare main + CorporateHero; articles gift-band + compact newsletter; footer newsletter wrap; PLP labels max=2.
+- Next: visual QA PLP/BYB/corporate/login mobile.
+
+### Session — 2026-07-28 (footer polish + short newsletter)
+- **Override:** Soft Gift storefront polish outside Phase 12.
+- Footer: brand mark lockup, icon socials, Reach us (email/WA/@inabiya), copyright bar; soft pink/lavender glow on dark band.
+- Newsletter compact: fixed ~12.5rem email + Subscribe (not full-width); dark-surface input.
+- Next: hard-refresh `/gift` footer.
+
+### Session — 2026-07-28 (home product card CTA + chips)
+- **Override:** Soft Gift storefront polish outside Phase 12.
+- Home cards: primary `View gift` (`clay-btn`) + secondary `Add to cart` (`clay-btn-secondary`); price uses foreground (not primary pink).
+- Hamper grid: hide redundant “Ready-made hamper” chip (brand chip stays; PLP unchanged).
+- Overlay labels `max={1}` on home for even NEW / Gift set hierarchy.
+- Next: hard-refresh `/gift` hampers + product shelves.
+
+### Session — 2026-07-28 (hero overline pill width)
+- `.gift-overline` was stretching full column width inside hero `flex-col` (default stretch).
+- Fixed with `width: fit-content; max-width: 100%` so pill hugs label text.
+- Next: hard-refresh `/gift` hero eyebrow.
+
+### Session — 2026-07-28 (categories + testimonials polish)
+- Categories: overline/subtitle, hover lift, “Shop →”, blush media frame; toys→train-toy photo; Mom Care image swapped off blanket.
+- Testimonials: pastel card tones, quote mark, avatar initials, italic display quote, real subtitle.
+- Next: hard-refresh `/gift` category + parent-love bands.
+
+### Session — 2026-07-28 (BYB banner readability polish)
+- Deeper pink→sky gradient + vignette for white-text contrast; stronger overline/CTA.
+- Steps: glass cards with number + icon, clearer type; trust labels as chips.
+- Next: hard-refresh `/gift` Build Your Box band.
+
+### Session — 2026-07-28 (USP section polish; kill filler asides)
+- Removed floating mottos (“Personalised · Ready · Trusted”, offers/testimonials fillers).
+- USP: real subtitle under title; soft pastel card washes (pink/mint/sky/lavender); icon-on-top layout.
+- Shop-by-baby subtitle stays under title (not right-rail). Header spacing tightened.
+- Next: hard-refresh `/gift` USP block.
+
+### Session — 2026-07-28 (hero: drop brand wordmark, restore Unsplash)
+- Hero left-side Inabiya wordmark removed (nav brand stays).
+- Hero image restored to prior Unsplash (`photo-1635874714425…`); seed + default updated.
+- Next: hard-refresh `/gift`.
+
+### Session — 2026-07-28 (homepage UX audit resolve + padding)
+- **Override:** Soft Gift storefront polish outside Phase 12.
+- Unified chrome gutter: `--gift-pad-x/y` · nav/band/footer/hero aligned (`px-gs-4` / `sm:px-gs-6`, tighter section Y).
+- P0: hero Inabiya brand · Soft Gift brand-pill accents (no hex) · unique category/recipient media · removed vanity 4.9 rating · local hero/hamper images.
+- P1/P2: section headers · clay-btn offer CTAs · radius token · toys ≤ recipient · +more link · testids · no emoji · shipping→#faq · journal alt · Design.md radius 1.75.
+- Re-seed `home` required for CMS props.
+- Next: visual QA `/gift` mobile+desktop.
+
+### Session — 2026-07-28 (exclusive offers card colors)
+- **Override:** Soft Gift storefront polish outside Phase 12.
+- Bug: Tailwind tree-shook `.gift-offer-card--{blush,sky,lavender}` background rules (dynamic class) → white cards.
+- Fix: tone fills under `.gift-offers-grid …`; static tone class map; safelist; Capture 007 soft pastel washes + tinted tags.
+- Next: hard-refresh `/gift` Exclusive Offers; confirm pink/teal/lavender cards.
 
 ### Session — 2026-07-27 (Inabiya homepage client parity)
 - **Override:** Soft Gift storefront polish outside Phase 12 (Phase 12 remains shipped).

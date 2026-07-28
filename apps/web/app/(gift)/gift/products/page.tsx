@@ -33,15 +33,72 @@ function titleFromFilters(sp: {
   return 'All gifts';
 }
 
-const FILTERS = [
-  { href: '/gift/products', label: 'All' },
-  { href: '/gift/products?hamper=1', label: 'Hampers' },
-  { href: '/gift/products?recipient=girl', label: 'Girl' },
-  { href: '/gift/products?recipient=boy', label: 'Boy' },
-  { href: '/gift/products?recipient=mom', label: 'Mom' },
-  { href: '/gift/products?category=clothing', label: 'Clothing' },
-  { href: '/gift/products?category=toys', label: 'Toys' },
+type FilterDef = {
+  href: string;
+  label: string;
+  match: (sp: {
+    recipient?: string;
+    age?: string;
+    hamper?: string;
+    category?: string;
+    q?: string;
+    occasion?: string;
+  }) => boolean;
+};
+
+const FILTERS: FilterDef[] = [
+  {
+    href: '/gift/products',
+    label: 'All',
+    match: (sp) =>
+      !sp.recipient && !sp.age && sp.hamper !== '1' && !sp.category && !sp.q && !sp.occasion,
+  },
+  {
+    href: '/gift/products?hamper=1',
+    label: 'Hampers',
+    match: (sp) => sp.hamper === '1',
+  },
+  {
+    href: '/gift/products?recipient=girl',
+    label: 'Girl',
+    match: (sp) => sp.recipient === 'girl',
+  },
+  {
+    href: '/gift/products?recipient=boy',
+    label: 'Boy',
+    match: (sp) => sp.recipient === 'boy',
+  },
+  {
+    href: '/gift/products?recipient=mom',
+    label: 'Mom',
+    match: (sp) => sp.recipient === 'mom',
+  },
+  {
+    href: '/gift/products?category=clothing',
+    label: 'Clothing',
+    match: (sp) => sp.category === 'clothing',
+  },
+  {
+    href: '/gift/products?category=toys',
+    label: 'Toys',
+    match: (sp) => sp.category === 'toys',
+  },
+];
+
+const SORTS = [
+  { value: 'newest', label: 'Newest' },
+  { value: 'price_asc', label: 'Price ↑' },
+  { value: 'price_desc', label: 'Price ↓' },
 ] as const;
+
+function plpHref(params: Record<string, string | undefined>): string {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v) qs.set(k, v);
+  }
+  const q = qs.toString();
+  return q ? `/gift/products?${q}` : '/gift/products';
+}
 
 export default async function ProductListPage({ searchParams }: { searchParams: SearchParams }) {
   const recipient = first(searchParams.recipient);
@@ -51,7 +108,18 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
   const occasion = first(searchParams.occasion);
   const qRaw = first(searchParams.q)?.trim();
   const q = qRaw ? qRaw.slice(0, 120) : undefined;
-  const sort = first(searchParams.sort) ?? 'newest';
+  const sortRaw = first(searchParams.sort) ?? 'newest';
+  const sort = SORTS.some((s) => s.value === sortRaw) ? sortRaw : 'newest';
+
+  const filterState = { recipient, age, hamper, category, q, occasion };
+  const keep: Record<string, string | undefined> = {
+    recipient,
+    age,
+    hamper,
+    category,
+    occasion,
+    q,
+  };
 
   const qs = new URLSearchParams();
   qs.set('sort', sort);
@@ -74,21 +142,71 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
   return (
     <main className="gift-page">
       <TrackView name="view_plp" />
-      <div className="mb-gs-6 sm:mb-gs-6">
+      <div className="mb-gs-6">
         <Link href="/gift" className="gift-link text-sm">
           ← Gift home
         </Link>
-        <h1 className="gift-h1 mt-gs-3">{heading}</h1>
-        <div className="-mx-gs-1 mt-gs-4 flex gap-gs-2 overflow-x-auto px-gs-1 pb-gs-1 sm:mt-gs-5 sm:flex-wrap sm:overflow-visible">
-          {FILTERS.map((f) => (
-            <Link key={f.href} className="clay-chip shrink-0 hover:text-primary" href={f.href}>
-              {f.label}
+        <p className="gift-overline mt-gs-4">Shop</p>
+        <h1 className="gift-h1 mt-gs-2">{heading}</h1>
+        <p className="gift-muted mt-gs-2 text-sm">
+          {products.length === 0
+            ? 'No matches for these filters yet.'
+            : `${products.length} gift${products.length === 1 ? '' : 's'}`}
+        </p>
+
+        <div className="-mx-gs-1 mt-gs-4 flex gap-gs-2 overflow-x-auto px-gs-1 pb-gs-1 sm:flex-wrap sm:overflow-visible">
+          {FILTERS.map((f) => {
+            const active = f.match(filterState);
+            const href =
+              f.href === '/gift/products'
+                ? plpHref({ sort })
+                : plpHref({
+                    ...Object.fromEntries(new URL(f.href, 'http://x').searchParams.entries()),
+                    sort,
+                  });
+            return (
+              <Link
+                key={f.href}
+                href={href}
+                aria-current={active ? 'page' : undefined}
+                className={
+                  active
+                    ? 'shrink-0 rounded-full bg-primary px-gs-3 py-gs-2 text-sm font-medium text-primary-foreground shadow-clay'
+                    : 'clay-chip shrink-0 hover:text-primary'
+                }
+              >
+                {f.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="mt-gs-3 flex flex-wrap items-center gap-gs-2" aria-label="Sort products">
+          <span className="text-xs font-medium uppercase tracking-wide opacity-55">Sort</span>
+          {SORTS.map((s) => (
+            <Link
+              key={s.value}
+              href={plpHref({ ...keep, sort: s.value })}
+              aria-current={sort === s.value ? 'page' : undefined}
+              className={
+                sort === s.value
+                  ? 'rounded-full bg-foreground px-gs-3 py-1 text-xs font-medium text-background'
+                  : 'clay-chip text-xs'
+              }
+            >
+              {s.label}
             </Link>
           ))}
         </div>
       </div>
+
       {products.length === 0 ? (
-        <p className="text-sm opacity-70">No products match these filters.</p>
+        <div className="clay-panel p-gs-6 text-center sm:p-gs-7">
+          <p className="text-sm opacity-80">No products match these filters.</p>
+          <Link href="/gift/products" className="clay-btn mt-gs-5 inline-flex">
+            Clear filters
+          </Link>
+        </div>
       ) : (
         <ul className="grid grid-cols-1 gap-gs-4 sm:grid-cols-2 sm:gap-gs-5 lg:grid-cols-3">
           {products.map((p) => (

@@ -5,14 +5,19 @@ import Image from 'next/image';
 import { useEffect, useState, type MouseEvent, type ReactNode } from 'react';
 import {
   ArrowRight,
+  Baby,
   Briefcase,
+  Cake,
   Gift,
   Heart,
+  LayoutGrid,
   Package,
   ShieldCheck,
   Sparkles,
   Star,
   Truck,
+  UserRound,
+  Wallet,
 } from 'lucide-react';
 import { formatInr, type StorefrontDisplayLabel } from '@/lib/catalog';
 import { cartApi } from '@/lib/cart-client';
@@ -126,30 +131,30 @@ function GiftSectionHeader({
   overline?: string | null;
   title?: string | null;
   subtitle?: string | null;
-  /** Right-aligned muted line (client “Curated…” style) */
+  /** Optional right-rail — prefer real CTAs via actionHref; avoid filler mottos. */
   aside?: string | null;
   actionHref?: string | null;
   actionLabel?: string | null;
 }) {
   if (!title && !subtitle && !overline && !actionHref && !aside) return null;
+  const showRail = Boolean((aside && aside.trim()) || (actionHref && actionLabel));
   return (
-    <div className="mb-gs-6 flex flex-col gap-gs-4 sm:mb-gs-7 sm:flex-row sm:items-end sm:justify-between">
+    <div
+      className={`mb-gs-5 flex flex-col gap-gs-3 sm:mb-gs-6 ${
+        showRail ? 'sm:flex-row sm:items-end sm:justify-between sm:gap-gs-6' : ''
+      }`}
+    >
       <div className="min-w-0 max-w-2xl">
         {overline ? <p className="gift-overline">{overline}</p> : null}
         {title ? (
           <h2 className={`gift-h2 ${overline ? 'mt-gs-2' : ''} leading-tight`}>{title}</h2>
         ) : null}
         {subtitle ? (
-          <p className="mt-gs-3 max-w-prose text-sm leading-relaxed text-foreground/75 sm:text-base">
+          <p className="gift-muted mt-gs-2 max-w-prose text-sm leading-relaxed sm:text-base">
             {subtitle}
           </p>
         ) : null}
       </div>
-      {aside ? (
-        <p className="shrink-0 self-start text-sm text-foreground/55 sm:self-end sm:text-right">
-          {aside}
-        </p>
-      ) : null}
       {actionHref && actionLabel ? (
         <Link
           href={actionHref}
@@ -157,6 +162,10 @@ function GiftSectionHeader({
         >
           {actionLabel}
         </Link>
+      ) : aside && aside.trim() ? (
+        <p className="gift-muted shrink-0 self-start text-sm sm:max-w-[14rem] sm:self-end sm:text-right">
+          {aside.trim()}
+        </p>
       ) : null}
     </div>
   );
@@ -202,7 +211,7 @@ const DEFAULT_USP_ITEMS = [
   {
     icon: 'package' as const,
     label: 'Ready-made hampers',
-    body: 'Curated for every occasion.',
+    body: 'Ready when you need them.',
   },
   {
     icon: 'heart' as const,
@@ -215,6 +224,8 @@ const DEFAULT_USP_ITEMS = [
     body: 'Baby-safe, tested, thoughtful.',
   },
 ];
+
+const USP_CARD_TONES = ['pink', 'mint', 'sky', 'lavender'] as const;
 
 function UspRow({
   items,
@@ -235,22 +246,36 @@ function UspRow({
       : DEFAULT_USP_ITEMS;
 
   return (
-    <ul className="gift-usp-cards list-none">
-      {rows.map(({ icon, label, body }) => {
-        const Icon = USP_ICON_MAP[icon] ?? Heart;
-        return (
-          <li key={label} className="gift-usp-cards__item">
-            <span className="gift-usp-cards__icon" aria-hidden>
-              <Icon className="h-5 w-5" strokeWidth={1.75} />
-            </span>
-            <div>
-              <p className="gift-usp-cards__label">{label}</p>
-              {body ? <p className="gift-usp-cards__body">{body}</p> : null}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      <GiftSectionHeader
+        overline="Why parents choose us"
+        title="Thoughtful extras, every order"
+        subtitle="Personal notes, ready hampers, and baby-safe picks — so gifting feels easy, not overwhelming."
+      />
+      <ul className="gift-usp-cards list-none">
+        {rows.map(({ icon, label, body }, idx) => {
+          const Icon = USP_ICON_MAP[icon] ?? Heart;
+          const tone = USP_CARD_TONES[idx % USP_CARD_TONES.length] ?? 'pink';
+          const toneClass = {
+            pink: 'gift-usp-cards__item gift-usp-cards__item--pink',
+            mint: 'gift-usp-cards__item gift-usp-cards__item--mint',
+            sky: 'gift-usp-cards__item gift-usp-cards__item--sky',
+            lavender: 'gift-usp-cards__item gift-usp-cards__item--lavender',
+          }[tone];
+          return (
+            <li key={label} className={toneClass}>
+              <span className="gift-usp-cards__icon" aria-hidden>
+                <Icon className="h-5 w-5" strokeWidth={1.75} />
+              </span>
+              <div>
+                <p className="gift-usp-cards__label">{label}</p>
+                {body ? <p className="gift-usp-cards__body">{body}</p> : null}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }
 
@@ -269,6 +294,7 @@ function HeroBlock({ props, layout }: { props: Record<string, unknown>; layout: 
         trustLine={props.trustLine ? String(props.trustLine) : undefined}
         eyebrow={props.eyebrow ? String(props.eyebrow) : undefined}
         imageUrl={props.imageUrl ? String(props.imageUrl) : undefined}
+        accentWord={props.accentWord ? String(props.accentWord) : undefined}
       />
     );
   }
@@ -338,7 +364,7 @@ function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: bool
 
   if (home) {
     return (
-      <GiftBand tone="lavender" className="relative overflow-hidden" toys>
+      <GiftBand tone="lavender" className="relative overflow-hidden" toys={false}>
         <div className="gift-doodle absolute inset-0 opacity-60" aria-hidden />
         <div className="relative clay-panel p-gs-6 sm:p-gs-7">{inner}</div>
       </GiftBand>
@@ -380,9 +406,12 @@ function SpacerBlock({ props }: { props: Record<string, unknown> }) {
 function HomeProductCard({
   product,
   featured = false,
+  /** When true (hamper grid), skip redundant “Ready-made hamper” chip. */
+  hideHamperChip = false,
 }: {
   product: CmsBlockProduct;
   featured?: boolean;
+  hideHamperChip?: boolean;
 }) {
   const img = product.media[0];
   const [busy, setBusy] = useState(false);
@@ -422,7 +451,11 @@ function HomeProductCard({
           featured ? 'aspect-[4/3] sm:aspect-auto sm:min-h-[16rem]' : 'aspect-[4/3]'
         }`}
       >
-        <Link href={`/gift/products/${product.slug}`} className="absolute inset-0 block">
+        <Link
+          href={`/gift/products/${product.slug}`}
+          className="absolute inset-0 block"
+          data-testid={`home-product-media-${product.slug}`}
+        >
           {img?.url ? (
             <Image
               src={img.url}
@@ -440,49 +473,64 @@ function HomeProductCard({
           )}
         </Link>
         {product.displayLabels?.length ? (
-          <ProductLabels labels={product.displayLabels} placement="overlay" />
-        ) : null}
-        {canQuickAdd ? (
-          <button
-            type="button"
-            onClick={(e) => void quickAdd(e)}
-            disabled={busy}
-            className="absolute bottom-gs-2 right-gs-2 z-10 rounded-full bg-white/95 px-gs-3 py-1.5 text-xs font-semibold text-primary shadow-clay hover:bg-white disabled:opacity-50"
-            aria-label={`Quick add ${product.title} to cart`}
-          >
-            {busy ? '…' : msg === 'Added' ? 'Added ✓' : 'Quick add +'}
-          </button>
+          <ProductLabels labels={product.displayLabels} placement="overlay" max={1} />
         ) : null}
       </div>
-      <Link
-        href={`/gift/products/${product.slug}`}
-        className={`flex flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}
-      >
-        <div className="flex flex-wrap items-center gap-gs-2">
-          {product.brandName ? (
-            <span className="clay-chip text-xs">{product.brandName}</span>
-          ) : null}
-          {product.isReadyMadeHamper ? (
-            <span className="clay-chip text-xs">Ready-made hamper</span>
-          ) : null}
-        </div>
-        <p
-          className={`font-medium leading-snug text-foreground transition-colors group-hover:text-primary ${
-            featured ? 'mt-gs-3 font-display text-2xl sm:text-3xl' : 'mt-gs-2'
+      <div className={`flex flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}>
+        {product.brandName || (product.isReadyMadeHamper && !hideHamperChip) ? (
+          <div className="flex flex-wrap items-center gap-gs-2">
+            {product.brandName ? (
+              <span className="clay-chip text-xs">{product.brandName}</span>
+            ) : null}
+            {product.isReadyMadeHamper && !hideHamperChip ? (
+              <span className="clay-chip text-xs">Ready-made hamper</span>
+            ) : null}
+          </div>
+        ) : null}
+        <Link
+          href={`/gift/products/${product.slug}`}
+          className={`font-medium leading-snug text-foreground transition-colors hover:text-primary ${
+            product.brandName || (product.isReadyMadeHamper && !hideHamperChip)
+              ? featured
+                ? 'mt-gs-3 font-display text-2xl sm:text-3xl'
+                : 'mt-gs-2'
+              : featured
+                ? 'font-display text-2xl sm:text-3xl'
+                : ''
           }`}
         >
           {product.title}
-        </p>
+        </Link>
         <p
-          className={`font-semibold text-primary ${featured ? 'mt-gs-3 text-lg' : 'mt-gs-2 text-sm'}`}
+          className={`font-semibold text-foreground ${
+            featured ? 'mt-gs-3 text-lg' : 'mt-gs-2 text-sm'
+          }`}
         >
           From {formatInr(product.fromPricePaise)}
         </p>
-        <p className="mt-gs-3 text-sm font-medium text-primary opacity-90">
-          {featured ? 'Explore this gift →' : 'View gift →'}
-        </p>
-        {msg && msg !== 'Added' ? <p className="mt-gs-1 text-xs text-danger">{msg}</p> : null}
-      </Link>
+        <div className="mt-gs-4 flex flex-wrap items-center gap-gs-2">
+          <Link
+            href={`/gift/products/${product.slug}`}
+            className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-sm"
+            data-testid={`home-product-view-${product.slug}`}
+          >
+            {featured ? 'Explore gift' : 'View gift'}
+          </Link>
+          {canQuickAdd ? (
+            <button
+              type="button"
+              onClick={(e) => void quickAdd(e)}
+              disabled={busy}
+              className="clay-btn-secondary !min-h-0 !px-gs-4 !py-gs-2 text-sm disabled:opacity-50"
+              aria-label={`Add ${product.title} to cart`}
+              data-testid={`home-product-add-${product.slug}`}
+            >
+              {busy ? 'Adding…' : msg === 'Added' ? 'Added ✓' : 'Add to cart'}
+            </button>
+          ) : null}
+        </div>
+        {msg && msg !== 'Added' ? <p className="mt-gs-2 text-xs text-danger">{msg}</p> : null}
+      </div>
     </div>
   );
 }
@@ -503,6 +551,7 @@ function ProductGridBlock({
   const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'See all';
   const products = Array.isArray(props.products) ? (props.products as CmsBlockProduct[]) : [];
   const home = layout === 'home';
+  const hideHamperChip = props.hamper === true;
   // Featured row only when enough remain for a balanced grid (avoids one full-width giant card).
   const featured = home && products.length >= 3 ? products[0] : null;
   const rest = featured ? products.slice(1) : products;
@@ -535,12 +584,14 @@ function ProductGridBlock({
         </p>
       ) : home ? (
         <div className="gift-stack">
-          {featured ? <HomeProductCard product={featured} featured /> : null}
+          {featured ? (
+            <HomeProductCard product={featured} featured hideHamperChip={hideHamperChip} />
+          ) : null}
           {rest.length > 0 ? (
             <ul className={`grid gap-gs-5 ${restCols}`}>
               {rest.map((p) => (
                 <li key={p.id} className="min-w-0 list-none">
-                  <HomeProductCard product={p} />
+                  <HomeProductCard product={p} hideHamperChip={hideHamperChip} />
                 </li>
               ))}
             </ul>
@@ -580,7 +631,7 @@ function ProductGridBlock({
 
   if (layout === 'home' && bandTone) {
     return (
-      <GiftBand tone={bandTone} toys>
+      <GiftBand tone={bandTone} toys={false}>
         {grid}
       </GiftBand>
     );
@@ -588,30 +639,30 @@ function ProductGridBlock({
   return <section className="py-gs-2">{grid}</section>;
 }
 
-/** Local brand marks — interim icons + accent (not official trademarks). */
-const BRAND_MARK: Record<string, { color: string; initials: string }> = {
-  Chicco: { color: '#1B4F72', initials: 'Ch' },
-  "Johnson’s Baby": { color: '#D81B60', initials: 'JB' },
-  "Johnson's Baby": { color: '#D81B60', initials: 'JB' },
-  Mothercare: { color: '#1565C0', initials: 'Mc' },
-  Pigeon: { color: '#0277BD', initials: 'Pi' },
-  Himalaya: { color: '#2E7D32', initials: 'Hi' },
-  'The Moms Co.': { color: '#C2185B', initials: 'TM' },
-  Mamaearth: { color: '#2E7D4F', initials: 'Ma' },
-  Pampers: { color: '#F9A825', initials: 'Pa' },
-  'Mee Mee': { color: '#7B1FA2', initials: 'MM' },
-  Sebamed: { color: '#00838F', initials: 'Se' },
-  Cetaphil: { color: '#1565C0', initials: 'Ce' },
-  'Mother Sparsh': { color: '#6A1B9A', initials: 'MS' },
-  'Baby Hug': { color: '#E65100', initials: 'BH' },
-  'Philips Avent': { color: '#0D47A1', initials: 'PA' },
-  Inabiya: { color: '#C44D7A', initials: 'In' },
-  'Soft Nest': { color: '#6B4F7A', initials: 'SN' },
+/** Soft Gift accent cycle for brand initials (no third-party hex). */
+const BRAND_ACCENTS = ['pink', 'mint', 'lavender', 'sky'] as const;
+
+const BRAND_INITIALS: Record<string, string> = {
+  Chicco: 'Ch',
+  "Johnson’s Baby": 'JB',
+  "Johnson's Baby": 'JB',
+  Mothercare: 'Mc',
+  Pigeon: 'Pi',
+  Himalaya: 'Hi',
+  'The Moms Co.': 'TM',
+  Mamaearth: 'Ma',
+  Pampers: 'Pa',
+  'Mee Mee': 'MM',
+  Sebamed: 'Se',
+  Cetaphil: 'Ce',
+  'Mother Sparsh': 'MS',
+  'Baby Hug': 'BH',
+  'Philips Avent': 'PA',
+  'Soft Nest': 'SN',
 };
 
 const BRAND_LOGO_BY_NAME: Record<string, string> = {
   'The Moms Co.': '/gift/brands/the-moms-co.svg',
-  Inabiya: '/gift/brands/inabiya.svg',
   Chicco: '/gift/brands/chicco.svg',
   Mamaearth: '/gift/brands/mamaearth.svg',
   'Soft Nest': '/gift/brands/soft-nest.svg',
@@ -619,54 +670,57 @@ const BRAND_LOGO_BY_NAME: Record<string, string> = {
 
 const DEFAULT_HOME_BRANDS = [
   'The Moms Co.',
-  'Inabiya',
   'Chicco',
   'Mamaearth',
   'Soft Nest',
+  'Himalaya',
 ] as const;
 
 type BrandItem = { name: string; logoUrl: string | null };
 
-function brandMarkFor(name: string) {
+function brandInitials(name: string) {
   return (
-    BRAND_MARK[name] ?? {
-      color: 'var(--inabiya-pink, #FF6B9D)',
-      initials: name
-        .split(/\s+/)
-        .map((w) => w[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase(),
-    }
+    BRAND_INITIALS[name] ??
+    name
+      .split(/\s+/)
+      .map((w) => w[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase()
   );
 }
 
 function normalizeBrands(raw: unknown): BrandItem[] {
-  if (!Array.isArray(raw)) {
-    return DEFAULT_HOME_BRANDS.map((name) => ({
-      name,
-      logoUrl: BRAND_LOGO_BY_NAME[name] ?? null,
-    }));
-  }
-  if (raw.length === 0) return [];
-  return raw
-    .map((entry): BrandItem | null => {
-      if (typeof entry === 'string' && entry.trim()) {
-        const name = entry.trim();
-        return { name, logoUrl: BRAND_LOGO_BY_NAME[name] ?? null };
-      }
-      if (entry && typeof entry === 'object' && 'name' in entry) {
-        const name = String((entry as { name: unknown }).name).trim();
-        if (!name) return null;
-        const custom =
-          typeof (entry as { logoUrl?: unknown }).logoUrl === 'string'
-            ? String((entry as { logoUrl: string }).logoUrl)
-            : null;
-        return { name, logoUrl: custom ?? BRAND_LOGO_BY_NAME[name] ?? null };
-      }
-      return null;
-    })
-    .filter((b): b is BrandItem => Boolean(b));
+  const mapped = (() => {
+    if (!Array.isArray(raw)) {
+      return DEFAULT_HOME_BRANDS.map((name) => ({
+        name,
+        logoUrl: BRAND_LOGO_BY_NAME[name] ?? null,
+      }));
+    }
+    if (raw.length === 0) return [];
+    return raw
+      .map((entry): BrandItem | null => {
+        if (typeof entry === 'string' && entry.trim()) {
+          const name = entry.trim();
+          return { name, logoUrl: BRAND_LOGO_BY_NAME[name] ?? null };
+        }
+        if (entry && typeof entry === 'object' && 'name' in entry) {
+          const name = String((entry as { name: unknown }).name).trim();
+          if (!name) return null;
+          const custom =
+            typeof (entry as { logoUrl?: unknown }).logoUrl === 'string'
+              ? String((entry as { logoUrl: string }).logoUrl)
+              : null;
+          return { name, logoUrl: custom ?? BRAND_LOGO_BY_NAME[name] ?? null };
+        }
+        return null;
+      })
+      .filter((b): b is BrandItem => Boolean(b));
+  })();
+
+  // We are the storefront — don't list ourselves in "brands we stock".
+  return mapped.filter((b) => b.name.toLowerCase() !== 'inabiya');
 }
 
 /** Client-style static brand pills: icon + name (Capture 004). */
@@ -684,25 +738,38 @@ function BrandPillPanel({
     <div className="gift-brand-panel">
       <h2 className="gift-brand-panel__title">{heading}</h2>
       <ul className="gift-brand-panel__grid list-none">
-        {items.map((brand) => {
-          const mark = brandMarkFor(brand.name);
+        {items.map((brand, i) => {
+          const accent = BRAND_ACCENTS[i % BRAND_ACCENTS.length];
+          const initials = brandInitials(brand.name);
           return (
-            <li key={brand.name} className="gift-brand-panel__pill">
-              <span
-                className="gift-brand-panel__icon"
-                style={{ background: `color-mix(in srgb, ${mark.color} 16%, white)`, color: mark.color }}
-                aria-hidden
-              >
-                {mark.initials}
+            <li
+              key={brand.name}
+              className={`gift-brand-panel__pill gift-brand-panel__pill--${accent}`}
+            >
+              <span className="gift-brand-panel__icon" aria-hidden>
+                {brand.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={brand.logoUrl}
+                    alt=""
+                    className="gift-brand-panel__mark-img"
+                  />
+                ) : (
+                  initials
+                )}
               </span>
-              <span className="gift-brand-panel__name" style={{ color: mark.color }}>
-                {brand.name}
-              </span>
+              <span className="gift-brand-panel__name">{brand.name}</span>
             </li>
           );
         })}
-        <li className="gift-brand-panel__pill gift-brand-panel__pill--more" aria-hidden>
-          <span className="gift-brand-panel__name">+ more</span>
+        <li>
+          <Link
+            href="/gift/products"
+            className="gift-brand-panel__pill gift-brand-panel__pill--more"
+            data-testid="brands-more"
+          >
+            <span className="gift-brand-panel__name">+ more</span>
+          </Link>
         </li>
       </ul>
     </div>
@@ -757,7 +824,7 @@ function BrandStripBlock({ props, home }: { props: Record<string, unknown>; home
 
   if (home) {
     return (
-      <GiftBand tone={showBrands ? 'sky' : 'soft'} toys={false}>
+      <GiftBand tone="soft" toys={false}>
         {body}
       </GiftBand>
     );
@@ -776,8 +843,9 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
   const body = (
     <>
       <GiftSectionHeader
+        overline={home ? 'For every little one' : null}
         title={props.title ? String(props.title) : null}
-        aside={props.subtitle ? String(props.subtitle) : null}
+        subtitle={props.subtitle ? String(props.subtitle) : null}
       />
       <div className="grid gap-gs-5 sm:grid-cols-2 sm:gap-gs-6">
         {cards.map(({ key, card }) => {
@@ -793,6 +861,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
                 key={key}
                 href={String(card.href ?? '/gift/products')}
                 className={`gift-recipient-card group ${sky ? 'gift-recipient-card--sky' : 'gift-recipient-card--pink'}`}
+                data-testid={`recipient-${label || key}`}
               >
                 <div className="gift-recipient-card__media">
                   {card.imageUrl ? (
@@ -889,7 +958,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
       );
       if (home) {
         return (
-          <GiftBand tone="blush" toys>
+          <GiftBand tone="soft" toys={false}>
             {body}
           </GiftBand>
         );
@@ -936,7 +1005,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
                   // eslint-disable-next-line @next/next/no-img-element -- CMS cover may be SVG/webp/jpeg
                   <img
                     src={String(a.imageUrl)}
-                    alt=""
+                    alt={a.title}
                     className={`absolute inset-0 h-full w-full transition duration-300 group-hover:scale-[1.02] ${
                       /\.svg(\?|#|$)/i.test(String(a.imageUrl))
                         ? 'object-contain p-gs-3 sm:p-gs-4'
@@ -979,7 +1048,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
 
   if (home) {
     return (
-      <GiftBand tone="blush" toys>
+      <GiftBand tone="soft" toys={false}>
         {body}
       </GiftBand>
     );
@@ -1158,14 +1227,16 @@ function DiscoveryChipsBlock({ props, home }: { props: Record<string, unknown>; 
   const body = (
     <>
       <GiftSectionHeader
-        overline={props.overline ? String(props.overline) : home && !asCards ? 'Discover' : null}
+        overline={props.overline ? String(props.overline) : home ? 'Browse the shop' : null}
         title={props.title ? String(props.title) : asCards ? 'Shop by category' : 'Shop by moment'}
         subtitle={
           props.subtitle
             ? String(props.subtitle)
-            : home && !asCards
-              ? 'Jump into age bands and occasions — filters open on the gift shop.'
-              : null
+            : home && asCards
+              ? 'Clothing, care, toys, and mom essentials — curated for gifting.'
+              : home && !asCards
+                ? 'Jump into age bands and occasions — filters open on the gift shop.'
+                : null
         }
         actionHref={asCards ? seeAllHref : null}
         actionLabel={asCards ? seeAllLabel : null}
@@ -1174,7 +1245,11 @@ function DiscoveryChipsBlock({ props, home }: { props: Record<string, unknown>; 
         <ul className="gift-category-grid list-none">
           {items.map((item) => (
             <li key={`${item.label}-${item.href}`}>
-              <Link href={item.href} className="gift-category-card group">
+              <Link
+                href={item.href}
+                className="gift-category-card group"
+                data-testid={`category-${item.label}`}
+              >
                 <div className="gift-category-card__media">
                   {item.imageUrl ? (
                     <Image
@@ -1182,13 +1257,18 @@ function DiscoveryChipsBlock({ props, home }: { props: Record<string, unknown>; 
                       alt={item.imageAlt || item.label}
                       fill
                       sizes="(max-width: 640px) 50vw, 25vw"
-                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                      className="object-cover object-center transition duration-500 group-hover:scale-[1.04]"
                     />
                   ) : (
                     <div className="gift-media-fallback h-full w-full" />
                   )}
                 </div>
-                <p className="gift-category-card__label">{item.label}</p>
+                <div className="gift-category-card__foot">
+                  <p className="gift-category-card__label">{item.label}</p>
+                  <span className="gift-category-card__go" aria-hidden>
+                    Shop →
+                  </span>
+                </div>
               </Link>
             </li>
           ))}
@@ -1209,7 +1289,7 @@ function DiscoveryChipsBlock({ props, home }: { props: Record<string, unknown>; 
 
   if (home) {
     return (
-      <GiftBand tone="soft" toys>
+      <GiftBand tone="soft" toys={false}>
         {body}
       </GiftBand>
     );
@@ -1239,16 +1319,23 @@ function BuildYourBoxTeaserBlock({
         .slice(0, 6)
     : [];
 
+  const BYB_STEP_ICONS = [UserRound, Baby, Cake, Wallet, LayoutGrid, Gift] as const;
+
   const inner = (
     <div className="gift-byb-banner">
       <div className="gift-byb-banner__grid">
-        <div>
+        <div className="gift-byb-banner__copy">
           <p className="gift-byb-banner__overline">{overline}</p>
           <h2 className="gift-byb-banner__title">{title}</h2>
           {body ? <p className="gift-byb-banner__body">{body}</p> : null}
-          <Link href={ctaHref} className="gift-byb-banner__cta inline-flex items-center gap-gs-2">
+          <Link
+            href={ctaHref}
+            className="gift-byb-banner__cta inline-flex items-center gap-gs-2"
+            data-testid="byb-cta"
+          >
             <Gift className="h-4 w-4" strokeWidth={1.75} aria-hidden />
             {ctaLabel}
+            <ArrowRight className="h-4 w-4" strokeWidth={1.75} aria-hidden />
           </Link>
           <ul className="gift-byb-banner__trust list-none">
             <li>Budget-first</li>
@@ -1258,17 +1345,25 @@ function BuildYourBoxTeaserBlock({
         </div>
         {steps.length ? (
           <ol className="gift-byb-steps list-none">
-            {steps.map((step, i) => (
-              <li key={`${step.title}-${i}`} className="gift-byb-steps__item">
-                <span className="gift-byb-steps__num" aria-hidden>
-                  {i + 1}
-                </span>
-                <div>
-                  <p className="gift-byb-steps__title">{step.title}</p>
-                  {step.body ? <p className="gift-byb-steps__body">{step.body}</p> : null}
-                </div>
-              </li>
-            ))}
+            {steps.map((step, i) => {
+              const StepIcon = BYB_STEP_ICONS[i] ?? Gift;
+              return (
+                <li key={`${step.title}-${i}`} className="gift-byb-steps__item">
+                  <div className="gift-byb-steps__meta">
+                    <span className="gift-byb-steps__num" aria-hidden>
+                      {i + 1}
+                    </span>
+                    <span className="gift-byb-steps__icon" aria-hidden>
+                      <StepIcon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    </span>
+                  </div>
+                  <div>
+                    <p className="gift-byb-steps__title">{step.title}</p>
+                    {step.body ? <p className="gift-byb-steps__body">{step.body}</p> : null}
+                  </div>
+                </li>
+              );
+            })}
           </ol>
         ) : null}
       </div>
@@ -1310,13 +1405,19 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
   if (!cards.length) return null;
 
   const iconMap = { heart: Heart, briefcase: Briefcase, box: Package } as const;
+  /* Full class strings so Tailwind keeps tone backgrounds (no dynamic purge). */
+  const toneClass = {
+    blush: 'gift-offer-card gift-offer-card--blush',
+    sky: 'gift-offer-card gift-offer-card--sky',
+    lavender: 'gift-offer-card gift-offer-card--lavender',
+  } as const;
 
   const body = (
     <>
       <GiftSectionHeader
-        overline={props.overline ? String(props.overline) : '✨ Limited-time benefits'}
+        overline={props.overline ? String(props.overline) : 'Limited-time benefits'}
         title={props.title ? String(props.title) : 'Exclusive Offers for Every Occasion'}
-        aside={props.subtitle ? String(props.subtitle) : 'Curated for Every Occasion'}
+        subtitle={props.subtitle ? String(props.subtitle) : null}
       />
       <ul className="gift-offers-grid list-none">
         {cards.map((card) => {
@@ -1324,7 +1425,7 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
           return (
             <li
               key={`${card.tag}-${card.title}`}
-              className={`gift-offer-card gift-offer-card--${card.tone}`}
+              className={toneClass[card.tone]}
             >
               <div className="gift-offer-card__top">
                 <span className="gift-offer-card__icon" aria-hidden>
@@ -1337,7 +1438,8 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
               {card.body ? <p className="gift-offer-card__body">{card.body}</p> : null}
               <Link
                 href={card.ctaHref}
-                className="gift-offer-card__cta inline-flex items-center gap-1.5"
+                className="gift-offer-card__cta clay-btn-secondary inline-flex items-center gap-gs-2"
+                data-testid={`offer-cta-${card.tone}`}
               >
                 {card.ctaLabel}
                 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
@@ -1379,36 +1481,72 @@ function TestimonialsBlock({ props, home }: { props: Record<string, unknown>; ho
     : [];
   if (!items.length) return null;
 
+  const tones = ['pink', 'mint', 'sky'] as const;
+
   const body = (
     <>
       <GiftSectionHeader
+        overline={props.overline ? String(props.overline) : 'Parent love'}
         title={
           props.title ? String(props.title) : 'Loved by new parents across India'
         }
-        subtitle={props.subtitle ? String(props.subtitle) : null}
+        subtitle={
+          props.subtitle
+            ? String(props.subtitle)
+            : 'Honest notes from recent gifts — personal, on-budget, and actually useful.'
+        }
       />
       <ul className="gift-testimonials-grid list-none">
-        {items.map((item) => (
-          <li key={`${item.author}-${item.quote.slice(0, 24)}`} className="gift-testimonial-card">
-            <div className="gift-testimonial-card__stars" aria-label={`${item.rating} out of 5 stars`}>
-              {Array.from({ length: item.rating }).map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-current" aria-hidden />
-              ))}
-            </div>
-            <p className="gift-testimonial-card__quote">“{item.quote}”</p>
-            <p className="gift-testimonial-card__author">
-              {item.author}
-              {item.role ? `, ${item.role}` : ''}
-            </p>
-          </li>
-        ))}
+        {items.map((item, idx) => {
+          const tone = tones[idx % tones.length] ?? 'pink';
+          const initials = item.author
+            .split(/\s+/)
+            .map((w) => w[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+          return (
+            <li
+              key={`${item.author}-${item.quote.slice(0, 24)}`}
+              className={
+                {
+                  pink: 'gift-testimonial-card gift-testimonial-card--pink',
+                  mint: 'gift-testimonial-card gift-testimonial-card--mint',
+                  sky: 'gift-testimonial-card gift-testimonial-card--sky',
+                }[tone]
+              }
+            >
+              <span className="gift-testimonial-card__mark" aria-hidden>
+                “
+              </span>
+              <div
+                className="gift-testimonial-card__stars"
+                aria-label={`${item.rating} out of 5 stars`}
+              >
+                {Array.from({ length: item.rating }).map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-current" aria-hidden />
+                ))}
+              </div>
+              <p className="gift-testimonial-card__quote">{item.quote}</p>
+              <div className="gift-testimonial-card__author-row">
+                <span className="gift-testimonial-card__avatar" aria-hidden>
+                  {initials}
+                </span>
+                <div>
+                  <p className="gift-testimonial-card__author">{item.author}</p>
+                  {item.role ? <p className="gift-testimonial-card__role">{item.role}</p> : null}
+                </div>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </>
   );
 
   if (home) {
     return (
-      <GiftBand tone="blush" toys>
+      <GiftBand tone="blush" toys={false}>
         {body}
       </GiftBand>
     );

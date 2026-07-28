@@ -1,6 +1,22 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  safelist: [
+    'gift-offer-card--blush',
+    'gift-offer-card--sky',
+    'gift-offer-card--lavender',
+    'gift-brand-panel__pill--pink',
+    'gift-brand-panel__pill--mint',
+    'gift-brand-panel__pill--lavender',
+    'gift-brand-panel__pill--sky',
+    'gift-usp-cards__item--pink',
+    'gift-usp-cards__item--mint',
+    'gift-usp-cards__item--sky',
+    'gift-usp-cards__item--lavender',
+    'gift-testimonial-card--pink',
+    'gift-testimonial-card--mint',
+    'gift-testimonial-card--sky',
+  ],
   theme: {
     extend: {
       colors: {

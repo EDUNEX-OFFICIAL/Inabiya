@@ -23,17 +23,11 @@ export default async function ArticlesIndexPage({
 
   return (
     <main>
-      <section className="relative overflow-hidden px-gs-4 pb-gs-7 pt-gs-8 sm:px-gs-6 sm:pb-gs-8 sm:pt-gs-8">
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-[var(--inabiya-blush)] via-[var(--inabiya-soft)] to-[var(--inabiya-sky)]"
-          aria-hidden
-        />
-        <div className="relative mx-auto max-w-3xl">
-          <p className="gift-overline">Inabiya Journal</p>
-          <h1 className="font-display mt-gs-3 text-4xl leading-tight sm:text-5xl md:text-6xl">
-            Parenting journal
-          </h1>
-          <p className="mt-gs-4 max-w-xl text-base opacity-80 sm:text-lg">
+      <section className="gift-band gift-band--blush">
+        <div className="gift-band-inner max-w-3xl">
+          <p className="gift-overline">Journal</p>
+          <h1 className="gift-h1 mt-gs-3">Parenting journal</h1>
+          <p className="gift-muted mt-gs-4 max-w-xl text-base sm:text-lg">
             Soft, trusted guidance for gifting and early parenthood — same stories as Editorial
             publishes.
           </p>
@@ -96,8 +90,8 @@ export default async function ArticlesIndexPage({
         <div className="clay-panel p-gs-6 sm:p-gs-6">
           <h2 className="gift-h2">Stay in touch</h2>
           <p className="mt-gs-2 text-sm opacity-75">Occasional notes — no spam.</p>
-          <div className="mt-gs-4">
-            <NewsletterForm />
+          <div className="mt-gs-4 max-w-md">
+            <NewsletterForm compact hideTitle />
           </div>
           <p className="mt-gs-6 text-sm">
             <Link href="/specialists" className="text-primary hover:underline">

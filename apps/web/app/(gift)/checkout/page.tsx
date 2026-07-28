@@ -267,12 +267,27 @@ export default function CheckoutPage() {
               </select>
             </label>
           ) : null}
-          {(['fullName', 'phone', 'line1', 'line2', 'city', 'state', 'postalCode'] as const).map(
-            (key) => (
+          {(['fullName', 'phone', 'line1', 'line2'] as const).map((key) => (
+            <label key={key} className="block text-sm">
+              {FIELD_LABELS[key]}
+              <input
+                required={key !== 'line2'}
+                placeholder={FIELD_LABELS[key]}
+                value={form[key]}
+                onChange={(e) => {
+                  setSelectedAddressId('');
+                  setForm((f) => ({ ...f, [key]: e.target.value }));
+                }}
+                className={inputClass}
+              />
+            </label>
+          ))}
+          <div className="grid gap-gs-3 sm:grid-cols-2">
+            {(['city', 'state'] as const).map((key) => (
               <label key={key} className="block text-sm">
                 {FIELD_LABELS[key]}
                 <input
-                  required={key !== 'line2'}
+                  required
                   placeholder={FIELD_LABELS[key]}
                   value={form[key]}
                   onChange={(e) => {
@@ -282,8 +297,23 @@ export default function CheckoutPage() {
                   className={inputClass}
                 />
               </label>
-            ),
-          )}
+            ))}
+          </div>
+          <label className="block max-w-xs text-sm">
+            {FIELD_LABELS.postalCode}
+            <input
+              required
+              placeholder={FIELD_LABELS.postalCode}
+              value={form.postalCode}
+              onChange={(e) => {
+                setSelectedAddressId('');
+                setForm((f) => ({ ...f, postalCode: e.target.value }));
+              }}
+              className={inputClass}
+              inputMode="numeric"
+              autoComplete="postal-code"
+            />
+          </label>
         </fieldset>
 
         <label className="block text-sm">
@@ -314,6 +344,7 @@ export default function CheckoutPage() {
             <p className="text-success">Discount: −{formatInr(preview.discountPaise)}</p>
           ) : null}
           <p>Shipping: {formatInr(preview.shippingPaise)}</p>
+          {preview.taxPaise > 0 ? <p>Tax: {formatInr(preview.taxPaise)}</p> : null}
           <p className="pt-gs-2 text-lg font-semibold text-foreground">
             Total: {formatInr(preview.totalPaise)}
           </p>

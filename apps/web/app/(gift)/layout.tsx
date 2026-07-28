@@ -26,8 +26,8 @@ export default function GiftLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
       ) : isInvoicePage ? null : (
-        <header className="clay-nav relative sticky top-0 z-30 px-gs-3 py-gs-3 sm:px-gs-6 sm:py-gs-4 md:px-gs-6 print:hidden">
-          <div className="relative mx-auto flex max-w-5xl items-center justify-between gap-gs-3">
+        <header className="clay-nav relative sticky top-0 z-30 px-gs-4 py-gs-3 sm:px-gs-6 sm:py-gs-4 print:hidden">
+          <div className="relative mx-auto flex w-full max-w-page items-center justify-between gap-gs-3">
             <Link
               href="/gift"
               className="font-display shrink-0 text-lg tracking-tight text-primary"

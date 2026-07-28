@@ -57,7 +57,9 @@ function RegisterForm() {
     <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
       <div>
         <h1 className="gift-h1">Create account</h1>
-        <p className="mt-gs-2 text-sm opacity-75">Registers as customer. Email + password only.</p>
+        <p className="mt-gs-2 text-sm opacity-75">
+          Create your Inabiya account with email and password — save gifts and checkout faster.
+        </p>
       </div>
       <form onSubmit={onSubmit} className="clay-panel flex flex-col gap-gs-3 p-gs-5 sm:p-gs-6">
         <label className="flex flex-col gap-gs-1 text-sm">

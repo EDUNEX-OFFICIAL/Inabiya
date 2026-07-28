@@ -2,18 +2,18 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRef, type ReactNode } from 'react';
+import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ArrowRight, Gift, HeartHandshake, ShieldCheck, Truck } from 'lucide-react';
 
 const DEFAULT_HERO_IMAGE =
-  'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=900&q=85';
+  'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=1200&q=85';
 
 const DEFAULT_TRUST = [
   'Baby-safe brands',
   'Free shipping over ₹2,000',
-  'Curated for new parents',
+  'PAN-India delivery',
 ] as const;
 
 const TRUST_ICONS = [ShieldCheck, Truck, HeartHandshake] as const;
@@ -29,6 +29,8 @@ export type GiftStorefrontHeroProps = {
   trustLine?: string;
   eyebrow?: string;
   imageUrl?: string;
+  /** Word to italic-accent in headline when present (CMS-owned). */
+  accentWord?: string;
 };
 
 function parseTrustChips(trustLine?: string): string[] {
@@ -40,19 +42,38 @@ function parseTrustChips(trustLine?: string): string[] {
     .slice(0, 6);
 }
 
-/** Soft Gift: italic pink accent on a key word (e.g. joy) when present. */
-function AccentHeadline({ text }: { text: string }) {
-  const parts = text.split(/(\bjoy\b)/i);
-  const nodes: ReactNode[] = parts.map((part, i) =>
-    /^joy$/i.test(part) ? (
-      <em key={i} className="gift-hero-split__accent">
-        {part}
-      </em>
-    ) : (
-      <span key={i}>{part}</span>
-    ),
+function AccentHeadline({ text, accentWord }: { text: string; accentWord?: string }) {
+  const needle = accentWord?.trim();
+  if (!needle) return <>{text}</>;
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(\\b${escaped}\\b)`, 'i');
+  const parts = text.split(re);
+  if (parts.length < 2) return <>{text}</>;
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <em key={i} className="gift-hero-split__accent">
+            {part}
+          </em>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
   );
-  return <>{nodes}</>;
+}
+
+function TrustChipLabel({ label }: { label: string }) {
+  const shipping = /shipping/i.test(label);
+  if (shipping) {
+    return (
+      <Link href="/gift#faq" className="underline-offset-2 hover:underline" data-testid="hero-trust-shipping">
+        {label}
+      </Link>
+    );
+  }
+  return <span>{label}</span>;
 }
 
 export function GiftStorefrontHero({
@@ -65,11 +86,13 @@ export function GiftStorefrontHero({
   trustLine,
   eyebrow,
   imageUrl,
+  accentWord,
 }: GiftStorefrontHeroProps) {
   const containerRef = useRef<HTMLElement>(null);
   const photoSrc = imageUrl?.trim() || DEFAULT_HERO_IMAGE;
   const trustChips = parseTrustChips(trustLine);
   const eyebrowText = eyebrow?.trim() || 'Personalised baby gifting';
+  const accent = accentWord?.trim() || (/\bjoy\b/i.test(headline) ? 'joy' : undefined);
 
   useGSAP(
     () => {
@@ -121,7 +144,7 @@ export function GiftStorefrontHero({
         />
       </div>
 
-      <div className="gift-hero-split__grid relative z-10 mx-auto grid max-w-7xl items-center gap-gs-6 px-gs-4 py-gs-8 sm:px-gs-6 sm:py-gs-8 lg:grid-cols-2 lg:gap-gs-8 lg:py-gs-8">
+      <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full max-w-page items-center gap-gs-6 px-gs-4 py-gs-6 sm:px-gs-6 sm:py-gs-6 lg:grid-cols-2 lg:gap-gs-8">
         <div className="gift-hero-split__copy order-2 flex flex-col text-left lg:order-1">
           <p data-hero-anim="eyebrow" className="gift-hero-split__eyebrow gift-overline">
             {eyebrowText}
@@ -131,7 +154,7 @@ export function GiftStorefrontHero({
             data-hero-anim="headline"
             className="gift-hero-split__headline gift-h1 mt-gs-4 max-w-2xl text-balance"
           >
-            <AccentHeadline text={headline} />
+            <AccentHeadline text={headline} accentWord={accent} />
           </h1>
 
           {subcopy ? (
@@ -143,10 +166,11 @@ export function GiftStorefrontHero({
             </p>
           ) : null}
 
-          <div className="mt-gs-6 flex w-full flex-col gap-gs-3 sm:w-auto sm:flex-row sm:flex-wrap">
+          <div className="mt-gs-5 flex w-full flex-col gap-gs-3 sm:mt-gs-6 sm:w-auto sm:flex-row sm:flex-wrap">
             {ctaLabel && ctaHref ? (
               <Link
                 data-hero-cta="primary"
+                data-testid="hero-cta-primary"
                 href={ctaHref}
                 className="clay-btn gift-hero-split__cta-primary inline-flex w-full items-center justify-center gap-gs-2 sm:w-auto"
               >
@@ -157,6 +181,7 @@ export function GiftStorefrontHero({
             {ctaLabel2 && ctaHref2 ? (
               <Link
                 data-hero-cta="secondary"
+                data-testid="hero-cta-secondary"
                 href={ctaHref2}
                 className="clay-btn-secondary gift-hero-split__cta-secondary inline-flex w-full items-center justify-center gap-gs-2 sm:w-auto"
               >
@@ -169,7 +194,7 @@ export function GiftStorefrontHero({
           {trustChips.length ? (
             <ul
               data-hero-anim="trust"
-              className="gift-hero-split__trust mt-gs-6 flex list-none flex-col gap-gs-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-gs-5"
+              className="gift-hero-split__trust mt-gs-5 flex list-none flex-col gap-gs-3 sm:mt-gs-6 sm:flex-row sm:flex-wrap sm:items-center sm:gap-gs-5"
             >
               {trustChips.map((label, i) => {
                 const Icon = TRUST_ICONS[i % TRUST_ICONS.length] ?? ShieldCheck;
@@ -178,7 +203,7 @@ export function GiftStorefrontHero({
                     <span className="gift-hero-split__trust-icon" aria-hidden>
                       <Icon className="h-4 w-4" strokeWidth={1.75} />
                     </span>
-                    <span>{label}</span>
+                    <TrustChipLabel label={label} />
                   </li>
                 );
               })}

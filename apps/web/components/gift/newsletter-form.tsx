@@ -4,10 +4,13 @@ import { FormEvent, useState } from 'react';
 import { apiUrl } from '@/lib/api-base';
 
 type Props = {
+  /** Shorter layout (footer / mid-page panels). */
   compact?: boolean;
+  /** Hide the default “Newsletter” heading (when parent already has a title). */
+  hideTitle?: boolean;
 };
 
-export function NewsletterForm({ compact = false }: Props) {
+export function NewsletterForm({ compact = false, hideTitle = false }: Props) {
   const [email, setEmail] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,9 +35,44 @@ export function NewsletterForm({ compact = false }: Props) {
     }
   }
 
+  if (compact) {
+    return (
+      <div className="gift-newsletter">
+        {!hideTitle ? (
+          <>
+            <p className="gift-newsletter__title">Stay in the loop</p>
+            <p className="gift-newsletter__hint">New drops & gentle parenting notes — no spam.</p>
+          </>
+        ) : null}
+        <form
+          onSubmit={(e) => void onSubmit(e)}
+          className={`gift-newsletter__form${hideTitle ? ' gift-newsletter__form--flush' : ''}`}
+        >
+          <input
+            type="email"
+            required
+            placeholder="you@email.com"
+            className="clay-input gift-newsletter__input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-label="Email for newsletter"
+          />
+          <button
+            type="submit"
+            disabled={busy}
+            className="clay-btn gift-newsletter__btn disabled:opacity-50"
+          >
+            {busy ? '…' : 'Subscribe'}
+          </button>
+        </form>
+        {msg ? <p className="gift-newsletter__msg">{msg}</p> : null}
+      </div>
+    );
+  }
+
   return (
-    <div className={compact ? '' : 'max-w-lg'}>
-      {!compact ? <p className="mb-gs-2 font-semibold">Newsletter</p> : null}
+    <div className="max-w-lg">
+      {!hideTitle ? <p className="mb-gs-2 font-semibold">Newsletter</p> : null}
       <form
         onSubmit={(e) => void onSubmit(e)}
         className="flex w-full flex-col gap-gs-2 sm:flex-row sm:flex-wrap"

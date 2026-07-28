@@ -61,7 +61,7 @@ export function ClayProductCard({
           ) : (
             <div className={`${imageHeightClass} w-full gift-media-fallback`} />
           )}
-          <ProductLabels labels={product.displayLabels} placement="overlay" />
+          <ProductLabels labels={product.displayLabels} placement="overlay" max={2} />
           {showQuickAdd && quickVariant ? (
             <button
               type="button"

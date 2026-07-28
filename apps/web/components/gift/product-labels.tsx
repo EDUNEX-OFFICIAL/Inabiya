@@ -4,6 +4,8 @@ type Props = {
   labels?: StorefrontDisplayLabel[] | null;
   /** Overlay on media vs inline in buy box */
   placement?: 'overlay' | 'inline';
+  /** Cap ribbons (homepage cards use 1 to avoid badge stacks). */
+  max?: number;
   className?: string;
 };
 
@@ -21,8 +23,8 @@ function toneClass(tone: StorefrontDisplayLabel['tone']): string {
   }
 }
 
-export function ProductLabels({ labels, placement = 'inline', className = '' }: Props) {
-  const list = labels ?? [];
+export function ProductLabels({ labels, placement = 'inline', max, className = '' }: Props) {
+  const list = max != null ? (labels ?? []).slice(0, Math.max(0, max)) : (labels ?? []);
   if (list.length === 0) return null;
 
   return (

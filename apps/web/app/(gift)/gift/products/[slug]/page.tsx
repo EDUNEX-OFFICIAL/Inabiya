@@ -81,7 +81,10 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busyCart, setBusyCart] = useState(false);
+  const [busyWish, setBusyWish] = useState(false);
+  const [busyBox, setBusyBox] = useState(false);
+  const anyBusy = busyCart || busyWish || busyBox;
   const [reviewSummary, setReviewSummary] = useState<Pick<
     ReviewList,
     'averageRating' | 'count'
@@ -180,7 +183,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       setPersonalizeOpen(true);
       return;
     }
-    setBusy(true);
+    setBusyCart(true);
     setError(null);
     try {
       await cartApi('/cart/items', {
@@ -193,7 +196,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed');
     } finally {
-      setBusy(false);
+      setBusyCart(false);
     }
   }
 
@@ -203,7 +206,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       router.push(`/login?next=/gift/products/${params.slug}`);
       return;
     }
-    setBusy(true);
+    setBusyWish(true);
     setError(null);
     try {
       await apiAuth('/catalog/wishlist', { method: 'POST', json: { variantId: variant.id } });
@@ -211,7 +214,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed');
     } finally {
-      setBusy(false);
+      setBusyWish(false);
     }
   }
 
@@ -232,7 +235,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       setPersonalizeOpen(true);
       return;
     }
-    setBusy(true);
+    setBusyBox(true);
     setError(null);
     try {
       const box = await apiAuth<{ id: string }>('/catalog/gift-boxes/active');
@@ -247,7 +250,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       router.push('/gift/build-your-box?continue=1');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed');
-      setBusy(false);
+      setBusyBox(false);
     }
   }
 
@@ -314,11 +317,12 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
         <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <div className="flex flex-wrap items-center gap-gs-2">
-            <ProductLabels labels={product.displayLabels} placement="inline" />
+            <ProductLabels labels={product.displayLabels} placement="inline" max={2} />
             {product.brandName ? (
               <span className="clay-chip text-xs">{product.brandName}</span>
             ) : null}
-            {product.isReadyMadeHamper ? (
+            {product.isReadyMadeHamper &&
+            !(product.displayLabels ?? []).some((l) => l.code === 'GIFT_SET') ? (
               <span className="clay-chip text-xs">Ready-made hamper</span>
             ) : null}
           </div>
@@ -453,7 +457,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 <button
                   type="button"
                   className="h-11 w-11 text-lg disabled:opacity-40"
-                  disabled={quantity <= 1 || busy}
+                  disabled={quantity <= 1 || anyBusy}
                   aria-label="Decrease quantity"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 >
@@ -465,7 +469,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 <button
                   type="button"
                   className="h-11 w-11 text-lg disabled:opacity-40"
-                  disabled={quantity >= maxQty || busy}
+                  disabled={quantity >= maxQty || anyBusy}
                   aria-label="Increase quantity"
                   onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
                 >
@@ -480,15 +484,15 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             <div className="flex items-stretch gap-gs-2">
               <button
                 type="button"
-                disabled={busy || !inStock}
+                disabled={busyCart || !inStock}
                 onClick={() => void addToCart()}
                 className="clay-btn min-w-0 flex-1 justify-center disabled:opacity-50"
               >
-                {busy ? 'Working…' : 'Add to cart'}
+                {busyCart ? 'Adding…' : 'Add to cart'}
               </button>
               <button
                 type="button"
-                disabled={busy || !variant}
+                disabled={busyWish || !variant}
                 onClick={() => void addToWishlist()}
                 className="clay-btn-ghost h-auto w-12 shrink-0 rounded-full border border-border px-0 disabled:opacity-50"
                 aria-label="Save to wishlist"
@@ -500,11 +504,11 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             {variant?.giftBoxEligible ? (
               <button
                 type="button"
-                disabled={busy || !inStock}
+                disabled={busyBox || !inStock}
                 onClick={() => void addToBox()}
                 className="clay-btn-secondary w-full justify-center disabled:opacity-50"
               >
-                Add to gift box
+                {busyBox ? 'Adding…' : 'Add to gift box'}
               </button>
             ) : null}
           </div>
@@ -512,6 +516,14 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           {message ? (
             <p className="mt-gs-3 text-sm text-success" role="status">
               {message}
+              {message === 'Added to cart' || /^Added \d+ to cart$/.test(message) ? (
+                <>
+                  {' '}
+                  <Link href="/gift/cart" className="gift-link font-medium">
+                    View cart →
+                  </Link>
+                </>
+              ) : null}
             </p>
           ) : null}
           {error ? (
@@ -633,6 +645,7 @@ function ProductFaqSection({ product }: { product: CatalogProduct }) {
         />
       ) : null}
       <FaqAccordion
+        id="faq"
         title="Frequently asked questions"
         items={faqItems.map((f) => ({
           question: f.question,
@@ -760,30 +773,6 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
       </div>
 
       <div className="min-w-0 space-y-gs-3">
-        <FaqAccordion
-          className="min-w-0"
-          defaultOpenIndex={0}
-          items={[
-            {
-              question: 'Shipping',
-              answer: (
-                <p>
-                  We prepare Soft Gift orders carefully and ship across India. Standard delivery is
-                  selected at checkout; express options appear when available for your pincode.
-                </p>
-              ),
-            },
-            {
-              question: 'Returns',
-              answer: (
-                <p>
-                  Returns open for 14 days after delivery. Personalised items may have limited
-                  return eligibility — see your order page for status and how to request a return.
-                </p>
-              ),
-            },
-          ]}
-        />
         {tags.length > 0 ? (
           <div className="pt-gs-1">
             <p className="text-xs font-medium uppercase tracking-wide opacity-55">Shop similar</p>
@@ -798,6 +787,13 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
             </ul>
           </div>
         ) : null}
+        <p className="text-sm opacity-70">
+          Shipping & returns details are in the{' '}
+          <a href="#faq" className="gift-link">
+            FAQ
+          </a>{' '}
+          below.
+        </p>
       </div>
     </section>
   );

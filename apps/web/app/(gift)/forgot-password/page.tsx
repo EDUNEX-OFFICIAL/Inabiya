@@ -41,8 +41,7 @@ export default function ForgotPasswordPage() {
       <div>
         <h1 className="gift-h1">Forgot password</h1>
         <p className="gift-muted mt-gs-2">
-          Enter your email and we will send a reset link (check worker logs in local/VPS until real
-          SMTP is wired).
+          Enter your email and we will send a reset link if an account exists for that address.
         </p>
       </div>
       <form onSubmit={(e) => void onSubmit(e)} className="clay-panel flex flex-col gap-gs-4 p-gs-5">

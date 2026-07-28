@@ -13,25 +13,28 @@ export default async function SpecialistsIndexPage() {
 
   return (
     <main className="gift-page max-w-2xl">
-      <p className="gift-overline">Inabiya</p>
-      <h1 className="gift-h1 mt-gs-2">Specialists</h1>
+      <p className="gift-overline">Specialists</p>
+      <h1 className="gift-h1 mt-gs-2">Meet our specialists</h1>
       <p className="gift-muted mt-gs-3 max-w-xl">
         Editorial experts who review and attribute guidance — not Creator Collective profiles.
       </p>
-      <ul className="mt-gs-7 space-y-gs-6">
+      <ul className="mt-gs-7 space-y-gs-4">
         {specialists.map((s) => (
           <li key={s.id}>
-            <Link href={`/specialists/${s.slug}`} className="group block">
-              <h2 className="gift-h2 group-hover:text-primary">{s.name}</h2>
+            <Link href={`/specialists/${s.slug}`} className="clay-card group block p-gs-5 transition hover:shadow-clay">
+              <h2 className="gift-h2 text-xl group-hover:text-primary sm:text-2xl">{s.name}</h2>
               {s.title ? <p className="gift-muted mt-gs-1">{s.title}</p> : null}
+              <p className="mt-gs-3 text-sm font-medium text-primary opacity-90">View profile →</p>
             </Link>
           </li>
         ))}
-        {specialists.length === 0 ? <li className="gift-muted">No specialists yet.</li> : null}
+        {specialists.length === 0 ? (
+          <li className="clay-panel p-gs-6 text-sm opacity-70">No specialists yet.</li>
+        ) : null}
       </ul>
       <p className="mt-gs-7 text-sm">
-        <Link href="/articles" className="gift-link underline">
-          ← Articles
+        <Link href="/articles" className="gift-link">
+          ← Parenting journal
         </Link>
       </p>
     </main>

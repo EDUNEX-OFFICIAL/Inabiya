@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { Facebook, Gift, Instagram, Mail } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/gift/whatsapp-icon';
 
 export type GiftFooterColumn = {
   title: string;
@@ -54,13 +56,27 @@ export const DEFAULT_FOOTER_COLUMNS: GiftFooterColumn[] = [
 
 const DEFAULT_FOOTER = {
   brandName: 'Inabiya',
-  tagline: 'Thoughtfully personalised baby essentials & gifting for the tiny humans (and their moms) you love.',
+  tagline:
+    'Thoughtfully personalised baby essentials & gifting for the tiny humans (and their moms) you love.',
   columns: DEFAULT_FOOTER_COLUMNS,
 };
 
-function FooterAnchor({ href, label }: { href: string; label: string }) {
+const DEFAULT_SOCIAL: GiftSocialLink[] = [
+  { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
+  { label: 'Facebook', href: 'https://facebook.com/inabiya', network: 'facebook' },
+  { label: 'WhatsApp', href: 'https://wa.me/919693940330', network: 'whatsapp' },
+];
+
+function FooterAnchor({
+  href,
+  label,
+  className = 'gift-footer-link',
+}: {
+  href: string;
+  label: string;
+  className?: string;
+}) {
   const external = href.startsWith('mailto:') || href.startsWith('http') || href.startsWith('tel:');
-  const className = 'transition-colors hover:text-[var(--inabiya-pink)]';
   if (external) {
     return (
       <a
@@ -79,33 +95,96 @@ function FooterAnchor({ href, label }: { href: string; label: string }) {
   );
 }
 
+function SocialIcon({ network }: { network?: string }) {
+  const n = (network ?? '').toLowerCase();
+  if (n.includes('instagram')) return <Instagram className="h-4 w-4" aria-hidden />;
+  if (n.includes('facebook')) return <Facebook className="h-4 w-4" aria-hidden />;
+  if (n.includes('whatsapp')) return <WhatsAppIcon className="h-4 w-4" />;
+  return <Gift className="h-4 w-4" aria-hidden />;
+}
+
+function ReachUs() {
+  return (
+    <div className="gift-footer__reach">
+      <p className="gift-footer__col-title">Reach us</p>
+      <ul className="gift-footer__col-list">
+        <li>
+          <a href="mailto:hello@inabiya.in" className="gift-footer-link gift-footer-link--icon">
+            <Mail className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+            hello@inabiya.in
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://wa.me/919693940330"
+            className="gift-footer-link gift-footer-link--icon"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <WhatsAppIcon className="h-3.5 w-3.5 shrink-0 opacity-70" />
+            WhatsApp
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://instagram.com/inabiya"
+            className="gift-footer-link gift-footer-link--icon"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Instagram className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+            @inabiya
+          </a>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
   const brandName = props.brandName?.trim() || DEFAULT_FOOTER.brandName;
   const tagline = props.tagline?.trim() || DEFAULT_FOOTER.tagline;
   const columns = props.columns?.length ? props.columns : DEFAULT_FOOTER.columns;
-  const socialLinks = props.socialLinks ?? [];
+  const socialLinks = props.socialLinks?.length ? props.socialLinks : DEFAULT_SOCIAL;
+  const year = new Date().getFullYear();
+  const showNewsletter = Boolean(props.showNewsletter && props.newsletterSlot);
 
   return (
-    <div className="gift-footer-dark">
-      <footer className="gift-band-inner pt-gs-8 pb-gs-8 text-sm">
-        <div className="grid gap-gs-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <p className="font-display text-xl text-white">{brandName}</p>
-            <p className="mt-gs-2 max-w-xs text-white/70">{tagline}</p>
+    <div className="gift-footer-dark gift-band">
+      <footer className="gift-band-inner gift-footer">
+        <div className="gift-footer__grid">
+          <div className="gift-footer__brand">
+            <Link href="/gift" className="gift-footer__brand-lockup">
+              <span className="gift-footer__mark" aria-hidden>
+                <Gift className="h-4 w-4" strokeWidth={2.25} />
+              </span>
+              <span className="font-display text-xl text-white sm:text-2xl">{brandName}</span>
+            </Link>
+            <p className="gift-footer__tagline">{tagline}</p>
             {socialLinks.length > 0 ? (
-              <ul className="mt-gs-4 flex flex-wrap gap-gs-3 text-white/75">
+              <ul className="gift-footer__social" aria-label="Social links">
                 {socialLinks.map((s) => (
                   <li key={`${s.network ?? s.label}-${s.href}`}>
-                    <FooterAnchor href={s.href} label={s.label} />
+                    <a
+                      href={s.href}
+                      className="gift-footer__social-btn"
+                      aria-label={s.label}
+                      {...(s.href.startsWith('http')
+                        ? { target: '_blank', rel: 'noopener noreferrer' }
+                        : {})}
+                    >
+                      <SocialIcon network={s.network ?? s.label} />
+                    </a>
                   </li>
                 ))}
               </ul>
             ) : null}
           </div>
+
           {columns.map((col) => (
-            <div key={col.title}>
-              <p className="font-semibold text-white">{col.title}</p>
-              <ul className="mt-gs-2 space-y-gs-2 text-white/70">
+            <div key={col.title} className="gift-footer__col">
+              <p className="gift-footer__col-title">{col.title}</p>
+              <ul className="gift-footer__col-list">
                 {col.links.map((link) => (
                   <li key={`${col.title}-${link.href}-${link.label}`}>
                     <FooterAnchor href={link.href} label={link.label} />
@@ -115,11 +194,25 @@ export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
             </div>
           ))}
         </div>
-        {props.showNewsletter && props.newsletterSlot ? (
-          <div className="mt-gs-7 border-t border-white/15 pt-gs-6 text-white/80">
-            {props.newsletterSlot}
-          </div>
-        ) : null}
+
+        <div className={`gift-footer__lower${showNewsletter ? '' : ' gift-footer__lower--reach-only'}`}>
+          {showNewsletter ? <div className="gift-footer__newsletter">{props.newsletterSlot}</div> : null}
+          <ReachUs />
+        </div>
+
+        <div className="gift-footer__bar">
+          <p>
+            © {year} {brandName}. Soft gifts for tiny humans.
+          </p>
+          <nav className="gift-footer__bar-links" aria-label="Legal">
+            <Link href="/gift#faq" className="gift-footer-link">
+              Shipping
+            </Link>
+            <Link href="/contact" className="gift-footer-link">
+              Contact
+            </Link>
+          </nav>
+        </div>
       </footer>
     </div>
   );

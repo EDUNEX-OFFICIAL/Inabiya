@@ -7,15 +7,19 @@ import { Eye, EyeOff } from 'lucide-react';
 import { apiAuth, storeSession, type AuthSession } from '@/lib/auth-client';
 import { cartApi } from '@/lib/cart-client';
 
-const SEED_USERS = [
-  { email: 'customer@test.inabiya', password: 'Password123!', note: 'Customer' },
-  { email: 'commerce@test.inabiya', password: 'Password123!', note: 'Commerce admin' },
-  { email: 'writer@test.inabiya', password: 'Password123!', note: 'Writer' },
-  { email: 'content@test.inabiya', password: 'Password123!', note: 'Content admin' },
-  { email: 'finance@test.inabiya', password: 'Password123!', note: 'Finance' },
-  { email: 'brand@test.inabiya', password: 'Password123!', note: 'Brand' },
-  { email: 'creator@test.inabiya', password: 'Password123!', note: 'Creator' },
-] as const;
+/** Dev-only — production builds drop this branch (no seed passwords in client bundle). */
+const SEED_USERS =
+  process.env.NODE_ENV === 'development'
+    ? ([
+        { email: 'customer@test.inabiya', password: 'Password123!', note: 'Customer' },
+        { email: 'commerce@test.inabiya', password: 'Password123!', note: 'Commerce admin' },
+        { email: 'writer@test.inabiya', password: 'Password123!', note: 'Writer' },
+        { email: 'content@test.inabiya', password: 'Password123!', note: 'Content admin' },
+        { email: 'finance@test.inabiya', password: 'Password123!', note: 'Finance' },
+        { email: 'brand@test.inabiya', password: 'Password123!', note: 'Brand' },
+        { email: 'creator@test.inabiya', password: 'Password123!', note: 'Creator' },
+      ] as const)
+    : null;
 
 function safeNextPath(raw: string | null): string | null {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return null;
@@ -27,8 +31,8 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const nextPath = safeNextPath(searchParams.get('next'));
   const resetOk = searchParams.get('reset') === '1';
-  const [email, setEmail] = useState('customer@test.inabiya');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -87,7 +91,7 @@ function LoginForm() {
       <div>
         <h1 className="gift-h1">Sign in</h1>
         <p className="mt-gs-2 text-sm opacity-75">
-          {nextPath ? `Continue to ${nextPath}` : 'Email and password — Soft Gift storefront.'}
+          {nextPath ? `Continue to ${nextPath}` : 'Sign in to save wishlists, track orders, and checkout faster.'}
         </p>
         {resetOk ? (
           <p className="gift-banner gift-banner--success mt-gs-3" role="status">
@@ -148,27 +152,29 @@ function LoginForm() {
           Register
         </Link>
       </p>
-      <div className="clay-card p-gs-4 text-xs opacity-80">
-        <p className="font-medium text-foreground">Seeded test users — click to fill</p>
-        <ul className="mt-gs-2 space-y-gs-2">
-          {SEED_USERS.map((u) => (
-            <li key={u.email}>
-              <button
-                type="button"
-                className="text-left underline decoration-border-strong hover:text-primary"
-                onClick={() => {
-                  setEmail(u.email);
-                  setPassword(u.password);
-                  setError(null);
-                }}
-              >
-                {u.email}
-              </button>
-              <span className="opacity-70"> · {u.note}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {SEED_USERS ? (
+        <div className="clay-card p-gs-4 text-xs opacity-80">
+          <p className="font-medium text-foreground">Dev only — seeded test users</p>
+          <ul className="mt-gs-2 space-y-gs-2">
+            {SEED_USERS.map((u) => (
+              <li key={u.email}>
+                <button
+                  type="button"
+                  className="text-left underline decoration-border-strong hover:text-primary"
+                  onClick={() => {
+                    setEmail(u.email);
+                    setPassword(u.password);
+                    setError(null);
+                  }}
+                >
+                  {u.email}
+                </button>
+                <span className="opacity-70"> · {u.note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </main>
   );
 }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { MarketingPageBlocks, type CmsPageBlock } from '@/components/cms/marketing-page-blocks';
 import { CorporateInquiryForm } from './corporate-inquiry-form';
+import { CorporateHero } from './corporate-hero';
 import { apiUrl } from '@/lib/api-base';
 import { GIFT_CORPORATE_SLUG } from '@inabiya/validation';
 import { marketingPageMetadata, webPageJsonLd, type CmsSeoPage } from '@/lib/cms-seo';
@@ -39,34 +40,44 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function CorporateGiftingPage() {
   const cms = await fetchCorporatePage();
   const ld = cms ? webPageJsonLd({ ...cms, slug: GIFT_CORPORATE_SLUG }) : null;
+  const blocks = (cms?.blocks ?? []).filter((b) => b.type !== 'footer');
 
   return (
-    <main className="gift-page">
+    <main>
       {ld ? (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
         />
       ) : null}
-      {cms?.blocks?.length ? (
-        <div className="mb-gs-6">
-          <MarketingPageBlocks blocks={cms.blocks} layout="page" />
-        </div>
+      {blocks.length ? (
+        <MarketingPageBlocks blocks={blocks} layout="home" />
       ) : (
-        <div className="max-w-lg">
-          <Link href="/gift" className="gift-link text-sm">
-            ← Gift home
-          </Link>
-          <h1 className="gift-h1 mt-gs-4">Corporate & bulk gifting</h1>
-          <p className="mt-gs-2 text-sm opacity-80">
-            Share your needs — we will follow up with pricing. Inquiry form only.
-          </p>
-        </div>
+        <CorporateHero />
       )}
 
-      <div className="mx-auto max-w-lg">
-        <CorporateInquiryForm />
-      </div>
+      <section className="gift-band gift-band--soft" id="inquiry">
+        <div className="gift-band-inner mx-auto max-w-lg">
+          {!blocks.length ? (
+            <div className="mb-gs-5">
+              <Link href="/gift" className="gift-link text-sm">
+                ← Gift home
+              </Link>
+              <p className="gift-overline mt-gs-4">Quote</p>
+              <h2 className="gift-h2 mt-gs-2">Tell us what you need</h2>
+              <p className="gift-muted mt-gs-2 text-sm">
+                Share your needs — we will follow up with pricing.
+              </p>
+            </div>
+          ) : (
+            <div className="mb-gs-5">
+              <p className="gift-overline">Quote</p>
+              <h2 className="gift-h2 mt-gs-2">Request a corporate quote</h2>
+            </div>
+          )}
+          <CorporateInquiryForm />
+        </div>
+      </section>
     </main>
   );
 }

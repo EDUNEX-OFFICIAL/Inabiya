@@ -32,31 +32,32 @@ export default async function SpecialistPage({ params }: { params: { slug: strin
 
   return (
     <main className="gift-page max-w-2xl">
-      <Link href="/specialists" className="gift-link text-sm underline">
+      <Link href="/specialists" className="gift-link text-sm">
         ← Specialists
       </Link>
-      <h1 className="gift-h1 mt-gs-6">{s.name}</h1>
-      {s.title ? <p className="mt-gs-2 font-body text-lg opacity-80">{s.title}</p> : null}
+      <p className="gift-overline mt-gs-4">Specialist</p>
+      <h1 className="gift-h1 mt-gs-2">{s.name}</h1>
+      {s.title ? <p className="gift-muted mt-gs-2 text-lg">{s.title}</p> : null}
       {s.credentials ? (
-        <p className="mt-gs-1 text-sm opacity-60 font-body">{s.credentials}</p>
+        <p className="mt-gs-1 text-sm opacity-60">{s.credentials}</p>
       ) : null}
-      {s.bio ? <p className="mt-gs-6 font-body leading-relaxed opacity-90">{s.bio}</p> : null}
+      {s.bio ? <p className="mt-gs-6 leading-relaxed opacity-90">{s.bio}</p> : null}
 
       <section className="mt-gs-7">
         <h2 className="gift-h2">Articles</h2>
-        <ul className="mt-gs-4 space-y-gs-4">
+        <ul className="mt-gs-4 space-y-gs-3">
           {(s.articles ?? []).map((a) => (
             <li key={a.id}>
-              <Link href={`/articles/${a.slug}`} className="underline font-body">
-                {a.title}
+              <Link href={`/articles/${a.slug}`} className="clay-card block p-gs-4 transition hover:shadow-clay">
+                <span className="font-medium text-foreground hover:text-primary">{a.title}</span>
+                {a.seoDescription ? (
+                  <p className="mt-gs-1 text-sm opacity-70">{a.seoDescription}</p>
+                ) : null}
               </Link>
-              {a.seoDescription ? (
-                <p className="mt-gs-1 text-sm opacity-70">{a.seoDescription}</p>
-              ) : null}
             </li>
           ))}
           {(s.articles ?? []).length === 0 ? (
-            <li className="text-sm opacity-70">No published articles yet.</li>
+            <li className="clay-panel p-gs-5 text-sm opacity-70">No published articles yet.</li>
           ) : null}
         </ul>
       </section>
