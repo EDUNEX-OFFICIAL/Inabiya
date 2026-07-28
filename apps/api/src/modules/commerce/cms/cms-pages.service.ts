@@ -364,21 +364,26 @@ export class CmsPagesService {
   private async resolveBrandStripProps(props: Record<string, unknown>) {
     const title = typeof props.title === 'string' ? props.title : undefined;
     const subtitle = typeof props.subtitle === 'string' ? props.subtitle : undefined;
+    const uspsOnly = props.showUsps === true;
     const showUsps = props.showUsps !== false;
     const usps = Array.isArray(props.usps) ? props.usps : undefined;
     let brands = Array.isArray(props.brands) ? props.brands.slice(0, 24) : [];
-    if (!brands.length) {
+    // USP-only strips must not invent a second brand carousel from catalog brands.
+    if (!brands.length && !uspsOnly) {
       const listed = await this.catalog.listPublishedProducts({ sort: 'newest' });
       brands = Array.from(
         new Set(listed.map((p) => p.brandName).filter((b): b is string => Boolean(b))),
       ).slice(0, 8);
     }
+    if (uspsOnly) {
+      brands = [];
+    }
     return {
       ...(title ? { title } : {}),
       ...(subtitle ? { subtitle } : {}),
-      brands,
+      ...(brands.length ? { brands } : {}),
       ...(usps ? { usps } : {}),
-      showUsps,
+      showUsps: uspsOnly ? true : showUsps,
     };
   }
 
