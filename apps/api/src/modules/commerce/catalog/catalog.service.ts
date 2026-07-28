@@ -68,6 +68,9 @@ export class CatalogService {
     occasion?: string;
     hamper?: '0' | '1';
     sort?: 'newest' | 'price_asc' | 'price_desc';
+    storefrontLabel?: 'BESTSELLER' | 'EDITORS_PICK' | 'GIFT_SET';
+    onSale?: boolean;
+    publishedSince?: Date;
   }) {
     const where: Prisma.ProductWhereInput = {
       status: ProductStatus.PUBLISHED,
@@ -92,6 +95,15 @@ export class CatalogService {
           : {}),
       ...(query.occasion ? { occasionTags: { has: query.occasion } } : {}),
       ...(query.hamper === '1' ? { isReadyMadeHamper: true } : {}),
+      ...(query.storefrontLabel
+        ? { storefrontLabels: { has: query.storefrontLabel } }
+        : {}),
+      ...(query.publishedSince
+        ? { publishedAt: { gte: query.publishedSince } }
+        : {}),
+      ...(query.onSale
+        ? { variants: { some: { compareAtPricePaise: { not: null } } } }
+        : {}),
     };
 
     const products = await this.prisma.product.findMany({
@@ -100,7 +112,15 @@ export class CatalogService {
       orderBy: { publishedAt: 'desc' },
     });
 
-    const mapped = products.map((p) => this.mapProduct(p));
+    let mapped = products.map((p) => this.mapProduct(p));
+    if (query.onSale) {
+      mapped = mapped.filter((p) =>
+        p.variants.some(
+          (v) =>
+            v.compareAtPricePaise != null && v.compareAtPricePaise > v.pricePaise,
+        ),
+      );
+    }
     if (query.sort === 'price_asc') {
       mapped.sort((a, b) => a.fromPricePaise - b.fromPricePaise);
     } else if (query.sort === 'price_desc') {
@@ -250,6 +270,14 @@ export class CatalogService {
           ...(body.brandName !== undefined ? { brandName: body.brandName } : {}),
           ...(body.storefrontLabels !== undefined
             ? { storefrontLabels: body.storefrontLabels }
+            : {}),
+          ...(body.seoTitle !== undefined ? { seoTitle: body.seoTitle } : {}),
+          ...(body.seoDescription !== undefined ? { seoDescription: body.seoDescription } : {}),
+          ...(body.canonicalPath !== undefined ? { canonicalPath: body.canonicalPath } : {}),
+          ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
+          ...(body.robotsIndex !== undefined ? { robotsIndex: body.robotsIndex } : {}),
+          ...(body.faqItems !== undefined
+            ? { faqItems: body.faqItems === null ? Prisma.DbNull : body.faqItems }
             : {}),
         },
         include: productInclude,
@@ -460,6 +488,12 @@ export class CatalogService {
       brandName: product.brandName,
       storefrontLabels,
       displayLabels,
+      seoTitle: product.seoTitle,
+      seoDescription: product.seoDescription,
+      canonicalPath: product.canonicalPath,
+      ogImageUrl: product.ogImageUrl,
+      robotsIndex: product.robotsIndex,
+      faqItems: parseProductFaqItems(product.faqItems),
       categories: product.categories.map((pc) => ({
         slug: pc.category.slug,
         name: pc.category.name,
@@ -482,4 +516,20 @@ export class CatalogService {
       variants,
     };
   }
+}
+
+function parseProductFaqItems(
+  raw: unknown,
+): Array<{ question: string; answerText: string }> | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const out: Array<{ question: string; answerText: string }> = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const q = (item as { question?: unknown }).question;
+    const a = (item as { answerText?: unknown }).answerText;
+    if (typeof q === 'string' && q.trim() && typeof a === 'string' && a.trim()) {
+      out.push({ question: q.trim(), answerText: a.trim() });
+    }
+  }
+  return out.length ? out : null;
 }

@@ -22,7 +22,7 @@ alwaysApply: true
 | Stack | Next.js App Router · NestJS · Postgres+Prisma · Redis+BullMQ · Tailwind+shadcn · Zod · pnpm |
 | No alternate stack | No Mongo, FastAPI/Django primary, CRA, Pages Router for new work, second ORM |
 | Phase | Only active-phase P0/P1 unless human overrides **and** Memory logs it |
-| Themes | Soft Gift (`gift`) ≠ Creator (`creator`) — never mix tokens |
+| Themes | Soft Gift (`gift`) ≠ Blog Creative (`blog`) ≠ Creator (`creator`) — never mix tokens |
 | Domains | No LMS models (`Student`, `Hostel`, `Exam`, …) |
 
 ## Stop coding and escalate

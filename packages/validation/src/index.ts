@@ -127,6 +127,13 @@ export const createProductBodySchema = z.object({
     .optional(),
 });
 
+export const productFaqItemSchema = z.object({
+  question: z.string().min(1).max(300),
+  answerText: z.string().min(1).max(4000),
+});
+
+const emptySeoToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
+
 export const updateProductBodySchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(5000).optional(),
@@ -140,6 +147,12 @@ export const updateProductBodySchema = z.object({
     .array(z.enum(['BESTSELLER', 'EDITORS_PICK', 'GIFT_SET']))
     .max(2)
     .optional(),
+  seoTitle: z.preprocess(emptySeoToNull, z.string().max(200).nullable().optional()),
+  seoDescription: z.preprocess(emptySeoToNull, z.string().max(500).nullable().optional()),
+  canonicalPath: z.preprocess(emptySeoToNull, z.string().max(300).nullable().optional()),
+  ogImageUrl: z.preprocess(emptySeoToNull, z.string().url().max(2000).nullable().optional()),
+  robotsIndex: z.boolean().optional(),
+  faqItems: z.array(productFaqItemSchema).max(20).nullable().optional(),
 });
 
 export const updateInventoryBodySchema = z.object({
@@ -170,6 +183,12 @@ export const catalogListQuerySchema = z.object({
   occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).optional(),
   hamper: z.enum(['0', '1']).optional(),
   sort: z.enum(['newest', 'price_asc', 'price_desc']).optional(),
+  /** Manual storefront ribbon filter (homepage merchandising / PLP). */
+  storefrontLabel: z.enum(['BESTSELLER', 'EDITORS_PICK', 'GIFT_SET']).optional(),
+  /** Any variant with compareAtPricePaise > pricePaise. */
+  onSale: z.enum(['0', '1']).optional(),
+  /** ISO date — products published on/after (New Arrivals). */
+  publishedSince: z.string().datetime().optional(),
 });
 
 export const wishlistAddBodySchema = z.object({
@@ -596,13 +615,29 @@ const imagePropsSchema = z.object({
   caption: z.string().max(300).optional(),
 });
 
+export const productGridSourceSchema = z.enum([
+  'auto',
+  'manual',
+  'bestsellers',
+  'editors',
+  'new',
+  'on_sale',
+]);
+
 const productGridPropsSchema = z.object({
   title: z.string().max(120).optional(),
   overline: z.string().max(80).optional(),
   subtitle: z.string().max(300).optional(),
+  /** Resolution mode — see CmsPagesService.resolveProductGridProps. */
+  source: productGridSourceSchema.optional(),
   productSlugs: z.array(z.string().max(120)).max(24).optional(),
   category: z.string().max(80).optional(),
+  occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).optional(),
+  age: z.enum(['newborn', 'infant', 'toddler', 'any']).optional(),
+  recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).optional(),
   hamper: z.boolean().optional(),
+  /** Days window when source=new (default 30). */
+  newWithinDays: z.number().int().min(1).max(90).optional(),
   limit: z.number().int().min(1).max(24).optional(),
   seeAllHref: z.string().max(500).optional(),
   seeAllLabel: z.string().max(80).optional(),
@@ -779,6 +814,17 @@ const testimonialsPropsSchema = z.object({
   items: z.array(testimonialItemSchema).min(1).max(6),
 });
 
+const countdownPropsSchema = z.object({
+  endsAt: z
+    .string()
+    .min(1)
+    .refine((s) => !Number.isNaN(Date.parse(s)), 'endsAt must be a valid ISO datetime'),
+  title: z.string().max(160).optional(),
+  expiredLabel: z.string().max(160).optional(),
+  ctaLabel: z.string().max(80).optional(),
+  ctaHref: z.string().max(500).optional(),
+});
+
 export const pageBlockInputSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('hero'), props: heroPropsSchema }),
   z.object({ type: z.literal('richText'), props: richTextPropsSchema }),
@@ -796,6 +842,7 @@ export const pageBlockInputSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('faq'), props: faqPropsSchema }),
   z.object({ type: z.literal('exclusiveOffers'), props: exclusiveOffersPropsSchema }),
   z.object({ type: z.literal('testimonials'), props: testimonialsPropsSchema }),
+  z.object({ type: z.literal('countdown'), props: countdownPropsSchema }),
 ]);
 
 /** Empty string → null so admin “clear field” does not fail path/URL regex. */

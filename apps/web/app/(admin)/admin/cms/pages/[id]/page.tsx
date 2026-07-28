@@ -23,6 +23,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { ArticleEditor } from '@/components/editorial/article-editor';
 import { CmsMediaField } from '@/components/cms/cms-media-field';
+import { ProductGridBlockEditor } from '@/components/cms/product-grid-block-editor';
+import { DiscoveryChipsBlockEditor } from '@/components/cms/discovery-chips-block-editor';
 
 type BlockType =
   | 'hero'
@@ -40,7 +42,8 @@ type BlockType =
   | 'saleStrip'
   | 'faq'
   | 'exclusiveOffers'
-  | 'testimonials';
+  | 'testimonials'
+  | 'countdown';
 
 type Block = {
   clientId: string;
@@ -79,6 +82,7 @@ const ALL_TYPES: BlockType[] = [
   'faq',
   'exclusiveOffers',
   'testimonials',
+  'countdown',
 ];
 
 const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
@@ -97,13 +101,18 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
   richText: { html: '<p></p>' },
   image: { url: '', alt: '', caption: '' },
   productGrid: {
+    source: 'auto',
     title: '',
     overline: '',
     subtitle: '',
     productSlugs: '',
     category: '',
+    occasion: '',
+    age: '',
+    recipient: '',
     hamper: 'false',
-    limit: '',
+    newWithinDays: '30',
+    limit: '8',
     seeAllHref: '',
     seeAllLabel: 'See all',
   },
@@ -270,6 +279,13 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
       null,
       0,
     ),
+  },
+  countdown: {
+    endsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    title: 'Sale ends soon',
+    expiredLabel: 'This offer has ended',
+    ctaLabel: 'Shop now',
+    ctaHref: '/gift',
   },
 };
 
@@ -487,15 +503,44 @@ function toPayload(blocks: Block[]) {
         .map((s) => s.trim())
         .filter(Boolean);
       const limitNum = Number.parseInt(b.props.limit || '', 10);
+      const newDays = Number.parseInt(b.props.newWithinDays || '', 10);
+      const sourceRaw = b.props.source || 'auto';
+      const source = (
+        ['auto', 'manual', 'bestsellers', 'editors', 'new', 'on_sale'] as const
+      ).includes(sourceRaw as 'auto')
+        ? (sourceRaw as 'auto' | 'manual' | 'bestsellers' | 'editors' | 'new' | 'on_sale')
+        : 'auto';
+      const occasion = (
+        ['welcome-baby', 'baby-shower', 'naming', 'birthday'] as const
+      ).includes(b.props.occasion as 'naming')
+        ? (b.props.occasion as 'welcome-baby' | 'baby-shower' | 'naming' | 'birthday')
+        : undefined;
+      const age = (['newborn', 'infant', 'toddler', 'any'] as const).includes(
+        b.props.age as 'newborn',
+      )
+        ? (b.props.age as 'newborn' | 'infant' | 'toddler' | 'any')
+        : undefined;
+      const recipient = (['girl', 'boy', 'mom', 'unisex'] as const).includes(
+        b.props.recipient as 'girl',
+      )
+        ? (b.props.recipient as 'girl' | 'boy' | 'mom' | 'unisex')
+        : undefined;
       return {
         type: 'productGrid' as const,
         props: {
+          source,
           ...(b.props.title ? { title: b.props.title } : {}),
           ...(b.props.overline ? { overline: b.props.overline } : {}),
           ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
           ...(slugs.length ? { productSlugs: slugs } : {}),
           ...(b.props.category ? { category: b.props.category } : {}),
+          ...(occasion ? { occasion } : {}),
+          ...(age ? { age } : {}),
+          ...(recipient ? { recipient } : {}),
           ...(b.props.hamper === 'true' ? { hamper: true } : {}),
+          ...(Number.isFinite(newDays) && newDays >= 1 && newDays <= 90
+            ? { newWithinDays: newDays }
+            : {}),
           ...(Number.isFinite(limitNum) && limitNum > 0 ? { limit: limitNum } : {}),
           ...(b.props.seeAllHref ? { seeAllHref: b.props.seeAllHref } : {}),
           ...(b.props.seeAllLabel ? { seeAllLabel: b.props.seeAllLabel } : {}),
@@ -785,6 +830,22 @@ function toPayload(blocks: Block[]) {
           ...(b.props.title ? { title: b.props.title } : {}),
           ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
           items,
+        },
+      };
+    }
+    if (b.type === 'countdown') {
+      const endsAt = (b.props.endsAt || '').trim();
+      if (!endsAt) {
+        throw new Error('Countdown needs an endsAt ISO datetime.');
+      }
+      return {
+        type: 'countdown' as const,
+        props: {
+          endsAt,
+          ...(b.props.title ? { title: b.props.title } : {}),
+          ...(b.props.expiredLabel ? { expiredLabel: b.props.expiredLabel } : {}),
+          ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
+          ...(b.props.ctaHref ? { ctaHref: b.props.ctaHref } : {}),
         },
       };
     }
@@ -1341,18 +1402,24 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
           {current ? (
             <div className="border-t pt-3 space-y-2">
               <p className="font-medium">Props · {current.type}</p>
-              {Object.keys(EMPTY_PROPS[current.type]).map((key) => (
-                <label key={key} className="block">
-                  {key === 'itemsJson' ? 'FAQ items (JSON)' : key}
-                  <PropField
-                    blockType={current.type}
-                    fieldKey={key}
-                    value={current.props[key] ?? ''}
-                    onChange={(v) => updateProp(key, v)}
-                    editorKey={current.clientId}
-                  />
-                </label>
-              ))}
+              {current.type === 'productGrid' ? (
+                <ProductGridBlockEditor props={current.props} onChange={updateProp} />
+              ) : current.type === 'discoveryChips' ? (
+                <DiscoveryChipsBlockEditor props={current.props} onChange={updateProp} />
+              ) : (
+                Object.keys(EMPTY_PROPS[current.type]).map((key) => (
+                  <label key={key} className="block">
+                    {key === 'itemsJson' ? 'FAQ items (JSON)' : key}
+                    <PropField
+                      blockType={current.type}
+                      fieldKey={key}
+                      value={current.props[key] ?? ''}
+                      onChange={(v) => updateProp(key, v)}
+                      editorKey={current.clientId}
+                    />
+                  </label>
+                ))
+              )}
             </div>
           ) : null}
         </aside>

@@ -19,8 +19,13 @@ function titleFromFilters(sp: {
   category?: string;
   occasion?: string;
   q?: string;
+  storefrontLabel?: string;
+  onSale?: string;
 }): string {
   if (sp.q) return `Search: “${sp.q}”`;
+  if (sp.storefrontLabel === 'BESTSELLER') return 'Best sellers';
+  if (sp.storefrontLabel === 'EDITORS_PICK') return "Editor's picks";
+  if (sp.onSale === '1') return 'On sale';
   if (sp.hamper === '1') return 'Ready-made hampers';
   if (sp.recipient === 'girl') return 'For baby girl';
   if (sp.recipient === 'boy') return 'For baby boy';
@@ -106,6 +111,8 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
   const hamper = first(searchParams.hamper);
   const category = first(searchParams.category);
   const occasion = first(searchParams.occasion);
+  const storefrontLabel = first(searchParams.storefrontLabel);
+  const onSale = first(searchParams.onSale);
   const qRaw = first(searchParams.q)?.trim();
   const q = qRaw ? qRaw.slice(0, 120) : undefined;
   const sortRaw = first(searchParams.sort) ?? 'newest';
@@ -118,6 +125,8 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
     hamper,
     category,
     occasion,
+    storefrontLabel,
+    onSale,
     q,
   };
 
@@ -128,6 +137,8 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
   if (hamper) qs.set('hamper', hamper);
   if (category) qs.set('category', category);
   if (occasion) qs.set('occasion', occasion);
+  if (storefrontLabel) qs.set('storefrontLabel', storefrontLabel);
+  if (onSale) qs.set('onSale', onSale);
   if (q) qs.set('q', q);
 
   let products: CatalogProduct[] = [];
@@ -137,7 +148,16 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
     products = [];
   }
 
-  const heading = titleFromFilters({ recipient, age, hamper, category, occasion, q });
+  const heading = titleFromFilters({
+    recipient,
+    age,
+    hamper,
+    category,
+    occasion,
+    q,
+    storefrontLabel,
+    onSale,
+  });
 
   return (
     <main className="gift-page">

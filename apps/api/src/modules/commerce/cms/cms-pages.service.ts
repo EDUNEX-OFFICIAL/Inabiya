@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { CatalogService } from '../catalog/catalog.service';
+import { parseProductGridResolution } from './resolve-product-grid-query';
 
 type PageWithBlocks = {
   id: string;
@@ -311,52 +312,47 @@ export class CmsPagesService {
   }
 
   private async resolveProductGridProps(props: Record<string, unknown>) {
-    const title = typeof props.title === 'string' ? props.title : undefined;
-    const overline = typeof props.overline === 'string' ? props.overline : undefined;
-    const subtitle = typeof props.subtitle === 'string' ? props.subtitle : undefined;
-    const category = typeof props.category === 'string' ? props.category : undefined;
-    const hamper = props.hamper === true;
-    const limit =
-      typeof props.limit === 'number' && props.limit > 0 ? Math.min(props.limit, 24) : undefined;
-    const seeAllHref = typeof props.seeAllHref === 'string' ? props.seeAllHref : undefined;
-    const seeAllLabel = typeof props.seeAllLabel === 'string' ? props.seeAllLabel : undefined;
-    const slugs = Array.isArray(props.productSlugs)
-      ? props.productSlugs.map(String).filter(Boolean)
-      : [];
-
+    const resolved = parseProductGridResolution(props);
     let products: ReturnType<CmsPagesService['mapProductCard']>[] = [];
 
-    if (slugs.length) {
-      const listed = await this.catalog.listPublishedProducts({ sort: 'newest' });
-      const bySlug = new Map(listed.map((p) => [p.slug, p]));
-      products = slugs
-        .map((s) => bySlug.get(s))
-        .filter((p): p is NonNullable<typeof p> => Boolean(p))
-        .map((p) => this.mapProductCard(p));
-    } else {
+    if (resolved.mode === 'slugs') {
       const listed = await this.catalog.listPublishedProducts({
-        ...(category ? { category } : {}),
-        ...(hamper ? { hamper: '1' as const } : {}),
+        ...resolved.query,
         sort: 'newest',
       });
-      const take = limit ?? (hamper ? 3 : 8);
-      products = listed.slice(0, take).map((p) => this.mapProductCard(p));
+      const bySlug = new Map(listed.map((p) => [p.slug, p]));
+      if (resolved.source === 'manual' && resolved.slugs.length === 0) {
+        products = [];
+      } else if (resolved.slugs.length) {
+        products = resolved.slugs
+          .map((s) => bySlug.get(s))
+          .filter((p): p is NonNullable<typeof p> => Boolean(p))
+          .map((p) => this.mapProductCard(p));
+      }
+    } else {
+      const listed = await this.catalog.listPublishedProducts(resolved.query);
+      products = listed.slice(0, resolved.limit).map((p) => this.mapProductCard(p));
     }
 
-    if (limit && slugs.length) {
-      products = products.slice(0, limit);
+    if (resolved.mode === 'slugs') {
+      products = products.slice(0, resolved.limit);
     }
 
     return {
-      ...(title ? { title } : {}),
-      ...(overline ? { overline } : {}),
-      ...(subtitle ? { subtitle } : {}),
-      ...(slugs.length ? { productSlugs: slugs } : {}),
-      ...(category ? { category } : {}),
-      ...(hamper ? { hamper: true } : {}),
-      ...(limit ? { limit } : {}),
-      ...(seeAllHref ? { seeAllHref } : {}),
-      ...(seeAllLabel ? { seeAllLabel } : {}),
+      source: resolved.source,
+      ...(resolved.title ? { title: resolved.title } : {}),
+      ...(resolved.overline ? { overline: resolved.overline } : {}),
+      ...(resolved.subtitle ? { subtitle: resolved.subtitle } : {}),
+      ...(resolved.slugs.length ? { productSlugs: resolved.slugs } : {}),
+      ...(resolved.category ? { category: resolved.category } : {}),
+      ...(resolved.occasion ? { occasion: resolved.occasion } : {}),
+      ...(resolved.age ? { age: resolved.age } : {}),
+      ...(resolved.recipient ? { recipient: resolved.recipient } : {}),
+      ...(resolved.hamper ? { hamper: true } : {}),
+      ...(resolved.newWithinDays ? { newWithinDays: resolved.newWithinDays } : {}),
+      limit: resolved.limit,
+      ...(resolved.seeAllHref ? { seeAllHref: resolved.seeAllHref } : {}),
+      ...(resolved.seeAllLabel ? { seeAllLabel: resolved.seeAllLabel } : {}),
       products,
     };
   }

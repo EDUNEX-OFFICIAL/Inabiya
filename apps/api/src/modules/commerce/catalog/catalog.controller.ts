@@ -42,9 +42,16 @@ export class CatalogPublicController {
       occasion?: string;
       hamper?: '0' | '1';
       sort?: 'newest' | 'price_asc' | 'price_desc';
+      storefrontLabel?: 'BESTSELLER' | 'EDITORS_PICK' | 'GIFT_SET';
+      onSale?: '0' | '1';
+      publishedSince?: string;
     },
   ) {
-    return this.catalog.listPublishedProducts(query);
+    return this.catalog.listPublishedProducts({
+      ...query,
+      onSale: query.onSale === '1' ? true : undefined,
+      publishedSince: query.publishedSince ? new Date(query.publishedSince) : undefined,
+    });
   }
 
   @Get('products/:slug')

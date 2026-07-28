@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: Inabiya API (stub)
+  version: 0.1.0-dev
+  description: |
+    Minimal OpenAPI stub for Soft Gift commerce + CMS (dev leftovers Wave 5).
+    Not a full generated surface — expand when `@nestjs/swagger` is adopted.
+    Payments remain mock (`PAYMENT_PROVIDER=mock`); Razorpay/S3/SMTP are post-dev.
+servers:
+  - url: http://127.0.0.1:4001/api/v1
+    description: VPS loopback
+paths:
+  /health:
+    get:
+      summary: Liveness
+      responses:
+        '200':
+          description: OK
+  /auth/login:
+    post:
+      summary: Email/password login
+      responses:
+        '200':
+          description: Tokens + user
+        '401':
+          description: Invalid credentials
+  /catalog/products:
+    get:
+      summary: Published catalog list
+      parameters:
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: hamper
+          schema: { type: string, enum: ['0', '1'] }
+      responses:
+        '200':
+          description: Product summaries
+  /catalog/products/{slug}:
+    get:
+      summary: Published product detail (includes SEO + faqItems when set)
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Product DTO
+        '404':
+          description: Not found
+  /admin/catalog/products/{id}:
+    patch:
+      summary: Update product (commerce admin) — SEO + FAQ fields
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated product
+  /admin/cms/pages:
+    get:
+      summary: List marketing pages
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Page list
+  /cms/pages/{slug}:
+    get:
+      summary: Public published marketing page
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Page + blocks
+        '404':
+          description: Unpublished or missing
+  /checkout/place-order:
+    post:
+      summary: Place order (mock payment flow)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Order + paymentId for mock confirm
+  /checkout/payments/{paymentId}/confirm:
+    post:
+      summary: Confirm mock payment (dev only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: paymentId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Captured
+  /orders/me/{id}/invoice:
+    get:
+      summary: Invoice preview JSON (snapshot persisted)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Invoice DTO
+  /orders/me/{id}/invoice/pdf:
+    get:
+      summary: Invoice PDF (local pdfkit)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: application/pdf
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -25,16 +25,24 @@ module.exports = {
         primary: {
           DEFAULT: 'var(--primary)',
           foreground: 'var(--primary-foreground)',
+          hover: 'var(--primary-hover, var(--primary))',
+        },
+        secondary: {
+          DEFAULT: 'var(--secondary, var(--muted, currentColor))',
+          foreground: 'var(--secondary-foreground, var(--foreground))',
         },
         surface: {
           DEFAULT: 'var(--surface, var(--background))',
           soft: 'var(--surface-soft, var(--background))',
+          nav: 'var(--surface-nav, var(--surface, var(--background)))',
         },
         border: {
           DEFAULT: 'var(--border, currentColor)',
           subtle: 'var(--border-subtle, var(--border, currentColor))',
           strong: 'var(--border-strong, var(--border, currentColor))',
+          focus: 'var(--border-focus, var(--ring, currentColor))',
         },
+        ring: 'var(--ring, var(--primary))',
         success: {
           DEFAULT: 'var(--success, #1b7a4a)',
           bg: 'var(--success-bg, #e8f7ef)',
@@ -51,7 +59,7 @@ module.exports = {
           DEFAULT: 'var(--info, #175cd3)',
           bg: 'var(--info-bg, #eff8ff)',
         },
-        body: 'var(--inabiya-body, var(--foreground))',
+        body: 'var(--inabiya-body, var(--blog-body, var(--muted-foreground, var(--foreground))))',
         muted: 'var(--muted-foreground, var(--foreground))',
       },
       spacing: {
@@ -68,6 +76,12 @@ module.exports = {
         display: ['var(--font-display)'],
         body: ['var(--font-body)'],
       },
+      fontSize: {
+        display: ['var(--text-display)', { lineHeight: 'var(--leading-display)' }],
+        h1: ['var(--text-h1)', { lineHeight: 'var(--leading-tight)' }],
+        h2: ['var(--text-h2)', { lineHeight: '1.25' }],
+        caption: ['var(--text-caption)', { lineHeight: '1.4', letterSpacing: '0.1em' }],
+      },
       borderRadius: {
         brand: 'var(--radius)',
         clay: 'var(--radius-card, var(--clay-radius, 1.75rem))',
@@ -79,6 +93,15 @@ module.exports = {
         'clay-hover': 'var(--clay-shadow-hover)',
         'clay-press': 'var(--clay-shadow-press)',
         brand: 'var(--shadow-brand)',
+      },
+      transitionDuration: {
+        fast: 'var(--duration-fast, 160ms)',
+        med: 'var(--duration-med, 220ms)',
+      },
+      zIndex: {
+        nav: 'var(--z-nav, 30)',
+        overlay: 'var(--z-overlay, 40)',
+        modal: 'var(--z-modal, 50)',
       },
       maxWidth: {
         page: 'var(--page-max, 64rem)',

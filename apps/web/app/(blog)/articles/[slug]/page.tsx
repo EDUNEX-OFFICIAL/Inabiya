@@ -47,17 +47,17 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     : null;
 
   return (
-    <main className="gift-page max-w-3xl">
+    <main className="blog-page max-w-3xl">
       <article>
-        <Link href="/articles" className="gift-link text-sm">
+        <Link href="/articles" className="text-sm text-primary hover:underline">
           ← Articles
         </Link>
 
         {article.category ? (
-          <p className="mt-gs-6 gift-overline">{article.category.name}</p>
+          <p className="mt-gs-6 blog-overline">{article.category.name}</p>
         ) : null}
 
-        <h1 className="gift-h1 mt-gs-3 text-balance">{article.title}</h1>
+        <h1 className="blog-h1 mt-gs-3 text-balance">{article.title}</h1>
 
         <p className="mt-gs-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm opacity-60">
           {publishedLabel ? <span>{publishedLabel}</span> : null}
@@ -81,7 +81,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         </p>
 
         {article.seo.ogImageUrl ? (
-          <div className="relative mt-gs-6 aspect-[16/10] overflow-hidden rounded-[var(--radius-clay,1.25rem)] border border-black/5 bg-[color-mix(in_oklab,var(--gift-surface)_88%,transparent)]">
+          <div className="relative mt-gs-6 aspect-[16/10] overflow-hidden rounded-clay border border-border-subtle bg-surface-soft">
             {/* eslint-disable-next-line @next/next/no-img-element -- editorial covers may be SVG */}
             <img
               src={article.seo.ogImageUrl}
@@ -91,7 +91,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           </div>
         ) : null}
 
-        <div className="clay-panel mt-gs-6 p-gs-5 text-base sm:p-gs-7 sm:text-lg">
+        <div className="blog-card blog-prose mt-gs-6 p-gs-5 sm:p-gs-7">
           <ArticleBody body={article.body} />
         </div>
 
@@ -99,7 +99,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <ul className="mt-gs-6 flex flex-wrap gap-gs-2 text-sm">
             {article.tags.map((t) => (
               <li key={t.slug}>
-                <Link href={`/articles?tag=${t.slug}`} className="clay-chip hover:text-primary">
+                <Link href={`/articles?tag=${t.slug}`} className="blog-chip hover:text-primary">
                   {t.name}
                 </Link>
               </li>
@@ -107,17 +107,17 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           </ul>
         ) : null}
 
-        <aside className="clay-panel mt-gs-7 p-gs-5 sm:p-gs-6">
-          <p className="gift-overline">Looking for a newborn gift?</p>
-          <p className="mt-gs-3 text-sm leading-relaxed opacity-80 sm:text-base">
+        <aside className="blog-card mt-gs-7 p-gs-5 sm:p-gs-6">
+          <p className="blog-overline">Looking for a newborn gift?</p>
+          <p className="blog-muted mt-gs-3 text-sm leading-relaxed sm:text-base">
             Soft, practical pieces for the first weeks — or build a box for someone living the
             newborn nights too.
           </p>
           <div className="mt-gs-5 flex flex-wrap gap-gs-3">
-            <Link href="/gift/products?age=newborn" className="clay-btn">
+            <Link href="/gift/products?age=newborn" className="blog-btn">
               Shop newborn
             </Link>
-            <Link href="/gift/build-your-box" className="clay-btn-secondary">
+            <Link href="/gift/build-your-box" className="blog-btn-secondary">
               Build Your Box
             </Link>
           </div>

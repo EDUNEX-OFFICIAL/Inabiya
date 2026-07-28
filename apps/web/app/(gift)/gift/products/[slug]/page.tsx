@@ -576,6 +576,9 @@ function HeartIcon() {
 function buildProductFaqItems(
   product: CatalogProduct,
 ): Array<{ question: string; answerText: string }> {
+  if (product.faqItems && product.faqItems.length > 0) {
+    return product.faqItems;
+  }
   const items: Array<{ question: string; answerText: string }> = [];
   const canPersonalise = (product.personalization?.length ?? 0) > 0;
 

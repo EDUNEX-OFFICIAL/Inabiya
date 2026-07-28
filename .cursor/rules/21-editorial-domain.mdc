@@ -1,6 +1,6 @@
 ---
 description: Editorial publish gates, ArticleStatus machine, writer payouts, specialists ≠ creators
-globs: "{apps/api/src/modules/editorial/**,apps/web/app/(gift)/articles/**,apps/web/app/(gift)/specialists/**,apps/web/app/(blog)/**,apps/web/app/(admin)/admin/editorial/**}"
+globs: "{apps/api/src/modules/editorial/**,apps/web/app/(blog)/articles/**,apps/web/app/(blog)/specialists/**,apps/web/app/(blog)/**,apps/web/app/(admin)/admin/editorial/**}"
 alwaysApply: false
 ---
 
@@ -40,4 +40,4 @@ Only `PENDING` + article `PUBLISHED` → `RELEASED`; audit `writer_payment.relea
 
 ## Specialists ≠ creators
 
-`SpecialistProfile` is editorial/medical attribution on articles. Never reuse Creator Collective models, routes, or `data-theme="creator"` for specialists. Public blog/articles stay Soft Gift (`gift`).
+`SpecialistProfile` is editorial/medical attribution on articles. Never reuse Creator Collective models, routes, or `data-theme="creator"` for specialists. Public blog/articles/specialists use Blog Creative (`data-theme="blog"`). Editorial CMS = `blog` + `data-density="compact"`.

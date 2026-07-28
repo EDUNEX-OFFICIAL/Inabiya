@@ -12,28 +12,32 @@ export default async function SpecialistsIndexPage() {
   }
 
   return (
-    <main className="gift-page max-w-2xl">
-      <p className="gift-overline">Specialists</p>
-      <h1 className="gift-h1 mt-gs-2">Meet our specialists</h1>
-      <p className="gift-muted mt-gs-3 max-w-xl">
+    <main className="blog-page max-w-2xl">
+      <p className="blog-overline">Specialists</p>
+      <h1 className="blog-h1 mt-gs-2">Meet our specialists</h1>
+      <p className="blog-muted mt-gs-3 max-w-xl">
         Editorial experts who review and attribute guidance — not Creator Collective profiles.
       </p>
       <ul className="mt-gs-7 space-y-gs-4">
         {specialists.map((s) => (
           <li key={s.id}>
-            <Link href={`/specialists/${s.slug}`} className="clay-card group block p-gs-5 transition hover:shadow-clay">
-              <h2 className="gift-h2 text-xl group-hover:text-primary sm:text-2xl">{s.name}</h2>
-              {s.title ? <p className="gift-muted mt-gs-1">{s.title}</p> : null}
+            <Link
+              href={`/specialists/${s.slug}`}
+              className="blog-card group block p-gs-5"
+              data-testid="specialist-profile"
+            >
+              <h2 className="blog-h2 text-xl group-hover:text-primary sm:text-2xl">{s.name}</h2>
+              {s.title ? <p className="blog-muted mt-gs-1">{s.title}</p> : null}
               <p className="mt-gs-3 text-sm font-medium text-primary opacity-90">View profile →</p>
             </Link>
           </li>
         ))}
         {specialists.length === 0 ? (
-          <li className="clay-panel p-gs-6 text-sm opacity-70">No specialists yet.</li>
+          <li className="blog-card p-gs-6 text-sm opacity-70">No specialists yet.</li>
         ) : null}
       </ul>
       <p className="mt-gs-7 text-sm">
-        <Link href="/articles" className="gift-link">
+        <Link href="/articles" className="text-primary hover:underline">
           ← Parenting journal
         </Link>
       </p>

@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 28, 2026 (cross-check storefront fixes)
+Last Updated: July 28, 2026 (CMS productGrid sources + homepage merchandising)
 
 
 ---
@@ -92,12 +92,12 @@ Path: `/srv/Inabiya/Docs/` (symlink `docs` → `Docs` for Cursor rules)
 | Validation | Zod |
 | Package mgr | pnpm workspaces |
 
-### 3.3 Dual design reminder
+### 3.3 Triple design reminder
 
-- **System A Soft Gift:** `#FF6B9D` pastels, Fraunces + Plus Jakarta
-- **System B Creator:** forest/cream/terracotta HSL, Playfair + Manrope
-- Never mix casually
-
+- **System A Soft Gift (`gift`):** `#FF6B9D` pastels, Fraunces + Plus Jakarta — ecommerce + commerce CMS
+- **System C Blog Creative (`blog`):** paper/ink + teal accent, Newsreader + Source Sans 3 — `/articles`, specialists, editorial CMS
+- **System B Creator (`creator`):** forest/cream/terracotta HSL, Playfair + Manrope — influencer campaigns
+- Shared foundations on `:root` (space/type/z/duration); never mix casually; no `data-theme="admin"`
 ### 3.4 Docs completion status
 
 | Doc | Status | Version |
@@ -106,7 +106,7 @@ Path: `/srv/Inabiya/Docs/` (symlink `docs` → `Docs` for Cursor rules)
 | Architecture.md | **Rewritten canonical — LMS removed** | **2.0.0** |
 | Rules.md | Expanded production authority | **2.0.0** |
 | Phases.md | Expanded delivery authority | **2.0.0** |
-| Design.md | Expanded dual-system authority | **2.0.0** |
+| Design.md | Expanded **triple**-system authority | **2.1.0** |
 | Memory.md | Expanded living memory | **2.0.0** |
 
 ### 3.5 Product implementation status
@@ -139,11 +139,12 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Cloudflare SSL mode check: **Full (strict)** preferred
-2. Ecommerce + CMS deep QA on public host (TipTap, saleStrip, media upload, hybrid labels)
-3. Razorpay / formal pentest
-4. Real AWS/MinIO SDK behind `S3StorageAdapter` (optional)
-5. When ready: real SMTP adapter
+1. Browser QA pass for cart-checkout + CMS DnD (Wave 0 marked B)
+2. Restart `inabiya-api` after leftovers so Product SEO / Invoice model are live
+3. Cloudflare SSL / public DNS — **post-dev**
+4. Razorpay — **post-dev**
+5. Real AWS/MinIO + SMTP — **post-dev**
+
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
 
@@ -175,6 +176,23 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-07-28 — Soft Gift ecommerce + CMS leftovers (dev-only)
+
+- **Policy:** No Razorpay / real S3 / real SMTP / public DNS in this track — mock + local adapters stay
+- Wave 0: QA smoke + audit honesty; `/gift/hampers` redirect fix
+- Wave 1: Product `seo*` + `faqItems` (Prisma + admin + PDP metadata)
+- Wave 2: `CommerceInvoice` snapshot + existing pdfkit PDF path
+- Wave 3: Checkout/admin mock-pay clarity; `PAYMENTS_MODE=mock` in `.env.example`
+- Wave 4: CMS `countdown` block
+- Wave 5: OpenAPI stub (`Docs/openapi.stub.yaml` + generate script)
+
+### 2026-07-28 — Triple theme token architecture
+
+- **Override:** Design.md dual-system → **triple** (Soft Gift · Blog Creative · Creator Collective)
+- Shared `:root` foundations; per-theme primitives/semantics/recipes; `data-density="compact"` for admin
+- Orphan `data-theme="admin"` removed; editorial → `blog`, commerce/platform → `gift`, creator admin → `creator`
+- Public `/articles` + `/specialists` moved under `(blog)` route group
 
 ### 2026-07-22 — Soft Gift homepage & chrome roadmap (Pass 1–12)
 
@@ -631,7 +649,7 @@ Use this to open the right PRD slice instead of whole file:
 
 - [x] Dev compose (db/redis; api/web/worker via `docker-compose.prod.yml`)
 - [x] Workspace scripts documented
-- [ ] OpenAPI stub generation path
+- [x] OpenAPI stub generation path (`scripts/generate-openapi-stub.js` → `Docs/openapi.stub.yaml`)
 
 ### Exit criteria
 
@@ -825,42 +843,42 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ### Phase 2 — Catalog & gift foundations
 
-- [ ] Categories/collections browse
-- [ ] PLP/PDP
-- [ ] Personalization MVP
-- [ ] Gift box builder MVP
-- [ ] Wishlist MVP
-- [ ] Admin product CRUD + publish
-- [ ] Basic inventory qty
+- [x] Categories/collections browse
+- [x] PLP/PDP
+- [x] Personalization MVP
+- [x] Gift box builder MVP
+- [x] Wishlist MVP
+- [x] Admin product CRUD + publish
+- [x] Basic inventory qty
 
 ### Phase 3 — Cart/checkout/payments/orders
 
-- [ ] Cart guest+auth merge
-- [ ] Checkout MVP
-- [ ] Payment adapter
-- [ ] Webhook idempotency tests
-- [ ] Inventory reserve/release
-- [ ] Order history/tracking basics
-- [ ] Confirmation notification
+- [x] Cart guest+auth merge
+- [x] Checkout MVP
+- [x] Payment adapter (**mock** — Razorpay post-dev)
+- [x] Webhook idempotency tests
+- [x] Inventory reserve/release
+- [x] Order history/tracking basics
+- [x] Confirmation notification
 
 ### Phase 4 — Commerce ops console
 
-- [ ] Dashboard KPIs subset
-- [ ] Order fulfillment transitions
-- [ ] Customer admin profile
-- [ ] Coupons MVP
-- [ ] Homepage CMS MVP
-- [ ] Basic reports
-- [ ] Low stock / failed payment alerts MVP
+- [x] Dashboard KPIs subset
+- [x] Order fulfillment transitions
+- [x] Customer admin profile
+- [x] Coupons MVP
+- [x] Homepage CMS MVP
+- [x] Basic reports
+- [x] Low stock / failed payment alerts MVP
 
 ### Phase 5 — Commerce GA hardening
 
-- [ ] Reviews moderation MVP
-- [ ] Returns request MVP
-- [ ] Abandonment email job
-- [ ] Funnel analytics events
-- [ ] Perf/security/a11y passes
-- [ ] Support lookup enough for launch
+- [x] Reviews moderation MVP
+- [x] Returns request MVP
+- [x] Abandonment email job
+- [x] Funnel analytics events
+- [x] Perf/security/a11y passes
+- [x] Support lookup enough for launch
 
 ### Phase 6 — Editorial core
 
@@ -907,6 +925,20 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-07-28 (Soft Gift ecommerce + CMS leftovers)
+- Waves 0–5 shipped (dev-only; third-party still post-dev).
+- Migrations: `product_seo_faq`, `commerce_invoice`.
+- Mock pay UX; CMS countdown; OpenAPI stub path.
+- Next: restart API containers; browser QA for blocked EC/CM rows.
+
+### Session — 2026-07-28 (triple theme tokens)
+- **Override:** Design v2.1 triple systems (gift / blog / creator); logged in decisions.
+- Shared foundations in `globals.css` `:root`; Blog Creative + Creator recipe parity; clay bridge for editorial CMS.
+- Layouts: blog theme on journal; density compact on admin families; dropped orphan `admin` theme.
+- Moved `(gift)/articles|specialists` → `(blog)/`; smoke shells on articles + creator home.
+- Tailwind semantic maps extended (`primary-hover`, type, z, duration).
+- Next: visual QA `/articles` `/creator` `/admin/editorial`.
+
 ### Session — 2026-07-28 (footer WhatsApp icon)
 - Replaced Lucide `MessageCircle` with official WhatsApp glyph in footer social + Reach us.
 - Shared `components/gift/whatsapp-icon.tsx` (floating CTA reuses it).
@@ -946,6 +978,14 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 - `.gift-overline` was stretching full column width inside hero `flex-col` (default stretch).
 - Fixed with `width: fit-content; max-width: 100%` so pill hugs label text.
 - Next: hard-refresh `/gift` hero eyebrow.
+
+### Session — 2026-07-28 (CMS-first homepage merchandising)
+- **Override:** Soft Gift homepage merchandising CMS outside Phase 12 (Phase 12 remains shipped).
+- `productGrid.source`: auto | manual | bestsellers | editors | new | on_sale; catalog filters `storefrontLabel` / `onSale` / `publishedSince` + occasion/age/recipient.
+- Admin: ProductGridBlockEditor + DiscoveryChipsBlockEditor (media + occasion/age presets).
+- Seed: 15 demo products (verified Unsplash), home blocks = saleStrip → best sellers → categories → new → occasion → age → on sale → editors → trending → BYB → hampers → corporate CTA → testimonials/journal/faq.
+- Check: `apps/api/src/modules/commerce/cms/resolve-product-grid-query.check.ts`.
+- Next: hard-refresh `/gift`; QA CMS save on productGrid; restart API if needed for Zod rebuild.
 
 ### Session — 2026-07-28 (categories + testimonials polish)
 - Categories: overline/subtitle, hover lift, “Shop →”, blush media frame; toys→train-toy photo; Mom Care image swapped off blanket.

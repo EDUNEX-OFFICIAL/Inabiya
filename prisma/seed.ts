@@ -152,9 +152,33 @@ async function main() {
   const clothing = await prisma.category.findUniqueOrThrow({ where: { slug: 'clothing' } });
   const toys = await prisma.category.findUniqueOrThrow({ where: { slug: 'toys' } });
   const momCare = await prisma.category.findUniqueOrThrow({ where: { slug: 'mom-care' } });
+  const bathSkin = await prisma.category.findUniqueOrThrow({ where: { slug: 'bath-skin' } });
 
-  // Unsplash demo media — IDs verified HTTP 200 (photo-1515488042361… is 404).
-  const demoProducts = [
+  const unsplash = (id: string, w = 800) =>
+    `https://images.unsplash.com/${id}?w=${w}&q=85`;
+  const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+
+  // Unsplash demo media — IDs verified HTTP 200 (2026-07-28).
+  const demoProducts: Array<{
+    slug: string;
+    title: string;
+    description: string;
+    sku: string;
+    label: string;
+    pricePaise: number;
+    compareAtPricePaise?: number;
+    onHand: number;
+    categoryId: string;
+    imageUrl: string;
+    recipientTags: string[];
+    ageBands: string[];
+    occasionTags: string[];
+    isReadyMadeHamper: boolean;
+    brandName: string;
+    storefrontLabels: string[];
+    extraCategoryIds?: string[];
+    publishedAt: Date;
+  }> = [
     {
       slug: 'cloud-soft-swaddle',
       title: 'Cloud Soft Swaddle',
@@ -164,13 +188,14 @@ async function main() {
       pricePaise: 129900,
       onHand: 25,
       categoryId: newborn.id,
-      imageUrl: '/gift/media/baby-clothes.jpg',
+      imageUrl: unsplash('photo-1522771739844-6a9f6d5f14af'),
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn'],
       occasionTags: ['welcome-baby'],
       isReadyMadeHamper: false,
       brandName: 'Soft Nest',
       storefrontLabels: ['EDITORS_PICK'],
+      publishedAt: daysAgo(45),
     },
     {
       slug: 'personalised-name-blanket',
@@ -182,13 +207,14 @@ async function main() {
       compareAtPricePaise: 499800,
       onHand: 15,
       categoryId: keepsakes.id,
-      imageUrl: '/gift/media/personalised-name-blanket.webp',
+      imageUrl: unsplash('photo-1586105251261-72a756497a11'),
       recipientTags: ['girl', 'unisex'],
       ageBands: ['newborn', 'infant'],
       occasionTags: ['welcome-baby', 'naming'],
       isReadyMadeHamper: false,
       brandName: 'Mamaearth',
       storefrontLabels: ['BESTSELLER'],
+      publishedAt: daysAgo(60),
     },
     {
       slug: 'wooden-rattle-set',
@@ -199,13 +225,14 @@ async function main() {
       pricePaise: 89900,
       onHand: 4,
       categoryId: toys.id,
-      imageUrl: '/gift/media/wooden-rattle-set.webp',
+      imageUrl: unsplash('photo-1566576912321-d58ddd7a6088'),
       recipientTags: ['boy', 'unisex'],
       ageBands: ['infant', 'toddler'],
       occasionTags: ['birthday', 'welcome-baby'],
       isReadyMadeHamper: false,
       brandName: 'Chicco',
-      storefrontLabels: [] as string[],
+      storefrontLabels: ['BESTSELLER'],
+      publishedAt: daysAgo(40),
     },
     {
       slug: 'welcome-baby-hamper',
@@ -216,14 +243,15 @@ async function main() {
       pricePaise: 399900,
       onHand: 12,
       categoryId: newborn.id,
-      imageUrl: '/gift/media/girl.jpeg',
+      imageUrl: unsplash('photo-1515488042361-ee00e0ddd4e4'),
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn'],
       occasionTags: ['welcome-baby', 'baby-shower'],
       isReadyMadeHamper: true,
       brandName: 'Inabiya',
-      storefrontLabels: ['GIFT_SET'],
+      storefrontLabels: ['GIFT_SET', 'BESTSELLER'],
       extraCategoryIds: [clothing.id],
+      publishedAt: daysAgo(50),
     },
     {
       slug: 'expecting-mom-calm-kit',
@@ -232,15 +260,201 @@ async function main() {
       sku: 'MOM-001',
       label: 'Kit',
       pricePaise: 179900,
+      compareAtPricePaise: 229900,
       onHand: 20,
       categoryId: momCare.id,
-      imageUrl: '/gift/media/personalised-name-blanket.webp',
+      imageUrl: unsplash('photo-1476703993599-0035a21b17a9'),
       recipientTags: ['mom'],
       ageBands: ['any'],
       occasionTags: ['baby-shower'],
       isReadyMadeHamper: true,
       brandName: 'The Moms Co.',
-      storefrontLabels: [] as string[],
+      storefrontLabels: ['EDITORS_PICK'],
+      publishedAt: daysAgo(20),
+    },
+    {
+      slug: 'organic-cotton-bodysuit-set',
+      title: 'Organic Cotton Bodysuit Set',
+      description: 'Three soft bodysuits in gentle pastels.',
+      sku: 'BODY-001',
+      label: 'Set of 3',
+      pricePaise: 159900,
+      compareAtPricePaise: 199900,
+      onHand: 30,
+      categoryId: clothing.id,
+      imageUrl: unsplash('photo-1503454537195-1dcabb73ffb9'),
+      recipientTags: ['girl', 'boy', 'unisex'],
+      ageBands: ['newborn', 'infant'],
+      occasionTags: ['welcome-baby', 'baby-shower'],
+      isReadyMadeHamper: false,
+      brandName: 'Mothercare',
+      storefrontLabels: ['BESTSELLER'],
+      publishedAt: daysAgo(35),
+    },
+    {
+      slug: 'moonlit-night-light',
+      title: 'Moonlit Night Light',
+      description: 'Soft glow night light for nurseries.',
+      sku: 'LGHT-001',
+      label: 'Default',
+      pricePaise: 149900,
+      onHand: 18,
+      categoryId: keepsakes.id,
+      imageUrl: unsplash('photo-1607604276583-eef5d076aa5f'),
+      recipientTags: ['unisex'],
+      ageBands: ['newborn', 'infant', 'toddler'],
+      occasionTags: ['welcome-baby', 'birthday'],
+      isReadyMadeHamper: false,
+      brandName: 'Philips Avent',
+      storefrontLabels: [],
+      publishedAt: daysAgo(5),
+    },
+    {
+      slug: 'lavender-bath-essentials',
+      title: 'Lavender Bath Essentials',
+      description: 'Gentle wash + lotion duo for bath time.',
+      sku: 'BATH-001',
+      label: 'Duo',
+      pricePaise: 99900,
+      compareAtPricePaise: 129900,
+      onHand: 40,
+      categoryId: bathSkin.id,
+      imageUrl: unsplash('photo-1596462502278-27bfdc403348'),
+      recipientTags: ['girl', 'boy', 'unisex'],
+      ageBands: ['newborn', 'infant'],
+      occasionTags: ['welcome-baby', 'baby-shower'],
+      isReadyMadeHamper: false,
+      brandName: "Johnson’s Baby",
+      storefrontLabels: ['BESTSELLER'],
+      publishedAt: daysAgo(28),
+    },
+    {
+      slug: 'stackable-wood-blocks',
+      title: 'Stackable Wood Blocks',
+      description: 'Natural wood stacking blocks for tiny hands.',
+      sku: 'BLCK-001',
+      label: '12 pcs',
+      pricePaise: 119900,
+      onHand: 22,
+      categoryId: toys.id,
+      imageUrl: unsplash('photo-1587654780291-39c9404d746b'),
+      recipientTags: ['boy', 'unisex'],
+      ageBands: ['infant', 'toddler'],
+      occasionTags: ['birthday'],
+      isReadyMadeHamper: false,
+      brandName: 'Chicco',
+      storefrontLabels: [],
+      publishedAt: daysAgo(3),
+    },
+    {
+      slug: 'silk-soft-romper',
+      title: 'Silk Soft Romper',
+      description: 'Everyday romper with envelope neckline.',
+      sku: 'ROMP-001',
+      label: '0–3M',
+      pricePaise: 109900,
+      onHand: 16,
+      categoryId: clothing.id,
+      imageUrl: unsplash('photo-1578898886225-c7c894047899'),
+      recipientTags: ['girl'],
+      ageBands: ['newborn', 'infant'],
+      occasionTags: ['welcome-baby', 'naming'],
+      isReadyMadeHamper: false,
+      brandName: 'Baby Hug',
+      storefrontLabels: ['EDITORS_PICK'],
+      publishedAt: daysAgo(7),
+    },
+    {
+      slug: 'milestone-memory-cards',
+      title: 'Milestone Memory Cards',
+      description: 'Photo cards to mark first-year moments.',
+      sku: 'CARD-001',
+      label: 'Deck',
+      pricePaise: 79900,
+      onHand: 35,
+      categoryId: keepsakes.id,
+      imageUrl: unsplash('photo-1492725764893-90b379c2b6e7'),
+      recipientTags: ['unisex'],
+      ageBands: ['newborn', 'infant'],
+      occasionTags: ['welcome-baby', 'naming'],
+      isReadyMadeHamper: false,
+      brandName: 'Inabiya',
+      storefrontLabels: ['EDITORS_PICK'],
+      publishedAt: daysAgo(12),
+    },
+    {
+      slug: 'nursing-comfort-hamper',
+      title: 'Nursing Comfort Hamper',
+      description: 'Ready hamper for new moms — care oils, balm & tea.',
+      sku: 'HAMP-002',
+      label: 'Comfort',
+      pricePaise: 349900,
+      onHand: 10,
+      categoryId: momCare.id,
+      imageUrl: unsplash('photo-1544367567-0f2fcb009e0b'),
+      recipientTags: ['mom'],
+      ageBands: ['any'],
+      occasionTags: ['baby-shower', 'welcome-baby'],
+      isReadyMadeHamper: true,
+      brandName: 'The Moms Co.',
+      storefrontLabels: ['GIFT_SET'],
+      publishedAt: daysAgo(15),
+    },
+    {
+      slug: 'pastel-play-mat',
+      title: 'Pastel Play Mat',
+      description: 'Foldable foam mat for tummy time and play.',
+      sku: 'MAT-001',
+      label: 'Standard',
+      pricePaise: 219900,
+      compareAtPricePaise: 279900,
+      onHand: 14,
+      categoryId: newborn.id,
+      imageUrl: unsplash('photo-1606092195730-5d7b9af1efc5'),
+      recipientTags: ['girl', 'boy', 'unisex'],
+      ageBands: ['newborn', 'infant'],
+      occasionTags: ['welcome-baby', 'birthday'],
+      isReadyMadeHamper: false,
+      brandName: 'Mee Mee',
+      storefrontLabels: [],
+      publishedAt: daysAgo(2),
+    },
+    {
+      slug: 'tiny-toes-booties',
+      title: 'Tiny Toes Booties',
+      description: 'Knit booties that stay on wriggly feet.',
+      sku: 'BOOT-001',
+      label: 'Pair',
+      pricePaise: 59900,
+      onHand: 50,
+      categoryId: clothing.id,
+      imageUrl: unsplash('photo-1555252333-9f8e92e65df9'),
+      recipientTags: ['girl', 'boy', 'unisex'],
+      ageBands: ['newborn', 'infant'],
+      occasionTags: ['welcome-baby', 'naming'],
+      isReadyMadeHamper: false,
+      brandName: 'Pigeon',
+      storefrontLabels: ['BESTSELLER'],
+      publishedAt: daysAgo(55),
+    },
+    {
+      slug: 'celebrate-naming-hamper',
+      title: 'Celebrate Naming Hamper',
+      description: 'Keepsake-forward hamper for naming day.',
+      sku: 'HAMP-003',
+      label: 'Naming',
+      pricePaise: 449900,
+      onHand: 8,
+      categoryId: keepsakes.id,
+      imageUrl: unsplash('photo-1635874714425-c342060a4c58'),
+      recipientTags: ['girl', 'boy', 'unisex'],
+      ageBands: ['newborn'],
+      occasionTags: ['naming', 'welcome-baby'],
+      isReadyMadeHamper: true,
+      brandName: 'Inabiya',
+      storefrontLabels: ['GIFT_SET', 'EDITORS_PICK'],
+      extraCategoryIds: [newborn.id],
+      publishedAt: daysAgo(8),
     },
   ];
 
@@ -251,7 +465,7 @@ async function main() {
         title: dp.title,
         description: dp.description,
         status: 'PUBLISHED',
-        publishedAt: new Date(),
+        publishedAt: dp.publishedAt,
         recipientTags: dp.recipientTags,
         ageBands: dp.ageBands,
         occasionTags: dp.occasionTags,
@@ -264,7 +478,7 @@ async function main() {
         title: dp.title,
         description: dp.description,
         status: 'PUBLISHED',
-        publishedAt: new Date(),
+        publishedAt: dp.publishedAt,
         recipientTags: dp.recipientTags,
         ageBands: dp.ageBands,
         occasionTags: dp.occasionTags,
@@ -346,23 +560,29 @@ async function main() {
     where: { key: 'homepage.featured_slugs' },
     update: {
       value: [
-        'cloud-soft-swaddle',
         'personalised-name-blanket',
         'wooden-rattle-set',
+        'organic-cotton-bodysuit-set',
         'welcome-baby-hamper',
+        'tiny-toes-booties',
+        'lavender-bath-essentials',
       ],
     },
     create: {
       key: 'homepage.featured_slugs',
       value: [
-        'cloud-soft-swaddle',
         'personalised-name-blanket',
         'wooden-rattle-set',
+        'organic-cotton-bodysuit-set',
         'welcome-baby-hamper',
+        'tiny-toes-booties',
+        'lavender-bath-essentials',
       ],
     },
   });
   console.log('Seeded homepage featured products');
+
+  const u = (id: string) => `https://images.unsplash.com/${id}?w=800&q=85`;
 
   const homeBlocks = [
     {
@@ -379,13 +599,23 @@ async function main() {
         ctaLabel2: 'Browse Hampers',
         ctaHref2: '/gift/products?hamper=1',
         trustLine: 'Baby-safe brands · Free shipping over ₹2,000 · PAN-India delivery',
-        imageUrl: 'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=1200&q=85',
+        imageUrl: u('photo-1635874714425-c342060a4c58').replace('w=800', 'w=1200'),
         accentWord: 'joy',
       },
     },
     {
-      type: 'brandStrip',
+      type: 'saleStrip',
       sortOrder: 1,
+      props: {
+        text: 'Free personalisation on gift boxes this week',
+        ctaLabel: 'Shop bestsellers →',
+        ctaHref: '/gift/products?storefrontLabel=BESTSELLER',
+        tone: 'blush',
+      },
+    },
+    {
+      type: 'brandStrip',
+      sortOrder: 2,
       props: {
         title: 'Trusted baby & kids brands we stock',
         showUsps: false,
@@ -409,7 +639,7 @@ async function main() {
     },
     {
       type: 'recipientSplit',
-      sortOrder: 2,
+      sortOrder: 3,
       props: {
         title: 'Shop by baby',
         subtitle: 'Curated palettes, unisex-safe products.',
@@ -420,7 +650,7 @@ async function main() {
           blurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
           cta: 'Shop girl gifts →',
           accent: 'pink',
-          imageUrl: '/gift/media/girl.jpeg',
+          imageUrl: u('photo-1515488042361-ee00e0ddd4e4'),
           imageAlt: 'Baby girl',
         },
         right: {
@@ -430,14 +660,14 @@ async function main() {
           blurb: 'Sky ribbons, soft brights, gender-neutral picks.',
           cta: 'Shop boy gifts →',
           accent: 'sky',
-          imageUrl: '/gift/media/boy.jpg',
+          imageUrl: u('photo-1503454537195-1dcabb73ffb9'),
           imageAlt: 'Baby boy essentials',
         },
       },
     },
     {
       type: 'brandStrip',
-      sortOrder: 3,
+      sortOrder: 4,
       props: {
         showUsps: true,
         usps: [
@@ -465,8 +695,21 @@ async function main() {
       },
     },
     {
+      type: 'productGrid',
+      sortOrder: 5,
+      props: {
+        source: 'bestsellers',
+        overline: 'Parents love these',
+        title: 'Best sellers',
+        subtitle: 'The gifts families reorder and recommend.',
+        limit: 8,
+        seeAllHref: '/gift/products?storefrontLabel=BESTSELLER',
+        seeAllLabel: 'See all',
+      },
+    },
+    {
       type: 'exclusiveOffers',
-      sortOrder: 4,
+      sortOrder: 6,
       props: {
         overline: 'Limited-time benefits',
         title: 'Exclusive Offers for Every Occasion',
@@ -506,7 +749,7 @@ async function main() {
     },
     {
       type: 'discoveryChips',
-      sortOrder: 5,
+      sortOrder: 7,
       props: {
         title: 'Shop by category',
         seeAllHref: '/gift/products',
@@ -515,33 +758,170 @@ async function main() {
           {
             label: 'Clothing',
             href: '/gift/products?category=clothing',
-            imageUrl: '/gift/media/baby-clothes.jpg',
+            imageUrl: u('photo-1522771739844-6a9f6d5f14af'),
             imageAlt: 'Baby clothing',
           },
           {
             label: 'Bath & Skin',
             href: '/gift/products?category=bath-skin',
-            imageUrl: '/gift/media/baby-cues.jpg',
+            imageUrl: u('photo-1596462502278-27bfdc403348'),
             imageAlt: 'Bath and skin care',
           },
           {
             label: 'Toys',
             href: '/gift/products?category=toys',
-            imageUrl: '/gift/media/train-toy.jpg',
-            imageAlt: 'Wooden train toys',
+            imageUrl: u('photo-1566576912321-d58ddd7a6088'),
+            imageAlt: 'Wooden toys',
           },
           {
             label: 'Mom Care',
             href: '/gift/products?category=mom-care',
-            imageUrl: '/gift/media/girl.jpeg',
-            imageAlt: 'Thoughtful care gifts for new moms',
+            imageUrl: u('photo-1476703993599-0035a21b17a9'),
+            imageAlt: 'Care gifts for new moms',
+          },
+          {
+            label: 'Keepsakes',
+            href: '/gift/products?category=keepsakes',
+            imageUrl: u('photo-1492725764893-90b379c2b6e7'),
+            imageAlt: 'Keepsakes',
+          },
+          {
+            label: 'Newborn',
+            href: '/gift/products?category=newborn',
+            imageUrl: u('photo-1555252333-9f8e92e65df9'),
+            imageAlt: 'Newborn essentials',
           },
         ],
       },
     },
     {
+      type: 'productGrid',
+      sortOrder: 8,
+      props: {
+        source: 'new',
+        overline: 'Just landed',
+        title: 'New arrivals',
+        subtitle: 'Fresh finds for the nursery and the gift pile.',
+        newWithinDays: 30,
+        limit: 8,
+        seeAllHref: '/gift/products?sort=newest',
+        seeAllLabel: 'See all',
+      },
+    },
+    {
+      type: 'discoveryChips',
+      sortOrder: 9,
+      props: {
+        title: 'Shop by occasion',
+        seeAllHref: '/gift/products',
+        seeAllLabel: 'See all',
+        items: [
+          {
+            label: 'Welcome baby',
+            href: '/gift/products?occasion=welcome-baby',
+            imageUrl: u('photo-1555252333-9f8e92e65df9'),
+            imageAlt: 'Welcome baby',
+          },
+          {
+            label: 'Baby shower',
+            href: '/gift/products?occasion=baby-shower',
+            imageUrl: u('photo-1515488042361-ee00e0ddd4e4'),
+            imageAlt: 'Baby shower',
+          },
+          {
+            label: 'Naming',
+            href: '/gift/products?occasion=naming',
+            imageUrl: u('photo-1492725764893-90b379c2b6e7'),
+            imageAlt: 'Naming ceremony',
+          },
+          {
+            label: 'Birthday',
+            href: '/gift/products?occasion=birthday',
+            imageUrl: u('photo-1587654780291-39c9404d746b'),
+            imageAlt: 'Birthday',
+          },
+        ],
+      },
+    },
+    {
+      type: 'discoveryChips',
+      sortOrder: 10,
+      props: {
+        title: 'Shop by age',
+        seeAllHref: '/gift/products',
+        seeAllLabel: 'See all',
+        items: [
+          {
+            label: 'Newborn',
+            href: '/gift/products?age=newborn',
+            imageUrl: u('photo-1555252333-9f8e92e65df9'),
+            imageAlt: 'Newborn',
+          },
+          {
+            label: 'Infant',
+            href: '/gift/products?age=infant',
+            imageUrl: u('photo-1503454537195-1dcabb73ffb9'),
+            imageAlt: 'Infant',
+          },
+          {
+            label: 'Toddler',
+            href: '/gift/products?age=toddler',
+            imageUrl: u('photo-1587654780291-39c9404d746b'),
+            imageAlt: 'Toddler',
+          },
+        ],
+      },
+    },
+    {
+      type: 'productGrid',
+      sortOrder: 11,
+      props: {
+        source: 'on_sale',
+        overline: 'Limited deals',
+        title: 'On sale',
+        subtitle: 'Thoughtful gifts with a little extra saving.',
+        limit: 8,
+        seeAllHref: '/gift/products?onSale=1',
+        seeAllLabel: 'See all',
+      },
+    },
+    {
+      type: 'productGrid',
+      sortOrder: 12,
+      props: {
+        source: 'editors',
+        overline: 'Curated',
+        title: "Editor's picks",
+        subtitle: 'Hand-picked favourites from our gift desk.',
+        limit: 6,
+        seeAllHref: '/gift/products?storefrontLabel=EDITORS_PICK',
+        seeAllLabel: 'See all',
+      },
+    },
+    {
+      type: 'productGrid',
+      sortOrder: 13,
+      props: {
+        source: 'manual',
+        overline: 'Trending',
+        title: 'Trending this week',
+        subtitle: 'What gifters are adding to boxes right now.',
+        productSlugs: [
+          'personalised-name-blanket',
+          'wooden-rattle-set',
+          'pastel-play-mat',
+          'silk-soft-romper',
+          'lavender-bath-essentials',
+          'moonlit-night-light',
+        ],
+        limit: 6,
+        seeAllHref: '/gift/products',
+        seeAllLabel: 'Browse all',
+      },
+    },
+    {
       type: 'buildYourBoxTeaser',
-      sortOrder: 6,
+      sortOrder: 14,
       props: {
         overline: '6-step gift builder',
         title: 'Customise a box just for them.',
@@ -560,20 +940,32 @@ async function main() {
     },
     {
       type: 'productGrid',
-      sortOrder: 7,
+      sortOrder: 15,
       props: {
+        source: 'auto',
         overline: 'Hampers',
         title: 'Ready-made hampers',
         subtitle: 'Complete boxes, ready to wrap — less planning, more delight.',
         hamper: true,
-        limit: 3,
+        limit: 6,
         seeAllHref: '/gift/products?hamper=1',
         seeAllLabel: 'See all',
       },
     },
     {
+      type: 'cta',
+      sortOrder: 16,
+      props: {
+        title: 'Corporate & bulk gifting',
+        body: 'Welcome-baby hampers for your team — branded cards, volume pricing, PAN-India delivery.',
+        label: 'Get a corporate quote',
+        href: '/gift/corporate',
+        variant: 'primary',
+      },
+    },
+    {
       type: 'testimonials',
-      sortOrder: 8,
+      sortOrder: 17,
       props: {
         overline: 'Parent love',
         title: 'Loved by new parents across India',
@@ -603,7 +995,7 @@ async function main() {
     },
     {
       type: 'articleTeasers',
-      sortOrder: 9,
+      sortOrder: 18,
       props: {
         overline: 'Journal',
         title: 'From the parenting journal',
@@ -615,7 +1007,7 @@ async function main() {
     },
     {
       type: 'faq',
-      sortOrder: 10,
+      sortOrder: 19,
       props: {
         title: 'Frequently asked questions',
         items: [

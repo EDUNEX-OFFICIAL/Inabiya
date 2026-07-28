@@ -1,0 +1,253 @@
+'use client';
+
+import { CmsMediaField } from '@/components/cms/cms-media-field';
+
+export type DiscoveryChipCard = {
+  label: string;
+  href: string;
+  imageUrl?: string;
+  imageAlt?: string;
+};
+
+type Props = {
+  props: Record<string, string>;
+  onChange: (key: string, value: string) => void;
+};
+
+const OCCASION_PRESET: DiscoveryChipCard[] = [
+  {
+    label: 'Welcome baby',
+    href: '/gift/products?occasion=welcome-baby',
+    imageUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=600&q=85',
+    imageAlt: 'Newborn welcome',
+  },
+  {
+    label: 'Baby shower',
+    href: '/gift/products?occasion=baby-shower',
+    imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=85',
+    imageAlt: 'Baby shower gifts',
+  },
+  {
+    label: 'Naming',
+    href: '/gift/products?occasion=naming',
+    imageUrl: 'https://images.unsplash.com/photo-1492725764893-90b379c2b6e7?w=600&q=85',
+    imageAlt: 'Naming ceremony',
+  },
+  {
+    label: 'Birthday',
+    href: '/gift/products?occasion=birthday',
+    imageUrl: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&q=85',
+    imageAlt: 'Birthday toys',
+  },
+];
+
+const AGE_PRESET: DiscoveryChipCard[] = [
+  {
+    label: 'Newborn',
+    href: '/gift/products?age=newborn',
+    imageUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=600&q=85',
+    imageAlt: 'Newborn essentials',
+  },
+  {
+    label: 'Infant',
+    href: '/gift/products?age=infant',
+    imageUrl: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600&q=85',
+    imageAlt: 'Infant gifts',
+  },
+  {
+    label: 'Toddler',
+    href: '/gift/products?age=toddler',
+    imageUrl: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=600&q=85',
+    imageAlt: 'Toddler play',
+  },
+];
+
+function parseItems(raw: string): DiscoveryChipCard[] {
+  return (raw || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split('|').map((p) => p.trim());
+      const card: DiscoveryChipCard = {
+        label: parts[0] || '',
+        href: parts[1] || '',
+      };
+      if (parts[2]) card.imageUrl = parts[2];
+      if (parts[3]) card.imageAlt = parts[3];
+      return card;
+    })
+    .filter((c) => c.label && c.href);
+}
+
+function serializeItems(items: DiscoveryChipCard[]): string {
+  return items
+    .map((c) => {
+      if (c.imageUrl) {
+        return c.imageAlt
+          ? `${c.label} | ${c.href} | ${c.imageUrl} | ${c.imageAlt}`
+          : `${c.label} | ${c.href} | ${c.imageUrl}`;
+      }
+      return `${c.label} | ${c.href}`;
+    })
+    .join('\n');
+}
+
+export function DiscoveryChipsBlockEditor({ props, onChange }: Props) {
+  const items = parseItems(props.items ?? '');
+
+  function setItems(next: DiscoveryChipCard[]) {
+    onChange('items', serializeItems(next));
+  }
+
+  function updateCard(index: number, patch: Partial<DiscoveryChipCard>) {
+    setItems(items.map((c, i) => (i === index ? { ...c, ...patch } : c)));
+  }
+
+  function removeCard(index: number) {
+    setItems(items.filter((_, i) => i !== index));
+  }
+
+  function addCard() {
+    setItems([...items, { label: 'New tile', href: '/gift/products', imageUrl: '', imageAlt: '' }]);
+  }
+
+  function moveCard(index: number, dir: -1 | 1) {
+    const j = index + dir;
+    if (j < 0 || j >= items.length) return;
+    const next = [...items];
+    const tmp = next[index]!;
+    next[index] = next[j]!;
+    next[j] = tmp;
+    setItems(next);
+  }
+
+  return (
+    <div className="space-y-3">
+      <label className="block">
+        Overline
+        <input
+          className="mt-1 block w-full rounded border px-2 py-1"
+          value={props.overline ?? ''}
+          onChange={(e) => onChange('overline', e.target.value)}
+        />
+      </label>
+      <label className="block">
+        Title
+        <input
+          className="mt-1 block w-full rounded border px-2 py-1"
+          value={props.title ?? ''}
+          onChange={(e) => onChange('title', e.target.value)}
+        />
+      </label>
+      <label className="block">
+        Subtitle
+        <input
+          className="mt-1 block w-full rounded border px-2 py-1"
+          value={props.subtitle ?? ''}
+          onChange={(e) => onChange('subtitle', e.target.value)}
+        />
+      </label>
+      <label className="block">
+        See all href
+        <input
+          className="mt-1 block w-full rounded border px-2 py-1 font-mono text-xs"
+          value={props.seeAllHref ?? ''}
+          onChange={(e) => onChange('seeAllHref', e.target.value)}
+        />
+      </label>
+      <label className="block">
+        See all label
+        <input
+          className="mt-1 block w-full rounded border px-2 py-1"
+          value={props.seeAllLabel ?? ''}
+          onChange={(e) => onChange('seeAllLabel', e.target.value)}
+        />
+      </label>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="rounded border px-2 py-1 text-xs"
+          onClick={() => {
+            onChange('title', 'Shop by occasion');
+            onChange('seeAllHref', '/gift/products');
+            setItems(OCCASION_PRESET);
+          }}
+        >
+          Preset: occasions
+        </button>
+        <button
+          type="button"
+          className="rounded border px-2 py-1 text-xs"
+          onClick={() => {
+            onChange('title', 'Shop by age');
+            onChange('seeAllHref', '/gift/products');
+            setItems(AGE_PRESET);
+          }}
+        >
+          Preset: ages
+        </button>
+        <button type="button" className="rounded border px-2 py-1 text-xs" onClick={addCard}>
+          + Add tile
+        </button>
+      </div>
+
+      <ul className="space-y-3">
+        {items.map((card, index) => (
+          <li key={`${card.href}-${index}`} className="rounded border p-2 space-y-2 bg-neutral-50">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium opacity-70">Tile {index + 1}</span>
+              <div className="flex gap-1">
+                <button type="button" className="px-1 text-xs" onClick={() => moveCard(index, -1)}>
+                  ↑
+                </button>
+                <button type="button" className="px-1 text-xs" onClick={() => moveCard(index, 1)}>
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className="px-1 text-xs text-red-600"
+                  onClick={() => removeCard(index)}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+            <label className="block text-xs">
+              Label
+              <input
+                className="mt-1 block w-full rounded border px-2 py-1"
+                value={card.label}
+                onChange={(e) => updateCard(index, { label: e.target.value })}
+              />
+            </label>
+            <label className="block text-xs">
+              Href
+              <input
+                className="mt-1 block w-full rounded border px-2 py-1 font-mono"
+                value={card.href}
+                onChange={(e) => updateCard(index, { href: e.target.value })}
+              />
+            </label>
+            <div className="text-xs">
+              <span className="opacity-70">Image</span>
+              <CmsMediaField
+                value={card.imageUrl ?? ''}
+                onChange={(v) => updateCard(index, { imageUrl: v })}
+              />
+            </div>
+            <label className="block text-xs">
+              Image alt
+              <input
+                className="mt-1 block w-full rounded border px-2 py-1"
+                value={card.imageAlt ?? ''}
+                onChange={(e) => updateCard(index, { imageAlt: e.target.value })}
+              />
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

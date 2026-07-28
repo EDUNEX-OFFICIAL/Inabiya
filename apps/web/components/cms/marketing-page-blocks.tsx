@@ -1119,6 +1119,56 @@ function SaleStripBlock({ props, home }: { props: Record<string, unknown>; home?
   );
 }
 
+function CountdownBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
+  const endsAtRaw = String(props.endsAt ?? '').trim();
+  const endsAt = endsAtRaw ? new Date(endsAtRaw) : null;
+  const title = String(props.title ?? 'Offer ends soon').trim();
+  const expiredLabel = String(props.expiredLabel ?? 'This offer has ended').trim();
+  const ctaLabel = props.ctaLabel ? String(props.ctaLabel) : '';
+  const ctaHref = props.ctaHref ? String(props.ctaHref) : '';
+  const valid = endsAt && !Number.isNaN(endsAt.getTime());
+  const expired = valid ? endsAt.getTime() <= Date.now() : true;
+
+  let remaining = '';
+  if (valid && !expired) {
+    const ms = endsAt.getTime() - Date.now();
+    const days = Math.floor(ms / 86_400_000);
+    const hours = Math.floor((ms % 86_400_000) / 3_600_000);
+    const mins = Math.floor((ms % 3_600_000) / 60_000);
+    remaining =
+      days > 0 ? `${days}d ${hours}h ${mins}m left` : hours > 0 ? `${hours}h ${mins}m left` : `${mins}m left`;
+  }
+
+  const inner = (
+    <div className="flex flex-col items-start justify-between gap-gs-3 sm:flex-row sm:items-center">
+      <div>
+        <p className="gift-overline">{expired ? 'Ended' : 'Limited time'}</p>
+        <p className="font-display mt-gs-2 text-xl sm:text-2xl">{expired ? expiredLabel : title}</p>
+        {!expired && remaining ? (
+          <p className="mt-gs-2 text-sm font-medium text-primary" suppressHydrationWarning>
+            {remaining}
+          </p>
+        ) : null}
+      </div>
+      {ctaLabel && ctaHref && !expired ? (
+        <Link href={ctaHref} className="clay-btn shrink-0 text-sm">
+          {ctaLabel}
+        </Link>
+      ) : null}
+    </div>
+  );
+
+  if (home) {
+    return <GiftBand tone="soft">{inner}</GiftBand>;
+  }
+
+  return (
+    <section className="gift-band gift-band--soft">
+      <div className="gift-band-inner">{inner}</div>
+    </section>
+  );
+}
+
 type FaqItem = { question: string; answerHtml: string };
 
 function parseFaqItems(raw: unknown): FaqItem[] {
@@ -1589,6 +1639,9 @@ function renderRestBlock(
   }
   if (b.type === 'saleStrip') {
     return <SaleStripBlock key={b.id} props={b.props} home={home} />;
+  }
+  if (b.type === 'countdown') {
+    return <CountdownBlock key={b.id} props={b.props} home={home} />;
   }
   if (b.type === 'exclusiveOffers') {
     return <ExclusiveOffersBlock key={b.id} props={b.props} home={home} />;

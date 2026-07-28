@@ -350,6 +350,11 @@ export default function CheckoutPage() {
           </p>
         </div>
 
+        <div className="gift-banner gift-banner--info text-sm" role="status">
+          <strong>Dev mock payment.</strong> No real card charge — confirm uses the mock provider
+          (`PAYMENT_PROVIDER=mock`). Razorpay is deferred until after project complete.
+        </div>
+
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
         <button
@@ -357,7 +362,7 @@ export default function CheckoutPage() {
           disabled={busy}
           className="clay-btn w-full sm:w-auto disabled:opacity-60"
         >
-          {busy ? 'Placing order…' : 'Pay & place order'}
+          {busy ? 'Placing order…' : 'Pay with mock & place order'}
         </button>
       </form>
     </main>

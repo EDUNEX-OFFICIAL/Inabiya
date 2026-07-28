@@ -183,6 +183,13 @@ model Product {
   brandName            String?                @map("brand_name")
   /// Manual merchandising chips: BESTSELLER | EDITORS_PICK | GIFT_SET (validated in Zod). Auto ribbons computed at map time.
   storefrontLabels     String[]               @default([]) @map("storefront_labels")
+  seoTitle             String?                @map("seo_title")
+  seoDescription       String?                @map("seo_description")
+  canonicalPath        String?                @map("canonical_path")
+  ogImageUrl           String?                @map("og_image_url")
+  robotsIndex          Boolean                @default(true) @map("robots_index")
+  /// Admin FAQ overrides: [{ question, answerText }] — empty/null → PDP uses built-in fallbacks
+  faqItems             Json?                  @map("faq_items")
   createdAt            DateTime               @default(now()) @map("created_at")
   updatedAt            DateTime               @updatedAt @map("updated_at")
   publishedAt          DateTime?              @map("published_at")
@@ -442,10 +449,25 @@ model Order {
   notes           OrderNote[]
   reviews         ProductReview[]
   returnRequests  ReturnRequest[]
+  invoice         CommerceInvoice?
 
   @@index([userId])
   @@index([status])
   @@map("orders")
+}
+
+/// Immutable tax-invoice snapshot (paise) — created once when first eligible invoice is requested or on capture.
+model CommerceInvoice {
+  id            String   @id @default(uuid()) @db.Uuid
+  orderId       String   @unique @map("order_id") @db.Uuid
+  invoiceNumber String   @unique @map("invoice_number")
+  issuedAt      DateTime @map("issued_at")
+  /// Frozen InvoiceInput JSON (totals + lines in paise)
+  snapshot      Json
+  createdAt     DateTime @default(now()) @map("created_at")
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("commerce_invoices")
 }
 
 model OrderItem {

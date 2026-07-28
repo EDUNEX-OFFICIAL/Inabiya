@@ -1,7 +1,7 @@
 # Inabiya
 # Design System & UX Standards
 
-Version: 2.0.0
+Version: 2.1.0
 
 Status: Active — Visual Authority
 
@@ -15,7 +15,7 @@ QA
 Marketing
 AI Coding Assistants
 
-Last Updated: July 2026
+Last Updated: July 28, 2026
 
 ---
 
@@ -25,8 +25,8 @@ This document is the authoritative design system for Inabiya production UI.
 
 It defines:
 
-1. Dual brand systems (Gift vs Creator Collective)
-2. Tokens (color, type, space, radius, elevation, motion)
+1. Triple brand systems (Soft Gift · Blog Creative · Creator Collective)
+2. Tokens (color, type, space, radius, elevation, motion) — shared foundations + per-theme semantics
 3. Layout principles and page compositions
 4. Component inventory and variants
 5. Accessibility, content, and QA standards
@@ -40,23 +40,25 @@ If UI conflicts with this file, change the UI — not the brand — unless Desig
 
 ---
 
-## 2. Dual-System Law (Non-Negotiable)
+## 2. Triple-System Law (Non-Negotiable)
 
-Inabiya is one company, **two selling concepts**, **two design systems**.
+Inabiya is one company, **three visual systems** (ecommerce, parenting journal, influencer campaigns).
 
-| System | Codename | Surfaces | Personality |
-|---|---|---|---|
-| **A** | Soft Gift | Storefront, Build Your Box, customer account, public blog UI, commerce-adjacent marketing | Warm, nurturing, pastel, soft, safe |
-| **B** | Earthy Editorial | Creator Collective marketing, signup, creator/brand dashboards, campaign marketplace | Organic, earthy, luxurious, editorial |
+| System | Codename | `data-theme` | Surfaces | Personality |
+|---|---|---|---|---|
+| **A** | Soft Gift | `gift` | Storefront `/gift`, marketing `/pages/*`, customer account, commerce CMS | Warm, nurturing, pastel, soft, safe |
+| **C** | Blog Creative | `blog` | Public `/articles`, `/specialists`, `/blog`, editorial CMS | Creative journal, paper/ink, trust-first longform |
+| **B** | Creator Collective | `creator` | Influencer campaign marketing, creator/brand dashboards, creator admin | Organic, earthy, luxurious, marketplace |
 
 ### Hard rules
 
-1. Never mix System A pink into System B.
-2. Never restyle System A with System B forest/terracotta as default.
-3. Theme by route/layout scope: `data-theme="gift"` | `data-theme="creator"`.
-4. Shared primitives read CSS variables only.
+1. Never mix Soft Gift pink into Blog or Creator.
+2. Never restyle Soft Gift with Creator forest/terracotta or Blog teal-ink as default.
+3. Theme by route/layout scope: `data-theme="gift"` | `data-theme="blog"` | `data-theme="creator"`.
+4. Shared foundations (`:root` space/type/z/duration) + theme primitives; components read **semantic** CSS variables only.
 5. Blog medical specialists ≠ Creator marketplace creators in IA/chrome.
-6. Admin consoles may be denser, but remain inside their family tokens.
+6. Admin consoles stay in family tokens + `data-density="compact"` — **no fourth brand palette** (`admin` theme is forbidden).
+7. Hover / focus / disabled / invalid live in recipes (`.clay-*`, `.blog-*`, `.creator-*`), not ad-hoc TSX hex.
 
 ---
 
@@ -66,15 +68,27 @@ Inabiya is one company, **two selling concepts**, **two design systems**.
 |---|---|
 | Styling | Tailwind CSS + CSS variables |
 | Primitives | shadcn/ui + Radix, restyled |
-| Motion | Framer Motion for intentional sequences |
+| Motion | GSAP Soft Gift story; Framer only for tiny UI |
 | Toasts | Sonner |
 | Forms | RHF + Zod + themed inputs |
 | Icons A | lucide-react stroke ~1.5 |
+| Icons C | lucide-react stroke ~1.5 |
 | Icons B | lucide + Phosphor |
 | Fonts A | Fraunces + Plus Jakarta Sans |
+| Fonts C | Newsreader + Source Sans 3 |
 | Fonts B | Playfair Display + Manrope |
 
 Forbidden as primary: MUI, Ant, Chakra, Inter/Roboto brand stacks, emoji-icons.
+
+### Token layers (all themes)
+
+| Layer | Where | What |
+|---|---|---|
+| 0 Shared foundations | `:root` in `globals.css` | `--space-*`, `--text-*`, `--duration-*`, `--z-*`, `--tap-min`, default radii |
+| 1 Brand primitives | `[data-theme]` | Raw hex/HSL only (e.g. `--inabiya-pink`, `--blog-ink`, creator HSL) |
+| 2 Semantics | `[data-theme]` | Same names: `--background`, `--primary`, `--primary-hover`, `--surface`, `--border-focus`, status, inputs, shadows |
+| 3 Recipes | `@layer components` | Buttons/inputs/cards/type with hover/active/focus/disabled/invalid |
+| Density | `data-density="compact"` | Tighter padding/type for CMS/admin — no new colors |
 
 ---
 
@@ -124,8 +138,8 @@ Defined in `apps/web/app/globals.css` under `[data-theme='gift']`. Brand hex liv
 
 | Layer | Tokens |
 |---|---|
-| Space | `--space-1`…`--space-8` → Tailwind `gs-1`…`gs-8` (`p-gs-4`, `gap-gs-5`, …) |
-| Radius | `--radius-pill`, `--radius-card`, `--radius-control` → `rounded-pill` / `rounded-clay` / `rounded-control` |
+| Space | Shared `:root` `--space-1`…`--space-8` → Tailwind `gs-1`…`gs-8` |
+| Radius | Gift overrides `--radius-pill` / `--radius-card` / `--radius-control` → `rounded-pill` / `rounded-clay` / `rounded-control` |
 | Surface | `--surface`, `--surface-soft`, `--surface-nav` |
 | Border / focus | `--border-subtle`, `--border-strong`, `--border-focus`, `--ring` |
 | Elevation | `--clay-shadow`, `--clay-shadow-hover`, `--clay-shadow-press` → `shadow-clay*` |
@@ -269,12 +283,6 @@ Guidelines:
 - Media ratio 1:1 or 4:5
 - Add action clear and large enough for thumbs
 
-#### Blog public
-
-- Same System A fonts/colors
-- Thumbnails often 16:9
-- Trust-first; article body not aggressive sales chrome
-
 #### Commerce admin (A-family dense)
 
 - Same tokens/fonts
@@ -300,7 +308,6 @@ Guidelines:
 | Order confirmation | Reassurance + next steps |
 | Account / orders / wishlist | Dense but soft |
 | About / contact | Human, warm photography |
-| Blog index / article | Editorial readability |
 
 #### Commerce admin
 
@@ -339,7 +346,6 @@ Warm bright soft light; cotton/wood textures; human connection.
 Aspect:
 
 - Product 1:1 or 4:5
-- Blog 16:9
 - Hero full-bleed
 
 Reference intents: hero hamper, lifestyle baby, essentials, wooden toys, mom care, nursery.
@@ -348,15 +354,70 @@ No abstract purple gradient heroes.
 
 ---
 
-## 5. System B — Earthy Editorial (Creator Collective)
+## 5. System C — Blog Creative
 
 ### 5.1 Personality
+
+Creative parenting journal · paper & ink · trust-first · longform readable · calm CTAs.  
+Not Soft Gift sales chrome; not Creator marketplace earthy.
+
+### 5.2 Color tokens (primitives)
+
+| Token | Hex | CSS var | Usage |
+|---|---|---|---|
+| Paper | `#F7F5F2` | `--blog-paper` | Page background |
+| Ink | `#1E2A3A` | `--blog-ink` | Headings |
+| Body | `#3A4553` | `--blog-body` | Body copy |
+| Accent | `#0F766E` | `--blog-accent` | Links / primary CTA |
+| Accent hover | `#0D5F59` | `--blog-accent-hover` | Hover |
+| Wash | `#E8F2F0` | `--blog-wash` | Soft bands / chips |
+| Highlight | `#F4E8C1` | `--blog-highlight` | Quotes / callouts |
+| White | `#FFFFFF` | `--blog-white` | Cards |
+
+**Usage rules**
+
+- Paper ground + white cards; teal-ink accents (never gift pink, never terracotta)
+- Tag/chip text = ink dark on wash (not white on wash)
+- Primary button = white on accent
+- **No hardcoded hex in TSX** — semantics + `.blog-*` recipes + `gs-*` only
+
+### 5.3 Semantic + recipes
+
+Defined under `[data-theme='blog']`. Same semantic names as Soft Gift/Creator (`--primary`, `--primary-hover`, `--surface`, status, inputs, shadows).
+
+**Recipes:** `.blog-shell`, `.blog-page`, `.blog-prose`, `.blog-btn` / `.blog-btn-secondary` / `.blog-btn-ghost`, `.blog-input`, `.blog-card`, `.blog-chip`, `.blog-nav`, `.blog-banner--*`, type `.blog-display` / `.blog-h1` / `.blog-h2` / `.blog-body` / `.blog-muted` / `.blog-overline`.
+
+### 5.4 Typography (System C)
+
+| Role | Font |
+|---|---|
+| Headings | Newsreader |
+| Body/UI | Source Sans 3 |
+
+### 5.5 Page inventory (System C)
+
+| Surface | Notes |
+|---|---|
+| Article index | Journal band + readable list; 16:9 thumbs |
+| Article detail | Prose-first; specialist attribution |
+| Specialists index/detail | Trust cards; not creator marketplace chrome |
+| Editorial CMS | Same tokens + `data-density="compact"` |
+
+### 5.6 Imagery (System C)
+
+Soft daylight, documentary parenting, specialist portraits. Aspect 16:9 for article thumbs. No pink Soft Gift product grids as the primary visual idea.
+
+---
+
+## 6. System B — Creator Collective (influencer campaigns)
+
+### 6.1 Personality
 
 Organic · earthy · luxurious · editorial.  
 Premium influencer marketplace for parenting brands.  
 Light mode preferred; dark mode = deep green editorial.
 
-### 5.2 Color tokens (HSL)
+### 6.2 Color tokens (HSL)
 
 #### Light
 
@@ -392,7 +453,7 @@ Light mode preferred; dark mode = deep green editorial.
 
 No generic SaaS blue/purple.
 
-### 5.3 Typography (System B)
+### 6.3 Typography (System B)
 
 | Role | Font |
 |---|---|
@@ -405,14 +466,14 @@ Cues:
 - Uppercase labels `tracking-[0.2em]`
 - Never Inter/Roboto
 
-### 5.4 Layout modes
+### 6.4 Layout modes
 
 | Mode | Use | Pattern |
 |---|---|---|
 | Tetris grid | Marketing | 12-col asymmetric, large negative space, overlap text/image; `py-24 px-6 md:px-12 max-w-7xl` |
 | High density | Dashboards | 3–4 col, subtle borders, flat, minimal shadow |
 
-### 5.5 Surfaces & controls
+### 6.5 Surfaces & controls
 
 - Header glass `backdrop-blur-xl bg-background/80`
 - Marketing surfaces: flat + 1px border, hover lift, `p-8`
@@ -424,13 +485,13 @@ Cues:
 - shadcn for forms/modals/selects/calendars customized to B
 - Marketing/signup inputs may be underline (`border-b-2 rounded-none`); dashboard solid muted
 
-### 5.6 Motion (System B)
+### 6.6 Motion (System B)
 
 1. Marketing staggered fade-up
 2. Dashboard ~150ms transitions
 3. Subtle parallax on key imagery when it helps hierarchy
 
-### 5.7 Page inventory (System B)
+### 6.7 Page inventory (System B)
 
 | Surface | Notes |
 |---|---|
@@ -443,7 +504,7 @@ Cues:
 | Messaging | Calm dense thread |
 | Deliverable review | Approval gates obvious |
 
-### 5.8 Component inventory (System B)
+### 6.8 Component inventory (System B)
 
 | Component | Notes |
 |---|---|
@@ -458,21 +519,23 @@ Cues:
 
 Icons: lucide + Phosphor. Toasts: Sonner.
 
-### 5.9 Imagery (System B)
+**Recipes (required parity):** `.creator-shell`, `.creator-page`, `.creator-btn` / `.creator-btn-secondary` / `.creator-btn-ghost`, `.creator-input`, `.creator-card`, `.creator-chip`, `.creator-nav`, `.creator-banner--*`, type `.creator-display` / `.creator-h1` / `.creator-h2` / `.creator-body` / `.creator-muted` / `.creator-overline`. Semiotics: `--primary-hover`, surfaces, status, input states — same names as gift/blog.
+
+### 6.9 Imagery (System B)
 
 Mother/newborn trust, creator lifestyle, filming creators, pediatric trust (where relevant), wooden product campaigns. Prefer curated references over random stock abstraction.
 
 ---
 
-## 6. Shared Interaction Grammar
+## 7. Shared Interaction Grammar
 
-Across A and B, keep consistent interaction meaning:
+Across A, B, and C, keep consistent interaction meaning:
 
 Buttons · Forms · Tables · Filters · Pagination · Search · Toasts · Loading · Empty · Error · Confirm dialogs
 
 Users must not relearn basic grammar when switching modules.
 
-### 6.1 States
+### 7.1 States
 
 | State | Pattern |
 |---|---|
@@ -485,7 +548,7 @@ Users must not relearn basic grammar when switching modules.
 
 Never expose stack traces.
 
-### 6.2 Forms
+### 7.2 Forms
 
 - Labels visible
 - Errors tied to fields
@@ -493,7 +556,7 @@ Never expose stack traces.
 - Show pending
 - Required indicators accessible
 
-### 6.3 Navigation
+### 7.3 Navigation
 
 - Clarity over feature quantity
 - Role-appropriate admin nav
@@ -501,22 +564,24 @@ Never expose stack traces.
 
 ---
 
-## 7. Theming architecture
+## 8. Theming architecture
 
 ```text
-app/(gift)/layout.tsx      → data-theme="gift"
-app/(blog)/layout.tsx      → data-theme="gift"
-app/(creator)/layout.tsx   → data-theme="creator"
-app/(admin)/commerce/...   → gift dense
-app/(admin)/editorial/...  → gift dense or editorial-dense variant
-app/(admin)/creator/...    → creator dense
+app/(gift)/layout.tsx              → data-theme="gift"
+app/(blog)/layout.tsx              → data-theme="blog"  (+ /articles, /specialists)
+app/(creator)/layout.tsx           → data-theme="creator"
+app/(admin)/layout.tsx             → no theme (AdminGate only)
+app/(admin)/commerce/...           → gift + data-density="compact"
+app/(admin)/editorial/...          → blog + data-density="compact"
+app/(admin)/creator/...            → creator + data-density="compact"
+app/(admin)/platform/...           → gift + data-density="compact"
 ```
 
-Theme switching is structural, not per-component random.
+Theme switching is structural, not per-component random. Never invent `data-theme="admin"`.
 
 ---
 
-## 8. Accessibility (WCAG-minded)
+## 9. Accessibility (WCAG-minded)
 
 Target: practical WCAG 2.2 AA for core flows.
 
@@ -532,7 +597,7 @@ Target: practical WCAG 2.2 AA for core flows.
 
 ---
 
-## 9. Content & tone
+## 10. Content & tone
 
 - Trust over aggressive selling
 - Education before promotion on blog
@@ -541,22 +606,24 @@ Target: practical WCAG 2.2 AA for core flows.
 - Indian parenting context: respectful, inclusive, non-judgmental
 
 Microcopy examples (A): “Add to box”, “Remaining budget”, “Personalise this gift”  
+Microcopy examples (C): “Read the guide”, “Meet our specialists”, “Subscribe to the journal”  
 Microcopy examples (B): “Submit proposal”, “Campaign marketplace”, “Deliverable approved”
 
 ---
 
-## 10. Testing attributes
+## 11. Testing attributes
 
 Critical interactive nodes require `data-testid` kebab-case.
 
 Examples (A): `add-to-box-btn`, `summary-panel`, `budget-remaining`, `checkout-pay-btn`  
+Examples (C): `article-card`, `newsletter-subscribe-btn`, `specialist-profile`  
 Examples (B): `submit-proposal-btn`, `campaign-card`, `select-creator-btn`
 
 ---
 
-## 11. Design QA checklist (merge gate)
+## 12. Design QA checklist (merge gate)
 
-- [ ] Correct theme (A vs B)
+- [ ] Correct theme (A gift / C blog / B creator)
 - [ ] Correct fonts
 - [ ] No Inter/Roboto/purple-glow SaaS default
 - [ ] Mobile verified
@@ -569,12 +636,13 @@ Examples (B): `submit-proposal-btn`, `campaign-card`, `select-creator-btn`
 - [ ] No theme bleed
 - [ ] `data-testid` on critical controls
 - [ ] Hero composition rules respected on marketing pages
+- [ ] Admin uses family theme + compact density (not a fourth palette)
 
 ---
 
-## 12. Anti-patterns
+## 13. Anti-patterns
 
-1. Mixing A/B tokens
+1. Mixing A/B/C tokens
 2. Treating specialists as creators in UI IA
 3. Purple glow AI SaaS heroes
 4. Applying cream+terracotta serif cluster onto Soft Gift by mistake
@@ -583,17 +651,18 @@ Examples (B): `submit-proposal-btn`, `campaign-card`, `select-creator-btn`
 7. Emoji icons
 8. Decorative card grids with no job
 9. Hero overlay sticker spam
-10. Inventing a third uncontrolled palette
+10. Inventing a fourth uncontrolled palette (e.g. `data-theme="admin"`)
 11. Dashboard widgets jammed into first marketing viewport
 12. Inset tiny hero cards where full-bleed brand hero is required
+13. Soft Gift pink CTAs on Blog Creative or Creator surfaces
 
 ---
 
-## 13. AI instructions
+## 14. AI instructions
 
-1. Identify System A or B before styling
+1. Identify System A, B, or C before styling
 2. Use only that system’s tokens/fonts/layout mode
-3. Prefer existing primitives
+3. Prefer existing primitives / recipes
 4. Obey first-viewport rules on marketing pages
 5. Include a11y + test IDs
 6. Do not “improve” by blending systems
@@ -601,19 +670,20 @@ Examples (B): `submit-proposal-btn`, `campaign-card`, `select-creator-btn`
 
 ---
 
-## 14. Phase application
+## 15. Phase application
 
 | Phases | Design focus |
 |---|---|
 | 0–1 | token plumbing + shells |
 | 2–5 | System A excellence |
-| 6–7 | System A editorial readability + admin dense |
+| 6–7 | System C journal readability + admin dense |
 | 8 | System B scoped theme introduction |
 | 9 | a11y/perf visual regressions |
+| Ongoing | Triple-theme token parity (shared foundations + recipes) |
 
 ---
 
-## 15. Evolution
+## 16. Evolution
 
 Token/font/component contract changes require:
 
@@ -621,8 +691,8 @@ Token/font/component contract changes require:
 2. Eng acknowledgment
 3. `Design.md` version bump
 4. `Memory.md` decision entry
-5. Theme regression pass on both systems if shared primitives change
+5. Theme regression pass on all three systems if shared foundations change
 
 ---
 
-**End of Design.md v2.0.0**
+**End of Design.md v2.1.0**

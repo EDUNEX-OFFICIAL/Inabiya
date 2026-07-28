@@ -31,10 +31,11 @@ Illegal jump → `409` + stable code. Money paths: `*Paise` Int + idempotent pay
 
 ## UI
 
-Always `data-theme="creator"` (Playfair + Manrope, forest/terracotta from `globals.css`).  
+Always `data-theme="creator"` (Playfair + Manrope, forest/terracotta from `globals.css`). Use `.creator-*` recipes for new UI.
 
 ```text
 ❌ Soft Gift pink / Fraunces on creator trees
+❌ Blog Creative teal / Newsreader on creator trees
 ❌ Treat SpecialistProfile (editorial) as a marketplace creator
 ```
 

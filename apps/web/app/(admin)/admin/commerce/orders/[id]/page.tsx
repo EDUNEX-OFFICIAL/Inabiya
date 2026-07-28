@@ -76,9 +76,14 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
 
       <section className="mt-4 text-sm">
         <h2 className="font-medium">Payment</h2>
+        <p className="mt-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+          Provider mode: <strong>MOCK</strong> (dev). Confirm/refund paths use mock adapter — not
+          Razorpay. Env: <code>PAYMENT_PROVIDER=mock</code>.
+        </p>
         {order.paymentVerification.map((p) => (
-          <p key={p.provider + p.status}>
-            {p.provider}: {p.status} {p.verified ? '✓' : ''} — {formatInr(p.amountPaise)}
+          <p key={p.provider + p.status} className="mt-1">
+            {p.provider === 'mock' || p.provider === 'MOCK' ? 'MOCK' : p.provider}: {p.status}{' '}
+            {p.verified ? '✓' : ''} — {formatInr(p.amountPaise)}
           </p>
         ))}
       </section>

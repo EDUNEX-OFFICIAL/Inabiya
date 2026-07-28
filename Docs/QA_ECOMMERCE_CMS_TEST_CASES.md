@@ -178,15 +178,28 @@ Do these in order if time is short:
 
 | Run date | Tester | Build / URL | Notes |
 |---|---|---|---|
-| | | `http://127.0.0.1:3001` | |
+| 2026-07-28 | Eng (Wave 0 smoke) | `http://127.0.0.1:3001` | API/page smoke + auth; not full manual UI matrix |
 
 | ID | Result (P/F/B) | Notes |
 |---|---|---|
-| EC-00 | | |
-| EC-00b | | |
-| EC-00c | | |
-| EC-01 | | |
-| … | | |
+| EC-01 | P | `/gift` 200 + nav markers |
+| EC-02 | P | PLP 200; catalog 5 products |
+| EC-03 | P | toys PLP 200 |
+| EC-05 | P | PDP swaddle/rattle 200 |
+| EC-10 | P | customer login tokens |
+| EC-11 | P | bad password 401 |
+| EC-19 | P | `/orders/me` 200 with token |
+| EC-21 | P | `/gift/build-your-box` 200 |
+| EC-22 | P | `/gift/hampers` → redirect `?hamper=1` (Wave 0b) |
+| EC-23 | P | corporate 200 |
+| EA-01 | P | `/admin/commerce` 200 |
+| EA-03 | P | `/api/v1/admin/catalog/products` |
+| CM-01 | P | admin CMS pages list 200 incl. `home` |
+| EC-00..EC-00e | B | Needs browser session for nav Sign out sync |
+| EC-06..EC-18 | B | Needs browser cart/checkout UI pass |
+| CM-02..CM-20 | B | Needs browser DnD/editor pass |
+
+Canonical eng summary also in `Docs/IMPLEMENTATION_AUDIT.md` Wave 0.
 
 ---
 
@@ -217,10 +230,10 @@ Do **not** fail a test for these — log as “future” / enhancement:
 | F2 | ~~`saleStrip` promo~~ — **shipped Phase 12** |
 | F3 | ~~Media library / image upload~~ — **shipped Phase 12** (local disk; AWS SDK deferred) |
 | F4 | ~~11D Soft Gift homepage on blocks~~ — **shipped** |
-| F5 | Extra blocks (FAQ, testimonials, countdown) when Product asks |
-| F6 | Phase 1: password reset, real email, feature flags |
-| F7 | Razorpay (replace mock pay) + public domain / Caddy |
-| F8 | Real AWS/MinIO SDK behind storage adapter |
+| F5 | ~~Extra blocks (FAQ, testimonials, countdown)~~ — **shipped** (countdown Wave 4) |
+| F6 | ~~Phase 1 password reset / stubs~~ — closed for dev; real email = post-dev |
+| F7 | Razorpay + public domain / Caddy — **post-dev** (mock pay kept) |
+| F8 | Real AWS/MinIO SDK — **post-dev** (local media OK) |
 
 Canonical eng list also in `Docs/CMS_PAGE_BUILDER.md` §12.
 

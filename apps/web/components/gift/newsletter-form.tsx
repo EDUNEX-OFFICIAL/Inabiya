@@ -52,7 +52,7 @@ export function NewsletterForm({ compact = false, hideTitle = false }: Props) {
             type="email"
             required
             placeholder="you@email.com"
-            className="clay-input gift-newsletter__input"
+            className="gift-newsletter__input block w-full min-h-[calc(var(--tap-min)-4px)] rounded-[var(--radius-control)] border border-[var(--input-border)] bg-[var(--input-bg)] px-gs-3 py-gs-2 text-sm text-foreground shadow-[var(--input-shadow)]"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             aria-label="Email for newsletter"
@@ -60,7 +60,8 @@ export function NewsletterForm({ compact = false, hideTitle = false }: Props) {
           <button
             type="submit"
             disabled={busy}
-            className="clay-btn gift-newsletter__btn disabled:opacity-50"
+            className="gift-newsletter__btn inline-flex min-h-tap items-center justify-center rounded-[var(--radius-control)] bg-primary px-gs-4 py-gs-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            data-testid="newsletter-subscribe-btn"
           >
             {busy ? '…' : 'Subscribe'}
           </button>

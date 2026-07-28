@@ -31,24 +31,24 @@ export default async function SpecialistPage({ params }: { params: { slug: strin
   if (!s) notFound();
 
   return (
-    <main className="gift-page max-w-2xl">
-      <Link href="/specialists" className="gift-link text-sm">
+    <main className="blog-page max-w-2xl">
+      <Link href="/specialists" className="text-sm text-primary hover:underline">
         ← Specialists
       </Link>
-      <p className="gift-overline mt-gs-4">Specialist</p>
-      <h1 className="gift-h1 mt-gs-2">{s.name}</h1>
-      {s.title ? <p className="gift-muted mt-gs-2 text-lg">{s.title}</p> : null}
+      <p className="blog-overline mt-gs-4">Specialist</p>
+      <h1 className="blog-h1 mt-gs-2">{s.name}</h1>
+      {s.title ? <p className="blog-muted mt-gs-2 text-lg">{s.title}</p> : null}
       {s.credentials ? (
         <p className="mt-gs-1 text-sm opacity-60">{s.credentials}</p>
       ) : null}
-      {s.bio ? <p className="mt-gs-6 leading-relaxed opacity-90">{s.bio}</p> : null}
+      {s.bio ? <p className="blog-body mt-gs-6 leading-relaxed">{s.bio}</p> : null}
 
       <section className="mt-gs-7">
-        <h2 className="gift-h2">Articles</h2>
+        <h2 className="blog-h2">Articles</h2>
         <ul className="mt-gs-4 space-y-gs-3">
           {(s.articles ?? []).map((a) => (
             <li key={a.id}>
-              <Link href={`/articles/${a.slug}`} className="clay-card block p-gs-4 transition hover:shadow-clay">
+              <Link href={`/articles/${a.slug}`} className="blog-card block p-gs-4">
                 <span className="font-medium text-foreground hover:text-primary">{a.title}</span>
                 {a.seoDescription ? (
                   <p className="mt-gs-1 text-sm opacity-70">{a.seoDescription}</p>
@@ -57,7 +57,7 @@ export default async function SpecialistPage({ params }: { params: { slug: strin
             </li>
           ))}
           {(s.articles ?? []).length === 0 ? (
-            <li className="clay-panel p-gs-5 text-sm opacity-70">No published articles yet.</li>
+            <li className="blog-card p-gs-5 text-sm opacity-70">No published articles yet.</li>
           ) : null}
         </ul>
       </section>

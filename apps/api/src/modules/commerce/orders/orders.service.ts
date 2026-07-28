@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { PaymentsService } from '../../../infrastructure/payments/payments.service';
 import { AuditService } from '../../audit/audit.service';
@@ -86,6 +86,7 @@ export class OrdersService {
         user: true,
         items: true,
         payments: { orderBy: { createdAt: 'desc' } },
+        invoice: true,
       },
     });
     if (!order) {
@@ -97,10 +98,15 @@ export class OrdersService {
         message: 'Invoice is available after payment is captured.',
       });
     }
+
+    if (order.invoice) {
+      return deserializeInvoiceSnapshot(order.invoice.snapshot, order.invoice.invoiceNumber);
+    }
+
     const payment = order.payments.find(
       (p) => p.status === PaymentStatus.CAPTURED || p.status === PaymentStatus.REFUNDED,
     );
-    return {
+    const input: InvoiceInput = {
       invoiceNumber: `INV-${order.orderNumber}`,
       orderNumber: order.orderNumber,
       issuedAt: order.paidAt ?? order.createdAt,
@@ -128,6 +134,25 @@ export class OrdersService {
       paymentProvider: payment?.provider ?? order.payments[0]?.provider ?? null,
       paymentStatus: payment?.status ?? order.payments[0]?.status ?? null,
     };
+
+    // Idempotent create — concurrent first reads may race; unique orderId wins.
+    try {
+      await this.prisma.commerceInvoice.create({
+        data: {
+          orderId: order.id,
+          invoiceNumber: input.invoiceNumber,
+          issuedAt: input.issuedAt,
+          snapshot: serializeInvoiceSnapshot(input),
+        },
+      });
+    } catch {
+      const existing = await this.prisma.commerceInvoice.findUnique({ where: { orderId: order.id } });
+      if (existing) {
+        return deserializeInvoiceSnapshot(existing.snapshot, existing.invoiceNumber);
+      }
+    }
+
+    return input;
   }
 
   async listAdmin() {
@@ -409,4 +434,55 @@ export class OrdersService {
       statusHistory: order.statusHistory,
     };
   }
+}
+
+function serializeInvoiceSnapshot(input: InvoiceInput): Prisma.InputJsonValue {
+  return {
+    ...input,
+    issuedAt: input.issuedAt.toISOString(),
+    paidAt: input.paidAt?.toISOString() ?? null,
+  };
+}
+
+function deserializeInvoiceSnapshot(raw: unknown, fallbackNumber: string): InvoiceInput {
+  if (!raw || typeof raw !== 'object') {
+    throw new BadRequestException({
+      code: 'INVOICE_CORRUPT',
+      message: 'Stored invoice snapshot is invalid.',
+    });
+  }
+  const o = raw as Record<string, unknown>;
+  const issuedAt = typeof o.issuedAt === 'string' ? new Date(o.issuedAt) : new Date();
+  const paidAt =
+    typeof o.paidAt === 'string' ? new Date(o.paidAt) : o.paidAt === null ? null : null;
+  return {
+    invoiceNumber: typeof o.invoiceNumber === 'string' ? o.invoiceNumber : fallbackNumber,
+    orderNumber: String(o.orderNumber ?? ''),
+    issuedAt,
+    paidAt,
+    status: String(o.status ?? ''),
+    customerEmail: String(o.customerEmail ?? ''),
+    customerName: typeof o.customerName === 'string' ? o.customerName : null,
+    shippingAddress: asInvoiceAddress(o.shippingAddress),
+    billingAddress: asInvoiceAddress(o.billingAddress),
+    items: Array.isArray(o.items)
+      ? (o.items as InvoiceInput['items']).map((i) => ({
+          title: String(i.title ?? ''),
+          label: String(i.label ?? ''),
+          sku: String(i.sku ?? ''),
+          quantity: Number(i.quantity) || 0,
+          unitPricePaise: Number(i.unitPricePaise) || 0,
+          lineTotalPaise: Number(i.lineTotalPaise) || 0,
+        }))
+      : [],
+    subtotalPaise: Number(o.subtotalPaise) || 0,
+    discountPaise: Number(o.discountPaise) || 0,
+    shippingPaise: Number(o.shippingPaise) || 0,
+    taxPaise: Number(o.taxPaise) || 0,
+    totalPaise: Number(o.totalPaise) || 0,
+    shippingMethod: String(o.shippingMethod ?? ''),
+    couponCode: typeof o.couponCode === 'string' ? o.couponCode : null,
+    paymentProvider: typeof o.paymentProvider === 'string' ? o.paymentProvider : null,
+    paymentStatus: typeof o.paymentStatus === 'string' ? o.paymentStatus : null,
+  };
 }

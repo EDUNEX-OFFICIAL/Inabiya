@@ -50,7 +50,7 @@ MarketingPage
 
 PageBlock
   id, pageId
-  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | discoveryChips | buildYourBoxTeaser | articleTeasers | footer | saleStrip | faq | exclusiveOffers | testimonials
+  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | discoveryChips | buildYourBoxTeaser | articleTeasers | footer | saleStrip | faq | exclusiveOffers | testimonials | countdown
   sortOrder: Int
   props: Json   # Zod-validated per type
 ```
@@ -66,14 +66,16 @@ Money never lives in block props as floats; product prices always come from cata
 | `hero` | `headline`, `subcopy?`, `ctaLabel?`, `ctaHref?`, `imageUrl?` | Soft Gift hero |
 | `richText` | `html` | Sanitise with same DOMPurify path as articles |
 | `image` | `url`, `alt`, `caption?` | MIME/size rules when media library exists |
-| `productGrid` | `title?`, `productSlugs?` **or** `category?` / filter query | Resolve live from catalog |
+| `productGrid` | `source?`, `title?`, `productSlugs?`, `category?`, `occasion?`, `age?`, `recipient?`, `hamper?`, `newWithinDays?`, `limit?`, `seeAll*` | Live catalog resolve. `source`: `auto` \| `manual` \| `bestsellers` \| `editors` \| `new` \| `on_sale` |
 | `cta` | `label`, `href`, `variant?` | Link to box / PLP / external |
 | `spacer` | `size: sm\|md\|lg` | Layout only |
 | `saleStrip` | `text`, `ctaLabel?`, `ctaHref?`, `tone?` | Soft Gift promo band (Phase 12) |
+| `countdown` | `endsAt`, `title?`, `expiredLabel?`, `ctaLabel?`, `ctaHref?` | Soft Gift offer timer (dev leftovers Wave 4) |
 | `faq` | `title?`, `items[{ question, answerHtml }]` | Accordion + FAQPage JSON-LD |
 | `exclusiveOffers` | `overline?`, `title?`, `subtitle?`, `cards[{ tag, title, subtitle?, body?, ctaLabel, ctaHref, tone?, icon? }]` | 3 gradient offer cards |
 | `testimonials` | `title?`, `subtitle?`, `items[{ quote, author, role?, rating? }]` | Quote cards with stars |
-| `discoveryChips` | `title?`, `items[{ label, href, imageUrl?, imageAlt? }]`, `seeAll*` | Chips or category image cards |
+| `discoveryChips` | `title?`, `items[{ label, href, imageUrl?, imageAlt? }]`, `seeAll*` | Category / occasion / age image tiles; admin card editor + presets |
+| `cta` | `label`, `href`, `variant?`, `title?`, `body?` | Corporate / promo band on Soft Gift home |
 
 Unknown `type` → fail validation on save; public renderer skips unknown types safely (log).
 
@@ -84,8 +86,10 @@ Unknown `type` → fail validation on save; public renderer skips unknown types 
 1. **List** — `/admin/cms/pages` (draft/published, slug, updated)
 2. **Editor** — `/admin/cms/pages/[id]`
    - Left: block palette
-   - Center: ordered blocks; reorder with **`@dnd-kit`** (when 11B ships; 11A may use up/down only)
+   - Center: ordered blocks; reorder with **`@dnd-kit`**
    - Right: props form for selected block
+   - **`productGrid`:** source dropdown, filters, published-product multi-select (manual)
+   - **`discoveryChips`:** structured tile editor + `CmsMediaField` + occasion/age presets
 3. Actions: Save draft · Publish · Unpublish · Preview (draft token or internal preview)
 
 Dense **admin** shell — not Soft Gift chrome.
@@ -168,9 +172,11 @@ Track here so testers/eng remember gaps. Ship only when Product/phase asks.
 | **Media library / image upload** for `image` + hero `imageUrl` | **Shipped (Phase 12)** | Local disk + `/api/v1/media/:id/content`; CMS picker |
 | **Inline image in richText via upload** | **Shipped (Phase 12)** | TipTap Upload/Library (URL prompt still available) |
 | **11D** `/gift` homepage on block engine | **Shipped** | Edit via `/admin/cms/pages` (slug `home`) |
-| **More block types** (testimonials, countdown) | Client may ask | One type at a time + Zod |
+| **More block types** (countdown) | **Shipped Wave 4 (2026-07-28)** | Zod + admin + Soft Gift band |
 | **FAQ block** | Shipped 2026-07-22 | Accordion + FAQPage JSON-LD |
-| **Real AWS/MinIO SDK** | Local disk store today | Swap behind `S3StorageAdapter` when ready |
+| **`productGrid` merchandising sources** | **Shipped 2026-07-28** | `bestsellers` / `editors` / `new` / `on_sale` / `manual` + CMS inspector |
+| **Real AWS/MinIO SDK** | Local disk store today | **Post-dev** — swap behind `S3StorageAdapter` |
+| **Razorpay** | Mock pay in checkout | **Post-dev** — keep `PAYMENT_PROVIDER=mock` |
 
 **Editorial TipTap reminder:** Toolbar shows only when article is editable (`ASSIGNED` / `DRAFT` / `CHANGES_REQUESTED`). **PUBLISHED** / review queues = read-only body (by design).
 

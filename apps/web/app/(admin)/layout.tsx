@@ -15,10 +15,8 @@ const ADMIN_ROLES = [
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div data-theme="admin">
-      <AdminGate allow={ADMIN_ROLES} loginNext="/admin/commerce">
-        {children}
-      </AdminGate>
-    </div>
+    <AdminGate allow={ADMIN_ROLES} loginNext="/admin/commerce">
+      {children}
+    </AdminGate>
   );
 }

@@ -23,30 +23,29 @@ export default async function ArticlesIndexPage({
 
   return (
     <main>
-      <section className="gift-band gift-band--blush">
-        <div className="gift-band-inner max-w-3xl">
-          <p className="gift-overline">Journal</p>
-          <h1 className="gift-h1 mt-gs-3">Parenting journal</h1>
-          <p className="gift-muted mt-gs-4 max-w-xl text-base sm:text-lg">
-            Soft, trusted guidance for gifting and early parenthood — same stories as Editorial
-            publishes.
+      <section className="blog-band">
+        <div className="blog-band-inner max-w-3xl">
+          <p className="blog-overline">Journal</p>
+          <h1 className="blog-h1 mt-gs-3">Parenting journal</h1>
+          <p className="blog-muted mt-gs-4 max-w-xl text-base sm:text-lg">
+            Trusted guidance for early parenthood — education first, calm creative editorial.
           </p>
-          <Link href="/gift" className="clay-btn-secondary mt-gs-6 inline-flex">
+          <Link href="/gift" className="blog-btn-secondary mt-gs-6 inline-flex">
             Shop gifts
           </Link>
         </div>
       </section>
 
-      <section className="gift-page max-w-3xl !pt-gs-6">
-        <h2 className="gift-h2 sm:text-3xl">Latest</h2>
+      <section className="blog-page max-w-3xl !pt-gs-6">
+        <h2 className="blog-h2 sm:text-3xl">Latest</h2>
         <ul className="mt-gs-6 space-y-gs-4">
           {articles.map((a) => (
-            <li key={a.id} className="clay-card overflow-hidden">
+            <li key={a.id} className="blog-card overflow-hidden" data-testid="article-card">
               <Link
                 href={`/articles/${a.slug}`}
                 className="group block sm:grid sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
               >
-                <div className="relative aspect-[16/9] bg-white sm:aspect-auto sm:min-h-[9rem]">
+                <div className="relative aspect-[16/9] bg-surface sm:aspect-auto sm:min-h-[9rem]">
                   {a.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -57,7 +56,7 @@ export default async function ArticlesIndexPage({
                       }`}
                     />
                   ) : (
-                    <div className="gift-media-fallback absolute inset-0" />
+                    <div className="blog-media-fallback absolute inset-0" />
                   )}
                 </div>
                 <div className="p-gs-5 sm:p-gs-6">
@@ -81,14 +80,14 @@ export default async function ArticlesIndexPage({
             </li>
           ))}
           {articles.length === 0 ? (
-            <li className="clay-panel p-gs-6 text-sm opacity-70">No published articles yet.</li>
+            <li className="blog-card p-gs-6 text-sm opacity-70">No published articles yet.</li>
           ) : null}
         </ul>
       </section>
 
-      <section className="gift-page max-w-3xl !pt-gs-1">
-        <div className="clay-panel p-gs-6 sm:p-gs-6">
-          <h2 className="gift-h2">Stay in touch</h2>
+      <section className="blog-page max-w-3xl !pt-gs-1">
+        <div className="blog-card p-gs-6">
+          <h2 className="blog-h2">Stay in touch</h2>
           <p className="mt-gs-2 text-sm opacity-75">Occasional notes — no spam.</p>
           <div className="mt-gs-4 max-w-md">
             <NewsletterForm compact hideTitle />

@@ -39,6 +39,12 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [storefrontLabels, setStorefrontLabels] = useState<ManualStorefrontLabel[]>([]);
   const [isReadyMadeHamper, setIsReadyMadeHamper] = useState(false);
   const [brandName, setBrandName] = useState('');
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
+  const [canonicalPath, setCanonicalPath] = useState('');
+  const [ogImageUrl, setOgImageUrl] = useState('');
+  const [robotsIndex, setRobotsIndex] = useState(true);
+  const [faqDraft, setFaqDraft] = useState('');
   const [stock, setStock] = useState<Record<string, string>>({});
   const [mrpRupees, setMrpRupees] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
@@ -60,6 +66,16 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
         setStorefrontLabels(p.storefrontLabels ?? []);
         setIsReadyMadeHamper(Boolean(p.isReadyMadeHamper));
         setBrandName(p.brandName ?? '');
+        setSeoTitle(p.seoTitle ?? '');
+        setSeoDescription(p.seoDescription ?? '');
+        setCanonicalPath(p.canonicalPath ?? '');
+        setOgImageUrl(p.ogImageUrl ?? '');
+        setRobotsIndex(p.robotsIndex !== false);
+        setFaqDraft(
+          p.faqItems?.length
+            ? JSON.stringify(p.faqItems, null, 2)
+            : '[\n  { "question": "", "answerText": "" }\n]',
+        );
         const s: Record<string, string> = {};
         const m: Record<string, string> = {};
         for (const v of p.variants) {
@@ -79,6 +95,28 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     e.preventDefault();
     setMsg(null);
     setError(null);
+    let faqItems: Array<{ question: string; answerText: string }> | null = null;
+    try {
+      const parsed = JSON.parse(faqDraft) as unknown;
+      if (parsed === null) {
+        faqItems = null;
+      } else if (!Array.isArray(parsed)) {
+        setError('FAQ JSON must be an array');
+        return;
+      } else {
+        const cleaned = parsed
+          .filter((row): row is { question?: unknown; answerText?: unknown } => !!row && typeof row === 'object')
+          .map((row) => ({
+            question: String(row.question ?? '').trim(),
+            answerText: String(row.answerText ?? '').trim(),
+          }))
+          .filter((row) => row.question && row.answerText);
+        faqItems = cleaned.length ? cleaned : null;
+      }
+    } catch {
+      setError('FAQ JSON is invalid');
+      return;
+    }
     try {
       const updated = await apiAuth<CatalogProduct>(`/admin/catalog/products/${params.id}`, {
         method: 'PATCH',
@@ -91,10 +129,26 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           isReadyMadeHamper,
           brandName: brandName.trim() || null,
           storefrontLabels,
+          seoTitle: seoTitle.trim() || null,
+          seoDescription: seoDescription.trim() || null,
+          canonicalPath: canonicalPath.trim() || null,
+          ogImageUrl: ogImageUrl.trim() || null,
+          robotsIndex,
+          faqItems,
         },
       });
       setProduct(updated);
       setStorefrontLabels(updated.storefrontLabels ?? []);
+      setSeoTitle(updated.seoTitle ?? '');
+      setSeoDescription(updated.seoDescription ?? '');
+      setCanonicalPath(updated.canonicalPath ?? '');
+      setOgImageUrl(updated.ogImageUrl ?? '');
+      setRobotsIndex(updated.robotsIndex !== false);
+      setFaqDraft(
+        updated.faqItems?.length
+          ? JSON.stringify(updated.faqItems, null, 2)
+          : '[\n  { "question": "", "answerText": "" }\n]',
+      );
       setMsg('Saved');
     } catch {
       setError('Save failed');
@@ -206,6 +260,66 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             onChange={(e) => setIsReadyMadeHamper(e.target.checked)}
           />
           Ready-made hamper
+        </label>
+        <fieldset className="space-y-2 rounded border p-3">
+          <legend className="px-1 text-xs font-medium opacity-70">SEO (PDP)</legend>
+          <label className="block text-sm">
+            SEO title
+            <input
+              className="mt-1 block w-full rounded border px-2 py-1"
+              value={seoTitle}
+              onChange={(e) => setSeoTitle(e.target.value)}
+              placeholder="Defaults to product title"
+            />
+          </label>
+          <label className="block text-sm">
+            SEO description
+            <textarea
+              className="mt-1 block w-full rounded border px-2 py-1"
+              rows={2}
+              value={seoDescription}
+              onChange={(e) => setSeoDescription(e.target.value)}
+            />
+          </label>
+          <label className="block text-sm">
+            Canonical path
+            <input
+              className="mt-1 block w-full rounded border px-2 py-1"
+              value={canonicalPath}
+              onChange={(e) => setCanonicalPath(e.target.value)}
+              placeholder={`/gift/products/${product?.slug ?? 'slug'}`}
+            />
+          </label>
+          <label className="block text-sm">
+            OG image URL
+            <input
+              className="mt-1 block w-full rounded border px-2 py-1"
+              value={ogImageUrl}
+              onChange={(e) => setOgImageUrl(e.target.value)}
+              placeholder="https://…"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={robotsIndex}
+              onChange={(e) => setRobotsIndex(e.target.checked)}
+            />
+            Allow search indexing
+          </label>
+        </fieldset>
+        <label className="block text-sm">
+          Product FAQs (JSON array)
+          <textarea
+            className="mt-1 block w-full rounded border px-2 py-1 font-mono text-xs"
+            rows={8}
+            value={faqDraft}
+            onChange={(e) => setFaqDraft(e.target.value)}
+            spellCheck={false}
+          />
+          <span className="mt-1 block text-xs opacity-60">
+            Empty questions are dropped. Clear all → leave empty array / blanks to use PDP fallbacks.
+          </span>
         </label>
         <fieldset>
           <legend className="text-xs opacity-70">Manual storefront labels (max 2)</legend>

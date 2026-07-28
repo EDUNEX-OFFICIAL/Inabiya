@@ -32,6 +32,12 @@ export type CatalogProduct = {
   storefrontLabels?: ManualStorefrontLabel[];
   /** Resolved hybrid ribbons (max 2) for PLP/PDP */
   displayLabels?: StorefrontDisplayLabel[];
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  canonicalPath?: string | null;
+  ogImageUrl?: string | null;
+  robotsIndex?: boolean;
+  faqItems?: Array<{ question: string; answerText: string }> | null;
   media: Array<{ url: string; altText: string | null }>;
   categories: Array<{ slug: string; name: string }>;
   variants: Array<{

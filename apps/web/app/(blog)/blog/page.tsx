@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Legacy System A stub — real Soft Gift journal is /articles (editorial publishes there). */
+/** Legacy /blog stub — journal lives at /articles (Blog Creative theme). */
 export default function BlogHomePage() {
   redirect('/articles');
 }
