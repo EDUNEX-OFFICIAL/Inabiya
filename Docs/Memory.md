@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 28, 2026 (gift footer column alignment)
+Last Updated: July 28, 2026 (demo login one-click fill)
 
 
 ---

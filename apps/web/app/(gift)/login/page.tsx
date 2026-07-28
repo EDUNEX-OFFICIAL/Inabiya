@@ -7,19 +7,27 @@ import { Eye, EyeOff } from 'lucide-react';
 import { apiAuth, storeSession, type AuthSession } from '@/lib/auth-client';
 import { cartApi } from '@/lib/cart-client';
 
-/** Dev-only — production builds drop this branch (no seed passwords in client bundle). */
-const SEED_USERS =
-  process.env.NODE_ENV === 'development'
-    ? ([
-        { email: 'customer@test.inabiya', password: 'Password123!', note: 'Customer' },
-        { email: 'commerce@test.inabiya', password: 'Password123!', note: 'Commerce admin' },
-        { email: 'writer@test.inabiya', password: 'Password123!', note: 'Writer' },
-        { email: 'content@test.inabiya', password: 'Password123!', note: 'Content admin' },
-        { email: 'finance@test.inabiya', password: 'Password123!', note: 'Finance' },
-        { email: 'brand@test.inabiya', password: 'Password123!', note: 'Brand' },
-        { email: 'creator@test.inabiya', password: 'Password123!', note: 'Creator' },
-      ] as const)
-    : null;
+/** Seeded demo accounts — shown when NEXT_PUBLIC_SHOW_DEMO_LOGINS=1 or in development. */
+const DEMO_PASSWORD = 'Password123!';
+
+const DEMO_USERS = [
+  { email: 'customer@test.inabiya', note: 'Customer', href: '/gift' },
+  { email: 'commerce@test.inabiya', note: 'Commerce admin', href: '/admin/commerce' },
+  { email: 'content@test.inabiya', note: 'Content admin', href: '/admin/cms/pages' },
+  { email: 'writer@test.inabiya', note: 'Writer', href: '/admin/editorial' },
+  { email: 'seo@test.inabiya', note: 'SEO editor', href: '/admin/editorial' },
+  { email: 'medical@test.inabiya', note: 'Medical reviewer', href: '/admin/editorial' },
+  { email: 'finance@test.inabiya', note: 'Finance', href: '/admin/editorial' },
+  { email: 'support@test.inabiya', note: 'Support', href: '/gift' },
+  { email: 'brand@test.inabiya', note: 'Brand', href: '/creator/brand' },
+  { email: 'creator@test.inabiya', note: 'Creator', href: '/creator/studio' },
+  { email: 'super@test.inabiya', note: 'Super admin', href: '/admin/commerce' },
+] as const;
+
+const SHOW_DEMO_LOGINS =
+  process.env.NODE_ENV === 'development' ||
+  process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === '1' ||
+  process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === 'true';
 
 function safeNextPath(raw: string | null): string | null {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return null;
@@ -36,6 +44,15 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [filledNote, setFilledNote] = useState<string | null>(null);
+
+  function fillDemo(u: (typeof DEMO_USERS)[number]) {
+    setEmail(u.email);
+    setPassword(DEMO_PASSWORD);
+    setShowPassword(true);
+    setError(null);
+    setFilledNote(`${u.note} filled — tap Sign in`);
+  }
 
   function redirectAfterLogin(session: AuthSession) {
     if (nextPath) {
@@ -87,11 +104,13 @@ function LoginForm() {
   }
 
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
+    <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
       <div>
         <h1 className="gift-h1">Sign in</h1>
         <p className="mt-gs-2 text-sm opacity-75">
-          {nextPath ? `Continue to ${nextPath}` : 'Sign in to save wishlists, track orders, and checkout faster.'}
+          {nextPath
+            ? `Continue to ${nextPath}`
+            : 'Sign in to save wishlists, track orders, and checkout faster.'}
         </p>
         {resetOk ? (
           <p className="gift-banner gift-banner--success mt-gs-3" role="status">
@@ -133,6 +152,11 @@ function LoginForm() {
             </button>
           </div>
         </label>
+        {filledNote ? (
+          <p className="text-xs font-medium text-primary" role="status">
+            {filledNote}
+          </p>
+        ) : null}
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         <button type="submit" disabled={busy} className="clay-btn mt-gs-1 disabled:opacity-60">
           {busy ? 'Signing in…' : 'Sign in'}
@@ -152,24 +176,26 @@ function LoginForm() {
           Register
         </Link>
       </p>
-      {SEED_USERS ? (
-        <div className="clay-card p-gs-4 text-xs opacity-80">
-          <p className="font-medium text-foreground">Dev only — seeded test users</p>
-          <ul className="mt-gs-2 space-y-gs-2">
-            {SEED_USERS.map((u) => (
+      {SHOW_DEMO_LOGINS ? (
+        <div className="clay-card space-y-gs-3 p-gs-4" data-testid="demo-login-panel">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Demo accounts — one click fill</p>
+            <p className="mt-gs-1 text-xs opacity-70">
+              Password for all: <code className="rounded bg-muted px-1 py-0.5">{DEMO_PASSWORD}</code>
+            </p>
+          </div>
+          <ul className="grid gap-gs-2 sm:grid-cols-2">
+            {DEMO_USERS.map((u) => (
               <li key={u.email}>
                 <button
                   type="button"
-                  className="text-left underline decoration-border-strong hover:text-primary"
-                  onClick={() => {
-                    setEmail(u.email);
-                    setPassword(u.password);
-                    setError(null);
-                  }}
+                  className="flex w-full flex-col items-start rounded-lg border border-border bg-background px-gs-3 py-gs-2 text-left transition hover:border-primary hover:bg-primary/5"
+                  onClick={() => fillDemo(u)}
+                  data-testid={`demo-fill-${u.email.split('@')[0]}`}
                 >
-                  {u.email}
+                  <span className="text-xs font-semibold text-primary">{u.note}</span>
+                  <span className="mt-0.5 truncate font-mono text-[11px] opacity-80">{u.email}</span>
                 </button>
-                <span className="opacity-70"> · {u.note}</span>
               </li>
             ))}
           </ul>
