@@ -997,7 +997,8 @@ h3 {
   }
 
   [data-theme='gift'] .gift-recipient-card {
-    display: block;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     border-radius: 1.5rem;
     background: #fff;
@@ -1011,10 +1012,18 @@ h3 {
 
   [data-theme='gift'] .gift-recipient-card__media {
     position: relative;
-    aspect-ratio: 8 / 5;
-    min-height: 10rem;
-    max-height: 14rem;
+    /* Capture 005 — taller portrait cards (not short landscape) */
+    aspect-ratio: 4 / 5;
+    min-height: 22rem;
+    max-height: 32rem;
     overflow: hidden;
+    flex: 1 1 auto;
+  }
+
+  @media (min-width: 640px) {
+    [data-theme='gift'] .gift-recipient-card__media {
+      min-height: 26rem;
+    }
   }
 
   [data-theme='gift'] .gift-recipient-card__overlay {
@@ -1026,16 +1035,16 @@ h3 {
   [data-theme='gift'] .gift-recipient-card--pink .gift-recipient-card__overlay {
     background: linear-gradient(
       180deg,
-      transparent 42%,
-      color-mix(in srgb, var(--inabiya-pink) 55%, rgba(20, 12, 36, 0.55)) 100%
+      transparent 38%,
+      color-mix(in srgb, var(--inabiya-pink) 45%, rgba(20, 12, 36, 0.5)) 100%
     );
   }
 
   [data-theme='gift'] .gift-recipient-card--sky .gift-recipient-card__overlay {
     background: linear-gradient(
       180deg,
-      transparent 42%,
-      color-mix(in srgb, var(--inabiya-sky) 50%, rgba(20, 40, 60, 0.55)) 100%
+      transparent 38%,
+      color-mix(in srgb, var(--inabiya-sky) 45%, rgba(20, 40, 60, 0.5)) 100%
     );
   }
 
@@ -1045,7 +1054,7 @@ h3 {
     right: 0;
     bottom: 0;
     z-index: 1;
-    padding: var(--space-5) var(--space-5) var(--space-6);
+    padding: var(--space-5) var(--space-5) var(--space-5);
     color: #fff;
   }
 
@@ -1076,18 +1085,29 @@ h3 {
     opacity: 0.92;
   }
 
+  /* Capture 005 — full-width colored CTA bar under image */
   [data-theme='gift'] .gift-recipient-card__cta {
-    display: inline-flex;
-    margin-top: var(--space-4);
+    display: block;
+    flex-shrink: 0;
+    padding: 0.95rem var(--space-4);
+    text-align: center;
     font-size: 0.875rem;
     font-weight: 600;
     color: #fff;
     text-decoration: none;
-    transition: opacity 0.2s ease;
+    transition: filter 0.2s ease;
+  }
+
+  [data-theme='gift'] .gift-recipient-card--pink .gift-recipient-card__cta {
+    background: var(--inabiya-pink);
+  }
+
+  [data-theme='gift'] .gift-recipient-card--sky .gift-recipient-card__cta {
+    background: color-mix(in srgb, var(--inabiya-sky) 65%, #3a8fb0);
   }
 
   [data-theme='gift'] .gift-recipient-card:hover .gift-recipient-card__cta {
-    opacity: 0.88;
+    filter: brightness(0.96);
   }
 
   [data-theme='gift'] .gift-category-grid {
