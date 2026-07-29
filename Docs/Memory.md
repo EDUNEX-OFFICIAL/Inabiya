@@ -1042,6 +1042,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 - UI: deltas, aging rows, sparkline, Auto 60s refresh + stale label, recent activity stub
 - Check: `dashboard-command.check.ts`; docs OPS-0 audit stub + OPS-8 alert prefs marked done
 - Deployed `web` + `api` via `deploy-vps.sh` @ `6fad003` (smoke ok)
+- Pushed `main` @ `6024487` (`feat(commerce-ops): deepen dashboard and catalog desk polish`)
 - Next: hard-refresh `/admin/commerce` + Settings alert prefs QA
 
 ### Session — 2026-07-29 (Commerce dashboard owner UX)
