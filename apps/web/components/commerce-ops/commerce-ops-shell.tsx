@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ExternalLink, Keyboard, LogOut, Menu, Search } from 'lucide-react';
 import {
   apiAuth,
   clearSession,
@@ -23,19 +24,33 @@ import {
 
 type Props = { children: ReactNode };
 
-function roleChip(roles: string[]): string {
-  if (roles.includes('SUPER_ADMIN')) return 'SUPER_ADMIN';
-  if (roles.includes('COMMERCE_ADMIN')) return 'COMMERCE_ADMIN';
-  if (roles.includes('SUPPORT')) return 'SUPPORT';
-  if (roles.includes('FINANCE')) return 'FINANCE';
+function roleLabel(roles: string[]): string {
+  if (roles.includes('SUPER_ADMIN')) return 'Super admin';
+  if (roles.includes('COMMERCE_ADMIN')) return 'Commerce admin';
+  if (roles.includes('SUPPORT')) return 'Support';
+  if (roles.includes('FINANCE')) return 'Finance';
   return roles[0] ?? '—';
 }
 
-function roleChipShort(roles: string[]): string {
-  const full = roleChip(roles);
-  if (full === 'COMMERCE_ADMIN') return 'COMMERCE';
-  if (full === 'SUPER_ADMIN') return 'SUPER';
-  return full;
+function displayNameOf(user: AuthUser): string {
+  const name = user.displayName?.trim();
+  if (name) return name;
+  const local = user.email.split('@')[0] ?? user.email;
+  return local;
+}
+
+function initialsOf(user: AuthUser): string {
+  const base = user.displayName?.trim() || user.email;
+  const parts = base.split(/[\s._@-]+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase();
+  }
+  return base.slice(0, 2).toUpperCase();
+}
+
+function signOut() {
+  clearSession();
+  window.location.href = '/login';
 }
 
 export function CommerceOpsShell({ children }: Props) {
@@ -47,7 +62,9 @@ export function CommerceOpsShell({ children }: Props) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQ, setPaletteQ] = useState('');
   const [helpOpen, setHelpOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [chord, setChord] = useState<string | null>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
 
   const refreshUser = useCallback(() => {
     const cached = getStoredUser();
@@ -102,12 +119,14 @@ export function CommerceOpsShell({ children }: Props) {
         setPaletteOpen((v) => !v);
         setPaletteQ('');
         setHelpOpen(false);
+        setAccountOpen(false);
         return;
       }
       if (e.key === 'Escape') {
         setPaletteOpen(false);
         setMobileNav(false);
         setHelpOpen(false);
+        setAccountOpen(false);
         setChord(null);
         return;
       }
@@ -117,11 +136,13 @@ export function CommerceOpsShell({ children }: Props) {
         e.preventDefault();
         setPaletteOpen(true);
         setPaletteQ('');
+        setAccountOpen(false);
         return;
       }
       if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setHelpOpen(true);
+        setAccountOpen(false);
         return;
       }
 
@@ -152,16 +173,35 @@ export function CommerceOpsShell({ children }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [paletteOpen, helpOpen, chord, router]);
 
-  // Lock body scroll when drawers open (mobile nav / command palette)
   useEffect(() => {
-    const lock = mobileNav || paletteOpen;
+    if (!accountOpen) return;
+    function onPointer(e: MouseEvent) {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setAccountOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onPointer);
+    return () => document.removeEventListener('mousedown', onPointer);
+  }, [accountOpen]);
+
+  // App-shell: lock document scroll for the whole ops session (main pane scrolls instead)
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('ops-shell-lock');
+    return () => root.classList.remove('ops-shell-lock');
+  }, []);
+
+  // Extra lock while drawers/modals open (overscroll safety)
+  useEffect(() => {
+    const lock = mobileNav || paletteOpen || helpOpen;
     document.documentElement.classList.toggle('scroll-locked', lock);
     return () => document.documentElement.classList.remove('scroll-locked');
-  }, [mobileNav, paletteOpen]);
+  }, [mobileNav, paletteOpen, helpOpen]);
 
   // Close mobile nav on route change
   useEffect(() => {
     setMobileNav(false);
+    setAccountOpen(false);
   }, [pathname]);
 
   const paletteHits = useMemo(() => {
@@ -201,7 +241,7 @@ export function CommerceOpsShell({ children }: Props) {
       <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col justify-center gap-3 px-4 py-8">
         <h1 className="font-display text-2xl">Not available for your role</h1>
         <p className="text-sm opacity-80">
-          This area is outside your Commerce Ops permissions ({roleChip(user.roles)}).
+          This area is outside your Commerce Ops permissions ({roleLabel(user.roles)}).
         </p>
         <Link href={landing} className="clay-btn w-fit text-sm">
           Go to your desk
@@ -237,28 +277,19 @@ export function CommerceOpsShell({ children }: Props) {
   }
 
   const sidebar = (
-    <nav className="flex h-full flex-col" aria-label="Commerce ops">
-      <div className="flex items-start justify-between gap-2 border-b border-[var(--border-subtle)] px-3 py-3">
-        <div className="min-w-0">
-          <Link
-            href="/admin/commerce"
-            className="font-display text-lg leading-tight text-[var(--foreground)]"
-            onClick={() => setMobileNav(false)}
-          >
-            Inabiya Ops
-          </Link>
-          <p className="mt-0.5 text-[11px] uppercase tracking-wide opacity-55">Soft Gift commerce</p>
-        </div>
-        <button
-          type="button"
-          className="clay-btn-ghost shrink-0 px-2 py-1 text-xs md:hidden"
+    <nav className="flex h-full min-h-0 flex-col" aria-label="Commerce ops">
+      <div className="shrink-0 border-b border-[var(--border-subtle)] px-3 py-3">
+        <Link
+          href="/admin/commerce"
+          className="font-display text-lg leading-tight text-[var(--foreground)]"
           onClick={() => setMobileNav(false)}
-          aria-label="Close navigation"
         >
-          Close
-        </button>
+          Inabiya Ops
+        </Link>
+        <p className="mt-0.5 text-[11px] uppercase tracking-wide opacity-55">Soft Gift commerce</p>
       </div>
-      <div className="flex-1 overflow-y-auto overscroll-contain px-2 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+
+      <div className="ops-sidebar-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-3">
         {grouped.map((g) => (
           <div key={g.section} className="mb-4">
             <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-wider opacity-45">
@@ -267,18 +298,38 @@ export function CommerceOpsShell({ children }: Props) {
             <NavLinks items={g.items} onNavigate={() => setMobileNav(false)} />
           </div>
         ))}
-      </div>
-      <div className="border-t border-[var(--border-subtle)] px-3 py-3 text-xs opacity-70">
-        <Link href="/gift" className="underline-offset-2 hover:underline">
+        <Link
+          href="/gift"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 flex items-center gap-1.5 px-2.5 py-1.5 text-xs opacity-60 hover:opacity-100"
+          onClick={() => setMobileNav(false)}
+        >
           View storefront
+          <ExternalLink className="h-3 w-3" aria-hidden />
         </Link>
+      </div>
+
+      <div className="shrink-0 border-t border-[var(--border-subtle)] bg-[var(--surface)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="rounded-lg border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3%,var(--surface))] p-3">
+          <p className="truncate text-sm font-medium leading-tight">{displayNameOf(user)}</p>
+          <p className="mt-1 text-[11px] opacity-55">{roleLabel(user.roles)}</p>
+          <button
+            type="button"
+            className="clay-btn-secondary mt-3 flex w-full min-h-10 items-center justify-center gap-1.5 text-sm"
+            onClick={signOut}
+          >
+            <LogOut className="h-3.5 w-3.5" aria-hidden />
+            Sign out
+          </button>
+        </div>
       </div>
     </nav>
   );
 
   return (
-    <div className="flex min-h-[100dvh] bg-[var(--background)] text-[var(--foreground)]">
-      <aside className="sticky top-0 hidden h-[100dvh] w-56 shrink-0 border-r border-[var(--border-subtle)] bg-[var(--surface)] md:block lg:w-60">
+    <div className="ops-shell flex h-[100dvh] max-h-[100dvh] overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+      <aside className="hidden h-full w-56 shrink-0 overflow-hidden border-r border-[var(--border-subtle)] bg-[var(--surface)] md:flex md:flex-col lg:w-60">
         {sidebar}
       </aside>
 
@@ -290,102 +341,130 @@ export function CommerceOpsShell({ children }: Props) {
             aria-label="Close menu"
             onClick={() => setMobileNav(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-[min(18rem,88vw)] max-w-full flex-col bg-[var(--surface)] shadow-lg pt-[env(safe-area-inset-top)]">
+          <aside className="absolute inset-y-0 left-0 flex w-[min(18rem,88vw)] max-w-full flex-col overflow-hidden bg-[var(--surface)] shadow-lg pt-[env(safe-area-inset-top)]">
             {sidebar}
           </aside>
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-[var(--border-subtle)] bg-[var(--surface)]/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm">
-          <div className="flex items-center gap-2 px-3 py-2 sm:px-4">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-30 shrink-0 border-b border-[var(--border-subtle)] bg-[var(--surface)]/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-3 py-2 sm:px-4">
+            <div className="flex min-w-0 items-center gap-2">
+              {/* Plain button — clay-btn-ghost forces display:inline-flex and breaks md:hidden */}
+              <button
+                type="button"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[var(--border-subtle)] md:!hidden"
+                onClick={() => setMobileNav(true)}
+                aria-label="Open navigation"
+                aria-expanded={mobileNav}
+              >
+                <Menu className="h-4 w-4" aria-hidden />
+              </button>
+
+              <nav
+                aria-label="Breadcrumb"
+                className="min-w-0 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                <ol className="flex items-center gap-1 whitespace-nowrap text-sm">
+                  {crumbs.map((c, i) => (
+                    <li key={`${c.label}-${i}`} className="flex items-center gap-1">
+                      {i > 0 ? <span className="opacity-40">/</span> : null}
+                      {c.href ? (
+                        <Link
+                          href={c.href}
+                          className={`${i === 0 && crumbs.length > 1 ? 'opacity-50' : 'opacity-70'} hover:opacity-100 hover:underline`}
+                        >
+                          {c.label}
+                        </Link>
+                      ) : (
+                        <span className="max-w-[28vw] truncate font-medium sm:max-w-[14rem]">{c.label}</span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            </div>
+
             <button
               type="button"
-              className="clay-btn-ghost shrink-0 px-2.5 py-2 text-sm md:hidden"
-              onClick={() => setMobileNav(true)}
-              aria-label="Open navigation"
-              aria-expanded={mobileNav}
+              className="inline-flex h-9 w-[min(22rem,52vw)] items-center gap-2 rounded-md border border-[var(--border-subtle)] px-3 text-xs hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] sm:w-72"
+              onClick={() => {
+                setPaletteOpen(true);
+                setPaletteQ('');
+                setAccountOpen(false);
+              }}
+              aria-label="Jump to page"
             >
-              Menu
+              <Search className="h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden />
+              <span className="min-w-0 flex-1 truncate text-left opacity-70">Jump to…</span>
+              <kbd className="hidden shrink-0 rounded border border-[var(--border-subtle)] px-1.5 py-0.5 text-[10px] font-medium opacity-55 sm:inline">
+                ⌘K
+              </kbd>
             </button>
 
-            <nav
-              aria-label="Breadcrumb"
-              className="min-w-0 flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              <ol className="flex items-center gap-1 whitespace-nowrap text-sm">
-                {crumbs.map((c, i) => (
-                  <li key={`${c.label}-${i}`} className="flex items-center gap-1">
-                    {i > 0 ? <span className="opacity-40">/</span> : null}
-                    {c.href ? (
-                      <Link href={c.href} className="opacity-70 hover:opacity-100 hover:underline">
-                        {c.label}
-                      </Link>
-                    ) : (
-                      <span className="max-w-[40vw] truncate font-medium sm:max-w-none">{c.label}</span>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </nav>
-
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-              <button
-                type="button"
-                className="clay-btn-ghost px-2 py-1.5 text-xs"
-                onClick={() => {
-                  setPaletteOpen(true);
-                  setPaletteQ('');
-                }}
-                aria-label="Jump to page"
-              >
-                <span className="sm:hidden">Jump</span>
-                <span className="hidden sm:inline">Jump ⌘K</span>
-              </button>
-              <button
-                type="button"
-                className="clay-btn-ghost px-2 py-1.5 text-xs"
-                onClick={() => setHelpOpen(true)}
-                aria-label="Keyboard shortcuts"
-                title="Shortcuts (?)"
-              >
-                ?
-              </button>
-              <button
-                type="button"
-                className="clay-btn-ghost px-2 py-1.5 text-xs"
-                onClick={() => {
-                  clearSession();
-                  window.location.href = '/login';
-                }}
-              >
-                Out
-              </button>
+            <div className="flex shrink-0 items-center justify-end">
+              <div className="relative" ref={accountRef}>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--primary)_18%,transparent)] text-[11px] font-semibold text-[var(--primary)] ring-1 ring-[color-mix(in_srgb,var(--primary)_25%,transparent)] transition hover:bg-[color-mix(in_srgb,var(--primary)_26%,transparent)]"
+                  onClick={() => setAccountOpen((v) => !v)}
+                  aria-label="Account menu"
+                  aria-expanded={accountOpen}
+                  aria-haspopup="menu"
+                >
+                  {initialsOf(user)}
+                </button>
+                {accountOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 z-50 mt-1.5 w-56 overflow-hidden rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] shadow-lg"
+                  >
+                    <div className="border-b border-[var(--border-subtle)] px-3 py-2.5">
+                      <p className="truncate text-sm font-medium">{displayNameOf(user)}</p>
+                      <p className="mt-0.5 truncate text-[11px] opacity-55">{user.email}</p>
+                      <p className="mt-1 text-[11px] opacity-55">{roleLabel(user.roles)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm opacity-80 hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)]"
+                      onClick={() => {
+                        setAccountOpen(false);
+                        setHelpOpen(true);
+                      }}
+                    >
+                      <Keyboard className="h-3.5 w-3.5" aria-hidden />
+                      Keyboard shortcuts
+                    </button>
+                    <Link
+                      href="/gift"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      role="menuitem"
+                      className="flex items-center gap-2 px-3 py-2.5 text-sm opacity-80 hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)]"
+                      onClick={() => setAccountOpen(false)}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                      View storefront
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-red-700 hover:bg-red-50"
+                      onClick={signOut}
+                    >
+                      <LogOut className="h-3.5 w-3.5" aria-hidden />
+                      Sign out
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border-subtle)]/70 px-3 py-1.5 sm:px-4">
-            <span
-              className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900"
-              title="Payments adapter mode"
-            >
-              <span className="sm:hidden">Mock pay</span>
-              <span className="hidden sm:inline">Payments: mock</span>
-            </span>
-            <span
-              className="clay-chip max-w-[9rem] truncate text-[11px] sm:max-w-[14rem]"
-              title={user.email}
-            >
-              <span className="sm:hidden">{roleChipShort(user.roles)}</span>
-              <span className="hidden sm:inline">{roleChip(user.roles)}</span>
-            </span>
-            <span className="hidden truncate text-[11px] opacity-55 sm:inline max-w-[12rem]">
-              {user.email}
-            </span>
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 overflow-x-hidden px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-5 sm:py-5">
+        <main className="ops-main-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-5 sm:py-5">
           {children}
         </main>
       </div>

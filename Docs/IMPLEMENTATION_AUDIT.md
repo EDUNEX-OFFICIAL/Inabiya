@@ -135,7 +135,7 @@ Post-dev stubs unchanged: Razorpay, real S3/MinIO, real SMTP, public Caddy/DNS, 
 | Scheduled report email | OPS-7 | P2 |
 | Dashboard notification prefs | OPS-8 | P1 |
 | Mobile triage layout | OPS-9 | P1 |
-| Cursor pagination on large lists | OPS-9 | P1 |
+| Cursor pagination on large lists | OPS-9 | **Products desk keyset done** (2026-07-29); orders/customers still P1 if needed |
 | Product CSV import (stock CSV only) | OPS-9 | P1 |
 | Multi-warehouse / bin WMS | — | **out of scope** |
 | Real Razorpay / SMTP / S3 / public DNS | — | **post-dev** |

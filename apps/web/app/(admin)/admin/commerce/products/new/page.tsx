@@ -4,10 +4,24 @@ import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiAuth } from '@/lib/auth-client';
+import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
+import { ProductMediaField } from '@/components/commerce-ops/product-media-field';
+
+function slugifyTitle(title: string): string {
+  return title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+}
+
+type CreateMode = 'draft' | 'publish';
 
 export default function NewProductPage() {
   const router = useRouter();
   const [slug, setSlug] = useState('');
+  const [slugTouched, setSlugTouched] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [sku, setSku] = useState('');
@@ -15,18 +29,31 @@ export default function NewProductPage() {
   const [priceInr, setPriceInr] = useState('');
   const [onHand, setOnHand] = useState('10');
   const [imageUrl, setImageUrl] = useState('');
+  const [imageAlt, setImageAlt] = useState('');
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
+  const [canonicalPath, setCanonicalPath] = useState('');
+  const [robotsIndex, setRobotsIndex] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<CreateMode | null>(null);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
+  function onTitleChange(next: string) {
+    setTitle(next);
+    if (!slugTouched) setSlug(slugifyTitle(next));
+  }
+
+  async function createProduct(mode: CreateMode) {
+    setBusy(mode);
     setError(null);
     try {
       const pricePaise = Math.round(Number(priceInr) * 100);
       if (!Number.isFinite(pricePaise) || pricePaise < 0) {
         throw new Error('Invalid price');
       }
+      if (!slug.trim() || !title.trim() || !sku.trim()) {
+        throw new Error('Title, slug, and SKU are required');
+      }
+      const alt = imageAlt.trim() || title.trim();
       const product = await apiAuth<{ id: string }>('/admin/catalog/products', {
         method: 'POST',
         json: {
@@ -41,7 +68,14 @@ export default function NewProductPage() {
               onHand: Number(onHand) || 0,
             },
           ],
-          media: imageUrl ? [{ url: imageUrl, altText: title }] : undefined,
+          media: imageUrl.trim()
+            ? [{ url: imageUrl.trim(), altText: alt, kind: 'IMAGE' as const }]
+            : undefined,
+          seoTitle: seoTitle.trim() || null,
+          seoDescription: seoDescription.trim() || null,
+          canonicalPath: canonicalPath.trim() || null,
+          ogImageUrl: null,
+          robotsIndex,
           personalization: [
             {
               key: 'babyName',
@@ -53,101 +87,203 @@ export default function NewProductPage() {
           ],
         },
       });
-      await apiAuth(`/admin/catalog/products/${product.id}/publish`, { method: 'POST' });
-      router.push('/admin/commerce/products');
+      if (mode === 'publish') {
+        await apiAuth(`/admin/catalog/products/${product.id}/publish`, { method: 'POST' });
+      }
+      router.push(`/admin/commerce/products/${product.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Create failed');
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    await createProduct('draft');
+  }
+
   return (
-    <main className="w-full max-w-lg">
+    <div className="w-full max-w-2xl">
       <Link href="/admin/commerce/products" className="text-sm underline opacity-70">
         ← Products
       </Link>
-      <h1 className="text-2xl font-semibold mt-4">New product</h1>
-      <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-3">
-        <label className="text-sm">
-          Slug (kebab-case)
-          <input
-            className="mt-1 block w-full rounded border px-2 py-1"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            required
+
+      <div className="mt-4">
+        <OpsPageHeader
+          title="New product"
+        />
+      </div>
+
+      <form onSubmit={onSubmit} className="mt-2 space-y-5">
+        <section className="space-y-3 rounded border border-[color:var(--gift-line)] p-4">
+          <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">Basics</h2>
+          <label className="block text-sm">
+            Title
+            <input
+              className="mt-1 block w-full rounded border px-2 py-1.5"
+              value={title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              required
+              autoFocus
+            />
+          </label>
+          <label className="block text-sm">
+            Slug (kebab-case)
+            <input
+              className="mt-1 block w-full rounded border px-2 py-1.5 font-mono text-sm"
+              value={slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setSlug(e.target.value);
+              }}
+              required
+              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+              title="lowercase kebab-case"
+            />
+          </label>
+          <label className="block text-sm">
+            Description
+            <textarea
+              className="mt-1 block w-full rounded border px-2 py-1.5"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+            />
+          </label>
+        </section>
+
+        <section className="space-y-3 rounded border border-[color:var(--gift-line)] p-4">
+          <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">
+            Pricing &amp; stock
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm">
+              SKU
+              <input
+                className="mt-1 block w-full rounded border px-2 py-1.5"
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                required
+              />
+            </label>
+            <label className="block text-sm">
+              Variant label
+              <input
+                className="mt-1 block w-full rounded border px-2 py-1.5"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+              />
+            </label>
+            <label className="block text-sm">
+              Price (₹)
+              <input
+                className="mt-1 block w-full rounded border px-2 py-1.5"
+                value={priceInr}
+                onChange={(e) => setPriceInr(e.target.value)}
+                inputMode="decimal"
+                required
+              />
+            </label>
+            <label className="block text-sm">
+              Stock on hand
+              <input
+                className="mt-1 block w-full rounded border px-2 py-1.5"
+                value={onHand}
+                onChange={(e) => setOnHand(e.target.value)}
+                inputMode="numeric"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="space-y-3 rounded border border-[color:var(--gift-line)] p-4">
+          <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">Media</h2>
+          <ProductMediaField
+            url={imageUrl}
+            altText={imageAlt}
+            onUrlChange={setImageUrl}
+            onAltChange={setImageAlt}
+            altPlaceholder={title || 'Product name'}
+            label="Primary image"
           />
-        </label>
-        <label className="text-sm">
-          Title
-          <input
-            className="mt-1 block w-full rounded border px-2 py-1"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </label>
-        <label className="text-sm">
-          Description
-          <textarea
-            className="mt-1 block w-full rounded border px-2 py-1"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-          />
-        </label>
-        <label className="text-sm">
-          SKU
-          <input
-            className="mt-1 block w-full rounded border px-2 py-1"
-            value={sku}
-            onChange={(e) => setSku(e.target.value)}
-            required
-          />
-        </label>
-        <label className="text-sm">
-          Variant label
-          <input
-            className="mt-1 block w-full rounded border px-2 py-1"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-          />
-        </label>
-        <label className="text-sm">
-          Price (₹)
-          <input
-            className="mt-1 block w-full rounded border px-2 py-1"
-            value={priceInr}
-            onChange={(e) => setPriceInr(e.target.value)}
-            required
-          />
-        </label>
-        <label className="text-sm">
-          Stock on hand
-          <input
-            className="mt-1 block w-full rounded border px-2 py-1"
-            value={onHand}
-            onChange={(e) => setOnHand(e.target.value)}
-          />
-        </label>
-        <label className="text-sm">
-          Image URL
-          <input
-            className="mt-1 block w-full rounded border px-2 py-1"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://…"
-          />
-        </label>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-60"
-        >
-          {busy ? 'Creating…' : 'Create & publish'}
-        </button>
+        </section>
+
+        <section className="space-y-3 rounded border border-[color:var(--gift-line)] p-4">
+          <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">SEO</h2>
+          <label className="block text-sm">
+            SEO title
+            <input
+              className="mt-1 block w-full rounded border px-2 py-1.5"
+              value={seoTitle}
+              onChange={(e) => setSeoTitle(e.target.value)}
+              maxLength={200}
+              placeholder={title || 'SEO title'}
+            />
+            <span className="mt-1 block text-[11px] opacity-50">
+              {(seoTitle || title).length}/200
+            </span>
+          </label>
+          <label className="block text-sm">
+            SEO description
+            <textarea
+              className="mt-1 block w-full rounded border px-2 py-1.5"
+              rows={2}
+              value={seoDescription}
+              onChange={(e) => setSeoDescription(e.target.value)}
+              maxLength={500}
+              placeholder="SEO description"
+            />
+            <span className="mt-1 block text-[11px] opacity-50">
+              {seoDescription.length}/500
+            </span>
+          </label>
+          <label className="block text-sm">
+            Canonical path
+            <input
+              className="mt-1 block w-full rounded border px-2 py-1.5 font-mono text-sm"
+              value={canonicalPath}
+              onChange={(e) => setCanonicalPath(e.target.value)}
+              placeholder={slug ? `/gift/products/${slug}` : '/gift/products/…'}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={robotsIndex}
+              onChange={(e) => setRobotsIndex(e.target.checked)}
+            />
+            Allow search indexing
+          </label>
+        </section>
+
+        {error ? (
+          <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        ) : null}
+
+        <div className="flex flex-col gap-3 border-t border-[color:var(--gift-line)] pt-4 pb-8 sm:flex-row sm:flex-wrap sm:items-center">
+          <button
+            type="submit"
+            disabled={busy !== null}
+            className="clay-btn-secondary text-sm disabled:opacity-60"
+          >
+            {busy === 'draft' ? 'Saving draft…' : 'Save as draft'}
+          </button>
+          <button
+            type="button"
+            disabled={busy !== null}
+            className="clay-btn text-sm disabled:opacity-60"
+            onClick={() => void createProduct('publish')}
+          >
+            {busy === 'publish' ? 'Publishing…' : 'Create & publish'}
+          </button>
+          <Link href="/admin/commerce/products" className="text-sm underline opacity-70 sm:ml-1">
+            Cancel
+          </Link>
+        </div>
       </form>
-    </main>
+    </div>
   );
 }

@@ -24,6 +24,7 @@ import {
   PdpVideoBand,
   ProductSeoSections,
 } from '@/components/gift/hamper-pdp-sections';
+import { PdpSkeleton } from '@/components/gift/gift-skeletons';
 
 function labelTag(value: string): string {
   return value.replaceAll('-', ' ');
@@ -275,7 +276,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   }
 
   if (!product) {
-    return <main className="gift-page text-sm opacity-70">Loading…</main>;
+    return <PdpSkeleton />;
   }
 
   const primaryCategory = product.categories[0];

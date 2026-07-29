@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, ProductStatus, ReturnStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
+import { AuditService } from '../../audit/audit.service';
 import { CommercePolicyService } from './commerce-policy.service';
 
 const PAID_STATUSES: OrderStatus[] = [
@@ -10,13 +11,30 @@ const PAID_STATUSES: OrderStatus[] = [
   OrderStatus.DELIVERED,
 ];
 
+/** Matches order desk SLA: PAID/PROCESSING older than 24h. */
+export const DASHBOARD_SLA_HOURS = 24;
+const SPARKLINE_DAYS = 7;
+
 export type DashboardRangeDays = 1 | 7 | 30;
+
+function slaCutoff(hours = DASHBOARD_SLA_HOURS): Date {
+  return new Date(Date.now() - hours * 60 * 60 * 1000);
+}
+
+/** paidAt ?? createdAt ≤ cutoff (same spirit as orders desk exceptions). */
+function agingWhere(status: OrderStatus, cutoff: Date) {
+  return {
+    status,
+    OR: [{ paidAt: { lte: cutoff } }, { paidAt: null, createdAt: { lte: cutoff } }],
+  };
+}
 
 @Injectable()
 export class OpsDashboardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly policy: CommercePolicyService,
+    private readonly audit: AuditService,
   ) {}
 
   async dashboard(rangeDays: DashboardRangeDays = 7) {
@@ -31,17 +49,28 @@ export class OpsDashboardService {
       rangeStart.setHours(0, 0, 0, 0);
     }
 
-    const lowStockThreshold = await this.policy.getLowStockThreshold();
+    const prevStart = this.rangeStart(rangeDays * 2);
+    const prevEnd = new Date(rangeStart.getTime() - 1);
+    const sparkStart = this.rangeStart(SPARKLINE_DAYS);
+    const cutoff = slaCutoff();
+
+    const commercePolicy = await this.policy.getPolicy();
+    const lowStockThreshold = commercePolicy.lowStockThreshold;
 
     const [
       rangeOrders,
+      prevOrders,
       todayOrders,
+      sparkOrders,
       failedPayments,
       lowStockRows,
       pendingFulfillment,
       pendingShip,
       awaitingProcess,
       openReturns,
+      awaitingProcessAging,
+      pendingShipAging,
+      recentAuditPage,
     ] = await Promise.all([
       this.prisma.order.findMany({
         where: {
@@ -53,9 +82,23 @@ export class OpsDashboardService {
       this.prisma.order.findMany({
         where: {
           status: { in: PAID_STATUSES },
+          paidAt: { gte: prevStart, lte: prevEnd },
+        },
+        select: { totalPaise: true },
+      }),
+      this.prisma.order.findMany({
+        where: {
+          status: { in: PAID_STATUSES },
           paidAt: { gte: startOfDay },
         },
         select: { totalPaise: true },
+      }),
+      this.prisma.order.findMany({
+        where: {
+          status: { in: PAID_STATUSES },
+          paidAt: { gte: sparkStart },
+        },
+        select: { paidAt: true, totalPaise: true },
       }),
       this.prisma.payment.count({ where: { status: PaymentStatus.FAILED } }),
       this.prisma.inventoryItem.findMany({
@@ -75,12 +118,17 @@ export class OpsDashboardService {
       this.prisma.returnRequest.count({
         where: { status: { in: [ReturnStatus.REQUESTED, ReturnStatus.APPROVED] } },
       }),
+      this.prisma.order.count({ where: agingWhere(OrderStatus.PAID, cutoff) }),
+      this.prisma.order.count({ where: agingWhere(OrderStatus.PROCESSING, cutoff) }),
+      this.audit.list({ page: 1, pageSize: 5 }),
     ]);
 
     const revenuePaise = rangeOrders.reduce((s, o) => s + o.totalPaise, 0);
     const todayRevenuePaise = todayOrders.reduce((s, o) => s + o.totalPaise, 0);
     const orderCount = rangeOrders.length;
     const ordersToday = todayOrders.length;
+    const prevRevenuePaise = prevOrders.reduce((s, o) => s + o.totalPaise, 0);
+    const prevOrderCount = prevOrders.length;
 
     return {
       rangeDays,
@@ -95,6 +143,27 @@ export class OpsDashboardService {
         pendingShip,
         awaitingProcess,
       },
+      previous: {
+        orderCount: prevOrderCount,
+        revenuePaise: prevRevenuePaise,
+        aovPaise: prevOrderCount > 0 ? Math.round(prevRevenuePaise / prevOrderCount) : 0,
+      },
+      daily: this.bucketDaily(sparkOrders, SPARKLINE_DAYS, sparkStart),
+      aging: {
+        hours: DASHBOARD_SLA_HOURS,
+        awaitingProcess: awaitingProcessAging,
+        pendingShip: pendingShipAging,
+        fulfillment: awaitingProcessAging + pendingShipAging,
+      },
+      alertPrefs: commercePolicy.dashboardAlertPrefs,
+      recentAudit: recentAuditPage.items.map((r) => ({
+        id: r.id,
+        action: r.action,
+        resource: r.resource,
+        resourceId: r.resourceId,
+        createdAt: r.createdAt,
+        actorEmail: r.actor?.email ?? null,
+      })),
       alerts: {
         failedPayments,
         openReturns,

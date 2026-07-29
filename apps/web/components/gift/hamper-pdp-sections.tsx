@@ -6,7 +6,7 @@ export function HamperWhatsInside({ product }: { product: CatalogProduct }) {
   if (!product.isReadyMadeHamper || items.length === 0) return null;
 
   return (
-    <section className="mt-gs-8" aria-labelledby="whats-inside">
+    <section aria-labelledby="whats-inside">
       <h2 id="whats-inside" className="gift-h2">
         What’s inside
       </h2>
@@ -63,7 +63,7 @@ export function HamperActionBar({ product }: { product: CatalogProduct }) {
   if (!product.isReadyMadeHamper) return null;
   return (
     <section
-      className="mt-gs-8 overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--primary)]/20 via-sky-100/40 to-[var(--primary)]/10 px-gs-5 py-gs-5 sm:px-gs-6"
+      className="overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--primary)]/20 via-sky-100/40 to-[var(--primary)]/10 px-gs-5 py-gs-5 sm:px-gs-6"
       aria-label="Hamper actions"
     >
       <div className="flex flex-col gap-gs-4 sm:flex-row sm:items-center sm:justify-between">
@@ -89,22 +89,19 @@ export function HamperActionBar({ product }: { product: CatalogProduct }) {
   );
 }
 
+import { ArticleBody } from '@/components/editorial/article-body';
+import { seoSectionsToHtml } from '@/lib/product-page-content';
+
 export function ProductSeoSections({
   sections,
 }: {
   sections: Array<{ heading: string; bodyText: string }> | null | undefined;
 }) {
-  if (!sections?.length) return null;
+  const html = seoSectionsToHtml(sections);
+  if (!html.trim()) return null;
   return (
-    <section className="mt-gs-8 space-y-gs-6" aria-label="Product details">
-      {sections.map((s) => (
-        <div key={s.heading}>
-          <h2 className="gift-h2">{s.heading}</h2>
-          <div className="mt-gs-3 whitespace-pre-line text-body leading-relaxed text-foreground/85">
-            {s.bodyText}
-          </div>
-        </div>
-      ))}
+    <section aria-label="Product details">
+      <ArticleBody body={html} className="text-foreground/85" />
     </section>
   );
 }
@@ -115,7 +112,7 @@ export function PdpVideoBand({ product }: { product: CatalogProduct }) {
   if (!video) return null;
   const poster = video.posterUrl || product.media.find((m) => m.kind !== 'VIDEO')?.url || video.url;
   return (
-    <section className="mt-gs-8" aria-labelledby="unboxing-video">
+    <section aria-labelledby="unboxing-video">
       <h2 id="unboxing-video" className="sr-only">
         Unboxing video
       </h2>

@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
-import { apiUrl } from '@/lib/api-base';
+import { apiAuth, apiAuthUpload } from '@/lib/auth-client';
 
 type MediaAsset = {
   id: string;
@@ -23,26 +22,9 @@ const CMS_IMAGE_ACCEPT =
   'image/jpeg,image/png,image/webp,image/gif,image/avif,image/svg+xml,.svg,.jpg,.jpeg,.png,.webp,.gif,.avif';
 
 export async function uploadCmsMediaFile(file: File): Promise<MediaAsset> {
-  const token = getStoredAccessToken();
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch(apiUrl('/media'), {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    credentials: 'include',
-    body: form,
-  });
-  const data = (await res.json().catch(() => ({}))) as MediaAsset & {
-    error?: { message?: string };
-  };
-  if (!res.ok) {
-    throw new Error(
-      typeof data?.error?.message === 'string'
-        ? data.error.message
-        : `Upload failed (${res.status})`,
-    );
-  }
-  return data;
+  return apiAuthUpload<MediaAsset>('/media', form);
 }
 
 export function MediaLibraryModal({

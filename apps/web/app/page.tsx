@@ -26,6 +26,9 @@ export default function HomePage() {
           <Link href="/admin/commerce">Admin — Commerce</Link>
         </li>
         <li>
+          <Link href="/admin/cms/pages">Admin — CMS (Soft Gift pages)</Link>
+        </li>
+        <li>
           <Link href="/admin/editorial">Admin — Editorial</Link>
         </li>
         <li>

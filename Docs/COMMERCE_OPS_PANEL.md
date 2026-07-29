@@ -156,7 +156,7 @@ Delivery phases in `Phases.md` = **Phase 13** track (`OPS-0` … `OPS-9`). Memor
 
 - [x] Role-gated nav items (Support ≠ full Commerce Admin)
 - [x] Layout ownership: `gift` + `compact` only at layout boundary
-- [ ] Audit link / “recent privileged actions” stub optional P1
+- [x] Audit link / “recent privileged actions” stub optional P1
 - [x] Command palette stub (open + navigate to known routes) P1
 
 #### Exit criteria
@@ -219,8 +219,9 @@ Seed low stock + unpaid/failed → dashboard shows cards → click → correct q
 
 - [x] Publish / unpublish with audit
 - [x] Bulk status publish/unpublish (category/tag bulk = P1 later)
-- [ ] Media binding via existing media library patterns (JSON gallery remains; library picker P1)
+- [x] Media binding via existing media library patterns on **new product** (upload/library/preview/alt + SEO); edit page JSON gallery remains (picker P1)
 - [x] Variant/SKU inventory hooks visible from product
+- [x] Admin list **keyset cursor pagination** (see §13)
 
 #### Exit criteria
 
@@ -393,7 +394,7 @@ Place 2 paid orders → sales report + CSV match KPI strip.
 #### UI / UX
 
 - [x] Settings hub: returns window, low-stock threshold, shipping display copy stubs
-- [ ] Notifications prefs (which alerts on dashboard) P1
+- [x] Notifications prefs (which alerts on dashboard) P1
 - [x] Audit log viewer (filter by actor/action/date)
 - [x] Read-only roles matrix for Commerce Admin education
 
@@ -429,7 +430,7 @@ Set return window 7 → ineligible order blocked; audit shows `policy.updated`.
 #### Functionality
 
 - [x] CSV import/export polish with Zod row validation (stock import)
-- [ ] Performance pass on large order/product lists (indexes, cursor pagination) — seed-scale OK; cursor = P1
+- [x] Performance pass on large order/product lists (indexes, cursor pagination) — **products desk keyset shipped**; orders list still seed-scale / P1 if needed
 - [x] P2 backlog only: warehouse/bin, forecasting, full SLA engine, advanced segmentation (documented ceiling)
 
 #### Exit criteria
@@ -525,8 +526,76 @@ Update this table when Memory marks an OPS complete.
 
 | Date | Change |
 |---|---|
+| 2026-07-29 | v1.5.0 — Admin catalog keyset pagination (§13) |
 | 2026-07-29 | v1.4.0 — OPS-3 Inventory desk + OPS-4 AuthZ refresh |
 | 2026-07-29 | v1.3.0 — OPS-4 Order desk (queue, case file, carrier/AWB) |
 | 2026-07-29 | v1.2.0 — OPS-0 responsive harden + OPS-1 Command center |
 | 2026-07-29 | v1.1.0 — OPS-0 Shell & IA shipped |
 | 2026-07-29 | v1.0.0 — Full journey defined from Phase 4 baseline; OPS-0…9 contracts |
+
+---
+
+## 13. Admin catalog keyset pagination (reference)
+
+**Status:** Shipped 2026-07-29 · **Human override** of OPS-9 P1 leftover.
+
+### Contract
+
+`GET /api/v1/admin/catalog/products`
+
+| Query | Type | Default | Notes |
+|---|---|---|---|
+| `q` | string | — | title / slug / brand / SKU `contains` (ILIKE) |
+| `status` | enum | — | `DRAFT` \| `PUBLISHED` \| `ARCHIVED` |
+| `cursor` | string | — | Opaque keyset from prior `nextCursor` |
+| `limit` | int 1…50 | **25** | Page size |
+
+**Response (breaking vs old bare array):**
+
+```json
+{
+  "items": [ /* slim desk rows */ ],
+  "nextCursor": "base64url… or null",
+  "limit": 25
+}
+```
+
+No `total` / `page` — avoid `COUNT(*)` on every keystroke. UI shows “N on this page · more” + Prev/Next.
+
+### Algorithm (keyset, not OFFSET)
+
+1. Sort: `ORDER BY updated_at DESC, id DESC` (id is stable tie-break).
+2. Cursor payload: `base64url(`${updatedAt.toISOString()}_${id}`)`.
+3. Next page = rows **strictly after** last row in that order:
+
+```sql
+(updated_at < :u) OR (updated_at = :u AND id < :id)
+```
+
+4. Fetch `limit + 1` rows; if extra exists, slice to `limit` and set `nextCursor` from last kept row.
+
+Helpers: `apps/api/src/modules/commerce/catalog/admin-catalog-cursor.ts`  
+Check: `admin-catalog-cursor.check.ts`
+
+### Optimizations
+
+| Layer | Choice |
+|---|---|
+| Indexes | `products(updated_at, id)`, `products(status, updated_at, id)` — migration `20260729200000_admin_catalog_keyset_indexes` |
+| Include | Slim `adminListInclude`: variants+inventory only, **1 IMAGE** media — no SEO/hamper/personalization/categories |
+| Count | Omitted by design |
+| UI Prev | Client **cursor stack** (previous page tokens); API is forward-only |
+| Search | Debounced 300ms; clears `cursor` + stack on filter change |
+
+### Do / Don’t (future lists)
+
+```text
+✅ Keyset on (sortCol, id) for admin/public heavy lists sorted by time
+✅ take = limit+1 for hasMore
+✅ Slim list DTO ≠ full get-by-id mapProduct
+❌ OFFSET/LIMIT deep pages for catalog desk
+❌ Prisma cursor:{ id } + skip:1 when orderBy is updatedAt alone (duplicate/skip risk)
+❌ Returning full productInclude on list endpoints
+```
+
+Reuse this pattern for orders/customers when those queues outgrow seed scale.

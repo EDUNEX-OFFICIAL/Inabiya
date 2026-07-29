@@ -147,6 +147,44 @@ export async function apiAuth<T>(
   return data as T;
 }
 
+/**
+ * Authenticated multipart upload. Does not set Content-Type so the browser
+ * can attach the multipart boundary. Retries once after silent refresh on 401.
+ */
+export async function apiAuthUpload<T>(
+  path: string,
+  form: FormData,
+  init?: { _retried?: boolean },
+): Promise<T> {
+  const headers = new Headers();
+  const token = getStoredAccessToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const res = await fetch(apiUrl(path), {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: form,
+  });
+
+  if (res.status === 401 && !init?._retried) {
+    const ok = await tryRefreshSession();
+    if (ok) {
+      return apiAuthUpload<T>(path, form, { _retried: true });
+    }
+  }
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message =
+      typeof data?.error?.message === 'string'
+        ? data.error.message
+        : `Upload failed (${res.status})`;
+    throw new Error(message);
+  }
+  return data as T;
+}
+
 /** Authenticated binary/HTML download (invoice, etc.). Triggers browser save. */
 export async function apiAuthDownload(path: string, fallbackFilename: string): Promise<void> {
   const headers = new Headers();

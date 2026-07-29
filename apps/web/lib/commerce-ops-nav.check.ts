@@ -38,4 +38,8 @@ assert.equal(crumbs[0]?.label, 'Commerce Ops');
 assert.equal(crumbs[1]?.label, 'Orders');
 assert.equal(crumbs.at(-1)?.href, undefined);
 
+const dashCrumb = buildOpsBreadcrumbs('/admin/commerce');
+assert.equal(dashCrumb.length, 1);
+assert.equal(dashCrumb[0]?.label, 'Dashboard');
+
 console.log('commerce-ops-nav.check: ok');

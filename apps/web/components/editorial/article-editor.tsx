@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
@@ -25,7 +25,16 @@ type Props = {
   placeholder?: string;
   /** Show media library / upload for images (CMS + editorial). */
   enableMediaLibrary?: boolean;
+  /** Image / upload / library controls. Default true. */
+  showImages?: boolean;
+  /** Code block control. Default true. */
+  showCode?: boolean;
+  /** Show Insert table toolbar button. Schema always loads so paste works. Default true. */
+  showTable?: boolean;
 };
+
+const selectCls =
+  'h-7 max-w-[6.5rem] rounded border border-black/10 bg-white/80 px-1.5 text-xs disabled:opacity-40';
 
 function ToolbarButton({
   onClick,
@@ -46,6 +55,7 @@ function ToolbarButton({
       title={title}
       disabled={disabled}
       onClick={onClick}
+      aria-pressed={active ? true : false}
       className={`rounded px-2 py-1 text-xs border ${
         active ? 'bg-[var(--primary)] text-white border-transparent' : 'bg-white/80 border-black/10'
       } disabled:opacity-40`}
@@ -55,6 +65,25 @@ function ToolbarButton({
   );
 }
 
+function blockTypeValue(editor: Editor): string {
+  if (editor.isActive('heading', { level: 2 })) return 'h2';
+  if (editor.isActive('heading', { level: 3 })) return 'h3';
+  if (editor.isActive('heading', { level: 4 })) return 'h4';
+  return 'p';
+}
+
+function listValue(editor: Editor): string {
+  if (editor.isActive('bulletList')) return 'bullet';
+  if (editor.isActive('orderedList')) return 'ordered';
+  return '';
+}
+
+function alignValue(editor: Editor): string {
+  if (editor.isActive({ textAlign: 'center' })) return 'center';
+  if (editor.isActive({ textAlign: 'right' })) return 'right';
+  return 'left';
+}
+
 export function ArticleEditor({
   initialContent,
   onChange,
@@ -62,22 +91,31 @@ export function ArticleEditor({
   className,
   placeholder = 'Write the article…',
   enableMediaLibrary = false,
+  showImages = true,
+  showCode = true,
+  showTable = true,
 }: Props) {
+  const imagesOn = showImages;
   const [libraryOpen, setLibraryOpen] = useState(false);
+  /** TipTap selection changes don't always re-render React — tick refreshes active toolbar state. */
+  const [, setSelTick] = useState(0);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
+        // H1 reserved for page title — body uses H2–H4 only.
         heading: { levels: [2, 3, 4] },
-        codeBlock: { HTMLAttributes: { class: 'article-code' } },
+        codeBlock: showCode ? { HTMLAttributes: { class: 'article-code' } } : false,
       }),
       Underline,
       Link.configure({
         openOnClick: false,
         HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
       }),
-      Image.configure({ allowBase64: false }),
+      ...(imagesOn ? [Image.configure({ allowBase64: false })] : []),
       Placeholder.configure({ placeholder }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      // Always register table schema so pasted / saved HTML tables round-trip.
+      // `showTable` only controls the Insert toolbar button.
       Table.configure({ resizable: false }),
       TableRow,
       TableHeader,
@@ -95,12 +133,24 @@ export function ArticleEditor({
     onUpdate: ({ editor: ed }) => {
       onChange(ed.getHTML());
     },
+    onSelectionUpdate: () => {
+      setSelTick((n) => n + 1);
+    },
   });
 
   useEffect(() => {
     if (!editor) return;
     editor.setEditable(editable);
   }, [editor, editable]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const bump = () => setSelTick((n) => n + 1);
+    editor.on('transaction', bump);
+    return () => {
+      editor.off('transaction', bump);
+    };
+  }, [editor]);
 
   if (!editor) {
     return (
@@ -121,7 +171,7 @@ export function ArticleEditor({
   }
 
   function setImage() {
-    if (!editor) return;
+    if (!editor || !imagesOn) return;
     if (enableMediaLibrary) {
       setLibraryOpen(true);
       return;
@@ -132,7 +182,7 @@ export function ArticleEditor({
   }
 
   async function uploadImageFile(file: File | null) {
-    if (!editor || !file) return;
+    if (!editor || !file || !imagesOn) return;
     try {
       const asset = await uploadCmsMediaFile(file);
       const url = asset.publicUrl ?? `/api/v1/media/${asset.id}/content`;
@@ -142,12 +192,76 @@ export function ArticleEditor({
     }
   }
 
+  function onBlockType(value: string) {
+    const ed = editor;
+    if (!ed) return;
+    const chain = ed.chain().focus();
+    if (value === 'p') chain.setParagraph().run();
+    else if (value === 'h2') chain.setHeading({ level: 2 }).run();
+    else if (value === 'h3') chain.setHeading({ level: 3 }).run();
+    else if (value === 'h4') chain.setHeading({ level: 4 }).run();
+  }
+
+  function onList(value: string) {
+    const ed = editor;
+    if (!ed) return;
+    const chain = ed.chain().focus();
+    if (value === 'bullet') {
+      if (!ed.isActive('bulletList')) chain.toggleBulletList().run();
+      return;
+    }
+    if (value === 'ordered') {
+      if (!ed.isActive('orderedList')) chain.toggleOrderedList().run();
+      return;
+    }
+    if (ed.isActive('bulletList')) chain.toggleBulletList().run();
+    else if (ed.isActive('orderedList')) chain.toggleOrderedList().run();
+  }
+
+  function onAlign(value: string) {
+    editor?.chain().focus().setTextAlign(value).run();
+  }
+
   return (
     <div
       className={`rounded border border-black/15 bg-white/90 overflow-hidden ${className ?? ''}`}
     >
       {editable ? (
-        <div className="flex flex-wrap gap-1 border-b border-black/10 p-2 bg-[var(--background)]">
+        <div className="flex flex-wrap items-center gap-1 border-b border-black/10 bg-[var(--background)] p-2">
+          <select
+            className={selectCls}
+            aria-label="Text style"
+            value={blockTypeValue(editor)}
+            onChange={(e) => onBlockType(e.target.value)}
+          >
+            <option value="p">Paragraph</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+            <option value="h4">H4</option>
+          </select>
+
+          <select
+            className={selectCls}
+            aria-label="List"
+            value={listValue(editor)}
+            onChange={(e) => onList(e.target.value)}
+          >
+            <option value="">List</option>
+            <option value="bullet">• Bullets</option>
+            <option value="ordered">1. Numbered</option>
+          </select>
+
+          <select
+            className={selectCls}
+            aria-label="Align"
+            value={alignValue(editor)}
+            onChange={(e) => onAlign(e.target.value)}
+          >
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+          </select>
+
           <ToolbarButton
             title="Bold"
             active={editor.isActive('bold')}
@@ -177,47 +291,21 @@ export function ArticleEditor({
             S
           </ToolbarButton>
           <ToolbarButton
-            title="Heading 2"
-            active={editor.isActive('heading', { level: 2 })}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          >
-            H2
-          </ToolbarButton>
-          <ToolbarButton
-            title="Heading 3"
-            active={editor.isActive('heading', { level: 3 })}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          >
-            H3
-          </ToolbarButton>
-          <ToolbarButton
-            title="Bullet list"
-            active={editor.isActive('bulletList')}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-          >
-            • List
-          </ToolbarButton>
-          <ToolbarButton
-            title="Ordered list"
-            active={editor.isActive('orderedList')}
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          >
-            1. List
-          </ToolbarButton>
-          <ToolbarButton
             title="Quote"
             active={editor.isActive('blockquote')}
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
           >
             Quote
           </ToolbarButton>
-          <ToolbarButton
-            title="Code block"
-            active={editor.isActive('codeBlock')}
-            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          >
-            Code
-          </ToolbarButton>
+          {showCode ? (
+            <ToolbarButton
+              title="Code block"
+              active={editor.isActive('codeBlock')}
+              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            >
+              Code
+            </ToolbarButton>
+          ) : null}
           <ToolbarButton
             title="Horizontal rule"
             onClick={() => editor.chain().focus().setHorizontalRule().run()}
@@ -227,47 +315,39 @@ export function ArticleEditor({
           <ToolbarButton title="Link" active={editor.isActive('link')} onClick={setLink}>
             Link
           </ToolbarButton>
-          <ToolbarButton title="Image" onClick={setImage}>
-            Image
-          </ToolbarButton>
-          {enableMediaLibrary ? (
+          {imagesOn ? (
             <>
-              <label className="cursor-pointer rounded border border-black/10 bg-white/80 px-2 py-1 text-xs hover:bg-black/5">
-                Upload img
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  onChange={(e) => void uploadImageFile(e.target.files?.[0] ?? null)}
-                />
-              </label>
-              <ToolbarButton title="Media library" onClick={() => setLibraryOpen(true)}>
-                Library
+              <ToolbarButton title="Image" onClick={setImage}>
+                Image
               </ToolbarButton>
+              {enableMediaLibrary ? (
+                <>
+                  <label className="cursor-pointer rounded border border-black/10 bg-white/80 px-2 py-1 text-xs hover:bg-black/5">
+                    Upload
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={(e) => void uploadImageFile(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                  <ToolbarButton title="Media library" onClick={() => setLibraryOpen(true)}>
+                    Library
+                  </ToolbarButton>
+                </>
+              ) : null}
             </>
           ) : null}
-          <ToolbarButton
-            title="Insert table"
-            onClick={() =>
-              editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-            }
-          >
-            Table
-          </ToolbarButton>
-          <ToolbarButton
-            title="Align left"
-            active={editor.isActive({ textAlign: 'left' })}
-            onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          >
-            Left
-          </ToolbarButton>
-          <ToolbarButton
-            title="Align center"
-            active={editor.isActive({ textAlign: 'center' })}
-            onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          >
-            Center
-          </ToolbarButton>
+          {showTable ? (
+            <ToolbarButton
+              title="Insert table"
+              onClick={() =>
+                editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+              }
+            >
+              Table
+            </ToolbarButton>
+          ) : null}
           <ToolbarButton
             title="Undo"
             onClick={() => editor.chain().focus().undo().run()}
@@ -285,7 +365,7 @@ export function ArticleEditor({
         </div>
       ) : null}
       <EditorContent editor={editor} />
-      {enableMediaLibrary ? (
+      {imagesOn && enableMediaLibrary ? (
         <MediaLibraryModal
           open={libraryOpen}
           onClose={() => setLibraryOpen(false)}

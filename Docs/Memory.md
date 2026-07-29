@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 29, 2026 (Phase 13 IMPLEMENTATION_AUDIT cross-check)
+Last Updated: July 30, 2026 (Dashboard command center deepen)
 
 
 ---
@@ -141,11 +141,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **Human:** Soft Gift Commerce + CMS panel live QA (pause further build until feedback)
+1. **Human:** Soft Gift Commerce + CMS + Ops shell UX polish visual QA
 2. Replace CC0 demo MP4 with real unboxing when assets ready
 3. Cloudflare SSL / public DNS — **post-dev**
 4. Razorpay / real AWS+SMTP — **post-dev**
-5. After QA: OPS Phase 13 P1 leftovers (cursor pagination, mobile triage, product CSV, media picker)
+5. After QA: OPS P1 leftovers (orders cursor if needed, mobile triage, product CSV, **edit-page gallery picker**)
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -1033,6 +1033,170 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-30 (Dashboard command center deepen)
+
+- **Override:** post Phase 13 — implement owner-dashboard gaps (human request)
+- API `GET /admin/commerce/dashboard`: previous-period KPIs, 7d sparkline `daily`, SLA aging (24h), `alertPrefs`, `recentAudit`
+- Policy: `dashboardAlertPrefs` in `commerce_settings` + Settings UI toggles
+- UI: deltas, aging rows, sparkline, Auto 60s refresh + stale label, recent activity stub
+- Check: `dashboard-command.check.ts`; docs OPS-0 audit stub + OPS-8 alert prefs marked done
+- Deployed `web` + `api` via `deploy-vps.sh` @ `6fad003` (smoke ok)
+- Next: hard-refresh `/admin/commerce` + Settings alert prefs QA
+
+### Session — 2026-07-29 (Commerce dashboard owner UX)
+
+- **Override:** post Phase 13 polish — `/admin/commerce` owner POV redesign (human request)
+- Attention-first inbox (urgency sort, deep-links, calm clear state); revenue hero + pulse KPIs; low-stock panel; icon quick actions; skeleton load
+- Soft Gift tokens/recipes only; no API change
+- Next: visual QA on `/admin/commerce` mobile + desktop
+
+### Session — 2026-07-29 (Admin catalog keyset pagination)
+
+- **Override:** OPS-9 P1 cursor pagination for products desk (human request)
+- API: `{ items, nextCursor, limit }` keyset on `(updatedAt,id)`; slim list include; indexes migration
+- UI: Prev/Next + cursor stack; default limit 25
+- Docs: `COMMERCE_OPS_PANEL.md` §13; Architecture + audit notes
+- Check: `admin-catalog-cursor.check.ts`; deployed web+api @ `6fad003`
+
+### Session — 2026-07-29 (Catalog search debounce)
+
+- Products search: compact pastel pill + Search/X icons; removed Clear + Search buttons; 300ms debounce URL sync
+- Deployed `web` @ `6fad003` (smoke ok)
+
+### Session — 2026-07-29 (Catalog desk deploy)
+
+- Cross-check: mobile header (New product full-width; Import/Categories/Merch sm+), select-all on cards, chip/search stacking, typecheck ok
+- Deployed `web` via `bash scripts/deploy-vps.sh web` @ `6fad003` (smoke ok)
+- Next: hard-refresh `/admin/commerce/products` mobile + desktop QA
+
+### Session — 2026-07-29 (Catalog desk UX polish)
+
+- Products desk: thumbnails + SKU, status chips, clay-panel table, mobile cards, bulk bar only on selection
+- Dropped guide description; quieter secondary actions; success/error banners separated
+- Next: visual QA on `/admin/commerce/products`
+
+### Session — 2026-07-29 (Remove Payments: mock badge)
+
+- Removed amber “Payments: mock” strip from commerce ops shell header (only UI surface)
+
+### Session — 2026-07-29 (Gift skeletons + PDP gap)
+
+- Opinion → yes: Soft Gift loading uses layout shimmer (PDP/cart/wishlist/box + route loading.tsx); collections already had one
+- PDP gap: parent `gap-gs-*` + section `mt-gs-8` + `.article-prose h2 { mt-8 }` stacked — removed section mt; first prose child `mt-0`
+- Next: hard-refresh PDP + cart QA
+
+### Session — 2026-07-29 (Table paste kept without toolbar)
+
+- Product toolbar still hides Table button; TipTap table schema always loaded so paste/HTML round-trips
+- Sanitize allowlist already includes table/thead/tbody/tr/th/td
+
+### Session — 2026-07-29 (Product editor toolbar compact)
+
+- TipTap: Heading / List / Align as dropdowns (H2–H4, ul/ol, L/C/R)
+- Product page content: no Code, Image, Upload, Library, Table (gallery owns media)
+- Editorial/CMS keep image + code defaults via props
+- Next: hard-refresh product edit QA
+
+### Session — 2026-07-29 (H2/H3 restore, drop style chip)
+
+- Restored **H2** / **H3** toolbar labels; kept **Paragraph**
+- Removed style chip / STYLE row (pink active button is enough)
+- H1 still omitted (page title owns it)
+- Next: hard-refresh editor QA
+- Deployed `web` (smoke ok)
+
+### Session — 2026-07-29 (UI copy rule + empty style)
+
+- Rule: `.cursor/rules/42-ui-copy.mdc` — no guide/instruction UI unless essential; keep short
+- TipTap: no Paragraph chip/active when editor empty (`isEmpty`)
+- Stripped product edit/new helper blurbs; labels/placeholders only
+- Next: deploy web
+
+### Session — 2026-07-29 (Editor style toolbar UX)
+
+- TipTap: Paragraph + Heading/Subheading labels; live “Style: …” chip
+- Selection re-render fix so pink active state tracks cursor
+- H1 still omitted on purpose (page title owns H1)
+- Next: deploy web
+
+### Session — 2026-07-29 (Product TipTap body)
+
+- Product page content: section rows → single TipTap editor (toolbar + media library)
+- Storage still `seoSections` JSON: one `{ heading: '', bodyText: html }` row
+- PDP `ProductSeoSections` renders sanitized HTML via `ArticleBody`
+- Zod + catalog parse allow empty heading; body max 50k
+- Next: hard-refresh product edit + PDP QA
+- Deployed `web` + `api` (smoke ok)
+
+### Session — 2026-07-29 (Rename SEO labels)
+
+- Admin copy: “Long-form SEO sections” → **Product page content**; share OG → plain-language optional
+- API field still `seoSections` (no schema rename)
+- Next: hard-refresh product edit; confirm copy feels clear
+- Deployed `web` (smoke ok)
+
+### Session — 2026-07-29 (Product edit UI overhaul)
+
+- Full edit desk redesign (not label-only): hero thumb + status, in-page section nav
+- Media: visual gallery editor (upload/library/alt/reorder) — JSON gone
+- FAQs / SEO sections / hamper: structured row editors
+- Discovery: chip toggles; sticky Save bar; wider max-w-4xl cards
+- Files: `products/[id]/page.tsx`, `product-gallery-editor.tsx`
+- Next: hard-refresh product edit QA; feedback on remaining polish
+- Deployed `web` (smoke ok)
+
+### Session — 2026-07-29 (Product draft + edit UX)
+
+- Clarified: create → `/admin/commerce/products/[id]` = product edit desk
+- New product: **Save as draft** (default submit) + **Create & publish**; no separate OG upload
+- Edit: status pill Draft/Published; **View product**; **Move to draft**; OG URL under Advanced
+- Status model remains DRAFT | PUBLISHED (draft = pending / not live)
+- Deployed `web` (smoke ok)
+- Next: hard-refresh new + edit product pages
+
+### Session — 2026-07-29 (Media upload 401 refresh)
+
+- Root cause: `uploadCmsMediaFile` used raw fetch — no silent refresh on expired access token (15m TTL)
+- Added `apiAuthUpload` (multipart + 401→refresh→retry); wired CMS + platform media + product picker
+- Deployed `web` (smoke ok)
+- Next: hard-refresh products/new; if still fails → Sign out / log in again
+
+### Session — 2026-07-29 (New product media + SEO)
+
+- Override (post Phase 13): human asked to upgrade `/admin/commerce/products/new`
+- `ProductMediaField`: upload + library modal + preview + alt text (reuses CMS media API)
+- Create form sections: Basics / Pricing / Media / SEO (title, description, canonical, OG image, robots)
+- `createProductBodySchema`: relative media/OG paths + SEO fields; create service persists SEO
+- Check: schema smoke (`PASS` relative URL; rejects `../` path)
+- Deployed `web` + `api` via `deploy-vps.sh` (smoke ok)
+- Edit page gallery still JSON (P1); new-product picker shipped
+- Next: human QA on products/new; optional wire picker into product edit gallery
+
+### Session — 2026-07-29 (OG image = primary on create)
+
+- Removed separate OG upload from `/products/new` — PDP already falls back to `media[0]`
+- Note on form: social preview uses primary image; override stays on edit page
+
+### Session — 2026-07-29 (Ops shell scroll + chrome fix)
+
+- Document scroll lock (`ops-shell-lock`); only `.ops-main-scroll` + sidebar scroll
+- Removed duplicate Shortcuts topbar buttons; shortcuts live in avatar menu
+- Removed sidebar X; hamburger uses plain button + `md:!hidden` (clay-btn-ghost broke hide)
+- `scrollbar-gutter: stable` on main to avoid layout shift
+- Next: deploy web + hard-refresh QA
+- Deployed `web` @ `6fad003` (smoke ok)
+
+### Session — 2026-07-29 (Commerce Ops shell UX polish)
+
+- Override (post Phase 13): ops desk chrome polish from human QA feedback
+- Topbar: hamburger/Menu icon, Jump-to chip + ⌘K, Shortcuts label, avatar dropdown (storefront + Sign out)
+- Sidebar: sticky full-height; nav scrolls; hover-only scrollbar; bottom user card (name, role, Sign out)
+- Dashboard: title/copy, linked KPIs, muted zero alerts, low-stock wording
+- Breadcrumb root on home = Dashboard; nested keeps soft Commerce Ops root
+- Check: `commerce-ops-nav.check.ts`
+- Deployed `web` via `bash scripts/deploy-vps.sh web` @ `6fad003` (smoke ok)
+- Next: human visual QA of ops shell (hard-refresh)
 
 ### Session — 2026-07-29 (deploy + push for Commerce/CMS QA)
 

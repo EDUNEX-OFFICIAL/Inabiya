@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import { ProductBrandLine } from '@/components/gift/product-brand-line';
+import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
 
 type GiftBox = {
   id: string;
@@ -74,7 +75,7 @@ const CATEGORIES = [
 
 export default function GiftBoxPage() {
   return (
-    <Suspense fallback={<main className="gift-page text-sm opacity-70">Loading gift box…</main>}>
+    <Suspense fallback={<GiftListSkeleton label="Loading gift box" />}>
       <GiftBoxWizard />
     </Suspense>
   );
@@ -265,7 +266,7 @@ function GiftBoxWizard() {
   }
 
   if (!box) {
-    return <main className="gift-page text-sm opacity-70">Loading gift box…</main>;
+    return <GiftListSkeleton label="Loading gift box" />;
   }
 
   const step = Math.min(6, Math.max(1, box.wizardStep || 1));

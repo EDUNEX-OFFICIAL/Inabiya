@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { cartApi, formatInr } from '@/lib/cart-client';
+import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
 
 type WishlistRow = {
   id: string;
@@ -55,7 +56,7 @@ export default function WishlistPage() {
   }
 
   if (!rows) {
-    return <main className="gift-page text-sm opacity-70">Loading wishlist…</main>;
+    return <GiftListSkeleton label="Loading wishlist" />;
   }
 
   return (

@@ -1,24 +1,43 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 
 const RETURN_WINDOW_KEY = 'policy.return_window_days';
 const LOW_STOCK_KEY = 'policy.low_stock_threshold';
 const SHIPPING_COPY_KEY = 'policy.shipping_display_copy';
+const ALERT_PREFS_KEY = 'policy.dashboard_alert_prefs';
 
 export const DEFAULT_RETURN_WINDOW_DAYS = 14;
 export const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 export const DEFAULT_SHIPPING_DISPLAY_COPY =
   'Standard 3–5 days · Express 1–2 days. Free standard shipping on select orders.';
 
+export const DEFAULT_DASHBOARD_ALERT_PREFS: DashboardAlertPrefs = {
+  failedPayments: true,
+  awaitingProcess: true,
+  pendingShip: true,
+  openReturns: true,
+  lowStock: true,
+};
+
 export type ReturnPolicy = {
   windowDays: number;
+};
+
+export type DashboardAlertPrefs = {
+  failedPayments: boolean;
+  awaitingProcess: boolean;
+  pendingShip: boolean;
+  openReturns: boolean;
+  lowStock: boolean;
 };
 
 export type CommercePolicy = {
   returnWindowDays: number;
   lowStockThreshold: number;
   shippingDisplayCopy: string;
+  dashboardAlertPrefs: DashboardAlertPrefs;
 };
 
 function asPositiveInt(raw: unknown, fallback: number, min: number, max: number): number {
@@ -32,6 +51,20 @@ function asPositiveInt(raw: unknown, fallback: number, min: number, max: number)
 
 function asString(raw: unknown, fallback: string): string {
   return typeof raw === 'string' && raw.trim() ? raw.trim() : fallback;
+}
+
+function asAlertPrefs(raw: unknown): DashboardAlertPrefs {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ...DEFAULT_DASHBOARD_ALERT_PREFS };
+  }
+  const o = raw as Record<string, unknown>;
+  return {
+    failedPayments: o.failedPayments !== false,
+    awaitingProcess: o.awaitingProcess !== false,
+    pendingShip: o.pendingShip !== false,
+    openReturns: o.openReturns !== false,
+    lowStock: o.lowStock !== false,
+  };
 }
 
 @Injectable()
@@ -49,7 +82,9 @@ export class CommercePolicyService {
   async getPolicy(): Promise<CommercePolicy> {
     const rows = await this.prisma.commerceSetting.findMany({
       where: {
-        key: { in: [RETURN_WINDOW_KEY, LOW_STOCK_KEY, SHIPPING_COPY_KEY] },
+        key: {
+          in: [RETURN_WINDOW_KEY, LOW_STOCK_KEY, SHIPPING_COPY_KEY, ALERT_PREFS_KEY],
+        },
       },
     });
     const map = new Map(rows.map((r) => [r.key, r.value]));
@@ -70,6 +105,7 @@ export class CommercePolicyService {
         map.get(SHIPPING_COPY_KEY),
         DEFAULT_SHIPPING_DISPLAY_COPY,
       ),
+      dashboardAlertPrefs: asAlertPrefs(map.get(ALERT_PREFS_KEY)),
     };
   }
 
@@ -96,6 +132,7 @@ export class CommercePolicyService {
       returnWindowDays?: number;
       lowStockThreshold?: number;
       shippingDisplayCopy?: string;
+      dashboardAlertPrefs?: DashboardAlertPrefs;
     },
     actorId?: string,
     requestId?: string,
@@ -103,7 +140,8 @@ export class CommercePolicyService {
     if (
       input.returnWindowDays == null &&
       input.lowStockThreshold == null &&
-      input.shippingDisplayCopy == null
+      input.shippingDisplayCopy == null &&
+      input.dashboardAlertPrefs == null
     ) {
       throw new BadRequestException({
         code: 'EMPTY_POLICY',
@@ -112,7 +150,7 @@ export class CommercePolicyService {
     }
 
     const before = await this.getPolicy();
-    const next: CommercePolicy = { ...before };
+    const next: CommercePolicy = { ...before, dashboardAlertPrefs: { ...before.dashboardAlertPrefs } };
 
     if (input.returnWindowDays != null) {
       const windowDays = Math.floor(input.returnWindowDays);
@@ -159,6 +197,20 @@ export class CommercePolicyService {
         where: { key: SHIPPING_COPY_KEY },
         create: { key: SHIPPING_COPY_KEY, value: copy },
         update: { value: copy },
+      });
+    }
+
+    if (input.dashboardAlertPrefs != null) {
+      next.dashboardAlertPrefs = asAlertPrefs(input.dashboardAlertPrefs);
+      await this.prisma.commerceSetting.upsert({
+        where: { key: ALERT_PREFS_KEY },
+        create: {
+          key: ALERT_PREFS_KEY,
+          value: next.dashboardAlertPrefs as unknown as Prisma.InputJsonValue,
+        },
+        update: {
+          value: next.dashboardAlertPrefs as unknown as Prisma.InputJsonValue,
+        },
       });
     }
 

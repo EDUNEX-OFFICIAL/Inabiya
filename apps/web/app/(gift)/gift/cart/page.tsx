@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getStoredAccessToken } from '@/lib/auth-client';
 import { cartApi, fetchCart, formatInr, type CartDto } from '@/lib/cart-client';
+import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
 
 export default function CartPage() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export default function CartPage() {
   }
 
   if (!cart) {
-    return <main className="gift-page max-w-3xl text-sm opacity-70">Loading cart…</main>;
+    return <GiftListSkeleton label="Loading cart" />;
   }
 
   return (

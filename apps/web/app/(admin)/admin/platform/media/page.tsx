@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
-import { apiUrl } from '@/lib/api-base';
+import { apiAuth, apiAuthUpload, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
 
 type MediaAsset = {
   id: string;
@@ -56,23 +55,9 @@ export default function PlatformMediaPage() {
     setBusy(true);
     setErr(null);
     try {
-      const token = getStoredAccessToken();
       const form = new FormData();
       form.append('file', file);
-      const res = await fetch(apiUrl('/media'), {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        credentials: 'include',
-        body: form,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(
-          typeof data?.error?.message === 'string'
-            ? data.error.message
-            : `Upload failed (${res.status})`,
-        );
-      }
+      await apiAuthUpload('/media', form);
       await load();
     } catch (e) {
       setErr(String((e as Error).message ?? e));

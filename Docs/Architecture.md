@@ -587,6 +587,7 @@ REST-first, versioned:
 - Plural nouns
 - Nested only for true ownership
 - Cursor pagination preferred for public lists
+- **Admin catalog products:** keyset on `(updatedAt, id)` — see `COMMERCE_OPS_PANEL.md` §13
 - UTC ISO-8601 timestamps
 - Consistent error envelope (`Rules.md`)
 

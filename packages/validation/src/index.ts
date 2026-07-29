@@ -73,6 +73,28 @@ export type TestSendMailBody = z.infer<typeof testSendMailBodySchema>;
 export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;
 export type UpsertFeatureFlagBody = z.infer<typeof upsertFeatureFlagBodySchema>;
 
+/** Product gallery / hamper / OG URLs — absolute http(s) or same-origin public path. */
+const productAssetUrlSchema = z
+  .string()
+  .min(1)
+  .max(500)
+  .refine(
+    (s) =>
+      /^https?:\/\//i.test(s) ||
+      (s.startsWith('/') && !s.startsWith('//') && !s.includes('..')),
+    'Must be http(s) URL or same-origin path',
+  );
+
+export const productMediaInputSchema = z.object({
+  url: productAssetUrlSchema,
+  altText: z.string().max(200).optional(),
+  kind: z.enum(['IMAGE', 'VIDEO']).optional(),
+  posterUrl: productAssetUrlSchema.optional(),
+  sortOrder: z.number().int().optional(),
+});
+
+const emptySeoToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
+
 /** Phase 2 — catalog admin + storefront queries */
 export const createProductBodySchema = z.object({
   slug: z
@@ -104,15 +126,12 @@ export const createProductBodySchema = z.object({
       }),
     )
     .min(1),
-  media: z
-    .array(
-      z.object({
-        url: z.string().url(),
-        altText: z.string().max(200).optional(),
-        sortOrder: z.number().int().optional(),
-      }),
-    )
-    .optional(),
+  media: z.array(productMediaInputSchema).max(24).optional(),
+  seoTitle: z.preprocess(emptySeoToNull, z.string().max(200).nullable().optional()),
+  seoDescription: z.preprocess(emptySeoToNull, z.string().max(500).nullable().optional()),
+  canonicalPath: z.preprocess(emptySeoToNull, z.string().max(300).nullable().optional()),
+  ogImageUrl: z.preprocess(emptySeoToNull, productAssetUrlSchema.nullable().optional()),
+  robotsIndex: z.boolean().optional(),
   personalization: z
     .array(
       z.object({
@@ -133,21 +152,10 @@ export const productFaqItemSchema = z.object({
 });
 
 export const productSeoSectionSchema = z.object({
-  heading: z.string().min(1).max(200),
-  bodyText: z.string().min(1).max(8000),
+  /** Empty when body is a single rich-text HTML document. */
+  heading: z.string().max(200).optional().default(''),
+  bodyText: z.string().min(1).max(50000),
 });
-
-/** Product gallery / hamper thumb URLs — absolute http(s) or same-origin public path. */
-const productAssetUrlSchema = z
-  .string()
-  .min(1)
-  .max(500)
-  .refine(
-    (s) =>
-      /^https?:\/\//i.test(s) ||
-      (s.startsWith('/') && !s.startsWith('//') && !s.includes('..')),
-    'Must be http(s) URL or same-origin path',
-  );
 
 export const productHamperItemSchema = z.object({
   title: z.string().min(1).max(200),
@@ -158,16 +166,6 @@ export const productHamperItemSchema = z.object({
   unitPricePaise: z.number().int().min(0),
   sortOrder: z.number().int().min(0).optional(),
 });
-
-export const productMediaInputSchema = z.object({
-  url: productAssetUrlSchema,
-  altText: z.string().max(200).optional(),
-  kind: z.enum(['IMAGE', 'VIDEO']).optional(),
-  posterUrl: productAssetUrlSchema.optional(),
-  sortOrder: z.number().int().optional(),
-});
-
-const emptySeoToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
 
 export const updateProductBodySchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -185,7 +183,7 @@ export const updateProductBodySchema = z.object({
   seoTitle: z.preprocess(emptySeoToNull, z.string().max(200).nullable().optional()),
   seoDescription: z.preprocess(emptySeoToNull, z.string().max(500).nullable().optional()),
   canonicalPath: z.preprocess(emptySeoToNull, z.string().max(300).nullable().optional()),
-  ogImageUrl: z.preprocess(emptySeoToNull, z.string().url().max(2000).nullable().optional()),
+  ogImageUrl: z.preprocess(emptySeoToNull, productAssetUrlSchema.nullable().optional()),
   robotsIndex: z.boolean().optional(),
   faqItems: z.array(productFaqItemSchema).max(20).nullable().optional(),
   seoSections: z.array(productSeoSectionSchema).max(12).nullable().optional(),
@@ -483,17 +481,27 @@ export const returnPolicyBodySchema = z.object({
   windowDays: z.number().int().min(1).max(365),
 });
 
+export const dashboardAlertPrefsSchema = z.object({
+  failedPayments: z.boolean(),
+  awaitingProcess: z.boolean(),
+  pendingShip: z.boolean(),
+  openReturns: z.boolean(),
+  lowStock: z.boolean(),
+});
+
 export const commercePolicyBodySchema = z
   .object({
     returnWindowDays: z.number().int().min(1).max(365).optional(),
     lowStockThreshold: z.number().int().min(0).max(1000).optional(),
     shippingDisplayCopy: z.string().trim().min(1).max(500).optional(),
+    dashboardAlertPrefs: dashboardAlertPrefsSchema.optional(),
   })
   .superRefine((v, ctx) => {
     if (
       v.returnWindowDays == null &&
       v.lowStockThreshold == null &&
-      v.shippingDisplayCopy == null
+      v.shippingDisplayCopy == null &&
+      v.dashboardAlertPrefs == null
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -515,6 +523,7 @@ export const adminAuditQuerySchema = z.object({
 });
 
 export type CommercePolicyBody = z.infer<typeof commercePolicyBodySchema>;
+export type DashboardAlertPrefs = z.infer<typeof dashboardAlertPrefsSchema>;
 export type AdminAuditQuery = z.infer<typeof adminAuditQuerySchema>;
 
 export type CreateReturnBody = z.infer<typeof createReturnBodySchema>;
@@ -673,6 +682,9 @@ export const bulkProductsBodySchema = z.object({
 export const adminCatalogListQuerySchema = z.object({
   q: z.string().trim().min(1).max(120).optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+  /** Opaque keyset cursor from previous page `nextCursor`. */
+  cursor: z.string().trim().min(1).max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(25),
 });
 
 export type TrackAnalyticsBody = z.infer<typeof trackAnalyticsBodySchema>;

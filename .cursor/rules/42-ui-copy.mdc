@@ -1,0 +1,40 @@
+---
+description: Keep admin/storefront UI free of instructional clutter; short copy only when essential
+alwaysApply: true
+---
+
+# UI copy — no guide text
+
+## Default
+
+Do **not** put instructions, tips, “how to use”, or explanatory essays on the UI.
+
+Users learn from labels, layout, and affordances — not paragraphs of help.
+
+## When copy is allowed
+
+Only if missing it causes real mistakes (money, publish/draft, irreversible delete, legal).
+
+Then: **shortest possible** — prefer a few words on the control itself, not a sentence under every field.
+
+```text
+❌ Full story for the product page — headings, lists… Click in text — pink button…
+❌ Draft stays off Soft Gift until you Publish (repeated under Save)
+✅ Label: "Product page content"
+✅ Button: "Save as draft" / "Publish" (the action is the instruction)
+```
+
+## Prefer
+
+| Instead of | Use |
+|---|---|
+| Hint under every section | Clear section title |
+| “Optional — leave blank to…” | Placeholder on the input |
+| Multi-line how-to | Nothing, or one short `title`/`aria-label` |
+| Style explainer chip text | Show style chip **only when cursor is in content** |
+
+## Do not
+
+- Add onboarding prose to ship a feature
+- Duplicate the same tip in header + toolbar + footer
+- Use “lol” or chatty copy in product UI

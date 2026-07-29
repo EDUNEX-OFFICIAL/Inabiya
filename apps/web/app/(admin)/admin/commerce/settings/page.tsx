@@ -12,6 +12,13 @@ type Policy = {
   returnWindowDays: number;
   lowStockThreshold: number;
   shippingDisplayCopy: string;
+  dashboardAlertPrefs: {
+    failedPayments: boolean;
+    awaitingProcess: boolean;
+    pendingShip: boolean;
+    openReturns: boolean;
+    lowStock: boolean;
+  };
 };
 
 type AuditItem = {
@@ -33,6 +40,25 @@ type AuditPage = {
 
 const ROLE_COLS = ['COMMERCE_ADMIN', 'SUPPORT', 'FINANCE'] as const;
 
+const ALERT_PREF_ROWS: Array<{
+  key: keyof Policy['dashboardAlertPrefs'];
+  label: string;
+}> = [
+  { key: 'failedPayments', label: 'Failed payments' },
+  { key: 'awaitingProcess', label: 'Awaiting process' },
+  { key: 'pendingShip', label: 'Ready to ship' },
+  { key: 'openReturns', label: 'Open returns' },
+  { key: 'lowStock', label: 'Low stock SKUs' },
+];
+
+const DEFAULT_ALERT_PREFS: Policy['dashboardAlertPrefs'] = {
+  failedPayments: true,
+  awaitingProcess: true,
+  pendingShip: true,
+  openReturns: true,
+  lowStock: true,
+};
+
 function SettingsInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -42,6 +68,7 @@ function SettingsInner() {
   const [returnWindowDays, setReturnWindowDays] = useState('14');
   const [lowStockThreshold, setLowStockThreshold] = useState('5');
   const [shippingCopy, setShippingCopy] = useState('');
+  const [alertPrefs, setAlertPrefs] = useState(DEFAULT_ALERT_PREFS);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -57,6 +84,7 @@ function SettingsInner() {
     setReturnWindowDays(String(p.returnWindowDays));
     setLowStockThreshold(String(p.lowStockThreshold));
     setShippingCopy(p.shippingDisplayCopy);
+    setAlertPrefs(p.dashboardAlertPrefs ?? DEFAULT_ALERT_PREFS);
   }, []);
 
   const loadAudit = useCallback(async () => {
@@ -105,10 +133,12 @@ function SettingsInner() {
           returnWindowDays: Number(returnWindowDays),
           lowStockThreshold: Number(lowStockThreshold),
           shippingDisplayCopy: shippingCopy.trim(),
+          dashboardAlertPrefs: alertPrefs,
         },
       });
       setPolicy(updated);
-      setMsg('Policy saved — return eligibility & low-stock alerts use these values.');
+      setAlertPrefs(updated.dashboardAlertPrefs ?? DEFAULT_ALERT_PREFS);
+      setMsg('Policy saved.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -203,6 +233,56 @@ function SettingsInner() {
 
           <section className="rounded border border-[color:var(--gift-line)] p-4 text-sm">
             <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">
+              Dashboard alerts
+            </h2>
+            <ul className="mt-3 space-y-2">
+              {ALERT_PREF_ROWS.map((row) => (
+                <li key={row.key}>
+                  <label className="flex min-h-10 cursor-pointer items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-[var(--primary)]"
+                      checked={alertPrefs[row.key]}
+                      onChange={(e) =>
+                        setAlertPrefs((prev) => ({ ...prev, [row.key]: e.target.checked }))
+                      }
+                    />
+                    <span>{row.label}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              className="clay-btn-secondary mt-3 text-sm disabled:opacity-50"
+              disabled={busy}
+              onClick={() => {
+                void (async () => {
+                  setBusy(true);
+                  setError(null);
+                  setMsg(null);
+                  try {
+                    const updated = await apiAuth<Policy>('/admin/commerce/policy', {
+                      method: 'POST',
+                      json: { dashboardAlertPrefs: alertPrefs },
+                    });
+                    setPolicy(updated);
+                    setAlertPrefs(updated.dashboardAlertPrefs ?? DEFAULT_ALERT_PREFS);
+                    setMsg('Alert prefs saved.');
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'Save failed');
+                  } finally {
+                    setBusy(false);
+                  }
+                })();
+              }}
+            >
+              Save alert prefs
+            </button>
+          </section>
+
+          <section className="rounded border border-[color:var(--gift-line)] p-4 text-sm">
+            <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">
               Roles matrix (read-only)
             </h2>
             <p className="mt-1 text-xs opacity-60">
@@ -254,10 +334,12 @@ function SettingsInner() {
                   Feature flags
                 </Link>
               </li>
+              <li>
+                <Link className="underline" href="/admin/commerce">
+                  Dashboard
+                </Link>
+              </li>
             </ul>
-            <p className="mt-3 text-xs opacity-55">
-              Dashboard alert notification prefs = P1 (deferred).
-            </p>
           </section>
         </div>
       ) : null}

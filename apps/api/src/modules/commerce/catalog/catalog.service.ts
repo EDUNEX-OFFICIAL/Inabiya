@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, ProductStatus } from '@prisma/client';
 import type {
+  AdminCatalogListQuery,
   CreateCategoryBody,
   CreateProductBody,
   UpdateProductBody,
@@ -9,6 +10,11 @@ import type {
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { InventoryService } from '../inventory/inventory.service';
+import {
+  adminProductKeysetAfter,
+  decodeAdminProductCursor,
+  encodeAdminProductCursor,
+} from './admin-catalog-cursor';
 import {
   isManualStorefrontLabel,
   resolveStorefrontDisplayLabels,
@@ -22,7 +28,28 @@ const productInclude = {
   hamperItems: { orderBy: { sortOrder: 'asc' as const } },
 } satisfies Prisma.ProductInclude;
 
+/** Desk list — no SEO/hamper/personalization/categories; one thumb + variants for stock/price. */
+const adminListInclude = {
+  variants: {
+    select: {
+      id: true,
+      sku: true,
+      label: true,
+      pricePaise: true,
+      inventory: { select: { onHand: true, reserved: true } },
+    },
+    orderBy: { createdAt: 'asc' as const },
+  },
+  media: {
+    where: { kind: 'IMAGE' as const },
+    orderBy: { sortOrder: 'asc' as const },
+    take: 1,
+    select: { url: true, altText: true, kind: true },
+  },
+} satisfies Prisma.ProductInclude;
+
 export type ProductDto = ReturnType<CatalogService['mapProduct']>;
+export type AdminProductListItem = ReturnType<CatalogService['mapAdminListProduct']>;
 
 @Injectable()
 export class CatalogService {
@@ -147,25 +174,56 @@ export class CatalogService {
     return this.mapProduct(product);
   }
 
-  async listAdminProducts(query: { q?: string; status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' } = {}) {
-    const where: Prisma.ProductWhereInput = {};
-    if (query.status) where.status = query.status;
+  async listAdminProducts(query: AdminCatalogListQuery) {
+    const limit = query.limit ?? 25;
+    const andParts: Prisma.ProductWhereInput[] = [];
+
+    if (query.status) andParts.push({ status: query.status });
+
     if (query.q?.trim()) {
       const term = query.q.trim();
-      where.OR = [
-        { title: { contains: term, mode: 'insensitive' } },
-        { slug: { contains: term, mode: 'insensitive' } },
-        { brandName: { contains: term, mode: 'insensitive' } },
-        { variants: { some: { sku: { contains: term, mode: 'insensitive' } } } },
-      ];
+      andParts.push({
+        OR: [
+          { title: { contains: term, mode: 'insensitive' } },
+          { slug: { contains: term, mode: 'insensitive' } },
+          { brandName: { contains: term, mode: 'insensitive' } },
+          { variants: { some: { sku: { contains: term, mode: 'insensitive' } } } },
+        ],
+      });
     }
-    const products = await this.prisma.product.findMany({
+
+    if (query.cursor) {
+      let decoded;
+      try {
+        decoded = decodeAdminProductCursor(query.cursor);
+      } catch {
+        throw new BadRequestException({
+          code: 'INVALID_CURSOR',
+          message: 'Invalid pagination cursor.',
+        });
+      }
+      andParts.push(adminProductKeysetAfter(decoded) as Prisma.ProductWhereInput);
+    }
+
+    const where: Prisma.ProductWhereInput = andParts.length > 0 ? { AND: andParts } : {};
+
+    const rows = await this.prisma.product.findMany({
       where,
-      include: productInclude,
-      orderBy: { updatedAt: 'desc' },
-      take: 200,
+      include: adminListInclude,
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
     });
-    return products.map((p) => this.mapProduct(p));
+
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const items = page.map((p) => this.mapAdminListProduct(p));
+    const last = page[page.length - 1];
+    const nextCursor =
+      hasMore && last
+        ? encodeAdminProductCursor({ updatedAt: last.updatedAt, id: last.id })
+        : null;
+
+    return { items, nextCursor, limit };
   }
 
   async getAdminProduct(id: string) {
@@ -195,6 +253,11 @@ export class CatalogService {
           isReadyMadeHamper: body.isReadyMadeHamper ?? false,
           brandName: body.brandName,
           storefrontLabels: body.storefrontLabels ?? [],
+          ...(body.seoTitle !== undefined ? { seoTitle: body.seoTitle } : {}),
+          ...(body.seoDescription !== undefined ? { seoDescription: body.seoDescription } : {}),
+          ...(body.canonicalPath !== undefined ? { canonicalPath: body.canonicalPath } : {}),
+          ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
+          ...(body.robotsIndex !== undefined ? { robotsIndex: body.robotsIndex } : {}),
           categories: {
             create: categoryIds.map((categoryId) => ({ categoryId })),
           },
@@ -204,7 +267,8 @@ export class CatalogService {
                   url: m.url,
                   altText: m.altText,
                   sortOrder: m.sortOrder ?? i,
-                  kind: 'IMAGE' as const,
+                  kind: m.kind ?? ('IMAGE' as const),
+                  posterUrl: m.posterUrl ?? null,
                 })),
               }
             : undefined,
@@ -494,6 +558,38 @@ export class CatalogService {
     return cats.map((c) => c.id);
   }
 
+  mapAdminListProduct(product: Prisma.ProductGetPayload<{ include: typeof adminListInclude }>) {
+    const variants = product.variants.map((v) => {
+      const onHand = v.inventory?.onHand ?? 0;
+      const reserved = v.inventory?.reserved ?? 0;
+      return {
+        id: v.id,
+        sku: v.sku,
+        label: v.label,
+        pricePaise: v.pricePaise,
+        available: Math.max(0, onHand - reserved),
+        giftBoxEligible: true as const,
+      };
+    });
+    const fromPricePaise = variants.length ? Math.min(...variants.map((v) => v.pricePaise)) : 0;
+    return {
+      id: product.id,
+      slug: product.slug,
+      title: product.title,
+      status: product.status,
+      fromPricePaise,
+      recipientTags: product.recipientTags,
+      occasionTags: product.occasionTags,
+      storefrontLabels: (product.storefrontLabels ?? []).filter(isManualStorefrontLabel),
+      media: product.media.map((m) => ({
+        url: m.url,
+        altText: m.altText,
+        kind: 'IMAGE' as const,
+      })),
+      variants,
+    };
+  }
+
   mapProduct(product: Prisma.ProductGetPayload<{ include: typeof productInclude }>) {
     const variants = product.variants.map((v) => {
       const onHand = v.inventory?.onHand ?? 0;
@@ -608,11 +704,11 @@ function parseProductSeoSections(
   const out: Array<{ heading: string; bodyText: string }> = [];
   for (const item of raw) {
     if (!item || typeof item !== 'object') continue;
-    const heading = (item as { heading?: unknown }).heading;
+    const headingRaw = (item as { heading?: unknown }).heading;
     const bodyText = (item as { bodyText?: unknown }).bodyText;
-    if (typeof heading === 'string' && heading.trim() && typeof bodyText === 'string' && bodyText.trim()) {
-      out.push({ heading: heading.trim(), bodyText: bodyText.trim() });
-    }
+    if (typeof bodyText !== 'string' || !bodyText.trim()) continue;
+    const heading = typeof headingRaw === 'string' ? headingRaw.trim() : '';
+    out.push({ heading, bodyText: bodyText.trim() });
   }
   return out.length ? out : null;
 }

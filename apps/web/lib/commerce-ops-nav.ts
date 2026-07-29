@@ -209,7 +209,7 @@ export type BreadcrumbCrumb = { label: string; href?: string };
 export function buildOpsBreadcrumbs(pathname: string): BreadcrumbCrumb[] {
   const crumbs: BreadcrumbCrumb[] = [{ label: 'Commerce Ops', href: '/admin/commerce' }];
   if (pathname === '/admin/commerce') {
-    return [{ label: 'Commerce Ops' }];
+    return [{ label: 'Dashboard' }];
   }
 
   const segments = pathname.replace(/^\/admin\/commerce\/?/, '').split('/').filter(Boolean);
