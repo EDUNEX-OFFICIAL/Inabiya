@@ -28,6 +28,8 @@ export type CatalogProduct = {
   occasionTags?: string[];
   isReadyMadeHamper?: boolean;
   brandName?: string | null;
+  /** Resolved unique brands (hamper item brands, else product brand). */
+  brandNames?: string[];
   /** Manual admin presets only */
   storefrontLabels?: ManualStorefrontLabel[];
   /** Resolved hybrid ribbons (max 2) for PLP/PDP */
@@ -38,7 +40,28 @@ export type CatalogProduct = {
   ogImageUrl?: string | null;
   robotsIndex?: boolean;
   faqItems?: Array<{ question: string; answerText: string }> | null;
-  media: Array<{ url: string; altText: string | null }>;
+  seoSections?: Array<{ heading: string; bodyText: string }> | null;
+  hamperItems?: Array<{
+    id: string;
+    title: string;
+    blurb: string | null;
+    brandName?: string | null;
+    imageUrl: string | null;
+    qty: number;
+    unitPricePaise: number;
+    sortOrder: number;
+  }>;
+  hamperItemCount?: number;
+  contentsValuePaise?: number;
+  hamperSavingsPaise?: number;
+  media: Array<{
+    url: string;
+    altText: string | null;
+    kind?: 'IMAGE' | 'VIDEO';
+    posterUrl?: string | null;
+    sortOrder?: number;
+    id?: string;
+  }>;
   categories: Array<{ slug: string; name: string }>;
   variants: Array<{
     id: string;

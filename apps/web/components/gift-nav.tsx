@@ -26,7 +26,7 @@ type MegaCopy = {
 
 const DEFAULT_SHOP_LINKS: MegaLink[] = [
   { href: '/gift/build-your-box', label: 'Build Your Box' },
-  { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
+  { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
   { href: '/gift/products?category=clothing', label: 'Clothing' },
   { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
   { href: '/gift/products?category=toys', label: 'Toys' },
@@ -35,12 +35,12 @@ const DEFAULT_SHOP_LINKS: MegaLink[] = [
 ];
 
 const DEFAULT_FOR_WHOM_LINKS: MegaLink[] = [
-  { href: '/gift/products?recipient=girl', label: 'Baby Girl' },
-  { href: '/gift/products?recipient=boy', label: 'Baby Boy' },
-  { href: '/gift/products?recipient=mom', label: 'Expecting Mom' },
-  { href: '/gift/products?age=newborn', label: 'Newborn' },
-  { href: '/gift/products?age=infant', label: 'Infant' },
-  { href: '/gift/products?age=toddler', label: 'Toddler' },
+  { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
+  { href: '/gift/collections/for-baby-boy', label: 'Baby Boy' },
+  { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom' },
+  { href: '/gift/collections/newborn', label: 'Newborn' },
+  { href: '/gift/collections/infant', label: 'Infant' },
+  { href: '/gift/collections/toddler', label: 'Toddler' },
 ];
 
 const DEFAULT_SHOP_MEGA: MegaCopy = {
@@ -54,7 +54,7 @@ const DEFAULT_SHOP_MEGA: MegaCopy = {
 const DEFAULT_WHOM_MEGA: MegaCopy = {
   headline: 'Gifts by stage',
   body: 'Girl, boy, expecting mom — and newborn through toddler.',
-  ctaHref: '/gift/products?age=newborn',
+  ctaHref: '/gift/collections/newborn',
   ctaLabel: 'Shop newborn →',
   imageSrc: '/gift/nav/for-whom.svg',
 };

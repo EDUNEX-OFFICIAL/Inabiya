@@ -291,19 +291,29 @@ export class CmsPagesService {
     title: string;
     fromPricePaise: number;
     brandName?: string | null;
+    brandNames?: string[];
     isReadyMadeHamper?: boolean;
+    hamperItemCount?: number;
     displayLabels?: Array<{ code: string; text: string; tone: string }>;
     media: Array<{ url: string; altText: string | null }>;
     variants?: Array<{ id: string; available: number }>;
   }) {
     const quick = (p.variants ?? []).find((v) => v.available > 0);
+    const brandNames =
+      p.brandNames?.length
+        ? p.brandNames
+        : p.brandName
+          ? [p.brandName]
+          : [];
     return {
       id: p.id,
       slug: p.slug,
       title: p.title,
       fromPricePaise: p.fromPricePaise,
       brandName: p.brandName ?? null,
+      brandNames,
       isReadyMadeHamper: Boolean(p.isReadyMadeHamper),
+      hamperItemCount: p.hamperItemCount ?? 0,
       displayLabels: p.displayLabels ?? [],
       quickAddVariantId: quick?.id ?? null,
       available: quick?.available ?? 0,

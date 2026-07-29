@@ -17,7 +17,7 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
   GiftChromeBody = {
   shopLinks: [
     { href: '/gift/build-your-box', label: 'Build Your Box' },
-    { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
+    { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
     { href: '/gift/products?category=clothing', label: 'Clothing' },
     { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
     { href: '/gift/products?category=toys', label: 'Toys' },
@@ -25,12 +25,12 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
     { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
   ],
   forWhomLinks: [
-    { href: '/gift/products?recipient=girl', label: 'Baby Girl' },
-    { href: '/gift/products?recipient=boy', label: 'Baby Boy' },
-    { href: '/gift/products?recipient=mom', label: 'Expecting Mom' },
-    { href: '/gift/products?age=newborn', label: 'Newborn' },
-    { href: '/gift/products?age=infant', label: 'Infant' },
-    { href: '/gift/products?age=toddler', label: 'Toddler' },
+    { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
+    { href: '/gift/collections/for-baby-boy', label: 'Baby Boy' },
+    { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom' },
+    { href: '/gift/collections/newborn', label: 'Newborn' },
+    { href: '/gift/collections/infant', label: 'Infant' },
+    { href: '/gift/collections/toddler', label: 'Toddler' },
   ],
   shopMega: {
     headline: 'Shop the Soft Gift edit',
@@ -60,8 +60,8 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
         title: 'Shop',
         links: [
           { label: 'Build Your Box', href: '/gift/build-your-box' },
-          { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
-          { label: 'Shop by Age', href: '/gift/products?age=newborn' },
+          { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
+          { label: 'Shop by Age', href: '/gift/collections/newborn' },
           { label: 'Corporate Gifting', href: '/gift/corporate' },
         ],
       },

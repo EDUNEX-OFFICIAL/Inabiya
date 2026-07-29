@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { Heart } from 'lucide-react';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { cartApi } from '@/lib/cart-client';
 import { formatInr, type CatalogProduct } from '@/lib/catalog';
@@ -12,9 +13,17 @@ import { TrackView } from '@/components/track-view';
 import { ClayProductCard } from '@/components/gift/clay-product-card';
 import { PdpGallery } from '@/components/gift/pdp-gallery';
 import { ProductLabels } from '@/components/gift/product-labels';
+import { ProductBrandLine } from '@/components/gift/product-brand-line';
+import { collectBrandNames } from '@/lib/brands';
 import { StarRatingSummary } from '@/components/gift/star-rating-summary';
 import { TrustStrip } from '@/components/gift/trust-strip';
 import { FaqAccordion, faqPageJsonLd } from '@/components/gift/faq-accordion';
+import {
+  HamperActionBar,
+  HamperWhatsInside,
+  PdpVideoBand,
+  ProductSeoSections,
+} from '@/components/gift/hamper-pdp-sections';
 
 function labelTag(value: string): string {
   return value.replaceAll('-', ' ');
@@ -313,21 +322,30 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       </nav>
 
       <div className="grid gap-gs-6 lg:grid-cols-2 lg:items-start lg:gap-gs-8">
-        <PdpGallery key={product.slug} media={product.media} title={product.title} />
+        <div id="gallery">
+          <PdpGallery key={product.slug} media={product.media} title={product.title} />
+        </div>
 
-        <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+        <div id="buy" className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <div className="flex flex-wrap items-center gap-gs-2">
             <ProductLabels labels={product.displayLabels} placement="inline" max={2} />
-            {product.brandName ? (
-              <span className="clay-chip text-xs">{product.brandName}</span>
-            ) : null}
-            {product.isReadyMadeHamper &&
-            !(product.displayLabels ?? []).some((l) => l.code === 'GIFT_SET') ? (
-              <span className="clay-chip text-xs">Ready-made hamper</span>
+            {product.isReadyMadeHamper ? (
+              <span className="clay-chip text-xs">
+                {product.hamperItemCount && product.hamperItemCount > 0
+                  ? `${product.hamperItemCount} items`
+                  : 'Ready-made hamper'}
+              </span>
             ) : null}
           </div>
 
           <h1 className="gift-h1 mt-gs-3 break-words leading-tight">{product.title}</h1>
+
+          <ProductBrandLine
+            brands={
+              product.brandNames?.length ? product.brandNames : collectBrandNames(product)
+            }
+            className="mt-gs-2"
+          />
 
           <StarRatingSummary
             className="mt-gs-2"
@@ -336,19 +354,55 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             emptyHref="#reviews"
           />
 
-          {product.description ? (
+          {product.isReadyMadeHamper && (product.hamperItems?.length ?? 0) > 0 ? (
+            <p className="mt-gs-3 text-sm text-foreground/75">
+              Contains{' '}
+              {product.hamperItems!
+                .slice(0, 2)
+                .map((i) => i.title)
+                .join(', ')}
+              {(product.hamperItems?.length ?? 0) > 2
+                ? `, and ${(product.hamperItems?.length ?? 0) - 2} more`
+                : ''}
+              .
+            </p>
+          ) : product.description ? (
             <p className="mt-gs-3 line-clamp-3 text-body opacity-90">{product.description}</p>
           ) : null}
 
           {variant ? (
             <p className="mt-gs-4 flex flex-wrap items-baseline gap-gs-3 font-display text-3xl font-semibold tracking-tight text-primary">
               <span>{formatInr(variant.pricePaise)}</span>
-              {variant.compareAtPricePaise != null &&
-              variant.compareAtPricePaise > variant.pricePaise ? (
-                <span className="text-lg font-normal text-foreground/50 line-through">
-                  {formatInr(variant.compareAtPricePaise)}
-                </span>
-              ) : null}
+              {(() => {
+                const compare =
+                  variant.compareAtPricePaise != null &&
+                  variant.compareAtPricePaise > variant.pricePaise
+                    ? variant.compareAtPricePaise
+                    : product.contentsValuePaise != null &&
+                        product.contentsValuePaise > variant.pricePaise
+                      ? product.contentsValuePaise
+                      : null;
+                const save =
+                  product.hamperSavingsPaise && product.hamperSavingsPaise > 0
+                    ? product.hamperSavingsPaise
+                    : compare != null
+                      ? compare - variant.pricePaise
+                      : 0;
+                return (
+                  <>
+                    {compare != null ? (
+                      <span className="text-lg font-normal text-foreground/50 line-through">
+                        {formatInr(compare)}
+                      </span>
+                    ) : null}
+                    {save > 0 ? (
+                      <span className="rounded-full bg-emerald-100 px-gs-3 py-1 text-xs font-semibold text-emerald-800">
+                        SAVE {formatInr(save)}
+                      </span>
+                    ) : null}
+                  </>
+                );
+              })()}
             </p>
           ) : (
             <p className="mt-gs-4 text-sm text-danger">This gift has no buyable options yet.</p>
@@ -494,11 +548,11 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 type="button"
                 disabled={busyWish || !variant}
                 onClick={() => void addToWishlist()}
-                className="clay-btn-ghost h-auto w-12 shrink-0 rounded-full border border-border px-0 disabled:opacity-50"
+                className="inline-flex size-12 shrink-0 items-center justify-center rounded-full border border-border-strong bg-white p-0 text-foreground shadow-sm transition hover:bg-[var(--surface-soft)] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Save to wishlist"
                 title="Save to wishlist"
               >
-                <HeartIcon />
+                <Heart className="size-5 shrink-0" strokeWidth={2} aria-hidden />
               </button>
             </div>
             {variant?.giftBoxEligible ? (
@@ -536,7 +590,15 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
       <TrustStrip />
 
+      <PdpVideoBand product={product} />
+
+      <HamperWhatsInside product={product} />
+
+      <HamperActionBar product={product} />
+
       <ProductDetailsBand product={product} />
+
+      <ProductSeoSections sections={product.seoSections} />
 
       <RelatedProducts
         slug={product.slug}
@@ -552,24 +614,6 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
         onSummaryChange={setReviewSummary}
       />
     </main>
-  );
-}
-
-function HeartIcon() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
-    </svg>
   );
 }
 
@@ -737,18 +781,46 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
     });
   }
 
+  const recipientCollection: Record<string, string> = {
+    girl: '/gift/collections/for-baby-girl',
+    boy: '/gift/collections/for-baby-boy',
+    mom: '/gift/collections/for-expecting-mom',
+    unisex: '/gift/collections/unisex-gifts',
+  };
+  const ageCollection: Record<string, string> = {
+    newborn: '/gift/collections/newborn',
+    infant: '/gift/collections/infant',
+    toddler: '/gift/collections/toddler',
+  };
+  const occasionCollection: Record<string, string> = {
+    'welcome-baby': '/gift/collections/welcome-baby',
+    'baby-shower': '/gift/collections/baby-shower',
+    naming: '/gift/collections/naming-ceremony',
+    birthday: '/gift/collections/first-birthday',
+  };
+
   const tags: Array<{ href: string; label: string }> = [];
   for (const c of product.categories) {
     tags.push({ href: `/gift/products?category=${c.slug}`, label: c.name });
   }
   for (const t of product.recipientTags ?? []) {
-    tags.push({ href: `/gift/products?recipient=${t}`, label: labelTag(t) });
+    tags.push({
+      href: recipientCollection[t] ?? `/gift/products?recipient=${t}`,
+      label: labelTag(t),
+    });
   }
   for (const t of product.ageBands ?? []) {
-    tags.push({ href: `/gift/products?age=${t}`, label: labelTag(t) });
+    if (t === 'any') continue;
+    tags.push({
+      href: ageCollection[t] ?? `/gift/products?age=${t}`,
+      label: labelTag(t),
+    });
   }
   for (const t of product.occasionTags ?? []) {
-    tags.push({ href: `/gift/products?occasion=${t}`, label: labelTag(t) });
+    tags.push({
+      href: occasionCollection[t] ?? `/gift/products?occasion=${t}`,
+      label: labelTag(t),
+    });
   }
 
   return (

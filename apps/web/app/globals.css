@@ -300,6 +300,16 @@
   --text-h2-lg: 1.5rem;
 }
 
+html {
+  /* Reserve classic scrollbar width so overflow:hidden / modal lock doesn’t shift layout. */
+  scrollbar-gutter: stable;
+}
+
+html.scroll-locked {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 body {
   background: var(--background, #fff);
   color: var(--foreground, #111);
@@ -1222,9 +1232,10 @@ h3 {
   }
 
   /* Soft Gift hero — client layout intent, System A tokens (not a clone) */
+  /* Height follows the image plane; no forced 92vh (that created large empty bands). */
   [data-theme='gift'] .gift-hero-split {
     background: var(--inabiya-soft);
-    min-height: min(92vh, 58rem);
+    min-height: 0;
   }
 
   /* Subtle pastel wash only (SVG pattern removed per client) */
@@ -1238,9 +1249,15 @@ h3 {
     );
   }
 
-  /* Match .gift-band horizontal/vertical gutters (--gift-pad-*) */
+  /* Match .gift-band horizontal gutters; mobile: tight stack + FAB clearance */
   [data-theme='gift'] .gift-hero-split__grid {
-    padding: var(--gift-pad-y, var(--space-5)) var(--gift-pad-x, var(--space-4));
+    padding: var(--space-3) var(--gift-pad-x, var(--space-4)) var(--space-6);
+  }
+
+  @media (min-width: 1024px) {
+    [data-theme='gift'] .gift-hero-split__grid {
+      padding: var(--space-5) var(--gift-pad-x, var(--space-4));
+    }
   }
 
   [data-theme='gift'] .gift-hero-split__eyebrow {
@@ -1249,10 +1266,10 @@ h3 {
   }
 
   [data-theme='gift'] .gift-hero-split__headline {
-    line-height: 1.12;
+    line-height: 1.15;
     color: var(--inabiya-heading);
     /* Sole page H1 on /gift — mobile → desktop scale to reference 60px */
-    font-size: 2rem; /* 32px */
+    font-size: 1.75rem; /* 28px — fits 3-line wrap on narrow phones */
   }
 
   @media (min-width: 640px) {
@@ -1264,6 +1281,7 @@ h3 {
   @media (min-width: 1024px) {
     [data-theme='gift'] .gift-hero-split__headline {
       font-size: 60px;
+      line-height: 1.12;
     }
   }
 
@@ -1287,18 +1305,28 @@ h3 {
   [data-theme='gift'] .gift-hero-split__frame {
     position: relative;
     overflow: hidden;
+    width: 100%;
+    margin-inline: auto;
     border-radius: var(--radius-card);
     box-shadow: var(--clay-shadow);
     border: 1px solid var(--border-subtle);
     background: var(--surface);
-    aspect-ratio: 4 / 5;
-    max-height: min(42rem, 78vh);
+    /* Mobile: near-square so photo + CTAs share first viewport */
+    aspect-ratio: 1 / 1;
+    max-height: min(22rem, 44vh);
+  }
+
+  @media (min-width: 640px) {
+    [data-theme='gift'] .gift-hero-split__frame {
+      aspect-ratio: 4 / 5;
+      max-height: min(34rem, 58vh);
+    }
   }
 
   @media (min-width: 1024px) {
     [data-theme='gift'] .gift-hero-split__frame {
       aspect-ratio: 4 / 5;
-      max-height: min(48rem, 85vh);
+      max-height: min(44rem, 78vh);
     }
   }
 
@@ -1312,7 +1340,13 @@ h3 {
 
   [data-theme='gift'] .gift-hero-split__trust {
     border-top: 1px solid var(--border-subtle);
-    padding-top: var(--space-5);
+    padding-top: var(--space-3);
+  }
+
+  @media (min-width: 1024px) {
+    [data-theme='gift'] .gift-hero-split__trust {
+      padding-top: var(--space-4);
+    }
   }
 
   [data-theme='gift'] .gift-hero-split__trust-item {

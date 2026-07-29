@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Legacy QA/bookmark URL — canonical hamper PLP is query-filtered products. */
+/** Legacy QA/bookmark URL — canonical hamper browse is the ready-hampers collection. */
 export default function GiftHampersRedirectPage() {
-  redirect('/gift/products?hamper=1');
+  redirect('/gift/collections/ready-hampers');
 }

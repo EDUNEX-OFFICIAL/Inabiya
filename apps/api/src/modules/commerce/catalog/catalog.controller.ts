@@ -45,12 +45,14 @@ export class CatalogPublicController {
       storefrontLabel?: 'BESTSELLER' | 'EDITORS_PICK' | 'GIFT_SET';
       onSale?: '0' | '1';
       publishedSince?: string;
+      maxPricePaise?: number;
     },
   ) {
     return this.catalog.listPublishedProducts({
       ...query,
       onSale: query.onSale === '1' ? true : undefined,
       publishedSince: query.publishedSince ? new Date(query.publishedSince) : undefined,
+      maxPricePaise: query.maxPricePaise,
     });
   }
 

@@ -114,7 +114,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             newborn nights too.
           </p>
           <div className="mt-gs-5 flex flex-wrap gap-gs-3">
-            <Link href="/gift/products?age=newborn" className="blog-btn">
+            <Link href="/gift/collections/newborn" className="blog-btn">
               Shop newborn
             </Link>
             <Link href="/gift/build-your-box" className="blog-btn-secondary">

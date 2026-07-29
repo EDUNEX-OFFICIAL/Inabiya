@@ -50,7 +50,7 @@ function LegacyGiftHomeFallback() {
         ctaLabel="Build Your Box"
         ctaHref="/gift/build-your-box"
         ctaLabel2="Browse Hampers"
-        ctaHref2="/gift/products?hamper=1"
+        ctaHref2="/gift/collections/ready-hampers"
       />
       <div className="mx-auto max-w-5xl px-gs-4 py-gs-7 sm:px-gs-6">
         <p className="gift-muted mb-gs-7">

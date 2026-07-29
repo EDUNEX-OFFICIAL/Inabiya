@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
+import { ProductBrandLine } from '@/components/gift/product-brand-line';
 
 type GiftBox = {
   id: string;
@@ -18,12 +19,14 @@ type GiftBox = {
   subtotalPaise: number;
   remainingBudgetPaise: number | null;
   overBudgetPaise?: number;
+  brandNames?: string[];
   items: Array<{
     id: string;
     productTitle: string;
     label: string;
     quantity: number;
     lineTotalPaise: number;
+    brandName?: string | null;
   }>;
 };
 
@@ -81,6 +84,7 @@ function GiftBoxWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const skipResumeGate = searchParams.get('continue') === '1';
+  const prefFromUrlApplied = useRef(false);
   const [box, setBox] = useState<GiftBox | null>(null);
   const [budget, setBudget] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -156,6 +160,40 @@ function GiftBoxWizard() {
       setError(e instanceof Error ? e.message : 'Could not save');
     }
   }
+
+  /** Collection CTAs may pass ?recipient=&age=&occasion= to prefill a fresh wizard. */
+  useEffect(() => {
+    if (!box || resumeChoice || prefFromUrlApplied.current) return;
+    if (box.recipient || box.wizardStep > 1) return;
+    const recipient = searchParams.get('recipient');
+    const age = searchParams.get('age');
+    const occasion = searchParams.get('occasion');
+    if (!recipient && !age && !occasion) return;
+    const allowedR = new Set(['girl', 'boy', 'mom', 'unisex']);
+    const allowedA = new Set(['newborn', 'infant', 'toddler', 'any']);
+    const allowedO = new Set(['welcome-baby', 'baby-shower', 'naming', 'birthday']);
+    const patch: {
+      recipient?: string | null;
+      ageBand?: string | null;
+      occasion?: string | null;
+      wizardStep: number;
+    } = { wizardStep: 1 };
+    if (recipient && allowedR.has(recipient)) {
+      patch.recipient = recipient;
+      patch.wizardStep = 2;
+    }
+    if (age && allowedA.has(age)) {
+      patch.ageBand = age;
+      if (patch.wizardStep < 3) patch.wizardStep = 3;
+    }
+    if (occasion && allowedO.has(occasion)) {
+      patch.occasion = occasion;
+      if (patch.wizardStep < 4) patch.wizardStep = 4;
+    }
+    prefFromUrlApplied.current = true;
+    void savePrefs(patch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply URL prefs once per fresh box
+  }, [box, resumeChoice, searchParams]);
 
   async function restartWizard() {
     setBusy(true);
@@ -487,6 +525,16 @@ function GiftBoxWizard() {
               {box.recipient ?? '—'} · {box.ageBand ?? '—'} · {box.occasion ?? '—'} · Budget{' '}
               {box.budgetPaise != null ? formatInr(box.budgetPaise) : 'not set'}
             </p>
+            <ProductBrandLine
+              brands={
+                box.brandNames?.length
+                  ? box.brandNames
+                  : box.items
+                      .map((i) => i.brandName)
+                      .filter((b): b is string => Boolean(b?.trim()))
+              }
+              className="mt-gs-2"
+            />
             <div className="mt-gs-3 flex flex-wrap items-baseline gap-gs-3">
               {box.remainingBudgetPaise != null ? (
                 <p className="text-lg font-semibold text-foreground">

@@ -26,6 +26,7 @@ import { trackEvent } from '@/lib/analytics';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
 import { FaqAccordion, faqPageJsonLd } from '@/components/gift/faq-accordion';
 import { ProductLabels } from '@/components/gift/product-labels';
+import { ProductBrandLine } from '@/components/gift/product-brand-line';
 import { GiftHomeMotion } from '@/components/cms/gift-home-motion';
 
 export type CmsBlockProduct = {
@@ -35,7 +36,10 @@ export type CmsBlockProduct = {
   fromPricePaise: number;
   media: Array<{ url: string; altText: string | null }>;
   brandName?: string | null;
+  brandNames?: string[];
   isReadyMadeHamper?: boolean;
+  /** Display BOM count for ready-made hampers */
+  hamperItemCount?: number;
   displayLabels?: StorefrontDisplayLabel[];
   quickAddVariantId?: string | null;
   available?: number;
@@ -472,25 +476,34 @@ function HomeProductCard({
             <div className="gift-media-fallback absolute inset-0" />
           )}
         </Link>
-        {product.displayLabels?.length ? (
-          <ProductLabels labels={product.displayLabels} placement="overlay" max={1} />
-        ) : null}
-      </div>
-      <div className={`flex flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}>
-        {product.brandName || (product.isReadyMadeHamper && !hideHamperChip) ? (
-          <div className="flex flex-wrap items-center gap-gs-2">
-            {product.brandName ? (
-              <span className="clay-chip text-xs">{product.brandName}</span>
-            ) : null}
-            {product.isReadyMadeHamper && !hideHamperChip ? (
-              <span className="clay-chip text-xs">Ready-made hamper</span>
+        <div className="pointer-events-none absolute inset-x-gs-2 top-gs-2 z-10 flex items-start justify-between gap-gs-2">
+          <div className="min-w-0 shrink">
+            {product.isReadyMadeHamper && (product.hamperItemCount ?? 0) > 0 ? (
+              <span className="inline-block rounded-full bg-foreground/85 px-gs-2 py-1 text-[11px] font-semibold text-background">
+                {product.hamperItemCount} items
+              </span>
             ) : null}
           </div>
+          <ProductLabels
+            labels={
+              product.isReadyMadeHamper
+                ? (product.displayLabels ?? []).filter((l) => l.code !== 'GIFT_SET')
+                : product.displayLabels
+            }
+            placement="inline"
+            max={1}
+            className="max-w-[65%] justify-end"
+          />
+        </div>
+      </div>
+      <div className={`flex flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}>
+        {product.isReadyMadeHamper && !hideHamperChip ? (
+          <span className="clay-chip w-fit text-xs">Ready-made hamper</span>
         ) : null}
         <Link
           href={`/gift/products/${product.slug}`}
           className={`font-medium leading-snug text-foreground transition-colors hover:text-primary ${
-            product.brandName || (product.isReadyMadeHamper && !hideHamperChip)
+            product.isReadyMadeHamper && !hideHamperChip
               ? featured
                 ? 'mt-gs-3 font-display text-2xl sm:text-3xl'
                 : 'mt-gs-2'
@@ -501,6 +514,16 @@ function HomeProductCard({
         >
           {product.title}
         </Link>
+        <ProductBrandLine
+          brands={
+            product.brandNames?.length
+              ? product.brandNames
+              : product.brandName
+                ? [product.brandName]
+                : []
+          }
+          className={`!text-xs ${featured ? 'mt-gs-2' : 'mt-gs-1'}`}
+        />
         <p
           className={`font-semibold text-foreground ${
             featured ? 'mt-gs-3 text-lg' : 'mt-gs-2 text-sm'
@@ -508,6 +531,11 @@ function HomeProductCard({
         >
           From {formatInr(product.fromPricePaise)}
         </p>
+        {product.isReadyMadeHamper && (product.hamperItemCount ?? 0) > 0 ? (
+          <p className={`text-xs opacity-70 ${featured ? 'mt-gs-2' : 'mt-gs-1'}`}>
+            {product.hamperItemCount} curated items in this set
+          </p>
+        ) : null}
         <div className="mt-gs-4 flex flex-wrap items-center gap-gs-2">
           <Link
             href={`/gift/products/${product.slug}`}
@@ -601,16 +629,23 @@ function ProductGridBlock({
         <ul className="grid gap-gs-5 sm:grid-cols-2">
           {products.map((p) => (
             <li key={p.id} className="clay-card overflow-hidden">
-              {p.media[0]?.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={p.media[0].url}
-                  alt={p.media[0].altText ?? p.title}
-                  className="h-44 w-full object-cover"
-                />
-              ) : (
-                <div className="gift-media-fallback h-44" />
-              )}
+              <div className="relative">
+                {p.media[0]?.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.media[0].url}
+                    alt={p.media[0].altText ?? p.title}
+                    className="h-44 w-full object-cover"
+                  />
+                ) : (
+                  <div className="gift-media-fallback h-44" />
+                )}
+                {p.isReadyMadeHamper && (p.hamperItemCount ?? 0) > 0 ? (
+                  <span className="absolute left-gs-2 top-gs-2 rounded-full bg-foreground/85 px-gs-2 py-1 text-[11px] font-semibold text-background">
+                    {p.hamperItemCount} items
+                  </span>
+                ) : null}
+              </div>
               <div className="p-gs-4">
                 <Link
                   href={`/gift/products/${p.slug}`}
@@ -621,6 +656,9 @@ function ProductGridBlock({
                 <p className="mt-gs-1 text-sm font-semibold text-primary">
                   {formatInr(p.fromPricePaise)}
                 </p>
+                {p.isReadyMadeHamper && (p.hamperItemCount ?? 0) > 0 ? (
+                  <p className="mt-gs-1 text-xs opacity-70">{p.hamperItemCount} items in this set</p>
+                ) : null}
               </div>
             </li>
           ))}

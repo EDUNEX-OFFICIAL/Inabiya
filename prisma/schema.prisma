@@ -157,6 +157,11 @@ enum PersonalizationType {
   SELECT
 }
 
+enum ProductMediaKind {
+  IMAGE
+  VIDEO
+}
+
 model Category {
   id          String            @id @default(uuid()) @db.Uuid
   slug        String            @unique
@@ -190,6 +195,8 @@ model Product {
   robotsIndex          Boolean                @default(true) @map("robots_index")
   /// Admin FAQ overrides: [{ question, answerText }] — empty/null → PDP uses built-in fallbacks
   faqItems             Json?                  @map("faq_items")
+  /// Long-form PDP SEO blocks: [{ heading, bodyText }]
+  seoSections          Json?                  @map("seo_sections")
   createdAt            DateTime               @default(now()) @map("created_at")
   updatedAt            DateTime               @updatedAt @map("updated_at")
   publishedAt          DateTime?              @map("published_at")
@@ -198,10 +205,29 @@ model Product {
   categories           ProductCategory[]
   personalizationOpts  PersonalizationOption[]
   reviews              ProductReview[]
+  hamperItems          ProductHamperItem[]
 
   @@index([status])
   @@index([isReadyMadeHamper])
   @@map("products")
+}
+
+/// Display BOM for ready-made hampers (story + savings; not separate cart lines).
+model ProductHamperItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  title          String
+  blurb          String?
+  brandName      String?  @map("brand_name")
+  imageUrl       String?  @map("image_url")
+  qty            Int      @default(1)
+  unitPricePaise Int      @map("unit_price_paise")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_hamper_items")
 }
 
 model ProductCategory {
@@ -247,13 +273,15 @@ model InventoryItem {
 }
 
 model ProductMedia {
-  id        String   @id @default(uuid()) @db.Uuid
-  productId String   @map("product_id") @db.Uuid
+  id        String           @id @default(uuid()) @db.Uuid
+  productId String           @map("product_id") @db.Uuid
   url       String
-  altText   String?  @map("alt_text")
-  sortOrder Int      @default(0) @map("sort_order")
-  createdAt DateTime @default(now()) @map("created_at")
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  altText   String?          @map("alt_text")
+  kind      ProductMediaKind @default(IMAGE)
+  posterUrl String?          @map("poster_url")
+  sortOrder Int              @default(0) @map("sort_order")
+  createdAt DateTime         @default(now()) @map("created_at")
+  product   Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@map("product_media")

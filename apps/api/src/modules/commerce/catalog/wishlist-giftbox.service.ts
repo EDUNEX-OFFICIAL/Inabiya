@@ -440,11 +440,25 @@ export class GiftBoxService {
       label: i.variant.label,
       productTitle: i.variant.product.title,
       productSlug: i.variant.product.slug,
+      brandName: i.variant.product.brandName,
       pricePaise: i.variant.pricePaise,
       quantity: i.quantity,
       lineTotalPaise: i.variant.pricePaise * i.quantity,
       personalization: i.personalization,
     }));
+    const brandNames = (() => {
+      const out: string[] = [];
+      const seen = new Set<string>();
+      for (const i of items) {
+        const raw = i.brandName?.trim();
+        if (!raw) continue;
+        const key = raw.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(raw);
+      }
+      return out;
+    })();
     const subtotalPaise = items.reduce((s, i) => s + i.lineTotalPaise, 0);
     const budgetPaise = box.budgetPaise;
     const remainingBudgetPaise = budgetPaise != null ? budgetPaise - subtotalPaise : null;
@@ -462,6 +476,7 @@ export class GiftBoxService {
       subtotalPaise,
       remainingBudgetPaise,
       overBudgetPaise,
+      brandNames,
       items,
     };
   }

@@ -1,0 +1,144 @@
+import Link from 'next/link';
+import { formatInr, type CatalogProduct } from '@/lib/catalog';
+
+export function HamperWhatsInside({ product }: { product: CatalogProduct }) {
+  const items = product.hamperItems ?? [];
+  if (!product.isReadyMadeHamper || items.length === 0) return null;
+
+  return (
+    <section className="mt-gs-8" aria-labelledby="whats-inside">
+      <h2 id="whats-inside" className="gift-h2">
+        What’s inside
+      </h2>
+      <p className="gift-muted mt-gs-2 text-sm">
+        {product.hamperItemCount ?? items.length} item
+        {(product.hamperItemCount ?? items.length) === 1 ? '' : 's'} curated in this hamper
+        {product.contentsValuePaise != null && product.contentsValuePaise > 0
+          ? ` · worth ${formatInr(product.contentsValuePaise)} if bought separately`
+          : ''}
+        .
+      </p>
+      <ul className="mt-gs-5 grid gap-gs-3 sm:grid-cols-2">
+        {items.map((item) => (
+          <li
+            key={item.id}
+            className="flex gap-gs-3 rounded-xl border border-foreground/8 bg-white/60 p-gs-3"
+          >
+            <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-foreground/5 sm:size-20">
+              {item.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="gift-media-fallback h-full w-full" aria-hidden />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium leading-snug text-foreground">
+                {item.title}
+                {item.qty > 1 ? (
+                  <span className="ml-1 text-xs font-normal opacity-60">×{item.qty}</span>
+                ) : null}
+              </p>
+              {item.brandName ? (
+                <p className="mt-0.5 text-xs text-foreground/55">
+                  <span className="font-semibold uppercase tracking-wide">Brand:</span>{' '}
+                  {item.brandName}
+                </p>
+              ) : null}
+              {item.blurb ? (
+                <p className="mt-0.5 line-clamp-2 text-xs text-foreground/60">{item.blurb}</p>
+              ) : null}
+              <p className="mt-gs-2 text-sm font-semibold text-primary">
+                {formatInr(item.unitPricePaise)}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export function HamperActionBar({ product }: { product: CatalogProduct }) {
+  if (!product.isReadyMadeHamper) return null;
+  return (
+    <section
+      className="mt-gs-8 overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--primary)]/20 via-sky-100/40 to-[var(--primary)]/10 px-gs-5 py-gs-5 sm:px-gs-6"
+      aria-label="Hamper actions"
+    >
+      <div className="flex flex-col gap-gs-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-display text-lg tracking-tight text-foreground">{product.title}</p>
+          <p className="mt-1 text-sm text-foreground/65">
+            Take this ready set, or build a custom box with your own picks.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-gs-2">
+          <a href="#buy" className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-sm">
+            Buy this hamper
+          </a>
+          <Link
+            href={`/gift/build-your-box${product.recipientTags?.[0] ? `?recipient=${product.recipientTags[0]}` : ''}`}
+            className="clay-btn-secondary !min-h-0 !px-gs-4 !py-gs-2 text-sm"
+          >
+            Create your own
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function ProductSeoSections({
+  sections,
+}: {
+  sections: Array<{ heading: string; bodyText: string }> | null | undefined;
+}) {
+  if (!sections?.length) return null;
+  return (
+    <section className="mt-gs-8 space-y-gs-6" aria-label="Product details">
+      {sections.map((s) => (
+        <div key={s.heading}>
+          <h2 className="gift-h2">{s.heading}</h2>
+          <div className="mt-gs-3 whitespace-pre-line text-body leading-relaxed text-foreground/85">
+            {s.bodyText}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/** Standalone video band when first VIDEO media exists (below buy box story). */
+export function PdpVideoBand({ product }: { product: CatalogProduct }) {
+  const video = product.media.find((m) => m.kind === 'VIDEO');
+  if (!video) return null;
+  const poster = video.posterUrl || product.media.find((m) => m.kind !== 'VIDEO')?.url || video.url;
+  return (
+    <section className="mt-gs-8" aria-labelledby="unboxing-video">
+      <h2 id="unboxing-video" className="sr-only">
+        Unboxing video
+      </h2>
+      <a
+        href="#gallery"
+        className="group relative block overflow-hidden rounded-2xl"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={poster}
+          alt=""
+          className="aspect-[21/9] w-full object-cover transition group-hover:scale-[1.01]"
+        />
+        <span className="absolute inset-0 flex flex-col items-center justify-center bg-foreground/35 px-gs-4 text-center text-white">
+          <span className="flex size-14 items-center justify-center rounded-full bg-white/95 text-primary shadow-clay">
+            ▶
+          </span>
+          <span className="mt-gs-3 font-display text-xl tracking-tight sm:text-2xl">
+            See the unboxing
+          </span>
+          <span className="mt-1 text-sm text-white/85">Right choice for your little one</span>
+        </span>
+      </a>
+    </section>
+  );
+}

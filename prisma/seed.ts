@@ -190,6 +190,15 @@ async function main() {
     storefrontLabels: string[];
     extraCategoryIds?: string[];
     publishedAt: Date;
+    hamperItems?: Array<{
+      title: string;
+      blurb?: string;
+      brandName?: string;
+      imageUrl: string;
+      qty: number;
+      unitPricePaise: number;
+    }>;
+    seoSections?: Array<{ heading: string; bodyText: string }>;
   }> = [
     {
       slug: 'cloud-soft-swaddle',
@@ -264,6 +273,60 @@ async function main() {
       storefrontLabels: ['GIFT_SET', 'BESTSELLER'],
       extraCategoryIds: [clothing.id],
       publishedAt: daysAgo(50),
+      hamperItems: [
+        {
+          title: 'Cloud Soft Swaddle',
+          blurb: 'Breathable muslin wrap',
+          brandName: 'Soft Nest',
+          imageUrl: media.clothes,
+          qty: 1,
+          unitPricePaise: 149900,
+        },
+        {
+          title: 'Wooden Rattle Set',
+          blurb: 'Gentle first toy',
+          brandName: 'Chicco',
+          imageUrl: media.rattle,
+          qty: 1,
+          unitPricePaise: 129900,
+        },
+        {
+          title: 'Milestone Memory Cards',
+          blurb: 'Capture early moments',
+          brandName: 'Inabiya',
+          imageUrl: media.blanket,
+          qty: 1,
+          unitPricePaise: 99900,
+        },
+        {
+          title: 'Keepsake note card',
+          blurb: 'Handwritten-ready card',
+          brandName: 'Inabiya',
+          imageUrl: media.hamper,
+          qty: 1,
+          unitPricePaise: 49900,
+        },
+        {
+          title: 'Soft cotton bib',
+          blurb: 'Everyday feed-time essential',
+          brandName: 'Mothercare',
+          imageUrl: media.clothes,
+          qty: 1,
+          unitPricePaise: 39900,
+        },
+      ],
+      seoSections: [
+        {
+          heading: 'Why choose this welcome hamper?',
+          bodyText:
+            'Everything a new parent needs in the first week — soft textiles, a calm toy, and a keepsake — gift-wrapped and ready to personalise.',
+        },
+        {
+          heading: 'Who should buy it?',
+          bodyText:
+            'Perfect for friends, family, and corporate welcome-baby gifting when you want one polished set instead of shopping piece by piece.',
+        },
+      ],
     },
     {
       slug: 'expecting-mom-calm-kit',
@@ -283,6 +346,29 @@ async function main() {
       brandName: 'The Moms Co.',
       storefrontLabels: ['EDITORS_PICK'],
       publishedAt: daysAgo(20),
+      hamperItems: [
+        {
+          title: 'Calm belly oil',
+          brandName: 'The Moms Co.',
+          imageUrl: media.mom,
+          qty: 1,
+          unitPricePaise: 119900,
+        },
+        {
+          title: 'Herbal wind-down tea',
+          brandName: 'Organic India',
+          imageUrl: media.cues,
+          qty: 1,
+          unitPricePaise: 79900,
+        },
+        {
+          title: 'Soft lip balm',
+          brandName: 'Mamaearth',
+          imageUrl: media.mom,
+          qty: 1,
+          unitPricePaise: 49900,
+        },
+      ],
     },
     {
       slug: 'organic-cotton-bodysuit-set',
@@ -411,6 +497,37 @@ async function main() {
       brandName: 'The Moms Co.',
       storefrontLabels: ['GIFT_SET'],
       publishedAt: daysAgo(15),
+      hamperItems: [
+        {
+          title: 'Belly care oil',
+          blurb: 'Gentle stretch-mark care',
+          brandName: 'The Moms Co.',
+          imageUrl: media.mom,
+          qty: 1,
+          unitPricePaise: 129900,
+        },
+        {
+          title: 'Recovery herbal tea',
+          brandName: 'Organic India',
+          imageUrl: media.cues,
+          qty: 1,
+          unitPricePaise: 79900,
+        },
+        {
+          title: 'Nipple balm',
+          brandName: 'Lansinoh',
+          imageUrl: media.mom,
+          qty: 1,
+          unitPricePaise: 69900,
+        },
+        {
+          title: 'Silk sleep mask',
+          brandName: 'Inabiya',
+          imageUrl: media.blanket,
+          qty: 1,
+          unitPricePaise: 99900,
+        },
+      ],
     },
     {
       slug: 'pastel-play-mat',
@@ -467,6 +584,44 @@ async function main() {
       storefrontLabels: ['GIFT_SET', 'EDITORS_PICK'],
       extraCategoryIds: [newborn.id],
       publishedAt: daysAgo(8),
+      hamperItems: [
+        {
+          title: 'Personalised Name Blanket',
+          blurb: 'Soft keepsake with baby’s name',
+          brandName: 'Soft Nest',
+          imageUrl: media.blanket,
+          qty: 1,
+          unitPricePaise: 249900,
+        },
+        {
+          title: 'Milestone Memory Cards',
+          brandName: 'Inabiya',
+          imageUrl: media.blanket,
+          qty: 1,
+          unitPricePaise: 99900,
+        },
+        {
+          title: 'Wooden keepsake rattle',
+          brandName: 'Chicco',
+          imageUrl: media.rattle,
+          qty: 1,
+          unitPricePaise: 89900,
+        },
+        {
+          title: 'Naming day card',
+          brandName: 'Inabiya',
+          imageUrl: media.hamper,
+          qty: 1,
+          unitPricePaise: 39900,
+        },
+      ],
+      seoSections: [
+        {
+          heading: 'Why this naming hamper?',
+          bodyText:
+            'A keepsake-forward set for naming day — personalised textile, memory cards, and a gentle toy, ready to gift.',
+        },
+      ],
     },
   ];
 
@@ -484,6 +639,7 @@ async function main() {
         isReadyMadeHamper: dp.isReadyMadeHamper,
         brandName: dp.brandName,
         storefrontLabels: dp.storefrontLabels ?? [],
+        seoSections: dp.seoSections ?? undefined,
       },
       create: {
         slug: dp.slug,
@@ -497,6 +653,7 @@ async function main() {
         isReadyMadeHamper: dp.isReadyMadeHamper,
         brandName: dp.brandName,
         storefrontLabels: dp.storefrontLabels ?? [],
+        seoSections: dp.seoSections ?? undefined,
       },
     });
 
@@ -544,12 +701,66 @@ async function main() {
     if (primaryMedia) {
       await prisma.productMedia.update({
         where: { id: primaryMedia.id },
-        data: { url: dp.imageUrl, altText: dp.title },
+        data: { url: dp.imageUrl, altText: dp.title, kind: 'IMAGE', sortOrder: 0 },
       });
     } else {
       await prisma.productMedia.create({
-        data: { productId: product.id, url: dp.imageUrl, altText: dp.title },
+        data: {
+          productId: product.id,
+          url: dp.imageUrl,
+          altText: dp.title,
+          kind: 'IMAGE',
+          sortOrder: 0,
+        },
       });
+    }
+
+    // Demo unboxing video for welcome hamper PDP gallery
+    if (dp.slug === 'welcome-baby-hamper') {
+      const videoUrl = '/gift/media/welcome-hamper-unbox.mp4';
+      const existingVideo = await prisma.productMedia.findFirst({
+        where: { productId: product.id, kind: 'VIDEO' },
+      });
+      if (existingVideo) {
+        await prisma.productMedia.update({
+          where: { id: existingVideo.id },
+          data: {
+            url: videoUrl,
+            posterUrl: dp.imageUrl,
+            altText: `${dp.title} unboxing`,
+            sortOrder: 1,
+          },
+        });
+      } else {
+        await prisma.productMedia.create({
+          data: {
+            productId: product.id,
+            url: videoUrl,
+            posterUrl: dp.imageUrl,
+            altText: `${dp.title} unboxing`,
+            kind: 'VIDEO',
+            sortOrder: 1,
+          },
+        });
+      }
+    }
+
+    if (dp.isReadyMadeHamper) {
+      await prisma.productHamperItem.deleteMany({ where: { productId: product.id } });
+      if (dp.hamperItems?.length) {
+        await prisma.productHamperItem.createMany({
+          data: dp.hamperItems.map((h, i) => ({
+            productId: product.id,
+            title: h.title,
+            blurb: h.blurb ?? null,
+            brandName: h.brandName ?? null,
+            imageUrl: h.imageUrl,
+            qty: h.qty,
+            unitPricePaise: h.unitPricePaise,
+            sortOrder: i,
+          })),
+        });
+      }
     }
 
     await prisma.personalizationOption.upsert({
@@ -607,7 +818,7 @@ async function main() {
         ctaLabel: 'Build Your Box',
         ctaHref: '/gift/build-your-box',
         ctaLabel2: 'Browse Hampers',
-        ctaHref2: '/gift/products?hamper=1',
+        ctaHref2: '/gift/collections/ready-hampers',
         trustLine: 'Baby-safe brands · Free shipping over ₹2,000 · PAN-India delivery',
         imageUrl: media.hamper,
         accentWord: 'joy',
@@ -619,7 +830,7 @@ async function main() {
       props: {
         text: 'Free personalisation on gift boxes this week',
         ctaLabel: 'Shop bestsellers →',
-        ctaHref: '/gift/products?storefrontLabel=BESTSELLER',
+        ctaHref: '/gift/collections/bestsellers',
         tone: 'blush',
       },
     },
@@ -655,7 +866,7 @@ async function main() {
         subtitle: 'Curated palettes, unisex-safe products.',
         left: {
           label: 'girl',
-          href: '/gift/products?recipient=girl',
+          href: '/gift/collections/for-baby-girl',
           eyebrow: 'For the little',
           blurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
           cta: 'Shop girl gifts →',
@@ -665,7 +876,7 @@ async function main() {
         },
         right: {
           label: 'boy',
-          href: '/gift/products?recipient=boy',
+          href: '/gift/collections/for-baby-boy',
           eyebrow: 'For the little',
           blurb: 'Sky ribbons, soft brights, gender-neutral picks.',
           cta: 'Shop boy gifts →',
@@ -713,7 +924,7 @@ async function main() {
         title: 'Best sellers',
         subtitle: 'The gifts families reorder and recommend.',
         limit: 8,
-        seeAllHref: '/gift/products?storefrontLabel=BESTSELLER',
+        seeAllHref: '/gift/collections/bestsellers',
         seeAllLabel: 'See all',
       },
     },
@@ -730,7 +941,7 @@ async function main() {
             subtitle: 'Welcome Baby',
             body: 'Celebrate every newborn with beautifully curated hampers, complimentary gift wrapping and a personalised message.',
             ctaLabel: 'Order Now',
-            ctaHref: '/gift/products?hamper=1',
+            ctaHref: '/gift/collections/ready-hampers',
             tone: 'blush',
             icon: 'heart',
           },
@@ -814,7 +1025,7 @@ async function main() {
         subtitle: 'Fresh finds for the nursery and the gift pile.',
         newWithinDays: 30,
         limit: 8,
-        seeAllHref: '/gift/products?sort=newest',
+        seeAllHref: '/gift/collections/new-arrivals',
         seeAllLabel: 'See all',
       },
     },
@@ -828,25 +1039,25 @@ async function main() {
         items: [
           {
             label: 'Welcome baby',
-            href: '/gift/products?occasion=welcome-baby',
+            href: '/gift/collections/welcome-baby',
             imageUrl: media.feet,
             imageAlt: 'Welcome baby',
           },
           {
             label: 'Baby shower',
-            href: '/gift/products?occasion=baby-shower',
+            href: '/gift/collections/baby-shower',
             imageUrl: media.girl,
             imageAlt: 'Baby shower',
           },
           {
             label: 'Naming',
-            href: '/gift/products?occasion=naming',
+            href: '/gift/collections/naming-ceremony',
             imageUrl: media.blanket,
             imageAlt: 'Naming ceremony',
           },
           {
             label: 'Birthday',
-            href: '/gift/products?occasion=birthday',
+            href: '/gift/collections/first-birthday',
             imageUrl: media.train,
             imageAlt: 'Birthday',
           },
@@ -863,19 +1074,19 @@ async function main() {
         items: [
           {
             label: 'Newborn',
-            href: '/gift/products?age=newborn',
+            href: '/gift/collections/newborn',
             imageUrl: media.feet,
             imageAlt: 'Newborn',
           },
           {
             label: 'Infant',
-            href: '/gift/products?age=infant',
+            href: '/gift/collections/infant',
             imageUrl: media.girl,
             imageAlt: 'Infant',
           },
           {
             label: 'Toddler',
-            href: '/gift/products?age=toddler',
+            href: '/gift/collections/toddler',
             imageUrl: media.train,
             imageAlt: 'Toddler',
           },
@@ -891,7 +1102,7 @@ async function main() {
         title: 'On sale',
         subtitle: 'Thoughtful gifts with a little extra saving.',
         limit: 8,
-        seeAllHref: '/gift/products?onSale=1',
+        seeAllHref: '/gift/collections/on-sale',
         seeAllLabel: 'See all',
       },
     },
@@ -904,7 +1115,7 @@ async function main() {
         title: "Editor's picks",
         subtitle: 'Hand-picked favourites from our gift desk.',
         limit: 6,
-        seeAllHref: '/gift/products?storefrontLabel=EDITORS_PICK',
+        seeAllHref: '/gift/collections/editors-picks',
         seeAllLabel: 'See all',
       },
     },
@@ -958,7 +1169,7 @@ async function main() {
         subtitle: 'Complete boxes, ready to wrap — less planning, more delight.',
         hamper: true,
         limit: 6,
-        seeAllHref: '/gift/products?hamper=1',
+        seeAllHref: '/gift/collections/ready-hampers',
         seeAllLabel: 'See all',
       },
     },
@@ -1092,7 +1303,7 @@ async function main() {
       value: {
         shopLinks: [
           { href: '/gift/build-your-box', label: 'Build Your Box' },
-          { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
+          { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
           { href: '/gift/products?category=clothing', label: 'Clothing' },
           { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
           { href: '/gift/products?category=toys', label: 'Toys' },
@@ -1100,12 +1311,12 @@ async function main() {
           { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
         ],
         forWhomLinks: [
-          { href: '/gift/products?recipient=girl', label: 'Baby Girl' },
-          { href: '/gift/products?recipient=boy', label: 'Baby Boy' },
-          { href: '/gift/products?recipient=mom', label: 'Expecting Mom' },
-          { href: '/gift/products?age=newborn', label: 'Newborn' },
-          { href: '/gift/products?age=infant', label: 'Infant' },
-          { href: '/gift/products?age=toddler', label: 'Toddler' },
+          { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
+          { href: '/gift/collections/for-baby-boy', label: 'Baby Boy' },
+          { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom' },
+          { href: '/gift/collections/newborn', label: 'Newborn' },
+          { href: '/gift/collections/infant', label: 'Infant' },
+          { href: '/gift/collections/toddler', label: 'Toddler' },
         ],
         footer: {
           brandName: 'Inabiya',
@@ -1122,8 +1333,8 @@ async function main() {
               title: 'Shop',
               links: [
                 { label: 'Build Your Box', href: '/gift/build-your-box' },
-                { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
-                { label: 'Shop by Age', href: '/gift/products?age=newborn' },
+                { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
+                { label: 'Shop by Age', href: '/gift/collections/newborn' },
                 { label: 'Corporate Gifting', href: '/gift/corporate' },
               ],
             },
@@ -1154,7 +1365,7 @@ async function main() {
       value: {
         shopLinks: [
           { href: '/gift/build-your-box', label: 'Build Your Box' },
-          { href: '/gift/products?hamper=1', label: 'Ready-Made Hampers' },
+          { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
           { href: '/gift/products?category=clothing', label: 'Clothing' },
           { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
           { href: '/gift/products?category=toys', label: 'Toys' },
@@ -1162,12 +1373,12 @@ async function main() {
           { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
         ],
         forWhomLinks: [
-          { href: '/gift/products?recipient=girl', label: 'Baby Girl' },
-          { href: '/gift/products?recipient=boy', label: 'Baby Boy' },
-          { href: '/gift/products?recipient=mom', label: 'Expecting Mom' },
-          { href: '/gift/products?age=newborn', label: 'Newborn' },
-          { href: '/gift/products?age=infant', label: 'Infant' },
-          { href: '/gift/products?age=toddler', label: 'Toddler' },
+          { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
+          { href: '/gift/collections/for-baby-boy', label: 'Baby Boy' },
+          { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom' },
+          { href: '/gift/collections/newborn', label: 'Newborn' },
+          { href: '/gift/collections/infant', label: 'Infant' },
+          { href: '/gift/collections/toddler', label: 'Toddler' },
         ],
         footer: {
           brandName: 'Inabiya',
@@ -1184,8 +1395,8 @@ async function main() {
               title: 'Shop',
               links: [
                 { label: 'Build Your Box', href: '/gift/build-your-box' },
-                { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
-                { label: 'Shop by Age', href: '/gift/products?age=newborn' },
+                { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
+                { label: 'Shop by Age', href: '/gift/collections/newborn' },
                 { label: 'Corporate Gifting', href: '/gift/corporate' },
               ],
             },

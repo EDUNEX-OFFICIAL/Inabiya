@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { apiUrl } from '@/lib/api-base';
 import { defaultPathForCmsSlug, getSiteOrigin } from '@/lib/cms-seo';
+import { allGiftCollectionSlugs } from '@/lib/gift-collections';
 import { GIFT_CORPORATE_SLUG, GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
 
 export const dynamic = 'force-dynamic';
@@ -66,6 +67,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'daily',
     priority: 0.85,
   });
+
+  for (const slug of allGiftCollectionSlugs()) {
+    entries.push({
+      url: `${origin}/gift/collections/${slug}`,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    });
+  }
 
   return entries;
 }

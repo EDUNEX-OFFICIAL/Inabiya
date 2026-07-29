@@ -58,7 +58,7 @@ export function CorporateHero() {
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
 
       <div className="gift-hero-split__grid relative z-10 mx-auto grid max-w-6xl items-center gap-gs-6 lg:grid-cols-2 lg:gap-gs-8">
-        <div className="gift-hero-split__copy order-2 flex flex-col text-left lg:order-1">
+        <div className="gift-hero-split__copy flex flex-col text-left">
           <p data-hero-anim="brand" className="gift-display text-primary sm:text-5xl">
             Inabiya
           </p>
@@ -112,7 +112,7 @@ export function CorporateHero() {
           </ul>
         </div>
 
-        <div className="gift-hero-split__media order-1 lg:order-2">
+        <div className="gift-hero-split__media">
           <div className="gift-hero-split__frame">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

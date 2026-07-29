@@ -29,8 +29,8 @@ export const DEFAULT_FOOTER_COLUMNS: GiftFooterColumn[] = [
     title: 'Shop',
     links: [
       { label: 'Build Your Box', href: '/gift/build-your-box' },
-      { label: 'Ready-Made Hampers', href: '/gift/products?hamper=1' },
-      { label: 'Shop by Age', href: '/gift/products?age=newborn' },
+      { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
+      { label: 'Shop by Age', href: '/gift/collections/newborn' },
       { label: 'Corporate Gifting', href: '/gift/corporate' },
     ],
   },

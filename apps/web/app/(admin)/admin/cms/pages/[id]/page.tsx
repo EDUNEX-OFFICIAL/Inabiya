@@ -129,7 +129,7 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     title: 'Shop by baby',
     subtitle: 'Curated palettes, unisex-safe products.',
     leftLabel: 'girl',
-    leftHref: '/gift/products?recipient=girl',
+    leftHref: '/gift/collections/for-baby-girl',
     leftEyebrow: 'For the little',
     leftBlurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
     leftCta: 'Shop girl gifts →',
@@ -137,7 +137,7 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     leftImageUrl: '/gift/media/baby-girl-soft.jpg',
     leftImageAlt: 'Baby girl with soft toys',
     rightLabel: 'boy',
-    rightHref: '/gift/products?recipient=boy',
+    rightHref: '/gift/collections/for-baby-boy',
     rightEyebrow: 'For the little',
     rightBlurb: 'Sky ribbons, soft brights, gender-neutral picks.',
     rightCta: 'Shop boy gifts →',
@@ -222,7 +222,7 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
           subtitle: 'Welcome Baby',
           body: 'Celebrate every newborn with curated hampers, gift wrapping and a personalised message.',
           ctaLabel: 'Order Now',
-          ctaHref: '/gift/products?hamper=1',
+          ctaHref: '/gift/collections/ready-hampers',
           tone: 'blush',
           icon: 'heart',
         },
@@ -309,7 +309,7 @@ function nestCard(
   const label = props[`${prefix}Label`] || (prefix === 'left' ? 'girl' : 'boy');
   const href =
     props[`${prefix}Href`] ||
-    (prefix === 'left' ? '/gift/products?recipient=girl' : '/gift/products?recipient=boy');
+    (prefix === 'left' ? '/gift/collections/for-baby-girl' : '/gift/collections/for-baby-boy');
   const accentRaw = props[`${prefix}Accent`];
   const accent =
     accentRaw === 'pink' || accentRaw === 'sky' ? (accentRaw as 'pink' | 'sky') : undefined;

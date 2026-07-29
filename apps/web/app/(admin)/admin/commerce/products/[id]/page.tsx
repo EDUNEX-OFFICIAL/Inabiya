@@ -45,6 +45,9 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [ogImageUrl, setOgImageUrl] = useState('');
   const [robotsIndex, setRobotsIndex] = useState(true);
   const [faqDraft, setFaqDraft] = useState('');
+  const [seoSectionsDraft, setSeoSectionsDraft] = useState('');
+  const [hamperItemsDraft, setHamperItemsDraft] = useState('');
+  const [mediaDraft, setMediaDraft] = useState('');
   const [stock, setStock] = useState<Record<string, string>>({});
   const [mrpRupees, setMrpRupees] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
@@ -76,6 +79,43 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             ? JSON.stringify(p.faqItems, null, 2)
             : '[\n  { "question": "", "answerText": "" }\n]',
         );
+        setSeoSectionsDraft(
+          p.seoSections?.length
+            ? JSON.stringify(p.seoSections, null, 2)
+            : '[\n  { "heading": "", "bodyText": "" }\n]',
+        );
+        setHamperItemsDraft(
+          p.hamperItems?.length
+            ? JSON.stringify(
+                p.hamperItems.map((h) => ({
+                  title: h.title,
+                  blurb: h.blurb ?? undefined,
+                  brandName: h.brandName ?? undefined,
+                  imageUrl: h.imageUrl ?? undefined,
+                  qty: h.qty,
+                  unitPricePaise: h.unitPricePaise,
+                  sortOrder: h.sortOrder,
+                })),
+                null,
+                2,
+              )
+            : '[\n  { "title": "", "qty": 1, "unitPricePaise": 0, "imageUrl": "/gift/media/baby-soft-gift.jpg" }\n]',
+        );
+        setMediaDraft(
+          p.media?.length
+            ? JSON.stringify(
+                p.media.map((m, i) => ({
+                  url: m.url,
+                  altText: m.altText ?? undefined,
+                  kind: m.kind ?? 'IMAGE',
+                  posterUrl: m.posterUrl ?? undefined,
+                  sortOrder: m.sortOrder ?? i,
+                })),
+                null,
+                2,
+              )
+            : '[\n  { "url": "/gift/media/baby-soft-gift.jpg", "kind": "IMAGE" }\n]',
+        );
         const s: Record<string, string> = {};
         const m: Record<string, string> = {};
         for (const v of p.variants) {
@@ -96,6 +136,26 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     setMsg(null);
     setError(null);
     let faqItems: Array<{ question: string; answerText: string }> | null = null;
+    let seoSections: Array<{ heading: string; bodyText: string }> | null = null;
+    let hamperItems:
+      | Array<{
+          title: string;
+          blurb?: string;
+          imageUrl?: string;
+          qty: number;
+          unitPricePaise: number;
+          sortOrder?: number;
+        }>
+      | null = null;
+    let media:
+      | Array<{
+          url: string;
+          altText?: string;
+          kind?: 'IMAGE' | 'VIDEO';
+          posterUrl?: string;
+          sortOrder?: number;
+        }>
+      | undefined = undefined;
     try {
       const parsed = JSON.parse(faqDraft) as unknown;
       if (parsed === null) {
@@ -118,6 +178,76 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
       return;
     }
     try {
+      const parsed = JSON.parse(seoSectionsDraft) as unknown;
+      if (!Array.isArray(parsed)) {
+        setError('SEO sections JSON must be an array');
+        return;
+      }
+      const cleaned = parsed
+        .filter((row): row is { heading?: unknown; bodyText?: unknown } => !!row && typeof row === 'object')
+        .map((row) => ({
+          heading: String(row.heading ?? '').trim(),
+          bodyText: String(row.bodyText ?? '').trim(),
+        }))
+        .filter((row) => row.heading && row.bodyText);
+      seoSections = cleaned.length ? cleaned : null;
+    } catch {
+      setError('SEO sections JSON is invalid');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(hamperItemsDraft) as unknown;
+      if (!Array.isArray(parsed)) {
+        setError('Hamper items JSON must be an array');
+        return;
+      }
+      const cleaned = parsed
+        .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+        .map((row, i) => ({
+          title: String(row.title ?? '').trim(),
+          blurb: row.blurb != null && String(row.blurb).trim() ? String(row.blurb).trim() : undefined,
+          brandName:
+            row.brandName != null && String(row.brandName).trim()
+              ? String(row.brandName).trim()
+              : undefined,
+          imageUrl:
+            row.imageUrl != null && String(row.imageUrl).trim()
+              ? String(row.imageUrl).trim()
+              : undefined,
+          qty: Math.max(1, Number(row.qty) || 1),
+          unitPricePaise: Math.max(0, Math.round(Number(row.unitPricePaise) || 0)),
+          sortOrder: Number.isFinite(Number(row.sortOrder)) ? Number(row.sortOrder) : i,
+        }))
+        .filter((row) => row.title);
+      hamperItems = isReadyMadeHamper ? (cleaned.length ? cleaned : []) : null;
+    } catch {
+      setError('Hamper items JSON is invalid');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(mediaDraft) as unknown;
+      if (!Array.isArray(parsed)) {
+        setError('Media JSON must be an array');
+        return;
+      }
+      media = parsed
+        .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+        .map((row, i) => ({
+          url: String(row.url ?? '').trim(),
+          altText: row.altText != null ? String(row.altText).trim() : undefined,
+          kind: row.kind === 'VIDEO' ? ('VIDEO' as const) : ('IMAGE' as const),
+          posterUrl:
+            row.posterUrl != null && String(row.posterUrl).trim()
+              ? String(row.posterUrl).trim()
+              : undefined,
+          sortOrder: Number.isFinite(Number(row.sortOrder)) ? Number(row.sortOrder) : i,
+        }))
+        .filter((row) => row.url);
+    } catch {
+      setError('Media JSON is invalid');
+      return;
+    }
+    try {
       const updated = await apiAuth<CatalogProduct>(`/admin/catalog/products/${params.id}`, {
         method: 'PATCH',
         json: {
@@ -135,6 +265,9 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           ogImageUrl: ogImageUrl.trim() || null,
           robotsIndex,
           faqItems,
+          seoSections,
+          hamperItems,
+          media,
         },
       });
       setProduct(updated);
@@ -148,6 +281,43 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
         updated.faqItems?.length
           ? JSON.stringify(updated.faqItems, null, 2)
           : '[\n  { "question": "", "answerText": "" }\n]',
+      );
+      setSeoSectionsDraft(
+        updated.seoSections?.length
+          ? JSON.stringify(updated.seoSections, null, 2)
+          : '[\n  { "heading": "", "bodyText": "" }\n]',
+      );
+      setHamperItemsDraft(
+        updated.hamperItems?.length
+          ? JSON.stringify(
+              updated.hamperItems.map((h) => ({
+                title: h.title,
+                blurb: h.blurb ?? undefined,
+                brandName: h.brandName ?? undefined,
+                imageUrl: h.imageUrl ?? undefined,
+                qty: h.qty,
+                unitPricePaise: h.unitPricePaise,
+                sortOrder: h.sortOrder,
+              })),
+              null,
+              2,
+            )
+          : '[]',
+      );
+      setMediaDraft(
+        updated.media?.length
+          ? JSON.stringify(
+              updated.media.map((m, i) => ({
+                url: m.url,
+                altText: m.altText ?? undefined,
+                kind: m.kind ?? 'IMAGE',
+                posterUrl: m.posterUrl ?? undefined,
+                sortOrder: m.sortOrder ?? i,
+              })),
+              null,
+              2,
+            )
+          : '[]',
       );
       setMsg('Saved');
     } catch {
@@ -252,6 +422,9 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             onChange={(e) => setBrandName(e.target.value)}
             placeholder="e.g. Soft Nest"
           />
+          <span className="mt-1 block text-xs opacity-60">
+            Single-SKU brand. For hampers, set brandName per hamper item — PDP shows BRANDS: a, b, c.
+          </span>
         </label>
         <label className="flex items-center gap-2">
           <input
@@ -321,6 +494,42 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             Empty questions are dropped. Clear all → leave empty array / blanks to use PDP fallbacks.
           </span>
         </label>
+        <label className="block text-sm">
+          SEO sections (JSON — heading + bodyText)
+          <textarea
+            className="mt-1 block w-full rounded border px-2 py-1 font-mono text-xs"
+            rows={8}
+            value={seoSectionsDraft}
+            onChange={(e) => setSeoSectionsDraft(e.target.value)}
+            spellCheck={false}
+          />
+        </label>
+        <label className="block text-sm">
+          Gallery media (JSON — url, kind IMAGE|VIDEO, posterUrl)
+          <textarea
+            className="mt-1 block w-full rounded border px-2 py-1 font-mono text-xs"
+            rows={8}
+            value={mediaDraft}
+            onChange={(e) => setMediaDraft(e.target.value)}
+            spellCheck={false}
+          />
+        </label>
+        {isReadyMadeHamper ? (
+          <label className="block text-sm">
+            Hamper contents (JSON — title, brandName, qty, unitPricePaise, imageUrl)
+            <textarea
+              className="mt-1 block w-full rounded border px-2 py-1 font-mono text-xs"
+              rows={10}
+              value={hamperItemsDraft}
+              onChange={(e) => setHamperItemsDraft(e.target.value)}
+              spellCheck={false}
+            />
+            <span className="mt-1 block text-xs opacity-60">
+              Display BOM for What’s Inside + savings. Optional brandName per item. Prices in paise
+              (₹100 = 10000).
+            </span>
+          </label>
+        ) : null}
         <fieldset>
           <legend className="text-xs opacity-70">Manual storefront labels (max 2)</legend>
           <p className="mt-1 text-xs opacity-60">

@@ -135,15 +135,15 @@ export function GiftStorefrontHero({
     <section ref={containerRef} className="gift-hero-split relative overflow-hidden">
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
 
-      <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full max-w-page items-center gap-gs-6 lg:grid-cols-2 lg:gap-gs-8">
-        <div className="gift-hero-split__copy order-2 flex flex-col text-left lg:order-1">
+      <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full max-w-page gap-gs-3 lg:grid-cols-2 lg:items-stretch lg:gap-gs-8">
+        <div className="gift-hero-split__copy flex flex-col items-center justify-center text-center lg:items-start lg:text-left">
           <p data-hero-anim="eyebrow" className="gift-hero-split__eyebrow gift-overline">
             {eyebrowText}
           </p>
 
           <h1
             data-hero-anim="headline"
-            className="gift-hero-split__headline gift-h1 mt-gs-4 max-w-2xl text-balance"
+            className="gift-hero-split__headline gift-h1 mt-gs-2 max-w-2xl text-balance lg:mt-gs-3"
           >
             <AccentHeadline text={headline} accentWord={accent} />
           </h1>
@@ -151,13 +151,13 @@ export function GiftStorefrontHero({
           {subcopy ? (
             <p
               data-hero-anim="subcopy"
-              className="gift-hero-split__sub gift-body mt-gs-4 max-w-md sm:mt-gs-5"
+              className="gift-hero-split__sub gift-body mt-gs-2 max-w-md lg:mt-gs-3"
             >
               {subcopy}
             </p>
           ) : null}
 
-          <div className="mt-gs-5 flex w-full flex-col gap-gs-3 sm:mt-gs-6 sm:w-auto sm:flex-row sm:flex-wrap">
+          <div className="mt-gs-3 flex w-full flex-col gap-gs-2 sm:mt-gs-4 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-gs-3 lg:justify-start">
             {ctaLabel && ctaHref ? (
               <Link
                 data-hero-cta="primary"
@@ -185,7 +185,7 @@ export function GiftStorefrontHero({
           {trustChips.length ? (
             <ul
               data-hero-anim="trust"
-              className="gift-hero-split__trust mt-gs-5 flex list-none flex-col gap-gs-3 sm:mt-gs-6 sm:flex-row sm:flex-wrap sm:items-center sm:gap-gs-5"
+              className="gift-hero-split__trust mt-gs-3 flex list-none flex-col items-center gap-gs-2 sm:mt-gs-4 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-gs-4 sm:gap-y-gs-2 lg:items-start lg:justify-start"
             >
               {trustChips.map((label, i) => {
                 const Icon = TRUST_ICONS[i % TRUST_ICONS.length] ?? ShieldCheck;
@@ -202,7 +202,7 @@ export function GiftStorefrontHero({
           ) : null}
         </div>
 
-        <div className="gift-hero-split__media order-1 lg:order-2">
+        <div className="gift-hero-split__media">
           <div className="gift-hero-split__frame relative">
             <Image
               src={photoSrc}

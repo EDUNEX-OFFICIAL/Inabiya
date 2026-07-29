@@ -17,25 +17,25 @@ type Props = {
 const OCCASION_PRESET: DiscoveryChipCard[] = [
   {
     label: 'Welcome baby',
-    href: '/gift/products?occasion=welcome-baby',
+    href: '/gift/collections/welcome-baby',
     imageUrl: '/gift/media/baby-boy-soft.jpg',
     imageAlt: 'Newborn welcome',
   },
   {
     label: 'Baby shower',
-    href: '/gift/products?occasion=baby-shower',
+    href: '/gift/collections/baby-shower',
     imageUrl: '/gift/media/baby-girl-soft.jpg',
     imageAlt: 'Baby shower gifts',
   },
   {
     label: 'Naming',
-    href: '/gift/products?occasion=naming',
+    href: '/gift/collections/naming-ceremony',
     imageUrl: '/gift/media/personalised-name-blanket.webp',
     imageAlt: 'Naming ceremony',
   },
   {
     label: 'Birthday',
-    href: '/gift/products?occasion=birthday',
+    href: '/gift/collections/first-birthday',
     imageUrl: '/gift/media/train-toy.jpg',
     imageAlt: 'Birthday toys',
   },
@@ -44,19 +44,19 @@ const OCCASION_PRESET: DiscoveryChipCard[] = [
 const AGE_PRESET: DiscoveryChipCard[] = [
   {
     label: 'Newborn',
-    href: '/gift/products?age=newborn',
+    href: '/gift/collections/newborn',
     imageUrl: '/gift/media/baby-boy-soft.jpg',
     imageAlt: 'Newborn essentials',
   },
   {
     label: 'Infant',
-    href: '/gift/products?age=infant',
+    href: '/gift/collections/infant',
     imageUrl: '/gift/media/baby-girl-soft.jpg',
     imageAlt: 'Infant gifts',
   },
   {
     label: 'Toddler',
-    href: '/gift/products?age=toddler',
+    href: '/gift/collections/toddler',
     imageUrl: '/gift/media/train-toy.jpg',
     imageAlt: 'Toddler play',
   },

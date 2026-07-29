@@ -18,6 +18,7 @@ const productInclude = {
   media: { orderBy: { sortOrder: 'asc' as const } },
   categories: { include: { category: true } },
   personalizationOpts: { orderBy: { sortOrder: 'asc' as const } },
+  hamperItems: { orderBy: { sortOrder: 'asc' as const } },
 } satisfies Prisma.ProductInclude;
 
 export type ProductDto = ReturnType<CatalogService['mapProduct']>;
@@ -71,6 +72,7 @@ export class CatalogService {
     storefrontLabel?: 'BESTSELLER' | 'EDITORS_PICK' | 'GIFT_SET';
     onSale?: boolean;
     publishedSince?: Date;
+    maxPricePaise?: number;
   }) {
     const where: Prisma.ProductWhereInput = {
       status: ProductStatus.PUBLISHED,
@@ -120,6 +122,9 @@ export class CatalogService {
             v.compareAtPricePaise != null && v.compareAtPricePaise > v.pricePaise,
         ),
       );
+    }
+    if (query.maxPricePaise != null) {
+      mapped = mapped.filter((p) => p.fromPricePaise <= query.maxPricePaise!);
     }
     if (query.sort === 'price_asc') {
       mapped.sort((a, b) => a.fromPricePaise - b.fromPricePaise);
@@ -184,6 +189,7 @@ export class CatalogService {
                   url: m.url,
                   altText: m.altText,
                   sortOrder: m.sortOrder ?? i,
+                  kind: 'IMAGE' as const,
                 })),
               }
             : undefined,
@@ -256,6 +262,38 @@ export class CatalogService {
           });
         }
       }
+      if (body.hamperItems !== undefined) {
+        await tx.productHamperItem.deleteMany({ where: { productId: id } });
+        if (body.hamperItems?.length) {
+          await tx.productHamperItem.createMany({
+            data: body.hamperItems.map((item, i) => ({
+              productId: id,
+              title: item.title,
+              blurb: item.blurb ?? null,
+              brandName: item.brandName ?? null,
+              imageUrl: item.imageUrl ?? null,
+              qty: item.qty ?? 1,
+              unitPricePaise: item.unitPricePaise,
+              sortOrder: item.sortOrder ?? i,
+            })),
+          });
+        }
+      }
+      if (body.media !== undefined) {
+        await tx.productMedia.deleteMany({ where: { productId: id } });
+        if (body.media.length) {
+          await tx.productMedia.createMany({
+            data: body.media.map((m, i) => ({
+              productId: id,
+              url: m.url,
+              altText: m.altText ?? null,
+              kind: m.kind ?? 'IMAGE',
+              posterUrl: m.posterUrl ?? null,
+              sortOrder: m.sortOrder ?? i,
+            })),
+          });
+        }
+      }
       return tx.product.update({
         where: { id },
         data: {
@@ -278,6 +316,9 @@ export class CatalogService {
           ...(body.robotsIndex !== undefined ? { robotsIndex: body.robotsIndex } : {}),
           ...(body.faqItems !== undefined
             ? { faqItems: body.faqItems === null ? Prisma.DbNull : body.faqItems }
+            : {}),
+          ...(body.seoSections !== undefined
+            ? { seoSections: body.seoSections === null ? Prisma.DbNull : body.seoSections }
             : {}),
         },
         include: productInclude,
@@ -473,6 +514,38 @@ export class CatalogService {
       storefrontLabels,
       variants,
     });
+    const hamperItems = (product.hamperItems ?? []).map((h) => ({
+      id: h.id,
+      title: h.title,
+      blurb: h.blurb,
+      brandName: h.brandName,
+      imageUrl: h.imageUrl,
+      qty: h.qty,
+      unitPricePaise: h.unitPricePaise,
+      sortOrder: h.sortOrder,
+    }));
+    const hamperItemCount = hamperItems.reduce((s, h) => s + h.qty, 0);
+    const contentsValuePaise = hamperItems.reduce((s, h) => s + h.unitPricePaise * h.qty, 0);
+    const hamperSavingsPaise =
+      product.isReadyMadeHamper && hamperItems.length > 0
+        ? Math.max(0, contentsValuePaise - fromPricePaise)
+        : 0;
+    const brandNames = (() => {
+      const out: string[] = [];
+      const seen = new Set<string>();
+      const push = (raw?: string | null) => {
+        if (!raw) return;
+        for (const part of raw.split(',').map((s) => s.trim()).filter(Boolean)) {
+          const key = part.toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push(part);
+        }
+      };
+      for (const h of hamperItems) push(h.brandName);
+      if (out.length === 0) push(product.brandName);
+      return out;
+    })();
     return {
       id: product.id,
       slug: product.slug,
@@ -486,6 +559,7 @@ export class CatalogService {
       occasionTags: product.occasionTags,
       isReadyMadeHamper: product.isReadyMadeHamper,
       brandName: product.brandName,
+      brandNames,
       storefrontLabels,
       displayLabels,
       seoTitle: product.seoTitle,
@@ -494,6 +568,11 @@ export class CatalogService {
       ogImageUrl: product.ogImageUrl,
       robotsIndex: product.robotsIndex,
       faqItems: parseProductFaqItems(product.faqItems),
+      seoSections: parseProductSeoSections(product.seoSections),
+      hamperItems,
+      hamperItemCount,
+      contentsValuePaise,
+      hamperSavingsPaise,
       categories: product.categories.map((pc) => ({
         slug: pc.category.slug,
         name: pc.category.name,
@@ -502,6 +581,8 @@ export class CatalogService {
         id: m.id,
         url: m.url,
         altText: m.altText,
+        kind: m.kind === 'VIDEO' ? ('VIDEO' as const) : ('IMAGE' as const),
+        posterUrl: m.posterUrl,
         sortOrder: m.sortOrder,
       })),
       personalization: product.personalizationOpts.map((o) => ({
@@ -516,6 +597,22 @@ export class CatalogService {
       variants,
     };
   }
+}
+
+function parseProductSeoSections(
+  raw: unknown,
+): Array<{ heading: string; bodyText: string }> | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const out: Array<{ heading: string; bodyText: string }> = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const heading = (item as { heading?: unknown }).heading;
+    const bodyText = (item as { bodyText?: unknown }).bodyText;
+    if (typeof heading === 'string' && heading.trim() && typeof bodyText === 'string' && bodyText.trim()) {
+      out.push({ heading: heading.trim(), bodyText: bodyText.trim() });
+    }
+  }
+  return out.length ? out : null;
 }
 
 function parseProductFaqItems(

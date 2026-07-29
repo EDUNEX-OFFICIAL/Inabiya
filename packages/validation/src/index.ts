@@ -132,6 +132,41 @@ export const productFaqItemSchema = z.object({
   answerText: z.string().min(1).max(4000),
 });
 
+export const productSeoSectionSchema = z.object({
+  heading: z.string().min(1).max(200),
+  bodyText: z.string().min(1).max(8000),
+});
+
+/** Product gallery / hamper thumb URLs — absolute http(s) or same-origin public path. */
+const productAssetUrlSchema = z
+  .string()
+  .min(1)
+  .max(500)
+  .refine(
+    (s) =>
+      /^https?:\/\//i.test(s) ||
+      (s.startsWith('/') && !s.startsWith('//') && !s.includes('..')),
+    'Must be http(s) URL or same-origin path',
+  );
+
+export const productHamperItemSchema = z.object({
+  title: z.string().min(1).max(200),
+  blurb: z.string().max(400).optional(),
+  brandName: z.string().max(120).optional(),
+  imageUrl: productAssetUrlSchema.optional(),
+  qty: z.number().int().min(1).max(99).default(1),
+  unitPricePaise: z.number().int().min(0),
+  sortOrder: z.number().int().min(0).optional(),
+});
+
+export const productMediaInputSchema = z.object({
+  url: productAssetUrlSchema,
+  altText: z.string().max(200).optional(),
+  kind: z.enum(['IMAGE', 'VIDEO']).optional(),
+  posterUrl: productAssetUrlSchema.optional(),
+  sortOrder: z.number().int().optional(),
+});
+
 const emptySeoToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
 
 export const updateProductBodySchema = z.object({
@@ -153,6 +188,11 @@ export const updateProductBodySchema = z.object({
   ogImageUrl: z.preprocess(emptySeoToNull, z.string().url().max(2000).nullable().optional()),
   robotsIndex: z.boolean().optional(),
   faqItems: z.array(productFaqItemSchema).max(20).nullable().optional(),
+  seoSections: z.array(productSeoSectionSchema).max(12).nullable().optional(),
+  /** Replace display BOM when provided (null clears). */
+  hamperItems: z.array(productHamperItemSchema).max(40).nullable().optional(),
+  /** Replace media gallery when provided. */
+  media: z.array(productMediaInputSchema).max(24).optional(),
 });
 
 export const updateInventoryBodySchema = z.object({
@@ -189,6 +229,8 @@ export const catalogListQuerySchema = z.object({
   onSale: z.enum(['0', '1']).optional(),
   /** ISO date — products published on/after (New Arrivals). */
   publishedSince: z.string().datetime().optional(),
+  /** Max from-price in paise (budget chips on collection PLP). */
+  maxPricePaise: z.coerce.number().int().positive().max(10_000_000).optional(),
 });
 
 export const wishlistAddBodySchema = z.object({

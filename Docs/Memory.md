@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 28, 2026 (Soft Gift minimal shadows + hero pastel)
+Last Updated: July 29, 2026 (hero mobile text-first)
 
 
 ---
@@ -139,8 +139,8 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Browser QA pass for cart-checkout + CMS DnD (Wave 0 marked B)
-2. Restart `inabiya-api` after leftovers so Product SEO / Invoice model are live
+1. **Ecommerce OPS panel** — next track (user)
+2. Replace CC0 demo MP4 with real unboxing when assets ready
 3. Cloudflare SSL / public DNS — **post-dev**
 4. Razorpay — **post-dev**
 5. Real AWS/MinIO + SMTP — **post-dev**
@@ -176,6 +176,27 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-07-29 — Brand line + hamper card contents modal
+
+- **Override:** Soft Gift merchandising UX outside Phase 12.
+- Brands are labels (`Brand:` / `Brands:`), not chips; hampers/BYB use unique item/product brands.
+- Ready-hamper cards: badge corners split; contents via modal (no in-grid card stretch).
+
+### 2026-07-29 — Hamper PDP (display BOM)
+
+- **Override:** Soft Gift hamper merchandising outside Phase 12.
+- Plan: `docs/plans/hamper-pdp.md` — same `/gift/products/[slug]`, branch on `isReadyMadeHamper`.
+- `ProductHamperItem` display BOM (not multi-line cart); savings = contents − sell (paise).
+- `ProductMedia.kind` IMAGE|VIDEO + poster; `seoSections` JSON for long-form SEO.
+- Linked SKU BOM / bundle inventory deferred.
+
+### 2026-07-29 — Soft gift collection pages (rule-based)
+
+- **Override:** Collection browse UX outside Phase 12 (storefront merchandising).
+- Soft collections: `/gift/collections/[slug]` registry maps to existing catalog filters (no Prisma `Collection` yet).
+- Desktop filter sidebar + mobile sticky Filters sheet; collection base filter locked.
+- Launch set: recipient / occasion / age / curated (hampers, bestsellers, editors, new, sale).
 
 ### 2026-07-28 — Soft Gift ecommerce + CMS leftovers (dev-only)
 
@@ -924,6 +945,104 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-29 (hero mobile text-first)
+- Soft Gift + corporate hero: mobile order text then image (removed order-2/order-1 swap).
+- Next: deploy web; then ecommerce OPS panel
+
+### Session — 2026-07-29 (PDP wishlist heart visible)
+- Cause: `clay-btn-ghost` padding (1.4rem×2) inside `w-12` left ~3px — heart crushed to a speck.
+- Fix: icon button without clay-btn padding (`size-12 p-0` + lucide Heart).
+- Next: deploy web
+
+### Session — 2026-07-29 (PDP wishlist heart fix)
+- Broken custom HeartIcon SVG path → invisible speck; replaced with lucide `Heart` (same as gift nav).
+- Next: deploy web; hard-refresh PDP wishlist button
+
+### Session — 2026-07-29 (seamless modal scroll-lock)
+- Root cause of weird shift: paddingRight on html+body **on top of** `scrollbar-gutter: stable` → horizontal overflow.
+- Fix: `lockPageScroll` only toggles `html.scroll-locked` / overflow; no padding; modal root `overflow-hidden`.
+- Next: deploy web; hard-refresh ready-hampers modal open/close
+
+### Session — 2026-07-29 (modal scroll-lock + thumbs +N)
+- Modal open shake: `scrollbar-gutter: stable` + scrollbar-width padding on body/html + sticky nav `data-scroll-lock-compensate`.
+- What’s inside modal restyled (header band, item rows, Save pill, Gift this CTA).
+- Card thumbs: ≤4 all; >4 → 3 stacked + `+N`; welcome hamper seeded to 5 items for +N demo.
+- Next: deploy web (+ seed if DB needs 5th item)
+
+### Session — 2026-07-29 (hamper card portal modal + CTA)
+- Fix: What’s inside was trapped in `.clay-card` (`overflow` + hover `transform`) → looked like in-card glitch scroll.
+- Modal now `createPortal(…, document.body)`; card CTA `Gift this · ₹…` / `View details`.
+- Next: deploy web; hard-refresh ready-hampers
+
+### Session — 2026-07-29 (brand line + hamper card modal)
+- **Override:** Soft Gift PDP brands + ready-hampers card UX outside Phase 12.
+- Brands: `ProductHamperItem.brandName` + API `brandNames`; PDP/home/BYB use `ProductBrandLine` (`Brand:` / `Brands:`) not chips.
+- Cards: left “N items” / right merch labels (drop GIFT_SET on hampers); thumbs + modal What’s inside (no in-card expand stretch).
+- Migration `20260729120000_hamper_item_brand`; seed multi-brand BOM; check `brands.check.ts`.
+- Next: deploy web+api; hard-refresh ready-hampers + welcome-baby PDP
+
+### Session — 2026-07-29 (hamper stream smoke closed)
+- Deploy already live; smoke: CMS home `hamperItemCount` (4/3/4); home HTML “N items” + curated line; ready-hampers PLP 4 badges; welcome VIDEO+MP4 200; all 4 hampers savings > 0.
+- Collections + hamper PDP plan v1 complete (display BOM). Linked SKU BOM still out of scope.
+- Next: browser visual QA; real unboxing video when ready
+
+### Session — 2026-07-29 (home hamper badge + demo video)
+- HomeProductCard + non-home product grid: “N items” badge; CMS `mapProductCard` passes `hamperItemCount`.
+- Seed: `/gift/media/welcome-hamper-unbox.mp4` VIDEO on `welcome-baby-hamper` (+ poster).
+- Next: deploy web+api; hard-refresh `/gift` hampers + PDP gallery video
+
+### Session — 2026-07-29 (hamper PDP contents)
+- **Override:** Hamper vs normal PDP outside Phase 12. Plan: `docs/plans/hamper-pdp.md`.
+- Migration `20260729110000_hamper_pdp_contents`: hamper items, media kind/poster, seoSections.
+- API map: hamperItemCount / contentsValuePaise / hamperSavingsPaise; admin JSON editors.
+- PDP: What’s Inside, SAVE badge, video gallery + band, SEO sections, hamper action bar; PLP item-count badge.
+- Seed: welcome-baby / mom / nursing hampers with contents; check `hamper-savings.check.ts`.
+- Next: deploy web+api; QA welcome-baby-hamper PDP
+
+### Session — 2026-07-29 (collection PLP UX polish)
+- **Override:** Collection UX audit fixes outside Phase 12.
+- Active chips + results toolbar (count + sort select); mobile sheet draft→Apply + focus trap.
+- Slim full-bleed hero, breadcrumbs, BYB CTA (URL prefs on BYB), related “Also shop” below grid.
+- Checkbox facets + accordion; Age band label; newborn removed from category facet; budget Under ₹1.5k/3k.
+- API: `maxPricePaise` on catalog list (Zod + service filter); empty state with sibling CTAs; `loading.tsx` skeleton.
+- Next: run `bash scripts/deploy-vps.sh web api` then hard-refresh collection QA
+
+### Session — 2026-07-29 (deploy web — collection pages)
+- Deployed `web` via `bash scripts/deploy-vps.sh web` so `/gift/collections/*` live (was Soft Gift 404).
+- Smoke: health/ready OK; local `/gift/collections/for-baby-girl` expected 200 after recreate.
+- Next: hard-refresh live girl/boy collection + Filters QA
+
+### Session — 2026-07-29 (gift collection pages)
+- **Override:** Soft Gift collection pages + filters (merch UX) outside Phase 12.
+- Registry: `apps/web/lib/gift-collections.ts` (16 slugs).
+- Route: `/gift/collections/[slug]` with hero + related chips + product grid.
+- Filters: desktop sidebar + mobile sheet (`collection-filters.tsx`); base filter locked.
+- Rewired seed homepage, `gift.chrome`, nav/footer defaults, PDP tags, hampers redirect, sitemap.
+- Check: merge/base-wins assert via tsx; web typecheck green; `pnpm db:seed` refreshed CMS hrefs.
+- Next: browser QA boy/girl/mom + mobile Filters
+
+### Session — 2026-07-29 (hero mobile center + shorter photo)
+- **Override:** Soft Gift hero mobile polish (client: mobile looks off).
+- Mobile: copy centered (`items-center text-center`); desktop stays left.
+- Shorter mobile photo (`1/1`, max ~44vh) so CTAs share first viewport; tighter gaps; bottom pad for WhatsApp FAB.
+- Headline 28px on narrow phones; `lg:` restores left align + 60px.
+- Files: `gift-storefront-hero.tsx`, `globals.css`; deploy `web`.
+- Next: hard-refresh `/gift` on phone
+
+### Session — 2026-07-29 (deploy web — hero spacing)
+- Deployed `web` only via `bash scripts/deploy-vps.sh web` (@ cb961d6).
+- Smoke: health/ready OK; `127.0.0.1:3001` → 200.
+- Next: hard-refresh live `/gift` desktop + mobile QA
+
+### Session — 2026-07-29 (hero left copy ↔ image center)
+- **Override:** Soft Gift hero spacing (client reference) outside Phase 12.
+- Dropped forced `min-height: 92vh` (empty pastel bands); hero height follows image.
+- Desktop: copy column `justify-center` + `lg:items-stretch` so tight text block sits on image vertical center (not inflated gaps).
+- Tightened eyebrow→headline→sub→CTA→trust margins; trust `padding-top` reduced.
+- Mobile: smaller image/copy gap (`gap-gs-4`), shorter photo max-height, tighter stack padding.
+- Files: `gift-storefront-hero.tsx`, `globals.css`
+- Next: hard-refresh `/gift` desktop + mobile visual QA
 
 ### Session — 2026-07-28 (Soft Gift shadows + hero polish)
 - **Override:** Soft Gift visual polish (client: too many clay shadows) outside Phase 12.

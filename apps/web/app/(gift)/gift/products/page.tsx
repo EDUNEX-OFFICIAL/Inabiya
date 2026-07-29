@@ -59,22 +59,22 @@ const FILTERS: FilterDef[] = [
       !sp.recipient && !sp.age && sp.hamper !== '1' && !sp.category && !sp.q && !sp.occasion,
   },
   {
-    href: '/gift/products?hamper=1',
+    href: '/gift/collections/ready-hampers',
     label: 'Hampers',
     match: (sp) => sp.hamper === '1',
   },
   {
-    href: '/gift/products?recipient=girl',
+    href: '/gift/collections/for-baby-girl',
     label: 'Girl',
     match: (sp) => sp.recipient === 'girl',
   },
   {
-    href: '/gift/products?recipient=boy',
+    href: '/gift/collections/for-baby-boy',
     label: 'Boy',
     match: (sp) => sp.recipient === 'boy',
   },
   {
-    href: '/gift/products?recipient=mom',
+    href: '/gift/collections/for-expecting-mom',
     label: 'Mom',
     match: (sp) => sp.recipient === 'mom',
   },
@@ -177,8 +177,9 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
         <div className="-mx-gs-1 mt-gs-4 flex gap-gs-2 overflow-x-auto px-gs-1 pb-gs-1 sm:flex-wrap sm:overflow-visible">
           {FILTERS.map((f) => {
             const active = f.match(filterState);
-            const href =
-              f.href === '/gift/products'
+            const href = f.href.startsWith('/gift/collections/')
+              ? f.href
+              : f.href === '/gift/products'
                 ? plpHref({ sort })
                 : plpHref({
                     ...Object.fromEntries(new URL(f.href, 'http://x').searchParams.entries()),
