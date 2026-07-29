@@ -62,6 +62,8 @@ function LoginForm() {
     const roles = session.user.roles;
     if (roles.includes('COMMERCE_ADMIN') || roles.includes('SUPER_ADMIN')) {
       router.push('/admin/commerce');
+    } else if (roles.includes('SUPPORT')) {
+      router.push('/admin/commerce/support');
     } else if (roles.includes('BRAND')) {
       router.push('/creator/brand');
     } else if (roles.includes('CREATOR')) {
@@ -71,7 +73,14 @@ function LoginForm() {
         ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'FINANCE'].includes(r),
       )
     ) {
-      router.push('/admin/editorial');
+      // Finance: commerce reports if they open ops; editorial remains default for content roles
+      if (roles.includes('FINANCE') && !roles.some((r) =>
+        ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER'].includes(r),
+      )) {
+        router.push('/admin/commerce/reports');
+      } else {
+        router.push('/admin/editorial');
+      }
     } else {
       router.push('/gift');
     }

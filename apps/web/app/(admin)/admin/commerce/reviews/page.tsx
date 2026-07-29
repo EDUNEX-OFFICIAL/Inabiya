@@ -44,11 +44,8 @@ export default function AdminReviewsPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-3xl">
-      <Link href="/admin/commerce" className="text-sm underline opacity-70">
-        ← Ops
-      </Link>
-      <h1 className="text-2xl font-semibold mt-4">Reviews</h1>
+    <main className="w-full max-w-3xl">
+<h1 className="text-2xl font-semibold mt-4">Reviews</h1>
       <div className="mt-3 flex gap-2 text-sm">
         {(['PENDING', 'APPROVED', 'REJECTED', ''] as const).map((s) => (
           <button

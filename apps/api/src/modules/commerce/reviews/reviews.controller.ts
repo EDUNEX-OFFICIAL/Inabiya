@@ -46,6 +46,7 @@ export class ReviewsAdminController {
   constructor(private readonly reviews: ReviewsService) {}
 
   @Get()
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT')
   list(@Query('status') status?: string) {
     const allowed = Object.values(ReviewStatus) as string[];
     const parsed = status && allowed.includes(status) ? (status as ReviewStatus) : undefined;

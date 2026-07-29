@@ -1,10 +1,23 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   adminSearchQuerySchema,
+  adminCustomersQuerySchema,
+  adminReportsQuerySchema,
+  adminAuditQuerySchema,
   createCouponBodySchema,
+  couponActiveBodySchema,
+  couponPreviewBodySchema,
+  commercePolicyBodySchema,
   customerStatusBodySchema,
   giftChromeBodySchema,
   storefrontConfigBodySchema,
+  type AdminAuditQuery,
+  type AdminCustomersQuery,
+  type AdminReportsQuery,
+  type CommercePolicyBody,
+  type CouponActiveBody,
+  type CouponPreviewBody,
+  type CreateCouponBody,
   type GiftChromeBody,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
@@ -12,10 +25,12 @@ import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard'
 import { CurrentUser } from '../../identity/current-user.decorator';
 import { Roles } from '../../identity/roles.decorator';
 import { RolesGuard } from '../../identity/roles.guard';
+import { AuditService } from '../../audit/audit.service';
 import { CustomerAdminService } from '../customers/customer-admin.service';
 import { CouponService } from '../promotions/coupon.service';
 import { CartAbandonmentService } from '../cart/cart-abandonment.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { CommercePolicyService } from './commerce-policy.service';
 import { OpsDashboardService } from './ops-dashboard.service';
 import { StorefrontConfigService } from './storefront-config.service';
 
@@ -30,32 +45,75 @@ export class OpsAdminController {
     private readonly customers: CustomerAdminService,
     private readonly abandonment: CartAbandonmentService,
     private readonly analytics: AnalyticsService,
+    private readonly policy: CommercePolicyService,
+    private readonly audit: AuditService,
   ) {}
 
   @Get('dashboard')
-  getDashboard() {
-    return this.dashboard.dashboard();
+  getDashboard(@Query('range') range?: string) {
+    const n = range ? Number(range) : 7;
+    const days = n === 1 || n === 30 ? n : 7;
+    return this.dashboard.dashboard(days);
   }
 
   @Get('reports/daily')
-  dailyReport(@Query('days') days?: string) {
-    const n = days ? Number(days) : 7;
-    return this.dashboard.dailyReport(
-      Number.isFinite(n) ? Math.min(90, Math.max(1, Math.floor(n))) : 7,
-    );
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
+  dailyReport(
+    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
+  ) {
+    return this.dashboard.dailyReport(query.days);
+  }
+
+  @Get('reports/sales')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
+  salesReport(
+    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
+  ) {
+    return this.dashboard.salesReport(query.days);
+  }
+
+  @Get('reports/products')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
+  productsReport(
+    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
+  ) {
+    return this.dashboard.productsReport(query.days);
+  }
+
+  @Get('reports/inventory')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
+  inventoryReport() {
+    return this.dashboard.inventoryReport();
+  }
+
+  @Get('reports/returns')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
+  returnsReport(
+    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
+  ) {
+    return this.dashboard.returnsReport(query.days);
+  }
+
+  @Get('reports/coupons')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
+  couponsReport(
+    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
+  ) {
+    return this.dashboard.couponsReport(query.days);
   }
 
   @Get('reports/status')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
   statusReport() {
     return this.dashboard.statusReport();
   }
 
   @Get('reports/funnel')
-  funnelReport(@Query('days') days?: string) {
-    const n = days ? Number(days) : 7;
-    return this.analytics.funnelSummary(
-      Number.isFinite(n) ? Math.min(90, Math.max(1, Math.floor(n))) : 7,
-    );
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
+  funnelReport(
+    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
+  ) {
+    return this.analytics.funnelSummary(query.days);
   }
 
   @Post('carts/abandonment-scan')
@@ -105,30 +163,48 @@ export class OpsAdminController {
     return this.coupons.listAdmin();
   }
 
+  @Post('coupons/preview')
+  previewCoupon(
+    @Body(new ZodValidationPipe(couponPreviewBodySchema)) body: CouponPreviewBody,
+  ) {
+    return this.coupons.preview(body);
+  }
+
   @Post('coupons')
   createCoupon(
-    @Body(new ZodValidationPipe(createCouponBodySchema))
-    body: Parameters<CouponService['createAdmin']>[0],
+    @Body(new ZodValidationPipe(createCouponBodySchema)) body: CreateCouponBody,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
   ) {
-    return this.coupons.createAdmin(body);
+    return this.coupons.createAdmin(body, user.id, String(req.id ?? ''));
   }
 
   @Patch('coupons/:code')
-  setCouponActive(@Param('code') code: string, @Body() body: { active: boolean }) {
-    return this.coupons.setActive(code, Boolean(body.active));
+  setCouponActive(
+    @Param('code') code: string,
+    @Body(new ZodValidationPipe(couponActiveBodySchema)) body: CouponActiveBody,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.coupons.setActive(code, body.active, user.id, String(req.id ?? ''));
   }
 
   @Get('customers')
-  listCustomers() {
-    return this.customers.list();
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT')
+  listCustomers(
+    @Query(new ZodValidationPipe(adminCustomersQuerySchema)) query: AdminCustomersQuery,
+  ) {
+    return this.customers.list(query);
   }
 
   @Get('customers/:id')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT')
   getCustomer(@Param('id') id: string) {
     return this.customers.get(id);
   }
 
   @Patch('customers/:id/status')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN')
   setCustomerStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(customerStatusBodySchema)) body: { isActive: boolean },
@@ -136,6 +212,26 @@ export class OpsAdminController {
     @Req() req: AuthedRequest,
   ) {
     return this.customers.setActive(id, body.isActive, user.id, String(req.id ?? ''));
+  }
+
+  @Get('policy')
+  getPolicy() {
+    return this.policy.getPolicy();
+  }
+
+  @Post('policy')
+  setPolicy(
+    @Body(new ZodValidationPipe(commercePolicyBodySchema)) body: CommercePolicyBody,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.policy.setPolicy(body, user.id, String(req.id ?? ''));
+  }
+
+  @Get('audit')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN')
+  listAudit(@Query(new ZodValidationPipe(adminAuditQuerySchema)) query: AdminAuditQuery) {
+    return this.audit.list(query);
   }
 }
 

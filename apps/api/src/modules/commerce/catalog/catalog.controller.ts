@@ -1,19 +1,19 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import type {
-  CreateCategoryBody,
-  CreateProductBody,
-  UpdateProductBody,
-  UpdateVariantBody,
-  BulkProductsBody,
-} from '@inabiya/validation';
 import {
   bulkProductsBodySchema,
+  adminCatalogListQuerySchema,
   catalogListQuerySchema,
   createCategoryBodySchema,
   createProductBodySchema,
   updateInventoryBodySchema,
   updateProductBodySchema,
   updateVariantBodySchema,
+  type AdminCatalogListQuery,
+  type BulkProductsBody,
+  type CreateCategoryBody,
+  type CreateProductBody,
+  type UpdateProductBody,
+  type UpdateVariantBody,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
@@ -69,8 +69,10 @@ export class CatalogAdminController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get('products')
-  listProducts() {
-    return this.catalog.listAdminProducts();
+  listProducts(
+    @Query(new ZodValidationPipe(adminCatalogListQuerySchema)) query: AdminCatalogListQuery,
+  ) {
+    return this.catalog.listAdminProducts(query);
   }
 
   @Get('products/:id')

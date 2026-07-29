@@ -199,6 +199,47 @@ export const updateInventoryBodySchema = z.object({
   onHand: z.number().int().min(0),
 });
 
+/** OPS-3 — relative stock adjust with reason */
+export const inventoryAdjustBodySchema = z.object({
+  delta: z.number().int().refine((n) => n !== 0, { message: 'delta must be non-zero' }),
+  reason: z.enum(['RECEIVE', 'DAMAGE', 'RECOUNT', 'CORRECTION']),
+  note: z.string().trim().max(500).optional(),
+});
+
+export const inventoryImportRowSchema = z.object({
+  sku: z.string().trim().min(1).max(80),
+  delta: z.number().int().refine((n) => n !== 0, { message: 'delta must be non-zero' }),
+  reason: z.enum(['RECEIVE', 'DAMAGE', 'RECOUNT', 'CORRECTION']),
+  note: z.string().trim().max(500).optional(),
+});
+
+export const inventoryImportBodySchema = z.object({
+  dryRun: z.boolean().default(true),
+  rows: z.array(inventoryImportRowSchema).min(1).max(500),
+});
+
+export const bulkOrdersBodySchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(50),
+  status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED']),
+  carrier: z.string().trim().min(1).max(80).optional(),
+  trackingNumber: z.string().trim().min(1).max(120).optional(),
+  note: z.string().trim().min(1).max(500).optional(),
+});
+
+export type InventoryAdjustBody = z.infer<typeof inventoryAdjustBodySchema>;
+export type InventoryImportBody = z.infer<typeof inventoryImportBodySchema>;
+export type BulkOrdersBody = z.infer<typeof bulkOrdersBodySchema>;
+
+export const adminInventoryQuerySchema = z.object({
+  q: z.string().trim().min(1).max(120).optional(),
+  lowStock: z
+    .union([z.literal('1'), z.literal('true'), z.literal('0'), z.literal('false')])
+    .optional(),
+  threshold: z.coerce.number().int().min(0).max(100).optional(),
+});
+
+export type AdminInventoryQuery = z.infer<typeof adminInventoryQuerySchema>;
+
 /** Admin: set/clear MRP (compare-at) on a variant */
 export const updateVariantBodySchema = z.object({
   compareAtPricePaise: z.number().int().min(0).nullable(),
@@ -328,21 +369,69 @@ export const orderNoteBodySchema = z.object({
 
 export const adminOrderStatusSchema = z.object({
   status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
+  carrier: z.string().trim().min(1).max(80).optional(),
+  trackingNumber: z.string().trim().min(1).max(120).optional(),
+  note: z.string().trim().min(1).max(500).optional(),
 });
 
-export const createCouponBodySchema = z.object({
-  code: z
-    .string()
-    .min(2)
-    .max(40)
-    .regex(/^[A-Z0-9_-]+$/i),
-  description: z.string().max(200).optional(),
-  discountPaise: z.number().int().min(0).optional(),
+export const adminOrdersQuerySchema = z.object({
+  status: z.string().max(120).optional(),
+  q: z.string().trim().min(1).max(120).optional(),
+  days: z.coerce.number().int().min(1).max(365).optional(),
+  payment: z.enum(['FAILED', 'CAPTURED', 'PENDING', 'REFUNDED']).optional(),
+});
+
+export type AdminOrderStatusBody = z.infer<typeof adminOrderStatusSchema>;
+export type AdminOrdersQuery = z.infer<typeof adminOrdersQuerySchema>;
+
+export const createCouponBodySchema = z
+  .object({
+    code: z
+      .string()
+      .min(2)
+      .max(40)
+      .regex(/^[A-Z0-9_-]+$/i),
+    description: z.string().max(200).optional(),
+    discountPaise: z.number().int().min(1).optional(),
+    discountPercent: z.number().int().min(1).max(100).optional(),
+    minSubtotalPaise: z.number().int().min(0).optional(),
+    maxUses: z.number().int().min(1).optional(),
+    active: z.boolean().optional(),
+    /** ISO or datetime-local string */
+    startsAt: z.string().trim().min(1).max(40).optional(),
+    expiresAt: z.string().trim().min(1).max(40).optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.discountPaise == null && v.discountPercent == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Provide discountPaise or discountPercent.',
+        path: ['discountPaise'],
+      });
+    }
+  });
+
+export const couponActiveBodySchema = z.object({
+  active: z.boolean(),
+});
+
+export const couponPreviewBodySchema = z.object({
+  subtotalPaise: z.number().int().min(0),
+  code: z.string().trim().min(2).max(40).optional(),
+  discountPaise: z.number().int().min(1).optional(),
   discountPercent: z.number().int().min(1).max(100).optional(),
   minSubtotalPaise: z.number().int().min(0).optional(),
-  maxUses: z.number().int().min(1).optional(),
-  active: z.boolean().optional(),
 });
+
+export type CreateCouponBody = z.infer<typeof createCouponBodySchema>;
+export type CouponActiveBody = z.infer<typeof couponActiveBodySchema>;
+export type CouponPreviewBody = z.infer<typeof couponPreviewBodySchema>;
+
+export const adminReportsQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(90).default(7),
+});
+
+export type AdminReportsQuery = z.infer<typeof adminReportsQuerySchema>;
 
 export const adminSearchQuerySchema = z.object({
   q: z.string().min(1).max(120),
@@ -358,6 +447,13 @@ export const customerStatusBodySchema = z.object({
   isActive: z.boolean(),
 });
 
+export const adminCustomersQuerySchema = z.object({
+  q: z.string().trim().min(1).max(120).optional(),
+  status: z.enum(['active', 'suspended']).optional(),
+});
+
+export type AdminCustomersQuery = z.infer<typeof adminCustomersQuerySchema>;
+
 /** Phase 5 — reviews */
 export const createReviewBodySchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -370,7 +466,6 @@ export const moderateReviewBodySchema = z.object({
   moderationNote: z.string().trim().max(500).optional(),
 });
 
-export type CreateCouponBody = z.infer<typeof createCouponBodySchema>;
 export type CreateReviewBody = z.infer<typeof createReviewBodySchema>;
 export type ModerateReviewBody = z.infer<typeof moderateReviewBodySchema>;
 
@@ -387,6 +482,40 @@ export const moderateReturnBodySchema = z.object({
 export const returnPolicyBodySchema = z.object({
   windowDays: z.number().int().min(1).max(365),
 });
+
+export const commercePolicyBodySchema = z
+  .object({
+    returnWindowDays: z.number().int().min(1).max(365).optional(),
+    lowStockThreshold: z.number().int().min(0).max(1000).optional(),
+    shippingDisplayCopy: z.string().trim().min(1).max(500).optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (
+      v.returnWindowDays == null &&
+      v.lowStockThreshold == null &&
+      v.shippingDisplayCopy == null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Provide at least one policy field.',
+      });
+    }
+  });
+
+export const adminAuditQuerySchema = z.object({
+  q: z.string().trim().min(1).max(120).optional(),
+  action: z.string().trim().min(1).max(120).optional(),
+  resource: z.string().trim().min(1).max(120).optional(),
+  resourceId: z.string().trim().min(1).max(80).optional(),
+  actorId: z.string().uuid().optional(),
+  from: z.string().trim().min(1).max(40).optional(),
+  to: z.string().trim().min(1).max(40).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+export type CommercePolicyBody = z.infer<typeof commercePolicyBodySchema>;
+export type AdminAuditQuery = z.infer<typeof adminAuditQuerySchema>;
 
 export type CreateReturnBody = z.infer<typeof createReturnBodySchema>;
 export type ModerateReturnBody = z.infer<typeof moderateReturnBodySchema>;
@@ -541,8 +670,14 @@ export const bulkProductsBodySchema = z.object({
   action: z.enum(['publish', 'unpublish']),
 });
 
+export const adminCatalogListQuerySchema = z.object({
+  q: z.string().trim().min(1).max(120).optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+});
+
 export type TrackAnalyticsBody = z.infer<typeof trackAnalyticsBodySchema>;
 export type BulkProductsBody = z.infer<typeof bulkProductsBodySchema>;
+export type AdminCatalogListQuery = z.infer<typeof adminCatalogListQuerySchema>;
 
 /** Phase 8 — Creator Collective */
 const slugSchema = z

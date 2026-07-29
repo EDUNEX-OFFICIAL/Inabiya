@@ -63,7 +63,7 @@ export default function NewProductPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-lg">
+    <main className="w-full max-w-lg">
       <Link href="/admin/commerce/products" className="text-sm underline opacity-70">
         ← Products
       </Link>

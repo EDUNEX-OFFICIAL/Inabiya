@@ -1,28 +1,69 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import type { CreateCouponBody } from '@inabiya/validation';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { CouponPreviewBody, CreateCouponBody } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
+import { AuditService } from '../../audit/audit.service';
+import { computeDiscountPaise, couponLifecycle } from './coupon-lifecycle';
 
 export type CouponResult = {
   code: string;
   discountPaise: number;
 };
 
+function parseOptionalDate(raw: string | undefined, field: string): Date | null {
+  if (!raw?.trim()) return null;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) {
+    throw new BadRequestException({
+      code: 'INVALID_DATE',
+      message: `Invalid ${field}.`,
+    });
+  }
+  return d;
+}
+
 @Injectable()
 export class CouponService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
-  listAdmin() {
-    return this.prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } });
+  async listAdmin() {
+    const rows = await this.prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } });
+    const now = new Date();
+    return rows.map((c) => {
+      const type =
+        c.discountPercent != null ? ('PERCENT' as const) : ('FIXED_PAISE' as const);
+      return {
+        id: c.id,
+        code: c.code,
+        description: c.description,
+        type,
+        discountPaise: c.discountPaise,
+        discountPercent: c.discountPercent,
+        minSubtotalPaise: c.minSubtotalPaise,
+        maxUses: c.maxUses,
+        usedCount: c.usedCount,
+        active: c.active,
+        startsAt: c.startsAt,
+        expiresAt: c.expiresAt,
+        createdAt: c.createdAt,
+        status: couponLifecycle(c, now),
+      };
+    });
   }
 
-  async createAdmin(body: CreateCouponBody) {
-    if (body.discountPaise == null && body.discountPercent == null) {
+  async createAdmin(body: CreateCouponBody, actorId: string, requestId?: string) {
+    const startsAt = parseOptionalDate(body.startsAt, 'startsAt');
+    const expiresAt = parseOptionalDate(body.expiresAt, 'expiresAt');
+    if (startsAt && expiresAt && expiresAt <= startsAt) {
       throw new BadRequestException({
-        code: 'INVALID_COUPON',
-        message: 'Provide discountPaise or discountPercent.',
+        code: 'INVALID_SCHEDULE',
+        message: 'expiresAt must be after startsAt.',
       });
     }
-    return this.prisma.coupon.create({
+
+    const created = await this.prisma.coupon.create({
       data: {
         code: body.code.toUpperCase(),
         description: body.description,
@@ -31,24 +72,100 @@ export class CouponService {
         minSubtotalPaise: body.minSubtotalPaise ?? 0,
         maxUses: body.maxUses ?? null,
         active: body.active ?? true,
+        startsAt,
+        expiresAt,
       },
     });
+
+    await this.audit.write({
+      actorId,
+      action: 'coupon.created',
+      resource: 'coupon',
+      resourceId: created.id,
+      metadata: {
+        code: created.code,
+        discountPaise: created.discountPaise,
+        discountPercent: created.discountPercent,
+        minSubtotalPaise: created.minSubtotalPaise,
+        maxUses: created.maxUses,
+        startsAt: created.startsAt,
+        expiresAt: created.expiresAt,
+      },
+      requestId,
+    });
+
+    return created;
   }
 
-  async setActive(code: string, active: boolean) {
+  async setActive(code: string, active: boolean, actorId: string, requestId?: string) {
     const coupon = await this.prisma.coupon.findUnique({
       where: { code: code.toUpperCase() },
     });
     if (!coupon) {
-      throw new BadRequestException({
-        code: 'INVALID_COUPON',
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
         message: 'Coupon not found.',
       });
     }
-    return this.prisma.coupon.update({
+    const updated = await this.prisma.coupon.update({
       where: { code: coupon.code },
       data: { active },
     });
+    await this.audit.write({
+      actorId,
+      action: active ? 'coupon.activated' : 'coupon.deactivated',
+      resource: 'coupon',
+      resourceId: updated.id,
+      metadata: { code: updated.code, active },
+      requestId,
+    });
+    return updated;
+  }
+
+  /** Preview discount for an existing code or draft fields (builder). */
+  async preview(body: CouponPreviewBody) {
+    const min = body.minSubtotalPaise ?? 0;
+    if (body.code?.trim()) {
+      try {
+        const result = await this.validate(body.code.trim(), body.subtotalPaise);
+        return {
+          ok: true as const,
+          code: result.code,
+          discountPaise: result.discountPaise,
+          totalAfterPaise: body.subtotalPaise - result.discountPaise,
+        };
+      } catch (e) {
+        const message =
+          e instanceof BadRequestException
+            ? ((e.getResponse() as { message?: string })?.message ?? 'Invalid coupon')
+            : 'Invalid coupon';
+        return { ok: false as const, message: String(message) };
+      }
+    }
+
+    if (body.discountPaise == null && body.discountPercent == null) {
+      throw new BadRequestException({
+        code: 'INVALID_PREVIEW',
+        message: 'Provide code or draft discount fields.',
+      });
+    }
+    if (body.subtotalPaise < min) {
+      return {
+        ok: false as const,
+        message: `Minimum order ${min / 100} INR required.`,
+      };
+    }
+    const discountPaise = computeDiscountPaise({
+      subtotalPaise: body.subtotalPaise,
+      discountPaise: body.discountPaise,
+      discountPercent: body.discountPercent,
+    });
+    return {
+      ok: true as const,
+      code: null,
+      discountPaise,
+      totalAfterPaise: body.subtotalPaise - discountPaise,
+    };
   }
 
   async validate(code: string, subtotalPaise: number): Promise<CouponResult> {
@@ -87,13 +204,11 @@ export class CouponService {
       });
     }
 
-    let discountPaise = 0;
-    if (coupon.discountPaise != null) {
-      discountPaise = coupon.discountPaise;
-    } else if (coupon.discountPercent != null) {
-      discountPaise = Math.floor((subtotalPaise * coupon.discountPercent) / 100);
-    }
-    discountPaise = Math.min(discountPaise, subtotalPaise);
+    const discountPaise = computeDiscountPaise({
+      subtotalPaise,
+      discountPaise: coupon.discountPaise,
+      discountPercent: coupon.discountPercent,
+    });
 
     return { code: coupon.code, discountPaise };
   }

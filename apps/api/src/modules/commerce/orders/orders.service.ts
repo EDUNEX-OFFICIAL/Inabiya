@@ -20,6 +20,34 @@ const FULFILLMENT_NEXT: Partial<Record<OrderStatus, OrderStatus[]>> = {
 
 const CANCELABLE: OrderStatus[] = ['PAID', 'PROCESSING'];
 
+function ageHours(from: Date, now = new Date()): number {
+  return Math.max(0, Math.floor((now.getTime() - from.getTime()) / 3_600_000));
+}
+
+function addressRisk(addr: unknown): boolean {
+  if (!addr || typeof addr !== 'object') return true;
+  const a = addr as Record<string, unknown>;
+  const line1 = String(a.line1 ?? a.addressLine1 ?? '').trim();
+  const city = String(a.city ?? '').trim();
+  const phone = String(a.phone ?? a.mobile ?? '').trim();
+  const pincode = String(a.pincode ?? a.postalCode ?? a.zip ?? '').trim();
+  return !line1 || !city || !phone || !pincode;
+}
+
+export type AdminOrdersListQuery = {
+  status?: string;
+  q?: string;
+  days?: number;
+  payment?: 'FAILED' | 'CAPTURED' | 'PENDING' | 'REFUNDED';
+};
+
+export type AdminStatusUpdate = {
+  status: OrderStatus;
+  carrier?: string;
+  trackingNumber?: string;
+  note?: string;
+};
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -155,22 +183,88 @@ export class OrdersService {
     return input;
   }
 
-  async listAdmin() {
+  async listAdmin(query: AdminOrdersListQuery = {}) {
+    const where: Prisma.OrderWhereInput = {};
+
+    if (query.status) {
+      const statuses = query.status
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean) as OrderStatus[];
+      const valid = statuses.filter((s) => Object.values(OrderStatus).includes(s));
+      if (valid.length === 1) where.status = valid[0];
+      else if (valid.length > 1) where.status = { in: valid };
+    }
+
+    if (query.days && Number.isFinite(query.days)) {
+      const since = new Date();
+      since.setDate(since.getDate() - query.days);
+      since.setHours(0, 0, 0, 0);
+      where.createdAt = { gte: since };
+    }
+
+    if (query.q?.trim()) {
+      const term = query.q.trim();
+      where.OR = [
+        { orderNumber: { contains: term, mode: 'insensitive' } },
+        { user: { email: { contains: term, mode: 'insensitive' } } },
+        { trackingNumber: { contains: term, mode: 'insensitive' } },
+      ];
+    }
+
+    if (query.payment) {
+      where.payments = { some: { status: query.payment as PaymentStatus } };
+    }
+
     const rows = await this.prisma.order.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       take: 100,
-      include: { user: true, items: true, payments: { take: 1, orderBy: { createdAt: 'desc' } } },
+      include: {
+        user: true,
+        items: true,
+        payments: { take: 1, orderBy: { createdAt: 'desc' } },
+        returnRequests: {
+          where: { status: { in: ['REQUESTED', 'APPROVED'] } },
+          select: { id: true },
+        },
+      },
     });
-    return rows.map((o) => ({
-      id: o.id,
-      orderNumber: o.orderNumber,
-      status: o.status,
-      totalPaise: o.totalPaise,
-      customerEmail: o.user.email,
-      itemCount: o.items.reduce((s, i) => s + i.quantity, 0),
-      paymentStatus: o.payments[0]?.status ?? 'PENDING',
-      createdAt: o.createdAt,
-    }));
+
+    const now = new Date();
+    return rows.map((o) => {
+      const paymentStatus = o.payments[0]?.status ?? 'PENDING';
+      const exceptions: string[] = [];
+      if (paymentStatus === 'FAILED' || o.status === 'PAYMENT_FAILED') {
+        exceptions.push('payment_issue');
+      }
+      if (addressRisk(o.shippingAddress)) exceptions.push('address_risk');
+      if (o.returnRequests.length > 0) exceptions.push('open_return');
+      if (
+        (o.status === 'PAID' || o.status === 'PROCESSING') &&
+        ageHours(o.paidAt ?? o.createdAt, now) >= 24
+      ) {
+        exceptions.push('sla_aging');
+      }
+
+      return {
+        id: o.id,
+        orderNumber: o.orderNumber,
+        status: o.status,
+        totalPaise: o.totalPaise,
+        customerEmail: o.user.email,
+        customerName: o.user.displayName,
+        itemCount: o.items.reduce((s, i) => s + i.quantity, 0),
+        paymentStatus,
+        carrier: o.carrier,
+        trackingNumber: o.trackingNumber,
+        createdAt: o.createdAt,
+        paidAt: o.paidAt,
+        ageHours: ageHours(o.paidAt ?? o.createdAt, now),
+        exceptions,
+        openReturnCount: o.returnRequests.length,
+      };
+    });
   }
 
   async getAdmin(orderId: string) {
@@ -182,13 +276,41 @@ export class OrdersService {
         payments: true,
         statusHistory: { orderBy: { createdAt: 'asc' } },
         notes: { orderBy: { createdAt: 'asc' }, include: { author: true } },
+        returnRequests: {
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, status: true, reason: true, createdAt: true },
+        },
       },
     });
     if (!order) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Order not found.' });
     }
+
+    const paymentIssue = order.payments.some((p) => p.status === 'FAILED') ||
+      order.status === 'PAYMENT_FAILED';
+    const addrRisk = addressRisk(order.shippingAddress);
+    const openReturns = order.returnRequests.filter(
+      (r) => r.status === 'REQUESTED' || r.status === 'APPROVED',
+    );
+    const exceptions: string[] = [];
+    if (paymentIssue) exceptions.push('payment_issue');
+    if (addrRisk) exceptions.push('address_risk');
+    if (openReturns.length > 0) exceptions.push('open_return');
+    if (
+      (order.status === 'PAID' || order.status === 'PROCESSING') &&
+      ageHours(order.paidAt ?? order.createdAt) >= 24
+    ) {
+      exceptions.push('sla_aging');
+    }
+
+    const next = [...(FULFILLMENT_NEXT[order.status] ?? [])];
+    if (CANCELABLE.includes(order.status)) next.push(OrderStatus.CANCELLED);
+
     return {
       ...this.mapDetail(order),
+      carrier: order.carrier,
+      trackingNumber: order.trackingNumber,
+      shippedAt: order.shippedAt,
       customer: {
         id: order.user.id,
         email: order.user.email,
@@ -208,7 +330,14 @@ export class OrdersService {
         authorEmail: n.author?.email ?? null,
         createdAt: n.createdAt,
       })),
+      returns: order.returnRequests,
+      openReturnCount: openReturns.length,
+      exceptions,
+      allowedNextStatuses: next,
       canCancel: CANCELABLE.includes(order.status),
+      canFulfill: !paymentIssue && order.status !== 'PAYMENT_FAILED' && order.status !== 'PENDING_PAYMENT',
+      ageHours: ageHours(order.paidAt ?? order.createdAt),
+      addressRisk: addrRisk,
     };
   }
 
@@ -224,10 +353,11 @@ export class OrdersService {
 
   async updateStatusAdmin(
     orderId: string,
-    status: OrderStatus,
+    body: AdminStatusUpdate,
     actorId: string,
     requestId?: string,
   ) {
+    const { status } = body;
     if (status === OrderStatus.CANCELLED) {
       return this.cancelAndRefundAdmin(orderId, actorId, requestId);
     }
@@ -242,24 +372,100 @@ export class OrdersService {
         message: `Cannot move order from ${order.status} to ${status}.`,
       });
     }
-    const updated = await this.prisma.order.update({
-      where: { id: orderId },
-      data: {
-        status,
-        statusHistory: {
-          create: { status, note: `Admin updated to ${status}` },
-        },
+
+    if (status === OrderStatus.SHIPPED || status === OrderStatus.DELIVERED) {
+      const payFail =
+        order.status === OrderStatus.PAYMENT_FAILED ||
+        order.status === OrderStatus.PENDING_PAYMENT;
+      if (payFail) {
+        throw new BadRequestException({
+          code: 'PAYMENT_BLOCKED',
+          message: 'Cannot fulfill an order with unresolved payment.',
+        });
+      }
+    }
+
+    const historyNote =
+      body.note?.trim() ||
+      (status === OrderStatus.SHIPPED && body.trackingNumber
+        ? `Shipped via ${body.carrier ?? 'carrier'} · ${body.trackingNumber}`
+        : `Admin updated to ${status}`);
+
+    const data: Prisma.OrderUpdateInput = {
+      status,
+      statusHistory: {
+        create: { status, note: historyNote },
       },
+    };
+
+    if (status === OrderStatus.SHIPPED) {
+      data.shippedAt = new Date();
+      if (body.carrier?.trim()) data.carrier = body.carrier.trim();
+      if (body.trackingNumber?.trim()) data.trackingNumber = body.trackingNumber.trim();
+    }
+
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data,
     });
     await this.audit.write({
       actorId,
       action: 'order.status.updated',
       resource: 'order',
       resourceId: orderId,
-      metadata: { status, from: order.status },
+      metadata: {
+        status,
+        from: order.status,
+        carrier: body.carrier ?? null,
+        trackingNumber: body.trackingNumber ?? null,
+      },
       requestId,
     });
-    return updated;
+    return this.getAdmin(orderId);
+  }
+
+  async bulkUpdateStatusAdmin(
+    body: {
+      ids: string[];
+      status: 'PROCESSING' | 'SHIPPED' | 'DELIVERED';
+      carrier?: string;
+      trackingNumber?: string;
+      note?: string;
+    },
+    actorId: string,
+    requestId?: string,
+  ) {
+    const results: Array<{ id: string; ok: boolean; error?: string }> = [];
+    for (const id of body.ids) {
+      try {
+        await this.updateStatusAdmin(
+          id,
+          {
+            status: body.status,
+            carrier: body.carrier,
+            trackingNumber: body.trackingNumber,
+            note: body.note,
+          },
+          actorId,
+          requestId,
+        );
+        results.push({ id, ok: true });
+      } catch (e) {
+        results.push({
+          id,
+          ok: false,
+          error: e instanceof Error ? e.message : 'failed',
+        });
+      }
+    }
+    await this.audit.write({
+      actorId,
+      action: 'order.bulk.status',
+      resource: 'order',
+      metadata: { status: body.status, ids: body.ids, results },
+      requestId,
+    });
+    return { status: body.status, results };
   }
 
   /**

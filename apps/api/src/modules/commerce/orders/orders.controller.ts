@@ -1,7 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
-import { OrderStatus } from '@prisma/client';
-import { adminOrderStatusSchema, orderNoteBodySchema } from '@inabiya/validation';
+import {
+  adminOrdersQuerySchema,
+  adminOrderStatusSchema,
+  bulkOrdersBodySchema,
+  orderNoteBodySchema,
+  type AdminOrdersQuery,
+  type AdminOrderStatusBody,
+  type BulkOrdersBody,
+} from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
 import { CurrentUser } from '../../identity/current-user.decorator';
@@ -50,16 +57,28 @@ export class OrdersAdminController {
   constructor(private readonly orders: OrdersService) {}
 
   @Get()
-  list() {
-    return this.orders.listAdmin();
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'FINANCE')
+  list(@Query(new ZodValidationPipe(adminOrdersQuerySchema)) query: AdminOrdersQuery) {
+    return this.orders.listAdmin(query);
+  }
+
+  @Post('bulk')
+  bulkStatus(
+    @Body(new ZodValidationPipe(bulkOrdersBodySchema)) body: BulkOrdersBody,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.orders.bulkUpdateStatusAdmin(body, user.id, String(req.id ?? ''));
   }
 
   @Get(':id')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'FINANCE')
   get(@Param('id') id: string) {
     return this.orders.getAdmin(id);
   }
 
   @Post(':id/notes')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT')
   addNote(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(orderNoteBodySchema)) body: { body: string },
@@ -69,6 +88,7 @@ export class OrdersAdminController {
   }
 
   @Post(':id/cancel')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
   cancel(@Param('id') id: string, @CurrentUser() user: { id: string }, @Req() req: AuthedRequest) {
     return this.orders.cancelAndRefundAdmin(id, user.id, String(req.id ?? ''));
   }
@@ -76,10 +96,10 @@ export class OrdersAdminController {
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(adminOrderStatusSchema)) body: { status: OrderStatus },
+    @Body(new ZodValidationPipe(adminOrderStatusSchema)) body: AdminOrderStatusBody,
     @CurrentUser() user: { id: string },
     @Req() req: AuthedRequest,
   ) {
-    return this.orders.updateStatusAdmin(id, body.status, user.id, String(req.id ?? ''));
+    return this.orders.updateStatusAdmin(id, body, user.id, String(req.id ?? ''));
   }
 }

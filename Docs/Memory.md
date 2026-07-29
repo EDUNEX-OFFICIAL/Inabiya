@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 29, 2026 (hero mobile text-first)
+Last Updated: July 29, 2026 (Phase 13 IMPLEMENTATION_AUDIT cross-check)
 
 
 ---
@@ -72,13 +72,14 @@ Path: `/srv/Inabiya/Docs/` (symlink `docs` → `Docs` for Cursor rules)
 
 | Field | Value |
 |---|---|
-| Phase | **Phase 12 — CMS TipTap + saleStrip + media** |
-| Status | **Shipped** (TipTap, saleStrip, media library/upload; real S3 SDK deferred) |
-| Milestone | Page-builder §12 complete |
+| Phase | **Phase 13 / OPS-9 — Power-user polish** |
+| Status | **OPS-9 Shipped** — **Phase 13 complete** |
+| Milestone | Professional commerce ops deepen (OPS-0…9) |
 | Owner | Eng |
-| Target window | 2026-07-22 |
+| Target window | 2026-07-29+ |
 | Monorepo | `/srv/Inabiya` (GitHub: `EDUNEX-OFFICIAL/Inabiya`) |
-| Prior | Ecommerce marketing CMS / Phase 11 CLOSED |
+| Authority | [`Docs/COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md) |
+| Prior | OPS-8 Settings & trust shipped |
 
 ### 3.2 Locked production stack
 
@@ -108,13 +109,14 @@ Path: `/srv/Inabiya/Docs/` (symlink `docs` → `Docs` for Cursor rules)
 | Phases.md | Expanded delivery authority | **2.0.0** |
 | Design.md | Expanded **triple**-system authority | **2.1.0** |
 | Memory.md | Expanded living memory | **2.0.0** |
+| COMMERCE_OPS_PANEL.md | Phase 13 OPS journey; OPS-0…9 **complete** | **2.0.0** |
 
 ### 3.5 Product implementation status
 
 | Product | Status | Notes |
 |---|---|---|
 | A Gift Commerce | Phase 5 leftovers closed | Analytics, account, abandonment |
-| B Commerce Admin | Phase 4 leftovers closed | Bulk edits, reports, support |
+| B Commerce Admin | Phase 13 OPS-0…9 **complete** | Soft Gift ops desk live |
 | C Editorial | Phase 7 closed | Public publish + TipTap + writer payments |
 | D Creator Collective | Phase 8 closed | Reverse-bid path + brand analytics |
 | Shared Platform | Phase 1 + 9 closed | Mail/S3 stubs; real providers deferred |
@@ -139,11 +141,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **Ecommerce OPS panel** — next track (user)
+1. **Human:** Soft Gift Commerce + CMS panel live QA (pause further build until feedback)
 2. Replace CC0 demo MP4 with real unboxing when assets ready
 3. Cloudflare SSL / public DNS — **post-dev**
-4. Razorpay — **post-dev**
-5. Real AWS/MinIO + SMTP — **post-dev**
+4. Razorpay / real AWS+SMTP — **post-dev**
+5. After QA: OPS Phase 13 P1 leftovers (cursor pagination, mobile triage, product CSV, media picker)
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -176,6 +178,92 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-07-29 — Phase 13 IMPLEMENTATION_AUDIT cross-check
+
+- `IMPLEMENTATION_AUDIT.md`: Phase 13 **P0 Closed**; per-OPS evidence table + honest P1 gaps
+- Static verification (files/migrations/symbols); browser matrix not re-run this pass
+- Next: live Soft Gift ops QA when needed; post-dev providers unchanged
+
+### 2026-07-29 — OPS-9 Power-user polish shipped (Phase 13 complete)
+
+- Shortcuts: ⌘K `/` `g+o/p/i…` `?` help; order pin views; bulk → PROCESSING
+- Stock CSV import dry-run/commit (`/admin/commerce/import`); Zod rows + audit
+- IMPLEMENTATION_AUDIT Phase 13 cross-check done same day; P1 leftovers remain
+
+### 2026-07-29 — OPS-8 Settings & trust shipped
+
+- Policy hub: return window, low-stock threshold, shipping copy → `commerce_settings` + audit
+- Audit viewer: filter/paginate; roles matrix; dashboard/inventory use policy threshold
+- Next: OPS-9 Power-user polish
+
+### 2026-07-29 — OPS-7 Reports shipped
+
+- Gallery: sales/products/inventory/returns/coupons/funnel; sales prev-period + sparkline + CSV
+- APIs: `/reports/sales|products|inventory|returns|coupons` (paise); Finance read roles
+- Next: OPS-8 Settings & trust
+
+### 2026-07-29 — OPS-6 Promotions shipped (+ OPS-5 xcheck)
+
+- OPS-5 xcheck: P0 ok; customer 360 roles refresh from `/auth/me`
+- Promotions desk: list type/schedule/status/usage; builder + preview; generate/deactivate; audit create/activate
+- Ceiling: one coupon per cart (stack matrix P2)
+- Next: OPS-7 Reports
+
+### 2026-07-29 — OPS-5 CRM & support shipped
+
+- Customers desk: search/status/LTV/segments; Customer 360 (addresses, orders, notes, inquiries)
+- Support desk: email/phone/order lookup + inquiries/returns links; suspend blocks checkout
+- Next: OPS-6 Promotions
+
+### 2026-07-29 — OPS-2 Catalog desk shipped
+
+- Products power-table: `?q`/`?status`, stock column, tags, sticky bulk bar; admin list API filters
+- Product edit sectioned (basics/SEO/media/tags/variants) + publish + inventory desk links
+- Categories desk + nav; merchandising polish (CMS home + legacy pins + /gift preview)
+- Next: OPS-5 CRM & support
+
+### 2026-07-29 — OPS-3 Inventory ops shipped
+
+- `InventoryMovement` ledger + adjust API (RECEIVE/DAMAGE/RECOUNT/CORRECTION)
+- Never available-negative (`onHand >= reserved`); audit `inventory.adjusted`
+- Desk UI: list, low-stock board, adjust sheet, history sheet
+- Catalog absolute inventory set routes through same ledger (CORRECTION)
+- OPS-4 cross-check: order detail roles refresh from `/auth/me`
+- Next: OPS-2 Catalog desk
+
+### 2026-07-29 — OPS-4 Order desk shipped
+
+- Queue: status chips, search, age window, exception badges, list/board toggle
+- Case file: customer/address, lines+personalization, payment, notes, timeline, print pack slip
+- Carrier + trackingNumber + shippedAt (migration `20260729190000_ops4_order_shipping`)
+- AuthZ: Support notes; Finance cancel; Commerce fulfill; payment blocks ship
+- Next: OPS-3 Inventory ops
+
+### 2026-07-29 — OPS-1 Command center + OPS-0 responsive harden
+
+- Shell: `100dvh`, safe-area, scroll-lock drawers, mobile header 2-row, bottom-sheet ⌘K, tap-sized nav
+- `OpsTableScroll` on orders/products/reports; product edit lost double padding
+- Dashboard `?range=1|7|30`; alert cards deep-link orders/returns/inventory; Refresh + relative age
+- Orders list honors `?status=` / `?focus=failed-payments`
+- Next: OPS-4 Order desk
+
+### 2026-07-29 — OPS-0 Commerce Shell & IA shipped
+
+- `CommerceOpsShell`: sidebar IA, breadcrumbs, role chip, Payments:mock cue, ⌘K jump palette
+- Role-gated nav: SUPPORT/FINANCE reduced; API read access for Support (orders/customers/search) + Finance reports
+- Placeholders: `/inventory`, `/settings`; login redirects Support → support desk, Finance → reports
+- Check: `pnpm exec tsx apps/web/lib/commerce-ops-nav.check.ts`
+- Next: OPS-1 Command center
+
+### 2026-07-29 — Commerce OPS Panel journey (Phase 13)
+
+- Human: move to commerce ops panel; document full development journey before coding one-by-one.
+- **Authority:** `Docs/COMMERCE_OPS_PANEL.md` v1.0.0 — OPS-0…9 contracts (UI/UX + functionality).
+- **Phases.md** §26 Phase 13 pointer added.
+- Active Phase → Phase 13; first build = **OPS-0 Shell & IA** (not started).
+- Baseline: Phase 4 MVP remains; journey **deepens**, does not replace stack/theme locks.
+- Build order: OPS-0 → 1 → 4 → 3 → 2 → 5 → 6 → 7 → 8 → 9.
 
 ### 2026-07-29 — Brand line + hamper card contents modal
 
@@ -945,6 +1033,85 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-07-29 (deploy + push for Commerce/CMS QA)
+
+- Commit + push Phase 13 OPS desk + audit; deploy web+api for human QA
+- Next actions: pause further build until Commerce + CMS panel feedback
+
+### Session — 2026-07-29 (Phase 13 audit cross-check)
+
+- Honest Phase 13 section added to IMPLEMENTATION_AUDIT; P0 pass / P1 listed
+- No code change beyond docs
+
+### Session — 2026-07-29 (OPS-9 Power-user)
+
+- Shortcuts + saved views + order bulk + inventory CSV import
+- Phase 13 OPS-0…9 closed in Memory/Phases/COMMERCE_OPS_PANEL v2.0.0
+
+### Session — 2026-07-29 (OPS-8 Settings & trust)
+
+- `/admin/commerce/policy` + `/audit`; settings UI tabs; low-stock from policy
+- Next: OPS-9
+
+### Session — 2026-07-29 (OPS-7 Reports)
+
+- Sales report aligned to dashboard window; CSV export; gallery cards
+- Next: OPS-8
+
+### Session — 2026-07-29 (OPS-5 xcheck + OPS-6 Promotions)
+
+- Verified OPS-5 AuthZ/checkout/suspend/LTV/support phone path
+- OPS-6 coupon schedule + preview API + promotions UI
+- Next: OPS-7
+
+### Session — 2026-07-29 (OPS-5 CRM & support)
+
+- Customer list filters + LTV; 360 page; support phone search; checkout suspend gate
+- Next: OPS-6
+
+### Session — 2026-07-29 (OPS-2 Catalog desk)
+
+- Catalog desk: power table + filters API; categories page; merchandising polish; edit sections
+- Next: OPS-5
+
+### Session — 2026-07-29 (OPS-3 Inventory + OPS-4 xcheck)
+
+- Cross-checked OPS-4 APIs (orders filters/exceptions ok); AuthZ refresh on case file
+- OPS-3: migration movements, admin inventory APIs, desk UI
+- Checks + typecheck ok; deploy web+api
+- Next: OPS-2
+
+### Session — 2026-07-29 (OPS-4 Order desk)
+
+- Order desk queue + case-file UI; board view P1; packing print
+- API list filters + exceptions; status update with carrier/AWB
+- Migration applied; address-risk check; typecheck + redeploy web/api
+- Next: OPS-3 Inventory
+
+### Session — 2026-07-29 (OPS-1 + responsive OPS-0)
+
+- Cross-checked OPS-0 mobile: shell/header/tables/palette fixed for small viewports
+- OPS-1 command center: range KPIs, alert inbox deep-links, quick actions, refresh
+- API dashboard range + openReturns / pendingShip / awaitingProcess
+- Typecheck ok; deploy web+api
+- Next: OPS-4
+
+### Session — 2026-07-29 (OPS-0 Shell & IA)
+
+- Shipped commerce ops shell under `gift` + `compact`
+- Files: `commerce-ops-shell.tsx`, `commerce-ops-nav.ts`, layout wire, inventory/settings stubs
+- AuthZ: Support/Finance read paths on orders/customers/reports/reviews/returns
+- Nav unit check ok; web+api typecheck ok
+- Deployed `inabiya-web` + `inabiya-api` (compose prod)
+- Next: OPS-1
+
+### Session — 2026-07-29 (Commerce OPS journey doc)
+
+- Docs only: `COMMERCE_OPS_PANEL.md` v1.0.0 (OPS-0…9 UI/UX + func contracts)
+- `Phases.md` §26 Phase 13 pointer; Memory Active Phase → Phase 13 (awaiting OPS-0)
+- No app code this session
+- Next: implement OPS-0 Shell & IA one-by-one
 
 ### Session — 2026-07-29 (hero mobile text-first)
 - Soft Gift + corporate hero: mobile order text then image (removed order-2/order-1 swap).

@@ -30,6 +30,7 @@ model User {
   addresses    CustomerAddress[]
   orders       Order[]
   orderNotes   OrderNote[]
+  inventoryMovements InventoryMovement[]
   reviews      ProductReview[]
   moderatedReviews ProductReview[] @relation("ReviewModerator")
   returnRequests ReturnRequest[]
@@ -253,6 +254,7 @@ model ProductVariant {
   updatedAt           DateTime        @updatedAt @map("updated_at")
   product             Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
   inventory        InventoryItem?
+  inventoryMovements InventoryMovement[]
   wishlistItems    WishlistItem[]
   giftBoxItems     GiftBoxItem[]
   cartItems        CartItem[]
@@ -268,8 +270,41 @@ model InventoryItem {
   onHand    Int            @default(0) @map("on_hand")
   reserved  Int            @default(0)
   variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  movements InventoryMovement[]
 
   @@map("inventory_items")
+}
+
+enum InventoryMovementReason {
+  RECEIVE
+  DAMAGE
+  RECOUNT
+  CORRECTION
+  RESERVE
+  RELEASE
+  COMMIT
+  RESTOCK
+}
+
+/// OPS-3 — every stock change must leave an auditable trail
+model InventoryMovement {
+  id            String                   @id @default(uuid()) @db.Uuid
+  variantId     String                   @map("variant_id") @db.Uuid
+  inventoryId   String                   @map("inventory_id") @db.Uuid
+  deltaOnHand   Int                      @map("delta_on_hand")
+  reason        InventoryMovementReason
+  note          String?
+  actorId       String?                  @map("actor_id") @db.Uuid
+  onHandAfter   Int                      @map("on_hand_after")
+  reservedAfter Int                      @map("reserved_after")
+  createdAt     DateTime                 @default(now()) @map("created_at")
+  inventory     InventoryItem            @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  variant       ProductVariant           @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  actor         User?                    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([variantId, createdAt])
+  @@index([inventoryId])
+  @@map("inventory_movements")
 }
 
 model ProductMedia {
@@ -467,6 +502,9 @@ model Order {
   giftWrap        Boolean            @default(false) @map("gift_wrap")
   shippingAddress Json               @map("shipping_address")
   billingAddress  Json?              @map("billing_address")
+  carrier         String?            @map("carrier")
+  trackingNumber  String?            @map("tracking_number")
+  shippedAt       DateTime?          @map("shipped_at")
   createdAt       DateTime           @default(now()) @map("created_at")
   updatedAt       DateTime           @updatedAt @map("updated_at")
   paidAt          DateTime?          @map("paid_at")

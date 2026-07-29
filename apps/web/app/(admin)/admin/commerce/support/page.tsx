@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
+import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 
 type SearchResult = {
   orders: Array<{
@@ -13,15 +14,53 @@ type SearchResult = {
     status: string;
     totalPaise: number;
     customerEmail: string;
+    customerId?: string;
+    phone?: string | null;
   }>;
-  customers: Array<{ id: string; email: string; displayName: string | null }>;
+  customers: Array<{
+    id: string;
+    email: string;
+    displayName: string | null;
+    isActive?: boolean;
+    phone?: string | null;
+  }>;
+  inquiries?: Array<{
+    id: string;
+    type: string;
+    email: string;
+    fullName: string;
+    phone: string | null;
+    status: string;
+    createdAt: string;
+  }>;
+};
+
+type Inquiry = {
+  id: string;
+  type: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  status: string;
+  createdAt: string;
 };
 
 export default function SupportLookupPage() {
   const router = useRouter();
   const [q, setQ] = useState('');
   const [result, setResult] = useState<SearchResult | null>(null);
+  const [recentInquiries, setRecentInquiries] = useState<Inquiry[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!getStoredAccessToken()) {
+      router.replace('/login');
+      return;
+    }
+    apiAuth<Inquiry[]>('/admin/commerce/gifting-inquiries')
+      .then((rows) => setRecentInquiries(rows.slice(0, 5)))
+      .catch(() => setRecentInquiries([]));
+  }, [router]);
 
   async function lookup(e: React.FormEvent) {
     e.preventDefault();
@@ -41,30 +80,42 @@ export default function SupportLookupPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <Link href="/admin/commerce" className="text-sm underline opacity-70">
-        ← Ops
-      </Link>
-      <h1 className="text-2xl font-semibold mt-4">Support lookup</h1>
-      <p className="text-sm opacity-70 mt-1">Search by order number or customer email.</p>
+    <div className="max-w-2xl">
+      <OpsPageHeader
+        title="Support desk"
+        description="Lookup by order #, email, or phone — then open order / customer in under 3 clicks."
+        actions={
+          <>
+            <Link href="/admin/commerce/customers" className="clay-btn-secondary text-sm">
+              Customers
+            </Link>
+            <Link href="/admin/commerce/gifting-inquiries" className="clay-btn-secondary text-sm">
+              Inquiries
+            </Link>
+            <Link href="/admin/commerce/returns" className="clay-btn-secondary text-sm">
+              Returns
+            </Link>
+          </>
+        }
+      />
 
       <form
-        className="mt-4 flex gap-2"
+        className="mt-2 flex flex-col gap-2 sm:flex-row"
         onSubmit={(e) => void lookup(e)}
         aria-label="Support search"
       >
         <label className="sr-only" htmlFor="support-q">
-          Order number or email
+          Order number, email, or phone
         </label>
         <input
           id="support-q"
-          className="flex-1 rounded border px-3 py-2 text-sm"
+          className="min-h-10 flex-1 rounded border px-3 py-2 text-sm"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="INB-… or email"
+          placeholder="INB-… / email / phone"
           required
         />
-        <button type="submit" className="rounded border px-3 py-2 text-sm">
+        <button type="submit" className="clay-btn min-h-10 px-3 text-sm">
           Lookup
         </button>
       </form>
@@ -80,11 +131,25 @@ export default function SupportLookupPage() {
               ) : (
                 result.orders.map((o) => (
                   <li key={o.id} className="rounded border p-3">
-                    <Link className="font-medium underline" href={`/admin/commerce/orders/${o.id}`}>
-                      {o.orderNumber}
-                    </Link>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                      <Link
+                        className="font-medium underline"
+                        href={`/admin/commerce/orders/${o.id}`}
+                      >
+                        {o.orderNumber}
+                      </Link>
+                      {o.customerId ? (
+                        <Link
+                          className="underline opacity-80"
+                          href={`/admin/commerce/customers/${o.customerId}`}
+                        >
+                          Customer 360
+                        </Link>
+                      ) : null}
+                    </div>
                     <p className="opacity-70">
                       {o.status} · {formatInr(o.totalPaise)} · {o.customerEmail}
+                      {o.phone ? ` · ${o.phone}` : ''}
                     </p>
                   </li>
                 ))
@@ -98,18 +163,72 @@ export default function SupportLookupPage() {
                 <li className="opacity-70">No customers.</li>
               ) : (
                 result.customers.map((c) => (
-                  <li key={c.id}>
-                    <Link className="underline" href={`/admin/commerce/customers/${c.id}`}>
+                  <li key={c.id} className="rounded border p-2">
+                    <Link className="underline font-medium" href={`/admin/commerce/customers/${c.id}`}>
                       {c.email}
                     </Link>
-                    {c.displayName ? ` — ${c.displayName}` : ''}
+                    <p className="text-xs opacity-70">
+                      {c.displayName ? `${c.displayName} · ` : ''}
+                      {c.phone ?? 'no phone'}
+                      {c.isActive === false ? ' · suspended' : ''}
+                    </p>
                   </li>
                 ))
               )}
             </ul>
           </section>
+          {result.inquiries && result.inquiries.length > 0 ? (
+            <section>
+              <h2 className="font-medium">Matching inquiries</h2>
+              <ul className="mt-2 space-y-1">
+                {result.inquiries.map((i) => (
+                  <li key={i.id} className="rounded border p-2">
+                    <p className="font-medium">
+                      {i.type} · {i.fullName} · {i.status}
+                    </p>
+                    <p className="text-xs opacity-70">
+                      {i.email}
+                      {i.phone ? ` · ${i.phone}` : ''}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/admin/commerce/gifting-inquiries"
+                className="mt-2 inline-block text-xs underline"
+              >
+                View all inquiries
+              </Link>
+            </section>
+          ) : null}
         </div>
-      ) : null}
-    </main>
+      ) : (
+        <section className="mt-8 rounded border border-[color:var(--gift-line)] p-4 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-medium">Recent inquiries</h2>
+            <Link href="/admin/commerce/gifting-inquiries" className="text-xs underline">
+              All
+            </Link>
+          </div>
+          <ul className="mt-2 space-y-2">
+            {recentInquiries.length === 0 ? (
+              <li className="opacity-70">No recent inquiries.</li>
+            ) : (
+              recentInquiries.map((i) => (
+                <li key={i.id} className="border-b py-2">
+                  <p className="font-medium">
+                    {i.type} · {i.fullName}
+                  </p>
+                  <p className="text-xs opacity-70">
+                    {i.email}
+                    {i.phone ? ` · ${i.phone}` : ''} · {i.status}
+                  </p>
+                </li>
+              ))
+            )}
+          </ul>
+        </section>
+      )}
+    </div>
   );
 }

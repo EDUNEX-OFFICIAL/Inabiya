@@ -28,11 +28,8 @@ export default function AdminSearchPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-lg">
-      <Link href="/admin/commerce" className="text-sm underline opacity-70">
-        ← Dashboard
-      </Link>
-      <h1 className="text-2xl font-semibold mt-4">Search</h1>
+    <main className="w-full max-w-lg">
+<h1 className="text-2xl font-semibold mt-4">Search</h1>
       <form onSubmit={onSearch} className="mt-4 flex gap-2">
         <input
           className="flex-1 rounded border px-2 py-1 text-sm"

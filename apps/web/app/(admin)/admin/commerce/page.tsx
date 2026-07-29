@@ -1,144 +1,303 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { apiAuth, clearSession, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
+import { apiAuth, getStoredUser, type AuthUser } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
+import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
+import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
+
+type RangeDays = 1 | 7 | 30;
 
 type Dashboard = {
+  rangeDays: number;
+  generatedAt: string;
   kpis: {
     orderCount: number;
     revenuePaise: number;
-    todayRevenuePaise: number;
     aovPaise: number;
+    ordersToday: number;
+    todayRevenuePaise: number;
     pendingFulfillment: number;
+    pendingShip: number;
+    awaitingProcess: number;
   };
   alerts: {
     failedPayments: number;
-    lowStock: Array<{ sku: string; productTitle: string; available: number }>;
+    openReturns: number;
+    pendingFulfillment: number;
+    pendingShip: number;
+    awaitingProcess: number;
+    lowStock: Array<{
+      sku: string;
+      productTitle: string;
+      productId: string;
+      available: number;
+    }>;
   };
 };
 
+const RANGES: Array<{ days: RangeDays; label: string }> = [
+  { days: 1, label: 'Today' },
+  { days: 7, label: '7 days' },
+  { days: 30, label: '30 days' },
+];
+
+function relativeAge(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return 'just now';
+  if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m ago`;
+  return `${Math.floor(ms / 3_600_000)}h ago`;
+}
+
 export default function CommerceAdminPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(getStoredUser());
+  const [range, setRange] = useState<RangeDays>(7);
   const [dash, setDash] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async (days: RangeDays) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const u = await apiAuth<AuthUser>('/auth/me');
+      setUser(u);
+      if (!u.roles.includes('COMMERCE_ADMIN') && !u.roles.includes('SUPER_ADMIN')) {
+        setError('Dashboard requires Commerce Admin.');
+        setDash(null);
+        return;
+      }
+      const d = await apiAuth<Dashboard>(`/admin/commerce/dashboard?range=${days}`);
+      setDash(d);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load dashboard');
+      setDash(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!getStoredAccessToken()) {
-      router.replace('/login');
-      return;
-    }
-    apiAuth<AuthUser>('/auth/me')
-      .then((u) => {
-        if (!u.roles.includes('COMMERCE_ADMIN') && !u.roles.includes('SUPER_ADMIN')) {
-          setError('Commerce Admin role required.');
-          return;
-        }
-        setUser(u);
-        return apiAuth<Dashboard>('/admin/commerce/dashboard');
-      })
-      .then((d) => d && setDash(d))
-      .catch(() => {
-        clearSession();
-        router.replace('/login');
-      });
-  }, [router]);
+    void load(range);
+  }, [load, range]);
 
-  if (error) {
+  if (error && !dash) {
     return (
-      <main className="min-h-screen p-8">
-        <p className="text-red-600">{error}</p>
-        <Link className="underline" href="/login">
-          Sign in
-        </Link>
-      </main>
+      <div>
+        <OpsPageHeader title="Command center" />
+        <p className="text-sm text-red-600">{error}</p>
+      </div>
     );
   }
 
-  if (!user || !dash) {
-    return <main className="min-h-screen p-8 text-sm opacity-70">Loading ops console…</main>;
-  }
-
   return (
-    <main className="min-h-screen p-8 bg-[var(--background)] text-[var(--foreground)]">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl">Commerce Ops</h1>
-          <p className="mt-1 text-sm opacity-80">
-            Signed in as {user.email}
-            {user.roles.includes('COMMERCE_ADMIN') ? ' (COMMERCE_ADMIN)' : ''}
-          </p>
-        </div>
-        <button
-          type="button"
-          className="rounded border px-3 py-1.5 text-sm"
-          onClick={() => {
-            clearSession();
-            window.location.href = '/login';
-          }}
-        >
-          Log out
-        </button>
-      </div>
+    <div className="space-y-5">
+      <OpsPageHeader
+        title="Command center"
+        description={
+          user
+            ? `${user.email}${dash ? ` · updated ${relativeAge(dash.generatedAt)}` : ''}`
+            : undefined
+        }
+        actions={
+          <>
+            <div
+              className="flex w-full max-w-full overflow-x-auto rounded-lg border border-[var(--border-subtle)] sm:w-auto"
+              role="group"
+              aria-label="Date range"
+            >
+              {RANGES.map((r) => (
+                <button
+                  key={r.days}
+                  type="button"
+                  className={`min-h-10 flex-1 whitespace-nowrap px-3 text-xs font-medium sm:flex-none ${
+                    range === r.days
+                      ? 'bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] text-[var(--primary)]'
+                      : 'opacity-70 hover:opacity-100'
+                  }`}
+                  aria-pressed={range === r.days}
+                  onClick={() => setRange(r.days)}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="clay-btn-secondary min-h-10 text-sm"
+              disabled={loading}
+              onClick={() => void load(range)}
+            >
+              {loading ? 'Refreshing…' : 'Refresh'}
+            </button>
+          </>
+        }
+      />
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded border p-4">
-          <p className="text-xs uppercase opacity-60">Orders</p>
-          <p className="text-2xl font-semibold">{dash.kpis.orderCount}</p>
-        </div>
-        <div className="rounded border p-4">
-          <p className="text-xs uppercase opacity-60">Revenue</p>
-          <p className="text-2xl font-semibold">{formatInr(dash.kpis.revenuePaise)}</p>
-        </div>
-        <div className="rounded border p-4">
-          <p className="text-xs uppercase opacity-60">Today</p>
-          <p className="text-2xl font-semibold">{formatInr(dash.kpis.todayRevenuePaise)}</p>
-        </div>
-        <div className="rounded border p-4">
-          <p className="text-xs uppercase opacity-60">AOV</p>
-          <p className="text-2xl font-semibold">{formatInr(dash.kpis.aovPaise)}</p>
-        </div>
-      </div>
+      {loading && !dash ? <p className="text-sm opacity-70">Loading command center…</p> : null}
 
-      {(dash.alerts.failedPayments > 0 || dash.alerts.lowStock.length > 0) && (
-        <section className="mt-6 rounded border border-amber-200 bg-amber-50 p-4 text-sm">
-          <h2 className="font-medium">Alerts</h2>
-          {dash.alerts.failedPayments > 0 ? (
-            <p className="mt-1">Failed payments: {dash.alerts.failedPayments}</p>
+      {dash ? (
+        <>
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+            <Kpi
+              label={range === 1 ? 'Orders today' : `Orders (${range}d)`}
+              value={String(dash.kpis.orderCount)}
+            />
+            <Kpi label={range === 1 ? 'Revenue today' : `Revenue (${range}d)`} value={formatInr(dash.kpis.revenuePaise)} />
+            <Kpi label="AOV" value={formatInr(dash.kpis.aovPaise)} />
+            <Kpi
+              label="Open fulfillments"
+              value={String(dash.kpis.pendingFulfillment)}
+              href="/admin/commerce/orders?status=PAID,PROCESSING"
+            />
+          </div>
+
+          {range !== 1 ? (
+            <p className="text-xs opacity-55">
+              Calendar today: {dash.kpis.ordersToday} orders · {formatInr(dash.kpis.todayRevenuePaise)}
+            </p>
           ) : null}
+
+          <section className="clay-panel p-3 sm:p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-display text-lg">Needs attention</h2>
+              <span className="text-[11px] opacity-50">Tap a card to open the queue</span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              <AlertCard
+                title="Awaiting process"
+                count={dash.alerts.awaitingProcess}
+                href="/admin/commerce/orders?status=PAID"
+                tone={dash.alerts.awaitingProcess > 0 ? 'warn' : 'ok'}
+              />
+              <AlertCard
+                title="Ready to ship"
+                count={dash.alerts.pendingShip}
+                href="/admin/commerce/orders?status=PROCESSING"
+                tone={dash.alerts.pendingShip > 0 ? 'warn' : 'ok'}
+              />
+              <AlertCard
+                title="Failed payments"
+                count={dash.alerts.failedPayments}
+                href="/admin/commerce/orders?focus=failed-payments"
+                tone={dash.alerts.failedPayments > 0 ? 'danger' : 'ok'}
+              />
+              <AlertCard
+                title="Open returns"
+                count={dash.alerts.openReturns}
+                href="/admin/commerce/returns?status=REQUESTED"
+                tone={dash.alerts.openReturns > 0 ? 'warn' : 'ok'}
+              />
+              <AlertCard
+                title="Low stock SKUs"
+                count={dash.alerts.lowStock.length}
+                href="/admin/commerce/inventory?lowStock=1"
+                tone={dash.alerts.lowStock.length > 0 ? 'warn' : 'ok'}
+              />
+            </div>
+          </section>
+
           {dash.alerts.lowStock.length > 0 ? (
-            <p className="mt-1">Low stock SKUs: {dash.alerts.lowStock.length}</p>
+            <section>
+              <h2 className="mb-2 font-medium text-sm">Low stock (sample)</h2>
+              <OpsTableScroll>
+                <table className="w-full min-w-[28rem] border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-[11px] uppercase tracking-wide opacity-55">
+                      <th className="py-2 pr-3">SKU</th>
+                      <th className="py-2 pr-3">Product</th>
+                      <th className="py-2">Avail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dash.alerts.lowStock.slice(0, 8).map((row) => (
+                      <tr key={row.sku} className="border-b">
+                        <td className="py-2 pr-3 font-mono text-xs">{row.sku}</td>
+                        <td className="py-2 pr-3">
+                          <Link
+                            className="underline underline-offset-2"
+                            href={`/admin/commerce/products/${row.productId}`}
+                          >
+                            {row.productTitle}
+                          </Link>
+                        </td>
+                        <td className="py-2">{row.available}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </OpsTableScroll>
+            </section>
           ) : null}
-          <p className="mt-1 opacity-70">Pending fulfillment: {dash.kpis.pendingFulfillment}</p>
-        </section>
-      )}
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-w-3xl">
-        {(
-          [
-            ['Products', '/admin/commerce/products'],
-            ['Orders', '/admin/commerce/orders'],
-            ['Reviews', '/admin/commerce/reviews'],
-            ['Returns', '/admin/commerce/returns'],
-            ['Reports', '/admin/commerce/reports'],
-            ['Support', '/admin/commerce/support'],
-            ['Customers', '/admin/commerce/customers'],
-            ['Coupons', '/admin/commerce/coupons'],
-            ['Homepage', '/admin/commerce/merchandising'],
-            ['Pages', '/admin/cms/pages'],
-            ['Inquiries', '/admin/commerce/gifting-inquiries'],
-            ['Search', '/admin/commerce/search'],
-            ['Storefront', '/gift'],
-          ] as const
-        ).map(([label, href]) => (
-          <Link key={href} href={href} className="rounded border p-3 text-sm hover:bg-neutral-50">
-            {label}
-          </Link>
-        ))}
-      </div>
-    </main>
+          <section>
+            <h2 className="mb-2 font-medium text-sm">Quick actions</h2>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <QuickAction href="/admin/commerce/products/new" label="New product" />
+              <QuickAction href="/admin/commerce/coupons" label="Create coupon" />
+              <QuickAction href="/admin/commerce/orders" label="Orders queue" />
+              <QuickAction href="/admin/commerce/merchandising" label="Merchandising" />
+            </div>
+          </section>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function Kpi({ label, value, href }: { label: string; value: string; href?: string }) {
+  const inner = (
+    <>
+      <p className="text-[10px] uppercase tracking-wide opacity-55 sm:text-[11px]">{label}</p>
+      <p className="mt-1 break-words text-lg font-semibold sm:text-xl">{value}</p>
+    </>
+  );
+  if (href) {
+    return (
+      <Link href={href} className="clay-panel block p-3 transition-opacity hover:opacity-90">
+        {inner}
+      </Link>
+    );
+  }
+  return <div className="clay-panel p-3">{inner}</div>;
+}
+
+function AlertCard({
+  title,
+  count,
+  href,
+  tone,
+}: {
+  title: string;
+  count: number;
+  href: string;
+  tone: 'ok' | 'warn' | 'danger';
+}) {
+  const toneClass =
+    tone === 'danger'
+      ? 'border-red-200 bg-red-50'
+      : tone === 'warn'
+        ? 'border-amber-200 bg-amber-50'
+        : 'border-[var(--border-subtle)] bg-[var(--surface)]';
+  return (
+    <Link
+      href={href}
+      className={`flex min-h-[4.5rem] items-center justify-between gap-3 rounded-lg border px-3 py-3 text-sm ${toneClass}`}
+    >
+      <span className="font-medium">{title}</span>
+      <span className="text-xl font-semibold tabular-nums">{count}</span>
+    </Link>
+  );
+}
+
+function QuickAction({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="clay-btn-secondary flex min-h-11 items-center justify-center px-2 text-center text-xs sm:text-sm"
+    >
+      {label}
+    </Link>
   );
 }

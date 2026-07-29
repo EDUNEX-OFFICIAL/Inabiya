@@ -8,6 +8,7 @@ import type {
 } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
+import { InventoryService } from '../inventory/inventory.service';
 import {
   isManualStorefrontLabel,
   resolveStorefrontDisplayLabels,
@@ -28,6 +29,7 @@ export class CatalogService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly inventory: InventoryService,
   ) {}
 
   async listCategories() {
@@ -145,10 +147,23 @@ export class CatalogService {
     return this.mapProduct(product);
   }
 
-  async listAdminProducts() {
+  async listAdminProducts(query: { q?: string; status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' } = {}) {
+    const where: Prisma.ProductWhereInput = {};
+    if (query.status) where.status = query.status;
+    if (query.q?.trim()) {
+      const term = query.q.trim();
+      where.OR = [
+        { title: { contains: term, mode: 'insensitive' } },
+        { slug: { contains: term, mode: 'insensitive' } },
+        { brandName: { contains: term, mode: 'insensitive' } },
+        { variants: { some: { sku: { contains: term, mode: 'insensitive' } } } },
+      ];
+    }
     const products = await this.prisma.product.findMany({
+      where,
       include: productInclude,
       orderBy: { updatedAt: 'desc' },
+      take: 200,
     });
     return products.map((p) => this.mapProduct(p));
   }
@@ -423,21 +438,8 @@ export class CatalogService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Variant not found.' });
     }
 
-    const inventory = await this.prisma.inventoryItem.upsert({
-      where: { variantId },
-      create: { variantId, onHand, reserved: 0 },
-      update: { onHand },
-    });
-
-    await this.audit.write({
-      actorId,
-      action: 'catalog.inventory.update',
-      resource: 'variant',
-      resourceId: variantId,
-      metadata: { onHand },
-      requestId,
-    });
-    return inventory;
+    // OPS-3: absolute set goes through inventory service (never below reserved + ledger)
+    return this.inventory.setOnHandAdmin(variantId, onHand, actorId, requestId);
   }
 
   async updateVariant(

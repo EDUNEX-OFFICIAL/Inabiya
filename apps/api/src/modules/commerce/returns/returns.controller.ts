@@ -61,6 +61,7 @@ export class ReturnsAdminController {
   ) {}
 
   @Get('returns')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'FINANCE')
   list(@Query('status') status?: string) {
     const allowed = Object.values(ReturnStatus) as string[];
     const parsed = status && allowed.includes(status) ? (status as ReturnStatus) : undefined;
@@ -83,7 +84,11 @@ export class ReturnsAdminController {
   }
 
   @Post('policy/returns')
-  setPolicy(@Body(new ZodValidationPipe(returnPolicyBodySchema)) body: { windowDays: number }) {
-    return this.policy.setReturnPolicy(body);
+  setPolicy(
+    @Body(new ZodValidationPipe(returnPolicyBodySchema)) body: { windowDays: number },
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.policy.setReturnPolicy(body, user.id, String(req.id ?? ''));
   }
 }

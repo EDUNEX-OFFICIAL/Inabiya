@@ -9,6 +9,7 @@ import { generateOrderNumber } from '../commerce-pricing';
 import { InventoryService } from '../inventory/inventory.service';
 import { CouponService } from '../promotions/coupon.service';
 import { AddressService } from '../customers/address.service';
+import { CustomerAdminService } from '../customers/customer-admin.service';
 
 @Injectable()
 export class CheckoutService {
@@ -20,6 +21,7 @@ export class CheckoutService {
     private readonly payments: PaymentsService,
     private readonly addresses: AddressService,
     private readonly audit: AuditService,
+    private readonly customers: CustomerAdminService,
   ) {}
 
   shippingMethods() {
@@ -50,6 +52,8 @@ export class CheckoutService {
     body: CheckoutPlaceOrderBody,
     requestId?: string,
   ) {
+    await this.customers.assertActiveForCheckout(userId);
+
     const cartDto = await this.cart.getOrCreate(userId, guestToken);
     if (cartDto.items.length === 0) {
       throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });

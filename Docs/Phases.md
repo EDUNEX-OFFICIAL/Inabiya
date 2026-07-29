@@ -828,4 +828,36 @@ Roadmap changes require:
 
 ---
 
+## 26. Phase 13 — Commerce OPS Panel (professional deepen)
+
+**Status:** **OPS-9 Shipped** (2026-07-29). Phase 13 Commerce OPS Panel **complete**.  
+**Authority:** [`Docs/COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md)  
+**Depends on:** Phase 4 Commerce Operations Console MVP (closed)  
+**Goal:** Elevate Commerce Admin from operable MVP to professional ops console (Shopify-class density + workflows) without a fourth `admin` theme.
+
+### Sub-phases (implement one at a time)
+
+| ID | Name | Recommended order | Status |
+|---|---|---|---|
+| OPS-0 | Shell & IA | 1 | **Done** (responsive harden) |
+| OPS-1 | Command center | 2 | **Done** |
+| OPS-4 | Order desk | 3 | **Done** |
+| OPS-3 | Inventory ops | 4 | **Done** |
+| OPS-2 | Catalog desk | 5 | **Done** |
+| OPS-5 | CRM & support | 6 | **Done** |
+| OPS-6 | Promotions | 7 | **Done** |
+| OPS-7 | Reports | 8 | **Done** |
+| OPS-8 | Settings & trust | 9 | **Done** |
+| OPS-9 | Power-user polish | 10 | **Done** |
+
+Memory Active Phase must name the **current OPS-N** only. Full P0/P1/exit criteria live in `COMMERCE_OPS_PANEL.md` — do not duplicate long checklists here.
+
+### Hard locks (unchanged)
+
+- Soft Gift (`gift`) + `data-density="compact"` — never `data-theme="admin"`
+- Zod + AuthZ on mutations; money `*Paise`; inventory never negative
+- No phase skip without Memory override
+
+---
+
 **End of Phases.md v2.0.0**

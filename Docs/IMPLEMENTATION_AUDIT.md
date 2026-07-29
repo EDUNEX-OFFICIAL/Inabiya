@@ -1,8 +1,9 @@
 # Inabiya — Implementation Cross-Check
 
-Last verified: **2026-07-28** (dev leftovers Waves 0–5 closed for Soft Gift ecommerce + CMS)
+Last verified: **2026-07-29** (Phase 13 Commerce OPS Panel OPS-0…9 P0 cross-check)
 
-This document reconciles **Phases 0–12** claims in `Memory.md` against the repo.
+This document reconciles phase claims in `Memory.md` against the repo.  
+Authority for Phase 13 detail: [`COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md) v2.0.0.
 
 ---
 
@@ -14,7 +15,7 @@ This document reconciles **Phases 0–12** claims in `Memory.md` against the rep
 | **1** Identity | **Closed for dev** | Auth P0 + stubs done; **real SMTP/S3 = post-dev** |
 | **2** Catalog | **Closed for dev** | Storefront + admin products MVP |
 | **3** Checkout | **Closed for dev** | Mock pay revenue path accepted until Razorpay (post-dev) |
-| **4** Ops console | Closed | Dashboard, CRM, CMS, fulfillment |
+| **4** Ops console | Closed (MVP) | Dashboard, CRM, CMS, fulfillment — **deepened by Phase 13** |
 | **5** Reviews/returns/CX | Closed | + leftovers analytics/account |
 | **6** Editorial workflow | Closed | |
 | **7** Publishing | Closed | TipTap + public articles + writer pay |
@@ -24,6 +25,7 @@ This document reconciles **Phases 0–12** claims in `Memory.md` against the rep
 | **10** Soft Gift Nav | **Closed** | Taxonomy, nav IA, 6-step builder, hampers, inquiries |
 | **11** Marketing Page Builder | **Closed** | 11A–11D; Soft Gift `/gift` on blocks |
 | **12** CMS TipTap + saleStrip + media | **Shipped** | TipTap, saleStrip, local media; real S3 SDK post-dev |
+| **13** Commerce OPS Panel | **P0 Closed** | OPS-0…9 shipped; P1 leftovers listed below |
 
 ---
 
@@ -89,3 +91,70 @@ Post-dev stubs unchanged: Razorpay, real S3/MinIO, real SMTP, public Caddy/DNS, 
 - Gift cards / loyalty / referral (PRD Stage 4)  
 - Editorial P1 related/comments/RSS; Creator deep audit  
 - Editorial: TipTap toolbar only on editable statuses — expected, not a bug  
+
+---
+
+## Phase 13 — Commerce OPS Panel (2026-07-29)
+
+**Claim (Memory):** OPS-0…9 shipped; Soft Gift dense ops desk (`gift` + `compact`); no `data-theme="admin"`.  
+**Verdict:** **P0 Closed** — each OPS has matching UI + API evidence in repo. Not “product forever complete”: P1 items + post-dev providers remain.
+
+### Per-OPS evidence
+
+| OPS | Verdict | Repo evidence (representative) |
+|---|---|---|
+| **OPS-0** Shell & IA | **Pass** | `commerce-ops-shell.tsx`, `commerce-ops-nav.ts` (+ role check), layout `data-theme="gift"` |
+| **OPS-1** Command center | **Pass** | `admin/commerce/page.tsx`, `ops-dashboard.service.ts` KPIs/alerts |
+| **OPS-4** Order desk | **Pass** | orders list/board + case file; migration `20260729190000_ops4_order_shipping` |
+| **OPS-3** Inventory | **Pass** | inventory desk + `InventoryMovement`; migration `20260729193000_ops3_inventory_movements` |
+| **OPS-2** Catalog | **Pass** | products power-table + categories + merchandising polish; admin list `?q`/`?status` |
+| **OPS-5** CRM & support | **Pass** | customers LTV/segments + 360; support phone search; `assertActiveForCheckout` |
+| **OPS-6** Promotions | **Pass** | coupons builder/preview/schedule; `couponLifecycle` + audit create/deactivate |
+| **OPS-7** Reports | **Pass** | reports gallery; `/reports/sales|products|inventory|returns|coupons`; CSV export (paise) |
+| **OPS-8** Settings & trust | **Pass** | `/admin/commerce/policy` + audit list; return window → returns eligibility path |
+| **OPS-9** Power-user | **Pass (P0)** | shortcuts/`?` help; pin views; order bulk PROCESSING; `/admin/commerce/import` dry-run |
+
+### Runnable checks present
+
+- `commerce-ops-nav.check.ts`
+- `customer-segments.check.ts`
+- `coupon-lifecycle.check.ts`
+- `ops3-inventory-available.check.ts` / `inventory-csv-parse.check.ts`
+- `ops4-address-risk.check.ts`
+- `reports-delta.check.ts`
+
+### Honest gaps (do **not** mark as shipped)
+
+| Item | OPS | Severity |
+|---|---|---|
+| Media library picker on product edit (JSON gallery remains) | OPS-2 | P1 |
+| Reservation visibility from open orders | OPS-3 | P1 |
+| Partial shipment | OPS-4 | later |
+| Communication log stub | OPS-5 | P1 |
+| Promo conflict/priority UI | OPS-6 | P1 |
+| Scheduled report email | OPS-7 | P2 |
+| Dashboard notification prefs | OPS-8 | P1 |
+| Mobile triage layout | OPS-9 | P1 |
+| Cursor pagination on large lists | OPS-9 | P1 |
+| Product CSV import (stock CSV only) | OPS-9 | P1 |
+| Multi-warehouse / bin WMS | — | **out of scope** |
+| Real Razorpay / SMTP / S3 / public DNS | — | **post-dev** |
+
+### Theme / AuthZ spot-check
+
+| Check | Result |
+|---|---|
+| No `data-theme="admin"` on commerce ops | Pass (contract + shell use Soft Gift) |
+| Money as `*Paise` in report/order APIs | Pass (integer paise) |
+| Support cannot suspend / cannot see catalog nav | Pass (Roles + nav filter check) |
+| Suspend blocks checkout | Pass (`ACCOUNT_SUSPENDED`) |
+| Inventory adjust cannot drive available &lt; 0 | Pass (service + ledger) |
+
+### Relation to Phase 4
+
+Phase 4 ops console MVP remains **Closed**. Phase 13 did **not** replace stack or theme; it deepened queues, inventory ledger, CRM, promotions, reports, policy/audit, and power-user tooling under the same Soft Gift dense admin.
+
+### Smoke note (this verification)
+
+**Static + typecheck evidence only** on 2026-07-29 (files/symbols/migrations present; `tsc` green earlier in session).  
+Full browser matrix not re-run in this audit pass — use [`QA_ECOMMERCE_CMS_TEST_CASES.md`](QA_ECOMMERCE_CMS_TEST_CASES.md) + ops demo scripts when doing live QA.
