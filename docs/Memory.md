@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 8, 2026 (Support products + deploy)
+Last Updated: August 8, 2026 (push Soft Gift ops batch)
 
 
 ---
@@ -145,7 +145,7 @@ Q4 (Architecture rewrite) → **Resolved**
 2. **Human:** Spot-check Support lookup product hits → `/admin/commerce/products/[id]`
 3. Cloudflare SSL / public DNS — **post-dev**
 4. OPS P1 leftovers when prioritized (orders cursor, product CSV, gallery picker, reservation visibility)
-5. Commit pending Soft Gift polish when ready (working tree still dirty vs `origin/main`)
+5. —
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -1059,6 +1059,11 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-08 (push Soft Gift ops batch)
+
+- Committed + pushed `5262fd1` → `origin/main` (84 files): Soft Gift desks, reports charts, categories/video/SEO extras.
+- Already live via prior `deploy-vps.sh web api` @ working tree (image tag still `6976f9e` until next rebuild).
 
 ### Session — 2026-08-08 (Support products leftover + deploy)
 
