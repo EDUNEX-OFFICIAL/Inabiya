@@ -130,7 +130,7 @@ export function GiftStorefrontHero({
   );
 
   return (
-    <section ref={containerRef} className="gift-hero-split relative overflow-hidden">
+    <section ref={containerRef} className="gift-hero-split relative overflow-x-clip">
       {/* In-DOM critical CSS: hides targets before globals.css / GSAP (kills flash→hide→in) */}
       <style dangerouslySetInnerHTML={{ __html: GIFT_HERO_FOUC_CSS }} />
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
@@ -185,7 +185,7 @@ export function GiftStorefrontHero({
           {trustChips.length ? (
             <ul
               data-hero-anim="trust"
-              className="gift-hero-split__trust mt-gs-3 flex w-full list-none flex-row flex-wrap items-start justify-center gap-x-gs-2 gap-y-gs-2 sm:mt-gs-4 sm:gap-x-gs-4 lg:justify-start"
+              className="gift-hero-split__trust mt-gs-3 flex w-full list-none flex-row flex-wrap items-start justify-center gap-x-gs-2 gap-y-gs-2 overflow-visible sm:mt-gs-4 sm:gap-x-gs-4 lg:justify-start"
             >
               {trustChips.map((label, i) => {
                 const Icon = TRUST_ICONS[i % TRUST_ICONS.length] ?? ShieldCheck;
