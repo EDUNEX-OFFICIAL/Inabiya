@@ -3,17 +3,26 @@ export const GIFT_HERO_FOUC_CSS = `
 .gift-hero-split:not([data-hero-ready]) [data-hero-anim],
 .gift-hero-split:not([data-hero-ready]) [data-hero-cta],
 .gift-hero-split:not([data-hero-ready]) .gift-hero-split__frame,
-.gift-hero-split:not([data-hero-ready]) .gift-hero-split__wash {
+.gift-hero-split:not([data-hero-ready]) .gift-hero-split__wash,
+.gift-hero-split:not([data-hero-ready]) .gift-hero-split__photo {
   opacity: 0 !important;
   visibility: hidden !important;
+}
+/* Keep photo invisible until decode + entrance (avoids LCP pop-in after text) */
+.gift-hero-split__photo:not(.gift-hero-split__photo--ready) {
+  opacity: 0 !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .gift-hero-split:not([data-hero-ready]) [data-hero-anim],
   .gift-hero-split:not([data-hero-ready]) [data-hero-cta],
   .gift-hero-split:not([data-hero-ready]) .gift-hero-split__frame,
-  .gift-hero-split:not([data-hero-ready]) .gift-hero-split__wash {
+  .gift-hero-split:not([data-hero-ready]) .gift-hero-split__wash,
+  .gift-hero-split:not([data-hero-ready]) .gift-hero-split__photo {
     opacity: 1 !important;
     visibility: visible !important;
+  }
+  .gift-hero-split__photo:not(.gift-hero-split__photo--ready) {
+    opacity: 1 !important;
   }
 }
 `.trim();

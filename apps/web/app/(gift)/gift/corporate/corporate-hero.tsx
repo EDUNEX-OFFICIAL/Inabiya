@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import { ArrowRight, Building2, Package, Sparkles } from 'lucide-react';
 import { GIFT_HERO_FOUC_CSS, runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
@@ -14,9 +14,18 @@ const TRUST = [
 
 export function CorporateHero() {
   const containerRef = useRef<HTMLElement>(null);
+  const [photoReady, setPhotoReady] = useState(false);
+  const markPhotoReady = useCallback(() => setPhotoReady(true), []);
+
+  useEffect(() => {
+    if (photoReady) return;
+    const t = window.setTimeout(() => setPhotoReady(true), 1200);
+    return () => window.clearTimeout(t);
+  }, [photoReady]);
 
   useGSAP(
     () => {
+      if (!photoReady) return;
       const root = containerRef.current;
       if (!root) return;
 
@@ -31,7 +40,7 @@ export function CorporateHero() {
         trust: root.querySelector('[data-hero-anim="trust"]'),
       });
     },
-    { scope: containerRef },
+    { scope: containerRef, dependencies: [photoReady] },
   );
 
   return (
@@ -100,7 +109,8 @@ export function CorporateHero() {
             <img
               src="/gift/media/gift-box.svg"
               alt="Inabiya Soft Gift box"
-              className="gift-hero-split__photo gift-hero-split__photo--contain"
+              className={`gift-hero-split__photo gift-hero-split__photo--contain${photoReady ? ' gift-hero-split__photo--ready' : ''}`}
+              onLoad={markPhotoReady}
             />
           </div>
         </div>

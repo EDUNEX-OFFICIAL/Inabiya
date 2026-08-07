@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import { ArrowRight, Gift, HeartHandshake, ShieldCheck, Truck } from 'lucide-react';
 import { GIFT_HERO_FOUC_CSS, runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
@@ -92,9 +92,26 @@ export function GiftStorefrontHero({
   const trustChips = parseTrustChips(trustLine);
   const eyebrowText = eyebrow?.trim() || 'Personalised baby gifting';
   const accent = accentWord?.trim() || (/\bjoy\b/i.test(headline) ? 'joy' : undefined);
+  const [photoReady, setPhotoReady] = useState(false);
+
+  const markPhotoReady = useCallback(() => {
+    setPhotoReady(true);
+  }, []);
+
+  useEffect(() => {
+    setPhotoReady(false);
+  }, [photoSrc]);
+
+  // Don't leave hero permanently hidden if decode stalls
+  useEffect(() => {
+    if (photoReady) return;
+    const t = window.setTimeout(() => setPhotoReady(true), 2200);
+    return () => window.clearTimeout(t);
+  }, [photoReady, photoSrc]);
 
   useGSAP(
     () => {
+      if (!photoReady) return;
       const root = containerRef.current;
       if (!root) return;
 
@@ -109,7 +126,7 @@ export function GiftStorefrontHero({
         trust: root.querySelector('[data-hero-anim="trust"]'),
       });
     },
-    { scope: containerRef },
+    { scope: containerRef, dependencies: [photoReady, photoSrc] },
   );
 
   return (
@@ -193,7 +210,9 @@ export function GiftStorefrontHero({
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="gift-hero-split__photo object-cover"
+              className={`gift-hero-split__photo object-cover${photoReady ? ' gift-hero-split__photo--ready' : ''}`}
+              onLoad={markPhotoReady}
+              onLoadingComplete={markPhotoReady}
             />
           </div>
         </div>

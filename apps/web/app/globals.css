@@ -398,9 +398,14 @@ body {
   .gift-hero-split:not([data-hero-ready]) [data-hero-anim],
   .gift-hero-split:not([data-hero-ready]) [data-hero-cta],
   .gift-hero-split:not([data-hero-ready]) .gift-hero-split__frame,
-  .gift-hero-split:not([data-hero-ready]) .gift-hero-split__wash {
+  .gift-hero-split:not([data-hero-ready]) .gift-hero-split__wash,
+  .gift-hero-split:not([data-hero-ready]) .gift-hero-split__photo {
     opacity: 0;
     visibility: hidden;
+  }
+
+  .gift-hero-split__photo:not(.gift-hero-split__photo--ready) {
+    opacity: 0;
   }
 }
 
