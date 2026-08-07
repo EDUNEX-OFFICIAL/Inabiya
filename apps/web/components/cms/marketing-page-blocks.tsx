@@ -761,7 +761,62 @@ function normalizeBrands(raw: unknown): BrandItem[] {
   return mapped.filter((b) => b.name.toLowerCase() !== 'inabiya');
 }
 
-/** Client-style static brand pills: icon + name (Capture 004). */
+/** Dual-row brand pill carousel (seamless marquee; no “+ more”). */
+function BrandCarouselRow({
+  brands,
+  accentsOffset,
+  reverse,
+}: {
+  brands: BrandItem[];
+  accentsOffset: number;
+  reverse?: boolean;
+}) {
+  if (!brands.length) return null;
+
+  const renderGroup = (duplicate: boolean) => (
+    <ul
+      className="gift-brand-panel__group list-none"
+      aria-hidden={duplicate ? true : undefined}
+    >
+      {brands.map((brand, i) => {
+        const accent = BRAND_ACCENTS[(accentsOffset + i) % BRAND_ACCENTS.length];
+        const initials = brandInitials(brand.name);
+        return (
+          <li
+            key={`${duplicate ? 'dup-' : ''}${brand.name}`}
+            className={`gift-brand-panel__pill gift-brand-panel__pill--${accent}`}
+          >
+            <span className="gift-brand-panel__icon" aria-hidden>
+              {brand.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={brand.logoUrl}
+                  alt=""
+                  className="gift-brand-panel__mark-img"
+                />
+              ) : (
+                initials
+              )}
+            </span>
+            <span className="gift-brand-panel__name">{brand.name}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+
+  return (
+    <div
+      className={`gift-brand-panel__viewport${reverse ? ' gift-brand-panel__viewport--reverse' : ''}`}
+    >
+      <div className="gift-brand-panel__track">
+        {renderGroup(false)}
+        {renderGroup(true)}
+      </div>
+    </div>
+  );
+}
+
 function BrandPillPanel({
   brands,
   title,
@@ -770,46 +825,20 @@ function BrandPillPanel({
   title: string;
 }) {
   const items = normalizeBrands(brands);
+  if (!items.length) return null;
+
   const heading = title.trim() || 'Trusted baby & kids brands we stock';
+  const mid = Math.ceil(items.length / 2);
+  const row1 = items.slice(0, mid);
+  const row2 = items.slice(mid);
 
   return (
     <div className="gift-brand-panel">
       <h2 className="gift-brand-panel__title">{heading}</h2>
-      <ul className="gift-brand-panel__grid list-none">
-        {items.map((brand, i) => {
-          const accent = BRAND_ACCENTS[i % BRAND_ACCENTS.length];
-          const initials = brandInitials(brand.name);
-          return (
-            <li
-              key={brand.name}
-              className={`gift-brand-panel__pill gift-brand-panel__pill--${accent}`}
-            >
-              <span className="gift-brand-panel__icon" aria-hidden>
-                {brand.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={brand.logoUrl}
-                    alt=""
-                    className="gift-brand-panel__mark-img"
-                  />
-                ) : (
-                  initials
-                )}
-              </span>
-              <span className="gift-brand-panel__name">{brand.name}</span>
-            </li>
-          );
-        })}
-        <li>
-          <Link
-            href="/gift/products"
-            className="gift-brand-panel__pill gift-brand-panel__pill--more"
-            data-testid="brands-more"
-          >
-            <span className="gift-brand-panel__name">+ more</span>
-          </Link>
-        </li>
-      </ul>
+      <div className="gift-brand-panel__carousel" role="region" aria-label={heading}>
+        <BrandCarouselRow brands={row1} accentsOffset={0} />
+        <BrandCarouselRow brands={row2} accentsOffset={row1.length} reverse />
+      </div>
     </div>
   );
 }

@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
-import gsap from 'gsap';
 import { ArrowRight, Building2, Package, Sparkles } from 'lucide-react';
+import { GIFT_HERO_FOUC_CSS, runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
 
 const TRUST = [
   { label: 'Dedicated quote', Icon: Building2 },
@@ -17,44 +17,26 @@ export function CorporateHero() {
 
   useGSAP(
     () => {
-      const reduced =
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const root = containerRef.current;
+      if (!root) return;
 
-      const targets = containerRef.current?.querySelectorAll(
-        '[data-hero-anim], [data-hero-cta], .gift-hero-split__frame, .gift-hero-split__wash',
-      );
-
-      if (reduced) {
-        if (targets?.length) gsap.set(targets, { clearProps: 'all', opacity: 1, y: 0, scale: 1 });
-        return;
-      }
-
-      const wash = containerRef.current?.querySelector('.gift-hero-split__wash');
-      const frame = containerRef.current?.querySelector('.gift-hero-split__frame');
-      const brand = containerRef.current?.querySelector('[data-hero-anim="brand"]');
-      const title = containerRef.current?.querySelector('[data-hero-anim="headline"]');
-      const body = containerRef.current?.querySelector('[data-hero-anim="subcopy"]');
-      const primary = containerRef.current?.querySelector('[data-hero-cta="primary"]');
-      const secondary = containerRef.current?.querySelector('[data-hero-cta="secondary"]');
-      const trust = containerRef.current?.querySelector('[data-hero-anim="trust"]');
-
-      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-
-      if (wash) tl.from(wash, { opacity: 0, duration: 1.1 }, 0);
-      if (frame) tl.from(frame, { opacity: 0, y: 22, scale: 1.03, duration: 1.2 }, 0.15);
-      if (brand) tl.from(brand, { opacity: 0, y: 10, duration: 0.7 }, 0.4);
-      if (title) tl.from(title, { opacity: 0, y: 28, duration: 1.05 }, 0.55);
-      if (body) tl.from(body, { opacity: 0, y: 16, duration: 0.85 }, 0.85);
-      if (primary) tl.from(primary, { opacity: 0, y: 14, duration: 0.75 }, 1.1);
-      if (secondary) tl.from(secondary, { opacity: 0, y: 12, duration: 0.7 }, 1.3);
-      if (trust) tl.from(trust, { opacity: 0, y: 10, duration: 0.7 }, 1.5);
+      return runGiftHeroEntrance(root, {
+        wash: root.querySelector('.gift-hero-split__wash'),
+        frame: root.querySelector('.gift-hero-split__frame'),
+        early: root.querySelector('[data-hero-anim="brand"]'),
+        title: root.querySelector('[data-hero-anim="headline"]'),
+        body: root.querySelector('[data-hero-anim="subcopy"]'),
+        primary: root.querySelector('[data-hero-cta="primary"]'),
+        secondary: root.querySelector('[data-hero-cta="secondary"]'),
+        trust: root.querySelector('[data-hero-anim="trust"]'),
+      });
     },
     { scope: containerRef },
   );
 
   return (
     <section ref={containerRef} className="gift-hero-split relative overflow-hidden">
+      <style dangerouslySetInnerHTML={{ __html: GIFT_HERO_FOUC_CSS }} />
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
 
       <div className="gift-hero-split__grid relative z-10 mx-auto grid max-w-6xl items-center gap-gs-6 lg:grid-cols-2 lg:gap-gs-8">

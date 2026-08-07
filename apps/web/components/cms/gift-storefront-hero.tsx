@@ -4,8 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
-import gsap from 'gsap';
 import { ArrowRight, Gift, HeartHandshake, ShieldCheck, Truck } from 'lucide-react';
+import { GIFT_HERO_FOUC_CSS, runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
 
 const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.jpg';
 
@@ -95,44 +95,27 @@ export function GiftStorefrontHero({
 
   useGSAP(
     () => {
-      const reduced =
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const root = containerRef.current;
+      if (!root) return;
 
-      const targets = containerRef.current?.querySelectorAll(
-        '[data-hero-anim], [data-hero-cta], .gift-hero-split__frame, .gift-hero-split__wash',
-      );
-
-      if (reduced) {
-        if (targets?.length) gsap.set(targets, { clearProps: 'all', opacity: 1, y: 0, scale: 1 });
-        return;
-      }
-
-      const wash = containerRef.current?.querySelector('.gift-hero-split__wash');
-      const frame = containerRef.current?.querySelector('.gift-hero-split__frame');
-      const eyebrowEl = containerRef.current?.querySelector('[data-hero-anim="eyebrow"]');
-      const title = containerRef.current?.querySelector('[data-hero-anim="headline"]');
-      const body = containerRef.current?.querySelector('[data-hero-anim="subcopy"]');
-      const primary = containerRef.current?.querySelector('[data-hero-cta="primary"]');
-      const secondary = containerRef.current?.querySelector('[data-hero-cta="secondary"]');
-      const trust = containerRef.current?.querySelector('[data-hero-anim="trust"]');
-
-      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-
-      if (wash) tl.from(wash, { opacity: 0, duration: 1.1 }, 0);
-      if (frame) tl.from(frame, { opacity: 0, y: 22, scale: 1.03, duration: 1.2 }, 0.15);
-      if (eyebrowEl) tl.from(eyebrowEl, { opacity: 0, y: 10, duration: 0.7 }, 0.4);
-      if (title) tl.from(title, { opacity: 0, y: 28, duration: 1.05 }, 0.55);
-      if (body) tl.from(body, { opacity: 0, y: 16, duration: 0.85 }, 0.85);
-      if (primary) tl.from(primary, { opacity: 0, y: 14, duration: 0.75 }, 1.1);
-      if (secondary) tl.from(secondary, { opacity: 0, y: 12, duration: 0.7 }, 1.3);
-      if (trust) tl.from(trust, { opacity: 0, y: 10, duration: 0.7 }, 1.5);
+      return runGiftHeroEntrance(root, {
+        wash: root.querySelector('.gift-hero-split__wash'),
+        frame: root.querySelector('.gift-hero-split__frame'),
+        early: root.querySelector('[data-hero-anim="eyebrow"]'),
+        title: root.querySelector('[data-hero-anim="headline"]'),
+        body: root.querySelector('[data-hero-anim="subcopy"]'),
+        primary: root.querySelector('[data-hero-cta="primary"]'),
+        secondary: root.querySelector('[data-hero-cta="secondary"]'),
+        trust: root.querySelector('[data-hero-anim="trust"]'),
+      });
     },
     { scope: containerRef },
   );
 
   return (
     <section ref={containerRef} className="gift-hero-split relative overflow-hidden">
+      {/* In-DOM critical CSS: hides targets before globals.css / GSAP (kills flash→hide→in) */}
+      <style dangerouslySetInnerHTML={{ __html: GIFT_HERO_FOUC_CSS }} />
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
 
       <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full max-w-page gap-gs-3 lg:grid-cols-2 lg:items-stretch lg:gap-gs-8">
@@ -143,7 +126,7 @@ export function GiftStorefrontHero({
 
           <h1
             data-hero-anim="headline"
-            className="gift-hero-split__headline gift-h1 mt-gs-2 max-w-2xl text-balance lg:mt-gs-3"
+            className="gift-hero-split__headline gift-h1 mt-gs-2 max-w-3xl text-balance lg:mt-gs-3"
           >
             <AccentHeadline text={headline} accentWord={accent} />
           </h1>
@@ -157,13 +140,13 @@ export function GiftStorefrontHero({
             </p>
           ) : null}
 
-          <div className="mt-gs-3 flex w-full flex-col gap-gs-2 sm:mt-gs-4 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-gs-3 lg:justify-start">
+          <div className="mt-gs-3 flex w-full max-w-md flex-row items-center justify-center gap-gs-2 sm:mt-gs-4 sm:max-w-none sm:w-auto sm:gap-gs-3 lg:justify-start">
             {ctaLabel && ctaHref ? (
               <Link
                 data-hero-cta="primary"
                 data-testid="hero-cta-primary"
                 href={ctaHref}
-                className="clay-btn gift-hero-split__cta-primary inline-flex w-full items-center justify-center gap-gs-2 sm:w-auto"
+                className="clay-btn gift-hero-split__cta-primary inline-flex min-w-0 flex-[1.35] items-center justify-center gap-gs-2 px-gs-3 sm:flex-none sm:px-[var(--btn-pad-x)]"
               >
                 <Gift className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
                 {ctaLabel}
@@ -174,10 +157,10 @@ export function GiftStorefrontHero({
                 data-hero-cta="secondary"
                 data-testid="hero-cta-secondary"
                 href={ctaHref2}
-                className="clay-btn-secondary gift-hero-split__cta-secondary inline-flex w-full items-center justify-center gap-gs-2 sm:w-auto"
+                className="clay-btn-secondary gift-hero-split__cta-secondary inline-flex w-auto shrink-0 items-center justify-center gap-1.5 px-gs-3 text-sm sm:gap-gs-2 sm:px-[var(--btn-pad-x)] sm:text-[length:var(--text-body)]"
               >
                 {ctaLabel2}
-                <ArrowRight className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={1.75} aria-hidden />
               </Link>
             ) : null}
           </div>
@@ -185,7 +168,7 @@ export function GiftStorefrontHero({
           {trustChips.length ? (
             <ul
               data-hero-anim="trust"
-              className="gift-hero-split__trust mt-gs-3 flex list-none flex-col items-center gap-gs-2 sm:mt-gs-4 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-gs-4 sm:gap-y-gs-2 lg:items-start lg:justify-start"
+              className="gift-hero-split__trust mt-gs-3 flex w-full list-none flex-row flex-wrap items-start justify-center gap-x-gs-2 gap-y-gs-2 sm:mt-gs-4 sm:gap-x-gs-4 lg:justify-start"
             >
               {trustChips.map((label, i) => {
                 const Icon = TRUST_ICONS[i % TRUST_ICONS.length] ?? ShieldCheck;

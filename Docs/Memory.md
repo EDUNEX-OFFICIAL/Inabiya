@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: July 30, 2026 (Dashboard command center deepen)
+Last Updated: August 7, 2026 (Hero headline mobile size)
 
 
 ---
@@ -1033,6 +1033,68 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-07 (hero headline mobile size)
+
+- **Override:** Soft Gift polish (human: desktop hero H1 dominant but mobile still weak).
+- Hero H1 scale: **44→56→72px** (was 36→52→72) so mobile/sm also punch above page `.gift-h1`.
+- File: `globals.css` (`.gift-hero-split__headline`)
+- Deployed `web` via `deploy-vps.sh web` @ `d4e4417` (smoke ok; live CSS has 2.75/3.5/4.5rem).
+- Next: hard-refresh `/gift` mobile viewport QA
+
+### Session — 2026-08-07 (brand 2-row carousel)
+
+- **Override:** Soft Gift polish (human: 2-row carousel mobile+desktop; remove +more).
+- Brand panel: dual seamless marquees (row2 reverse); hover pause; reduced-motion → swipe scroll.
+- Removed `+ more` CTA.
+- Files: `marketing-page-blocks.tsx`, `globals.css`
+- Deployed `web` @ `d4e4417` (smoke ok).
+- Next: hard-refresh brand strip on `/gift`
+
+### Session — 2026-08-07 (brand panel mobile left align)
+
+- **Override:** Soft Gift polish (human: brands left-align on mobile / improve).
+- Mobile: 2-col grid + left title; pills fill cells; name ellipsis.
+- `sm+`: flex wrap `flex-start` (no centered ragged last row).
+- File: `globals.css`
+- Deployed `web` @ `d4e4417` (smoke ok).
+- Next: hard-refresh brand strip on `/gift` mobile
+
+### Session — 2026-08-07 (hero type + Lenis + icon motion)
+
+- **Override:** Soft Gift polish (human: larger dominant headline; minimal icon motion; add Lenis).
+- Hero H1: 36→52→72px; `max-w-3xl`.
+- Icon hover micro-motion on clay buttons, trust chips, USP cards (`prefers-reduced-motion` gated).
+- Lenis on Soft Gift layout only (`GiftLenis` + ScrollTrigger sync); skipped when reduced-motion.
+- Dep: `lenis` in `@inabiya/web`.
+- Files: `gift-storefront-hero.tsx`, `gift-lenis.tsx`, `(gift)/layout.tsx`, `globals.css`, lockfile.
+- Deployed `web` via `deploy-vps.sh web` @ `d4e4417` (smoke ok).
+- Next: hard-refresh `/gift` — headline, hover icons, smooth scroll
+
+### Session — 2026-08-07 (hero mobile CTA width + trust row)
+
+- **Override:** Soft Gift hero mobile polish (human: trust badges one row; CTA not full-bleed; then both CTAs same row).
+- Trust: always `flex-row`; mobile equal-width columns with icon-over-label.
+- CTAs: side-by-side; primary flex-dominant; secondary content-sized + slightly smaller type on mobile.
+- Files: `gift-storefront-hero.tsx`, `globals.css`
+- Deployed `web` via `deploy-vps.sh web` @ `d4e4417` (smoke ok) ×3.
+- Next: hard-refresh `/gift` mobile viewport QA
+
+### Session — 2026-08-07 (hero FOUC — deploy + critical CSS)
+
+- **Override:** Soft Gift hero polish (human: flash still visible after source-only fix).
+- Root cause: Docker `inabiya-web` was **8d old** (source never deployed); prior CSS was inside `@layer` + late stylesheet.
+- Fix: shared `gift-hero-entrance.ts` (set→ready→to); critical `<style>` in hero; unlayered globals FOUC rule.
+- Deploy: `bash scripts/deploy-vps.sh web` — live on `:3001` (critical CSS in HTML before eyebrow)
+- Next: hard-refresh `/gift` (Ctrl+Shift+R)
+
+### Session — 2026-08-07 (hero FOUC / flash-before-from)
+
+- **Override:** Soft Gift hero polish outside Phase 12 (human: content flash then hide then animate).
+- Cause: `gsap.from()` after paint; no CSS pre-hide.
+- Fix: CSS hide until `data-hero-ready`; `gsap.set` from-state then `to()`; reduced-motion still reveals.
+- Files: `gift-storefront-hero.tsx`, `corporate-hero.tsx`, `globals.css`
+- Next: hard-refresh `/gift` (+ corporate) hero load
 
 ### Session — 2026-07-30 (Dashboard command center deepen)
 
