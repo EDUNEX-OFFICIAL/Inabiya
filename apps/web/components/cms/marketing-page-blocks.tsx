@@ -20,7 +20,8 @@ import {
 import { formatInr } from '@/lib/catalog';
 import { sanitizeArticleHtml } from '@/lib/article-html';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
-import { FaqAccordion, faqPageJsonLd } from '@/components/gift/faq-accordion';
+import { FaqAccordion } from '@/components/gift/faq-accordion';
+import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
 import { GiftHomeMotion } from '@/components/cms/gift-home-motion';
 import { HomeProductCard } from '@/components/cms/home-product-card';
 import type { CmsBlockProduct, CmsPageBlock } from '@/components/cms/marketing-page-types';

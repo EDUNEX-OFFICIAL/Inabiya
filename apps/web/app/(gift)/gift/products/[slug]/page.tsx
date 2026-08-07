@@ -17,7 +17,8 @@ import { ProductBrandLine } from '@/components/gift/product-brand-line';
 import { collectBrandNames } from '@/lib/brands';
 import { StarRatingSummary } from '@/components/gift/star-rating-summary';
 import { TrustStrip } from '@/components/gift/trust-strip';
-import { FaqAccordion, faqPageJsonLd } from '@/components/gift/faq-accordion';
+import { FaqAccordion } from '@/components/gift/faq-accordion';
+import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
 import {
   HamperActionBar,
   HamperWhatsInside,
