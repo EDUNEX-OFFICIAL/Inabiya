@@ -58,7 +58,7 @@ function formatAddress(a: Address | null | undefined): string | null {
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   return (
-    <Suspense fallback={<main className="gift-page text-sm opacity-70">Loading order…</main>}>
+    <Suspense fallback={<main className="gift-page text-body opacity-70">Loading order…</main>}>
       <OrderDetailView params={params} />
     </Suspense>
   );
@@ -102,7 +102,7 @@ function OrderDetailView({ params }: { params: { id: string } }) {
   }
 
   if (!order) {
-    return <main className="gift-page text-sm opacity-70">Loading order…</main>;
+    return <main className="gift-page text-body opacity-70">Loading order…</main>;
   }
 
   const steps = ['PENDING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as const;
@@ -126,7 +126,7 @@ function OrderDetailView({ params }: { params: { id: string } }) {
           Thank you! Your order was placed successfully.
         </p>
       ) : null}
-      <div className="flex flex-wrap gap-gs-3 text-sm">
+      <div className="flex flex-wrap gap-gs-3 text-body">
         <Link href="/orders" className="gift-link">
           ← All orders
         </Link>
@@ -138,9 +138,9 @@ function OrderDetailView({ params }: { params: { id: string } }) {
       <div className="mt-gs-4 flex flex-wrap items-start justify-between gap-gs-4">
         <div>
           <h1 className="gift-h1">{order.orderNumber}</h1>
-          <p className="mt-gs-1 text-sm opacity-70">Status: {order.status.replaceAll('_', ' ')}</p>
+          <p className="mt-gs-1 text-body opacity-70">Status: {order.status.replaceAll('_', ' ')}</p>
           {payment ? (
-            <p className="mt-gs-1 text-sm opacity-70">
+            <p className="mt-gs-1 text-body opacity-70">
               Payment: {payment.status} · {payment.provider}
             </p>
           ) : null}
@@ -152,26 +152,26 @@ function OrderDetailView({ params }: { params: { id: string } }) {
         ) : null}
       </div>
       {invoiceAvailable ? (
-        <p className="mt-gs-2 text-xs opacity-60">
+        <p className="mt-gs-2 text-caption opacity-60">
           Preview the receipt, then download as PDF or print.
         </p>
       ) : order.status === 'PENDING_PAYMENT' ? (
-        <p className="mt-gs-2 text-sm opacity-70">
+        <p className="mt-gs-2 text-body opacity-70">
           Invoice will be available after payment is captured.
         </p>
       ) : null}
 
       <div className="mt-gs-4 flex flex-wrap gap-gs-3">
-        <Link href="/gift/products" className="clay-btn-secondary text-sm">
+        <Link href="/gift/products" className="clay-btn-secondary text-body">
           Continue shopping
         </Link>
-        <Link href="/gift/build-your-box" className="clay-btn-ghost text-sm">
+        <Link href="/gift/build-your-box" className="clay-btn-ghost text-body">
           Build another box
         </Link>
       </div>
 
       <section className="clay-panel mt-gs-6 p-gs-5" aria-label="Order tracking">
-        <h2 className="font-display text-xl">Tracking</h2>
+        <h2 className="gift-h2">Tracking</h2>
         {special ? (
           <p className="gift-banner gift-banner--warning mt-gs-3">{order.status}</p>
         ) : (
@@ -182,10 +182,10 @@ function OrderDetailView({ params }: { params: { id: string } }) {
               return (
                 <li
                   key={step}
-                  className={`flex items-center gap-gs-3 text-sm ${done ? '' : 'opacity-40'}`}
+                  className={`flex items-center gap-gs-3 text-body ${done ? '' : 'opacity-40'}`}
                 >
                   <span
-                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs ${
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-pill border text-caption ${
                       done
                         ? 'border-primary bg-primary text-white shadow-clay'
                         : 'border-border-strong'
@@ -202,7 +202,7 @@ function OrderDetailView({ params }: { params: { id: string } }) {
         )}
       </section>
 
-      <ul className="mt-gs-6 space-y-gs-3 text-sm">
+      <ul className="mt-gs-6 space-y-gs-3 text-body">
         {order.items.map((item, i) => (
           <li key={i} className="clay-card flex justify-between gap-gs-4 p-gs-4">
             <span>
@@ -215,7 +215,7 @@ function OrderDetailView({ params }: { params: { id: string } }) {
         ))}
       </ul>
 
-      <div className="clay-panel mt-gs-4 space-y-gs-1 p-gs-5 text-sm">
+      <div className="clay-panel mt-gs-4 space-y-gs-1 p-gs-5 text-body">
         <p>Subtotal: {formatInr(order.subtotalPaise)}</p>
         {order.discountPaise > 0 ? <p>Discount: −{formatInr(order.discountPaise)}</p> : null}
         <p>Shipping: {formatInr(order.shippingPaise)}</p>
@@ -224,19 +224,19 @@ function OrderDetailView({ params }: { params: { id: string } }) {
       </div>
 
       {(shipText || billText) && (
-        <section className="mt-gs-6 grid gap-gs-4 sm:grid-cols-2 text-sm">
+        <section className="mt-gs-6 grid gap-gs-4 sm:grid-cols-2 text-body">
           {shipText ? (
             <div className="clay-panel p-gs-5">
-              <h2 className="font-display text-lg">Ship to</h2>
+              <h2 className="gift-h2">Ship to</h2>
               <p className="mt-gs-2 whitespace-pre-line opacity-80">{shipText}</p>
               {order.shippingMethod ? (
-                <p className="mt-gs-2 text-xs opacity-60">Method: {order.shippingMethod}</p>
+                <p className="mt-gs-2 text-caption opacity-60">Method: {order.shippingMethod}</p>
               ) : null}
             </div>
           ) : null}
           {billText ? (
             <div className="clay-panel p-gs-5">
-              <h2 className="font-display text-lg">Billing</h2>
+              <h2 className="gift-h2">Billing</h2>
               <p className="mt-gs-2 whitespace-pre-line opacity-80">{billText}</p>
             </div>
           ) : null}
@@ -244,13 +244,13 @@ function OrderDetailView({ params }: { params: { id: string } }) {
       )}
 
       {order.giftMessage ? (
-        <p className="clay-card mt-gs-4 p-gs-4 text-sm">
+        <p className="clay-card mt-gs-4 p-gs-4 text-body">
           <strong>Gift message:</strong> {order.giftMessage}
         </p>
       ) : null}
 
       <h2 className="font-display mt-gs-6 mb-gs-3 text-xl">Timeline</h2>
-      <ol className="space-y-gs-2 text-sm opacity-80">
+      <ol className="space-y-gs-2 text-body opacity-80">
         {order.statusHistory.map((h, i) => (
           <li key={i} className="clay-chip !block w-full !rounded-control py-gs-2">
             {h.status} — {new Date(h.createdAt).toLocaleString()}
@@ -259,8 +259,8 @@ function OrderDetailView({ params }: { params: { id: string } }) {
         ))}
       </ol>
 
-      <section className="clay-panel mt-gs-6 p-gs-5 text-sm">
-        <h2 className="font-display text-xl">Return</h2>
+      <section className="clay-panel mt-gs-6 p-gs-5 text-body">
+        <h2 className="gift-h2">Return</h2>
         {eligibility ? (
           <>
             <p className="mt-gs-2 opacity-70">
@@ -300,7 +300,7 @@ function OrderDetailView({ params }: { params: { id: string } }) {
         {returnMsg ? <p className="mt-gs-2 opacity-80">{returnMsg}</p> : null}
       </section>
 
-      <p className="mt-gs-6 text-sm opacity-70">
+      <p className="mt-gs-6 text-body opacity-70">
         Need help?{' '}
         <a href="mailto:hello@inabiya.in" className="gift-link">
           hello@inabiya.in

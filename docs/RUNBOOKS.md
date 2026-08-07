@@ -12,7 +12,7 @@ Status: **Phase 9 closeout — VPS-local launch readiness signed**
 | 3 | Gift checkout paid path (mock) | Eng | **x** (prior phases) |
 | 4 | Editorial publish → public article | Eng | **x** |
 | 5 | Creator reverse-bid → payment release | Eng | **x** |
-| 6 | Auth rate limits verified (429 after burst) | Eng | **x** (`Docs/SECURITY.md`) |
+| 6 | Auth rate limits verified (429 after burst) | Eng | **x** (`docs/SECURITY.md`) |
 | 7 | Postgres backup drill completed | Ops/Eng | **x** (`scripts/backup-postgres.sh`) |
 | 8 | Secrets not in git; `.env` rotation noted | Ops/Eng | **x** (runbook §4; verify prod secrets ≠ example) |
 | 9 | On-call owner named | Lead | **x** — Primary: VPS Eng (`/srv/Inabiya`); Backup: Project Lead — update contacts before public DNS |
@@ -87,6 +87,6 @@ bash scripts/dr-smoke.sh   # restore into temp DB, verify, drop — live DB unto
 
 ## 10. Related docs
 
-- `Docs/SECURITY.md` — pentest MVP findings + remediations
+- `docs/SECURITY.md` — pentest MVP findings + remediations
 - `scripts/phase9-load-smoke.sh` — concurrent hot-path smoke
 - `scripts/dr-smoke.sh` — backup/restore DR smoke

@@ -61,12 +61,12 @@ export function FaqAccordion({ title, items, defaultOpenIndex = 0, className, ho
                 id={btnId}
                 aria-expanded={open}
                 aria-controls={panelId}
-                className="flex w-full cursor-pointer list-none items-center justify-between gap-gs-3 px-gs-5 py-gs-4 text-left text-sm font-medium"
+                className="flex w-full cursor-pointer list-none items-center justify-between gap-gs-3 px-gs-5 py-gs-4 text-left text-body font-medium"
                 onClick={() => setOpenIndex(open ? null : i)}
               >
                 <span>{item.question}</span>
                 <span
-                  className={`shrink-0 text-base leading-none opacity-50 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  className={`shrink-0 text-h2 leading-none opacity-50 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                     open ? 'rotate-45' : 'rotate-0'
                   }`}
                   aria-hidden
@@ -82,7 +82,7 @@ export function FaqAccordion({ title, items, defaultOpenIndex = 0, className, ho
                 style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
               >
                 <div className="min-h-0 overflow-hidden">
-                  <div className="border-t border-border-subtle px-gs-5 pb-gs-4 pt-gs-3 text-sm leading-relaxed opacity-85">
+                  <div className="border-t border-border-subtle px-gs-5 pb-gs-4 pt-gs-3 text-body leading-relaxed opacity-85">
                     {item.answer}
                   </div>
                 </div>

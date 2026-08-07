@@ -11,14 +11,14 @@ export default function CollectionLoading() {
       <div className="mx-auto flex max-w-page gap-gs-7 px-gs-4 py-gs-6 sm:px-gs-6">
         <div className="hidden w-56 shrink-0 space-y-gs-4 md:block">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-foreground/[0.06]" />
+            <div key={i} className="h-20 animate-pulse rounded-control bg-foreground/[0.06]" />
           ))}
         </div>
         <div className="min-w-0 flex-1">
           <div className="mb-gs-4 h-8 w-full max-w-sm animate-pulse rounded bg-foreground/8" />
           <ul className="grid grid-cols-1 gap-gs-4 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <li key={i} className="overflow-hidden rounded-2xl bg-foreground/[0.04]">
+              <li key={i} className="overflow-hidden rounded-clay bg-foreground/[0.04]">
                 <div className="h-44 animate-pulse bg-foreground/[0.08]" />
                 <div className="space-y-2 p-gs-4">
                   <div className="h-4 w-3/4 animate-pulse rounded bg-foreground/10" />

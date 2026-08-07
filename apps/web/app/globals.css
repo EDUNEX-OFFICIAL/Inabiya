@@ -73,6 +73,27 @@
   --font-display: 'Fraunces', ui-serif, Georgia, serif;
   --font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 
+  /*
+   * Soft Gift φ scale (≈1.618) — gift-scoped only; :root stays for blog/creator.
+   * Body base 1rem; caption floors at 0.75rem (a11y; φ⁻¹×16≈10 too small).
+   */
+  --text-caption: 0.75rem;
+  --text-body: 1rem;
+  --text-body-lg: 1rem;
+  --text-h2: 1.25rem;
+  --text-h2-lg: 1.618rem;
+  --text-h1: 1.618rem;
+  --text-h1-lg: 2.618rem;
+  --text-display: 2.618rem;
+  --text-display-lg: 4.236rem;
+  --leading-body: 1.618;
+
+  /* Section rhythm (φ); keep space-1…4 for controls */
+  --space-5: 1.618rem;
+  --space-6: 2.618rem;
+  --space-7: 4.236rem;
+  --space-8: 6.854rem;
+
   /* Gift radius (softer clay) */
   --radius-pill: 9999px;
   --radius-card: 1.75rem;
@@ -81,6 +102,9 @@
   --radius: 1.25rem;
   --clay-radius: var(--radius-card);
   --clay-radius-sm: var(--radius-control);
+
+  /* Provider brand (WhatsApp FAB — single named token) */
+  --gift-whatsapp: #25d366;
 
   /* Surfaces */
   --surface: var(--inabiya-white);
@@ -137,6 +161,8 @@
   --gift-pad-x: var(--space-4);
   --gift-pad-y: var(--space-5);
   --gift-pad-y-lg: var(--space-6);
+  /* Below sticky storefront nav */
+  --gift-sticky-offset: 4.5rem;
 }
 
 [data-theme='blog'] {
@@ -1328,23 +1354,15 @@ h3 {
   }
 
   [data-theme='gift'] .gift-hero-split__headline {
-    line-height: 1.12;
+    line-height: var(--leading-display);
     color: var(--inabiya-heading);
-    /* Dominant hero H1 — punchy on mobile too (not just lg) */
-    font-size: 2.75rem; /* 44px — clearly above page .gift-h1 (30px) */
+    font-size: var(--text-display);
     letter-spacing: -0.03em;
   }
 
   @media (min-width: 640px) {
     [data-theme='gift'] .gift-hero-split__headline {
-      font-size: 3.5rem; /* 56px */
-      line-height: 1.1;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    [data-theme='gift'] .gift-hero-split__headline {
-      font-size: 4.5rem; /* 72px */
+      font-size: var(--text-display-lg);
       line-height: 1.08;
     }
   }

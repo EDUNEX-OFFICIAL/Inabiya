@@ -53,15 +53,15 @@ export default function AccountPage() {
   }
 
   if (!user) {
-    return <main className="gift-page max-w-lg text-sm opacity-70">Loading account…</main>;
+    return <main className="gift-page max-w-lg text-body opacity-70">Loading account…</main>;
   }
 
   return (
     <main className="gift-page max-w-lg">
       <h1 className="gift-h1">Account</h1>
-      <p className="mt-gs-1 text-sm opacity-70">{user.email}</p>
+      <p className="mt-gs-1 text-body opacity-70">{user.email}</p>
 
-      <nav className="mt-gs-5 flex flex-wrap gap-gs-2 text-sm" aria-label="Account">
+      <nav className="mt-gs-5 flex flex-wrap gap-gs-2 text-body" aria-label="Account">
         <Link className="clay-chip hover:text-primary" href="/orders">
           Orders
         </Link>
@@ -74,10 +74,10 @@ export default function AccountPage() {
       </nav>
 
       <section className="clay-panel mt-gs-6 p-gs-4 sm:p-gs-6" aria-labelledby="profile-heading">
-        <h2 id="profile-heading" className="font-display text-xl sm:text-2xl">
+        <h2 id="profile-heading" className="gift-h2">
           Profile
         </h2>
-        <label className="mt-gs-3 block text-sm" htmlFor="displayName">
+        <label className="mt-gs-3 block text-body" htmlFor="displayName">
           Display name
           <input
             id="displayName"
@@ -95,7 +95,7 @@ export default function AccountPage() {
           Save
         </button>
         {msg ? (
-          <p className="mt-gs-2 text-sm text-success" role="status">
+          <p className="mt-gs-2 text-body text-success" role="status">
             {msg}
           </p>
         ) : null}
@@ -105,7 +105,7 @@ export default function AccountPage() {
         <h2 id="addresses-heading" className="gift-h2">
           Addresses
         </h2>
-        <ul className="mt-gs-4 space-y-gs-3 text-sm">
+        <ul className="mt-gs-4 space-y-gs-3 text-body">
           {addresses.length === 0 ? (
             <li className="clay-panel p-gs-4 opacity-80">
               No saved addresses yet — add one at checkout.
@@ -116,7 +116,7 @@ export default function AccountPage() {
                 <p className="font-medium">
                   {a.fullName}
                   {a.isDefault ? (
-                    <span className="ml-gs-2 text-xs font-normal text-primary">default</span>
+                    <span className="ml-gs-2 text-caption font-normal text-primary">default</span>
                   ) : null}
                 </p>
                 <p className="mt-gs-1 opacity-80">

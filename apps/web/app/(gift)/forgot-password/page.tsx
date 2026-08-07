@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
       <form onSubmit={(e) => void onSubmit(e)} className="clay-panel flex flex-col gap-gs-4 p-gs-5">
-        <label className="flex flex-col gap-gs-1 text-sm">
+        <label className="flex flex-col gap-gs-1 text-body">
           Email
           <input
             className="clay-input"
@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
             onChange={(e) => setEmail(e.target.value)}
           />
         </label>
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <p className="text-body text-danger">{error}</p> : null}
         {msg ? (
           <p className="gift-banner gift-banner--success" role="status">
             {msg}
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
           {busy ? 'Sending…' : 'Send reset link'}
         </button>
       </form>
-      <p className="text-sm opacity-75">
+      <p className="text-body opacity-75">
         <Link href="/login" className="font-medium text-primary underline">
           ← Back to sign in
         </Link>

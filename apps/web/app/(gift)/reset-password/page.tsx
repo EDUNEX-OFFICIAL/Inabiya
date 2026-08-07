@@ -65,7 +65,7 @@ function ResetPasswordForm() {
           onSubmit={(e) => void onSubmit(e)}
           className="clay-panel flex flex-col gap-gs-4 p-gs-5"
         >
-          <label className="flex flex-col gap-gs-1 text-sm">
+          <label className="flex flex-col gap-gs-1 text-body">
             New password
             <input
               className="clay-input"
@@ -77,7 +77,7 @@ function ResetPasswordForm() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </label>
-          <label className="flex flex-col gap-gs-1 text-sm">
+          <label className="flex flex-col gap-gs-1 text-body">
             Confirm password
             <input
               className="clay-input"
@@ -89,13 +89,13 @@ function ResetPasswordForm() {
               onChange={(e) => setConfirm(e.target.value)}
             />
           </label>
-          {error ? <p className="text-sm text-danger">{error}</p> : null}
+          {error ? <p className="text-body text-danger">{error}</p> : null}
           <button type="submit" disabled={busy} className="clay-btn disabled:opacity-60">
             {busy ? 'Saving…' : 'Update password'}
           </button>
         </form>
       )}
-      <p className="text-sm opacity-75">
+      <p className="text-body opacity-75">
         <Link href="/login" className="font-medium text-primary underline">
           ← Back to sign in
         </Link>
@@ -106,7 +106,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<main className="p-gs-6 text-sm opacity-70">Loading…</main>}>
+    <Suspense fallback={<main className="p-gs-6 text-body opacity-70">Loading…</main>}>
       <ResetPasswordForm />
     </Suspense>
   );

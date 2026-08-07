@@ -116,7 +116,7 @@ function LoginForm() {
     <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
       <div>
         <h1 className="gift-h1">Sign in</h1>
-        <p className="mt-gs-2 text-sm opacity-75">
+        <p className="mt-gs-2 text-body opacity-75">
           {nextPath
             ? `Continue to ${nextPath}`
             : 'Sign in to save wishlists, track orders, and checkout faster.'}
@@ -128,7 +128,7 @@ function LoginForm() {
         ) : null}
       </div>
       <form onSubmit={onSubmit} className="clay-panel flex flex-col gap-gs-3 p-gs-5 sm:p-gs-6">
-        <label className="flex flex-col gap-gs-1 text-sm">
+        <label className="flex flex-col gap-gs-1 text-body">
           Email
           <input
             className="clay-input !mt-gs-1"
@@ -140,7 +140,7 @@ function LoginForm() {
             spellCheck={false}
           />
         </label>
-        <label className="flex flex-col gap-gs-1 text-sm">
+        <label className="flex flex-col gap-gs-1 text-body">
           Password
           <div className="relative">
             <input
@@ -162,21 +162,21 @@ function LoginForm() {
           </div>
         </label>
         {filledNote ? (
-          <p className="text-xs font-medium text-primary" role="status">
+          <p className="text-caption font-medium text-primary" role="status">
             {filledNote}
           </p>
         ) : null}
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <p className="text-body text-danger">{error}</p> : null}
         <button type="submit" disabled={busy} className="clay-btn mt-gs-1 disabled:opacity-60">
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
-      <p className="text-sm opacity-75">
+      <p className="text-body opacity-75">
         <Link className="font-medium text-primary underline" href="/forgot-password">
           Forgot password?
         </Link>
       </p>
-      <p className="text-sm opacity-75">
+      <p className="text-body opacity-75">
         No account?{' '}
         <Link
           className="font-medium text-primary underline"
@@ -188,9 +188,9 @@ function LoginForm() {
       {SHOW_DEMO_LOGINS ? (
         <div className="clay-card space-y-gs-3 p-gs-4" data-testid="demo-login-panel">
           <div>
-            <p className="text-sm font-semibold text-foreground">Demo accounts — one click fill</p>
-            <p className="mt-gs-1 text-xs opacity-70">
-              Password for all: <code className="rounded bg-muted px-1 py-0.5">{DEMO_PASSWORD}</code>
+            <p className="text-body font-semibold text-foreground">Demo accounts — one click fill</p>
+            <p className="mt-gs-1 text-caption opacity-70">
+              Password for all: <code className="rounded bg-muted px-1 py-gs-1">{DEMO_PASSWORD}</code>
             </p>
           </div>
           <ul className="grid gap-gs-2 sm:grid-cols-2">
@@ -198,12 +198,12 @@ function LoginForm() {
               <li key={u.email}>
                 <button
                   type="button"
-                  className="flex w-full flex-col items-start rounded-lg border border-border bg-background px-gs-3 py-gs-2 text-left transition hover:border-primary hover:bg-primary/5"
+                  className="flex w-full flex-col items-start rounded-control border border-border bg-background px-gs-3 py-gs-2 text-left transition hover:border-primary hover:bg-primary/5"
                   onClick={() => fillDemo(u)}
                   data-testid={`demo-fill-${u.email.split('@')[0]}`}
                 >
-                  <span className="text-xs font-semibold text-primary">{u.note}</span>
-                  <span className="mt-0.5 truncate font-mono text-[11px] opacity-80">{u.email}</span>
+                  <span className="text-caption font-semibold text-primary">{u.note}</span>
+                  <span className="mt-gs-1 truncate font-mono text-[11px] opacity-80">{u.email}</span>
                 </button>
               </li>
             ))}
@@ -216,7 +216,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="p-gs-6 text-sm opacity-70">Loading…</main>}>
+    <Suspense fallback={<main className="p-gs-6 text-body opacity-70">Loading…</main>}>
       <LoginForm />
     </Suspense>
   );

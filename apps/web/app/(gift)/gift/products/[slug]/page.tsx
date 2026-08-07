@@ -268,7 +268,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     return (
       <main className="gift-page">
         <p>{error}</p>
-        <Link href="/gift/products" className="gift-link mt-gs-3 inline-block text-sm">
+        <Link href="/gift/products" className="gift-link mt-gs-3 inline-block text-body">
           ← All products
         </Link>
       </main>
@@ -288,7 +288,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       <TrackView name="view_pdp" productId={product.id} />
 
       <nav
-        className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm opacity-75"
+        className="flex min-w-0 flex-wrap items-center gap-x-gs-2 gap-y-gs-1 text-body opacity-75"
         aria-label="Breadcrumb"
       >
         <Link href="/gift" className="gift-link shrink-0">
@@ -331,7 +331,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           <div className="flex flex-wrap items-center gap-gs-2">
             <ProductLabels labels={product.displayLabels} placement="inline" max={2} />
             {product.isReadyMadeHamper ? (
-              <span className="clay-chip text-xs">
+              <span className="clay-chip text-caption">
                 {product.hamperItemCount && product.hamperItemCount > 0
                   ? `${product.hamperItemCount} items`
                   : 'Ready-made hamper'}
@@ -356,7 +356,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           />
 
           {product.isReadyMadeHamper && (product.hamperItems?.length ?? 0) > 0 ? (
-            <p className="mt-gs-3 text-sm text-foreground/75">
+            <p className="gift-muted mt-gs-3">
               Contains{' '}
               {product.hamperItems!
                 .slice(0, 2)
@@ -372,7 +372,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           ) : null}
 
           {variant ? (
-            <p className="mt-gs-4 flex flex-wrap items-baseline gap-gs-3 font-display text-3xl font-semibold tracking-tight text-primary">
+            <p className="mt-gs-4 flex flex-wrap items-baseline gap-gs-3 font-display text-h1 font-semibold tracking-tight text-primary">
               <span>{formatInr(variant.pricePaise)}</span>
               {(() => {
                 const compare =
@@ -392,12 +392,12 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 return (
                   <>
                     {compare != null ? (
-                      <span className="text-lg font-normal text-foreground/50 line-through">
+                      <span className="text-h2 font-normal text-foreground/50 line-through">
                         {formatInr(compare)}
                       </span>
                     ) : null}
                     {save > 0 ? (
-                      <span className="rounded-full bg-emerald-100 px-gs-3 py-1 text-xs font-semibold text-emerald-800">
+                      <span className="rounded-pill bg-success-bg px-gs-3 py-gs-1 text-caption font-semibold text-success">
                         SAVE {formatInr(save)}
                       </span>
                     ) : null}
@@ -406,10 +406,10 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
               })()}
             </p>
           ) : (
-            <p className="mt-gs-4 text-sm text-danger">This gift has no buyable options yet.</p>
+            <p className="mt-gs-4 text-body text-danger">This gift has no buyable options yet.</p>
           )}
 
-          <p className={`mt-gs-2 text-sm font-medium ${inStock ? 'text-success' : 'text-danger'}`}>
+          <p className={`mt-gs-2 text-body font-medium ${inStock ? 'text-success' : 'text-danger'}`}>
             {inStock
               ? variant && variant.available <= 5
                 ? `Only ${variant.available} left`
@@ -419,7 +419,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
           {product.variants.length > 1 ? (
             <fieldset className="mt-gs-4">
-              <legend className="text-sm font-medium">Choose option</legend>
+              <legend className="text-body font-medium">Choose option</legend>
               <div className="mt-gs-2 flex flex-wrap gap-gs-2">
                 {product.variants.map((v) => {
                   const selected = v.id === variantId;
@@ -434,7 +434,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                         setMessage(null);
                         setError(null);
                       }}
-                      className={`max-w-full rounded-full border px-gs-3 py-gs-2 text-left text-sm transition ${
+                      className={`max-w-full rounded-pill border px-gs-3 py-gs-2 text-left text-body transition ${
                         selected
                           ? 'border-transparent bg-primary text-white shadow-clay'
                           : 'border-border bg-white/80 hover:border-primary/40'
@@ -462,7 +462,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
           {showOptionalToggle ? (
             <div className="mt-gs-4 rounded-clay border border-border-subtle bg-white/70 px-gs-4 py-gs-3">
-              <label className="flex cursor-pointer items-start gap-gs-3 text-sm">
+              <label className="flex cursor-pointer items-start gap-gs-3 text-body">
                 <input
                   type="checkbox"
                   className="mt-1"
@@ -485,7 +485,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                       ? ` — ${optionalPersonalization[0].label}`
                       : ''}
                   </span>
-                  <span className="mt-0.5 block text-xs opacity-65">
+                  <span className="mt-gs-1 block text-caption opacity-65">
                     Stitched or noted with care — included when you fill the field below.
                   </span>
                 </span>
@@ -507,8 +507,8 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
           {inStock ? (
             <div className="mt-gs-4 flex flex-wrap items-center gap-gs-3">
-              <span className="text-sm font-medium">Quantity</span>
-              <div className="inline-flex items-center rounded-full border border-border bg-white/80">
+              <span className="text-body font-medium">Quantity</span>
+              <div className="inline-flex items-center rounded-pill border border-border bg-white/80">
                 <button
                   type="button"
                   className="h-11 w-11 text-lg disabled:opacity-40"
@@ -518,7 +518,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 >
                   −
                 </button>
-                <span className="min-w-[2rem] text-center text-sm tabular-nums" aria-live="polite">
+                <span className="min-w-[2rem] text-center text-body tabular-nums" aria-live="polite">
                   {quantity}
                 </span>
                 <button
@@ -531,7 +531,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                   +
                 </button>
               </div>
-              {maxQty <= 5 ? <span className="text-xs opacity-60">Max {maxQty}</span> : null}
+              {maxQty <= 5 ? <span className="text-caption opacity-60">Max {maxQty}</span> : null}
             </div>
           ) : null}
 
@@ -549,7 +549,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 type="button"
                 disabled={busyWish || !variant}
                 onClick={() => void addToWishlist()}
-                className="inline-flex size-12 shrink-0 items-center justify-center rounded-full border border-border-strong bg-white p-0 text-foreground shadow-sm transition hover:bg-[var(--surface-soft)] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex size-12 shrink-0 items-center justify-center rounded-pill border border-border-strong bg-white p-0 text-foreground shadow-sm transition hover:bg-[var(--surface-soft)] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Save to wishlist"
                 title="Save to wishlist"
               >
@@ -569,7 +569,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           </div>
 
           {message ? (
-            <p className="mt-gs-3 text-sm text-success" role="status">
+            <p className="mt-gs-3 text-body text-success" role="status">
               {message}
               {message === 'Added to cart' || /^Added \d+ to cart$/.test(message) ? (
                 <>
@@ -582,7 +582,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             </p>
           ) : null}
           {error ? (
-            <p className="mt-gs-3 text-sm text-danger" role="alert">
+            <p className="mt-gs-3 text-body text-danger" role="alert">
               {error}
             </p>
           ) : null}
@@ -716,7 +716,7 @@ function PersonalizationField({
   const choices = selectOptions(opt.options);
   const isSelect = opt.type === 'SELECT' && choices.length > 0;
   return (
-    <label className="mt-gs-3 block text-sm first:mt-0">
+    <label className="mt-gs-3 block text-body first:mt-0">
       <span className="font-medium">
         {opt.label}
         {opt.required ? <span className="text-primary"> *</span> : null}
@@ -746,7 +746,7 @@ function PersonalizationField({
         />
       )}
       {opt.maxLength && !isSelect ? (
-        <span className="mt-gs-1 block text-xs opacity-55">Up to {opt.maxLength} characters</span>
+        <span className="mt-gs-1 block text-caption opacity-55">Up to {opt.maxLength} characters</span>
       ) : null}
     </label>
   );
@@ -838,10 +838,10 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
               key={h.title}
               className="flex gap-gs-3 rounded-clay border border-border-subtle bg-white/60 px-gs-4 py-gs-3"
             >
-              <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
+              <span className="mt-gs-1 h-2 w-2 shrink-0 rounded-pill bg-primary" aria-hidden />
               <span className="min-w-0">
-                <p className="text-sm font-medium">{h.title}</p>
-                <p className="mt-0.5 text-sm leading-relaxed opacity-75">{h.body}</p>
+                <p className="text-body font-medium">{h.title}</p>
+                <p className="mt-gs-1 text-body leading-relaxed opacity-75">{h.body}</p>
               </span>
             </li>
           ))}
@@ -851,11 +851,11 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
       <div className="min-w-0 space-y-gs-3">
         {tags.length > 0 ? (
           <div className="pt-gs-1">
-            <p className="text-xs font-medium uppercase tracking-wide opacity-55">Shop similar</p>
+            <p className="text-caption font-medium uppercase tracking-wide opacity-55">Shop similar</p>
             <ul className="mt-gs-2 flex flex-wrap gap-gs-2" aria-label="Browse similar">
               {tags.map((t) => (
                 <li key={`${t.href}-${t.label}`}>
-                  <Link href={t.href} className="clay-chip text-xs capitalize hover:text-primary">
+                  <Link href={t.href} className="clay-chip text-caption capitalize hover:text-primary">
                     {t.label}
                   </Link>
                 </li>
@@ -863,7 +863,7 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
             </ul>
           </div>
         ) : null}
-        <p className="text-sm opacity-70">
+        <p className="text-body opacity-70">
           Shipping & returns details are in the{' '}
           <a href="#faq" className="gift-link">
             FAQ
@@ -935,11 +935,11 @@ function RelatedProducts({
       <div className="flex flex-wrap items-end justify-between gap-gs-3">
         <h2 className="gift-h2">You may also like</h2>
         {categorySlug ? (
-          <Link href={`/gift/products?category=${categorySlug}`} className="gift-link text-sm">
+          <Link href={`/gift/products?category=${categorySlug}`} className="gift-link text-body">
             Browse category
           </Link>
         ) : (
-          <Link href="/gift/products" className="gift-link text-sm">
+          <Link href="/gift/products" className="gift-link text-body">
             Browse all
           </Link>
         )}
@@ -1040,7 +1040,7 @@ function ReviewsSection({
       <div className="flex flex-wrap items-end justify-between gap-gs-3">
         <div className="min-w-0">
           <h2 className="gift-h2">Reviews</h2>
-          <p className="mt-gs-1 text-sm opacity-70">
+          <p className="mt-gs-1 text-body opacity-70">
             {count === 0
               ? 'Parents are discovering this gift — share your story after it arrives.'
               : `${avg?.toFixed(1) ?? '—'}★ average · ${count} review${count === 1 ? '' : 's'}`}
@@ -1048,7 +1048,7 @@ function ReviewsSection({
         </div>
         <button
           type="button"
-          className="clay-btn-secondary shrink-0 text-sm"
+          className="clay-btn-secondary shrink-0 text-body"
           onClick={() => setFormOpen((o) => !o)}
         >
           {formOpen ? 'Hide form' : 'Write a review'}
@@ -1058,7 +1058,7 @@ function ReviewsSection({
       {count > 0 ? (
         <ul className="mt-gs-5 space-y-gs-3">
           {data?.reviews.map((r) => (
-            <li key={r.id} className="clay-card p-gs-4 text-sm">
+            <li key={r.id} className="clay-card p-gs-4 text-body">
               <p className="font-medium">
                 <span aria-label={`${r.rating} out of 5 stars`}>{'★'.repeat(r.rating)}</span>
                 <span className="opacity-30" aria-hidden>
@@ -1067,7 +1067,7 @@ function ReviewsSection({
                 {r.headline ? <span className="ml-gs-2 break-words">— {r.headline}</span> : null}
               </p>
               <p className="mt-gs-2 break-words opacity-80">{r.body}</p>
-              <p className="mt-gs-2 text-xs opacity-60">
+              <p className="mt-gs-2 text-caption opacity-60">
                 {r.authorName}
                 {r.verifiedPurchase ? ' · Verified purchase' : ''}
               </p>
@@ -1078,10 +1078,10 @@ function ReviewsSection({
 
       {showStoreWide ? (
         <div className="mt-gs-5">
-          <h3 className="text-sm font-medium">What parents say about Inabiya gifts</h3>
+          <h3 className="text-body font-medium">What parents say about Inabiya gifts</h3>
           <ul className="mt-gs-3 space-y-gs-3">
             {storeWide!.reviews.map((r) => (
-              <li key={r.id} className="clay-card p-gs-4 text-sm">
+              <li key={r.id} className="clay-card p-gs-4 text-body">
                 <p className="font-medium">
                   <span aria-label={`${r.rating} out of 5 stars`}>{'★'.repeat(r.rating)}</span>
                   <span className="opacity-30" aria-hidden>
@@ -1090,7 +1090,7 @@ function ReviewsSection({
                   {r.headline ? <span className="ml-gs-2">— {r.headline}</span> : null}
                 </p>
                 <p className="mt-gs-2 break-words opacity-80">{r.body}</p>
-                <p className="mt-gs-2 text-xs opacity-60">
+                <p className="mt-gs-2 text-caption opacity-60">
                   {r.authorName}
                   {' · '}
                   <Link href={`/gift/products/${r.productSlug}`} className="gift-link">
@@ -1105,11 +1105,11 @@ function ReviewsSection({
 
       {formOpen ? (
         <div className="clay-panel mt-gs-6 p-gs-5">
-          <h3 className="text-sm font-medium">Write a review</h3>
-          <p className="mt-gs-1 text-xs opacity-60">
+          <h3 className="text-body font-medium">Write a review</h3>
+          <p className="mt-gs-1 text-caption opacity-60">
             Verified purchasers only. Reviews go to moderation first.
           </p>
-          <label className="mt-gs-3 block text-sm">
+          <label className="mt-gs-3 block text-body">
             Rating
             <select
               className="clay-input"
@@ -1123,7 +1123,7 @@ function ReviewsSection({
               ))}
             </select>
           </label>
-          <label className="mt-gs-2 block text-sm">
+          <label className="mt-gs-2 block text-body">
             Headline
             <input
               className="clay-input"
@@ -1132,7 +1132,7 @@ function ReviewsSection({
               onChange={(e) => setHeadline(e.target.value)}
             />
           </label>
-          <label className="mt-gs-2 block text-sm">
+          <label className="mt-gs-2 block text-body">
             Review
             <textarea
               className="clay-input min-h-[80px]"
@@ -1150,7 +1150,7 @@ function ReviewsSection({
           >
             {submitting ? 'Submitting…' : 'Submit'}
           </button>
-          {formMsg ? <p className="mt-gs-2 text-sm opacity-80">{formMsg}</p> : null}
+          {formMsg ? <p className="mt-gs-2 text-body opacity-80">{formMsg}</p> : null}
         </div>
       ) : null}
     </section>

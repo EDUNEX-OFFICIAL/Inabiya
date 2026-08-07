@@ -163,12 +163,12 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
     <main className="gift-page">
       <TrackView name="view_plp" />
       <div className="mb-gs-6">
-        <Link href="/gift" className="gift-link text-sm">
+        <Link href="/gift" className="gift-link text-body">
           ← Gift home
         </Link>
         <p className="gift-overline mt-gs-4">Shop</p>
         <h1 className="gift-h1 mt-gs-2">{heading}</h1>
-        <p className="gift-muted mt-gs-2 text-sm">
+        <p className="gift-muted mt-gs-2">
           {products.length === 0
             ? 'No matches for these filters yet.'
             : `${products.length} gift${products.length === 1 ? '' : 's'}`}
@@ -192,7 +192,7 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
                 aria-current={active ? 'page' : undefined}
                 className={
                   active
-                    ? 'shrink-0 rounded-full bg-primary px-gs-3 py-gs-2 text-sm font-medium text-primary-foreground shadow-clay'
+                    ? 'shrink-0 rounded-pill bg-primary px-gs-3 py-gs-2 text-body font-medium text-primary-foreground shadow-clay'
                     : 'clay-chip shrink-0 hover:text-primary'
                 }
               >
@@ -203,7 +203,7 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
         </div>
 
         <div className="mt-gs-3 flex flex-wrap items-center gap-gs-2" aria-label="Sort products">
-          <span className="text-xs font-medium uppercase tracking-wide opacity-55">Sort</span>
+          <span className="text-caption font-medium uppercase tracking-wide opacity-55">Sort</span>
           {SORTS.map((s) => (
             <Link
               key={s.value}
@@ -211,8 +211,8 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
               aria-current={sort === s.value ? 'page' : undefined}
               className={
                 sort === s.value
-                  ? 'rounded-full bg-foreground px-gs-3 py-1 text-xs font-medium text-background'
-                  : 'clay-chip text-xs'
+                  ? 'rounded-pill bg-foreground px-gs-3 py-gs-1 text-caption font-medium text-background'
+                  : 'clay-chip text-caption'
               }
             >
               {s.label}
@@ -223,7 +223,7 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
 
       {products.length === 0 ? (
         <div className="clay-panel p-gs-6 text-center sm:p-gs-7">
-          <p className="text-sm opacity-80">No products match these filters.</p>
+          <p className="text-body opacity-80">No products match these filters.</p>
           <Link href="/gift/products" className="clay-btn mt-gs-5 inline-flex">
             Clear filters
           </Link>

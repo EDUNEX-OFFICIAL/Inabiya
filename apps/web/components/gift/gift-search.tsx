@@ -164,7 +164,7 @@ export function GiftSearch({
             setOpenList(true);
           }}
           placeholder="Search gifts…"
-          className="min-w-0 flex-1 bg-transparent py-gs-2 text-sm outline-none [&::-webkit-search-cancel-button]:hidden"
+          className="min-w-0 flex-1 bg-transparent py-gs-2 text-body outline-none [&::-webkit-search-cancel-button]:hidden"
           autoComplete="off"
           enterKeyHint="search"
         />
@@ -188,7 +188,7 @@ export function GiftSearch({
           aria-label="Gift search suggestions"
         >
           {busy ? <p className="gift-muted px-gs-2 py-gs-2">Searching…</p> : null}
-          {error ? <p className="px-gs-2 py-gs-2 text-sm text-danger">{error}</p> : null}
+          {error ? <p className="px-gs-2 py-gs-2 text-body text-danger">{error}</p> : null}
           {!busy && !error && debounced.length >= MIN_Q && items.length === 0 ? (
             <p className="gift-muted break-all px-gs-2 py-gs-2">No gifts match “{debounced}”.</p>
           ) : null}
@@ -198,14 +198,14 @@ export function GiftSearch({
                 <li key={p.id} role="option" aria-selected="false">
                   <Link
                     href={`/gift/products/${p.slug}`}
-                    className="flex items-baseline justify-between gap-gs-3 rounded-lg px-gs-2 py-gs-2 hover:bg-surface-soft"
+                    className="flex items-baseline justify-between gap-gs-3 rounded-control px-gs-2 py-gs-2 hover:bg-surface-soft"
                     onClick={() => {
                       setOpenList(false);
                       onNavigate?.();
                     }}
                   >
                     <span className="truncate font-medium">{p.title}</span>
-                    <span className="shrink-0 text-xs font-semibold text-primary">
+                    <span className="shrink-0 text-caption font-semibold text-primary">
                       {formatInr(p.fromPricePaise)}
                     </span>
                   </Link>
@@ -216,7 +216,7 @@ export function GiftSearch({
           {showSeeAll ? (
             <Link
               href={`/gift/products?q=${encodeURIComponent(debounced)}`}
-              className="mt-gs-1 block rounded-lg px-gs-2 py-gs-2 text-sm font-medium text-primary hover:bg-surface-soft"
+              className="mt-gs-1 block rounded-control px-gs-2 py-gs-2 text-body font-medium text-primary hover:bg-surface-soft"
               onClick={() => {
                 setOpenList(false);
                 onNavigate?.();

@@ -1,59 +1,40 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
-import { ReactLenis, useLenis } from 'lenis/react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import 'lenis/dist/lenis.css';
-
-gsap.registerPlugin(ScrollTrigger);
-
-/** Keep GSAP ScrollTrigger in sync while Lenis owns the scroll. */
-function GiftLenisScrollSync() {
-  useLenis(() => {
-    ScrollTrigger.update();
-  });
-
-  useEffect(() => {
-    ScrollTrigger.refresh();
-    return () => {
-      ScrollTrigger.refresh();
-    };
-  }, []);
-
-  return null;
-}
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 
 /**
- * Soft Gift–only smooth scroll. Skipped when prefers-reduced-motion.
- * Not mounted on blog/creator/admin themes.
+ * Soft Gift–only smooth scroll. Loads Lenis + GSAP ScrollTrigger sync
+ * after mount (skipped when prefers-reduced-motion) so the layout shell
+ * stays free of that weight on first paint.
  */
 export function GiftLenis({ children }: { children: ReactNode }) {
-  const [enabled, setEnabled] = useState(false);
+  const [Inner, setInner] = useState<ComponentType<{ children: ReactNode }> | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setEnabled(!mq.matches);
-    sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
+    let cancelled = false;
+
+    const load = () => {
+      if (mq.matches) {
+        setInner(null);
+        return;
+      }
+      void import('./gift-lenis-inner').then((m) => {
+        if (!cancelled) setInner(() => m.GiftLenisInner);
+      });
+    };
+
+    load();
+    mq.addEventListener('change', load);
+    return () => {
+      cancelled = true;
+      mq.removeEventListener('change', load);
+    };
   }, []);
 
-  if (!enabled) {
+  if (!Inner) {
     return <>{children}</>;
   }
 
-  return (
-    <ReactLenis
-      root
-      options={{
-        duration: 1.05,
-        smoothWheel: true,
-        touchMultiplier: 1.1,
-      }}
-    >
-      <GiftLenisScrollSync />
-      {children}
-    </ReactLenis>
-  );
+  return <Inner>{children}</Inner>;
 }

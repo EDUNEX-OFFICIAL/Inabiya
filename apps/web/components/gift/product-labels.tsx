@@ -10,16 +10,18 @@ type Props = {
 };
 
 function toneClass(tone: StorefrontDisplayLabel['tone']): string {
+  const base =
+    'rounded-pill px-gs-2 py-gs-1 text-caption font-semibold uppercase tracking-wide shadow-sm';
   switch (tone) {
     case 'sale':
-      return 'rounded-full bg-[color:var(--danger)] px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm sm:text-xs';
+      return `${base} bg-[color:var(--danger)] text-white`;
     case 'new':
-      return 'rounded-full bg-primary px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground shadow-sm sm:text-xs';
+      return `${base} bg-primary text-primary-foreground`;
     case 'stock':
-      return 'rounded-full border border-foreground/20 bg-white/95 px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground shadow-sm sm:text-xs';
+      return `${base} border border-foreground/20 bg-white/95 text-foreground`;
     case 'manual':
     default:
-      return 'rounded-full bg-foreground px-gs-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm sm:text-xs';
+      return `${base} bg-foreground text-background`;
   }
 }
 

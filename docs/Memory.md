@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 7, 2026 (Hero headline mobile size)
+Last Updated: August 7, 2026 (Soft Gift Lenis + marketing RSC split)
 
 
 ---
@@ -62,7 +62,7 @@ If chat and Memory disagree → ask human → sync Memory.
 | `Memory.md` v2 | Current progress | Every session |
 | `IMPLEMENTATION_AUDIT.md` | Phases vs repo cross-check | Before phase transitions |
 
-Path: `/srv/Inabiya/Docs/` (symlink `docs` → `Docs` for Cursor rules)
+Path: `/srv/Inabiya/docs/` (canonical)
 
 ---
 
@@ -78,7 +78,7 @@ Path: `/srv/Inabiya/Docs/` (symlink `docs` → `Docs` for Cursor rules)
 | Owner | Eng |
 | Target window | 2026-07-29+ |
 | Monorepo | `/srv/Inabiya` (GitHub: `EDUNEX-OFFICIAL/Inabiya`) |
-| Authority | [`Docs/COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md) |
+| Authority | [`docs/COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md) |
 | Prior | OPS-8 Settings & trust shipped |
 
 ### 3.2 Locked production stack
@@ -141,11 +141,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **Human:** Soft Gift Commerce + CMS + Ops shell UX polish visual QA
+1. **Human:** Soft Gift visual QA at 375 / 768 / 1280 (φ + leftover type + perf split)
 2. Replace CC0 demo MP4 with real unboxing when assets ready
 3. Cloudflare SSL / public DNS — **post-dev**
 4. Razorpay / real AWS+SMTP — **post-dev**
-5. After QA: OPS P1 leftovers (orders cursor if needed, mobile triage, product CSV, **edit-page gallery picker**)
+5. OPS P1 leftovers when prioritized (orders cursor, product CSV, gallery picker)
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -259,7 +259,7 @@ Resolve → move to Decisions Log → remove from this table.
 ### 2026-07-29 — Commerce OPS Panel journey (Phase 13)
 
 - Human: move to commerce ops panel; document full development journey before coding one-by-one.
-- **Authority:** `Docs/COMMERCE_OPS_PANEL.md` v1.0.0 — OPS-0…9 contracts (UI/UX + functionality).
+- **Authority:** `docs/COMMERCE_OPS_PANEL.md` v1.0.0 — OPS-0…9 contracts (UI/UX + functionality).
 - **Phases.md** §26 Phase 13 pointer added.
 - Active Phase → Phase 13; first build = **OPS-0 Shell & IA** (not started).
 - Baseline: Phase 4 MVP remains; journey **deepens**, does not replace stack/theme locks.
@@ -294,7 +294,7 @@ Resolve → move to Decisions Log → remove from this table.
 - Wave 2: `CommerceInvoice` snapshot + existing pdfkit PDF path
 - Wave 3: Checkout/admin mock-pay clarity; `PAYMENTS_MODE=mock` in `.env.example`
 - Wave 4: CMS `countdown` block
-- Wave 5: OpenAPI stub (`Docs/openapi.stub.yaml` + generate script)
+- Wave 5: OpenAPI stub (`docs/openapi.stub.yaml` + generate script)
 
 ### 2026-07-28 — Triple theme token architecture
 
@@ -437,7 +437,7 @@ Resolve → move to Decisions Log → remove from this table.
 
 - Client DnD “creating pages” → **1B**: full marketing pages `/pages/[slug]` + block builder (not homepage-only, not TipTap replace)
 - This session **2Y**: docs/roadmap only — **no** Prisma/API/`@dnd-kit` code; **no** ecommerce/CMS/Creator audits
-- Authority: `Docs/CMS_PAGE_BUILDER.md`; Phases §24; DnD lib when coding = `@dnd-kit`
+- Authority: `docs/CMS_PAGE_BUILDER.md`; Phases §24; DnD lib when coding = `@dnd-kit`
 - Soft Gift theme for public pages; TipTap journal unchanged; homepage KV CMS stays until optional 11D
 - Queued later: ecommerce+CMS re-audit; then Creator Collective deep audit
 
@@ -519,7 +519,7 @@ Resolve → move to Decisions Log → remove from this table.
 
 - Dashboard KPIs, alerts, search, customer admin, coupon admin, homepage CMS
 - Order fulfillment transitions validated; internal notes on orders
-- See `Docs/IMPLEMENTATION_AUDIT.md` for Phases 0–3 cross-check
+- See `docs/IMPLEMENTATION_AUDIT.md` for Phases 0–3 cross-check
 
 ### 2026-07-20 — Payment provider: Razorpay (deferred)
 
@@ -551,7 +551,7 @@ Resolve → move to Decisions Log → remove from this table.
 
 ### 2026-07-20 — Docs path + VPS CI/CD
 
-- Canonical docs: `/srv/Inabiya/Docs/`; `docs` symlink → `Docs` (removed broken `/srv/docs`)
+- Canonical docs: `/srv/Inabiya/docs/`; `docs` symlink → `Docs` (removed broken `/srv/docs`)
 - Q1 resolved: production monorepo `/srv/Inabiya` (`EDUNEX-OFFICIAL/Inabiya`)
 - Q5 resolved: Phase 0 deployables = `web` + `api` + `worker` via compose (BuildKit on VPS)
 - CI/CD: GitHub verify → SSH → `scripts/deploy-vps.sh` (images build on VPS, not GHCR)
@@ -654,13 +654,13 @@ Use this to open the right PRD slice instead of whole file:
 - [x] Load test checkout + publish hot paths (`scripts/phase9-load-smoke.sh`)
 - [x] Dashboards/alerts MVP — `/admin/platform` readiness + `/version`
 - [x] Backup/restore drill for PostgreSQL (`backup-postgres.sh` + `dr-smoke.sh`)
-- [x] Secret rotation runbook (`Docs/RUNBOOKS.md`)
+- [x] Secret rotation runbook (`docs/RUNBOOKS.md`)
 - [x] Rate limits on auth + checkout place-order
-- [x] Pentest P0/P1 remediations MVP (`Docs/SECURITY.md` + headers)
+- [x] Pentest P0/P1 remediations MVP (`docs/SECURITY.md` + headers)
 - [x] DR smoke test (`scripts/dr-smoke.sh`)
 - [x] Runbooks: webhook failures, queue backlog, rollback
 - [x] PII/GDPR checklist (MVP notes in RUNBOOKS)
-- [x] Launch checklist signed (`Docs/RUNBOOKS.md`)
+- [x] Launch checklist signed (`docs/RUNBOOKS.md`)
 - [x] On-call owner list filled (VPS Eng / Project Lead — replace contacts before public DNS)
 
 ### Should (P1)
@@ -758,7 +758,7 @@ Use this to open the right PRD slice instead of whole file:
 
 - [x] Dev compose (db/redis; api/web/worker via `docker-compose.prod.yml`)
 - [x] Workspace scripts documented
-- [x] OpenAPI stub generation path (`scripts/generate-openapi-stub.js` → `Docs/openapi.stub.yaml`)
+- [x] OpenAPI stub generation path (`scripts/generate-openapi-stub.js` → `docs/openapi.stub.yaml`)
 
 ### Exit criteria
 
@@ -1033,6 +1033,44 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-07 (Soft Gift Lenis + marketing RSC split)
+
+- **Override continue:** perf follow-up — Lenis deferred + marketing client islands.
+- `(gift)/layout.tsx` → **Server** (`data-theme` + FOUC from `gift-hero-fouc.ts` no GSAP); chrome in `gift-layout-chrome.tsx`.
+- `GiftLenis` lazy-loads `gift-lenis-inner` (Lenis+GSAP) after mount; reduced-motion skips.
+- `marketing-page-blocks.tsx` → **RSC** (~1.5k LOC, no `'use client'`); `HomeProductCard` client island; RichText/FAQ sanitize on server via `sanitizeArticleHtml`.
+- SVG `<img>` kept for brand marks / article SVG covers / corporate hero SVG (intentional).
+- `tsc --noEmit` clean.
+- Next: human viewport QA
+
+### Session — 2026-08-07 (Soft Gift leftover type + images)
+
+- **Override continue:** post-φ leftover pass — gift storefront `text-sm`/`text-xs`/`rounded-*` → `text-body`/`text-caption`/`rounded-pill|clay|control`; headings → `.gift-h2` where ad-hoc.
+- Images: `next/image` on hamper PDP, gift-nav mega, wishlist, marketing hero/image/article covers (SVG brand marks + SVG covers stay `<img>`).
+- Touched ~36 gift/marketing files; `tsc --noEmit` clean.
+- Next: human viewport QA; Lenis/marketing client split optional
+
+### Session — 2026-08-07 (Soft Gift φ spacing & typography)
+
+- **Override:** post Phase 13 — Soft Gift–only visual polish (human: golden ratio φ + consistency). Blog/Creator untouched.
+- Gift-scoped φ tokens in `globals.css`: type (body `1rem`, display `2.618`/`4.236`) + section space-5…8; `--gift-whatsapp`, `--gift-sticky-offset`.
+- Hero headline → `--text-display*`; Tailwind `text-body` / `text-body-lg`.
+- Hotspots aligned to recipes/`gs-*`/semantics: marketing blocks, clay-product-card, PDP, labels, filters, nav badge, invoice, WhatsApp FAB.
+- Perf: `next/image` + `sizes` on clay-product-card + pdp-gallery (+ marketing secondary product grid).
+- Docs: `Design.md` §4.2a/4.5–4.7 φ Soft Gift; this Memory entry.
+- Next: human viewport QA; leftover gift `text-sm`/`<img>` pass optional
+
+### Session — 2026-08-07 (rename Docs → docs)
+
+- Renamed canonical folder **`Docs/` → `docs/`** (lowercase); removed old `docs` symlink earlier same day.
+- Updated Cursor rules, README, openapi stub script, and in-doc path refs.
+- Next: commit when human asks
+
+### Session — 2026-08-07 (remove docs symlink)
+
+- Removed `docs` → `Docs` symlink (superseded by rename to lowercase `docs/`).
+- Next: rename complete
 
 ### Session — 2026-08-07 (hero headline mobile size)
 
@@ -1757,7 +1795,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ### Session — 2026-07-21 (Centered hero + gifting SVG)
 
-- Removed text (`Offline` / twitch copy) from `Docs/gifting.svg`; served as `/gift/gifting-bg.svg`.
+- Removed text (`Offline` / twitch copy) from `docs/gifting.svg`; served as `/gift/gifting-bg.svg`.
 - Storefront hero: drop asymmetric split → centered brand/headline/CTAs over full-bleed SVG bg; GSAP entrance kept.
 - Override: Soft Gift homepage hero polish.
 
@@ -1912,7 +1950,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ### Session — 2026-07-21 (Phase 11 DnD pages — docs only)
 
-- Wrote `Docs/CMS_PAGE_BUILDER.md` (1B contract, block catalog, API sketch, 11A–D).
+- Wrote `docs/CMS_PAGE_BUILDER.md` (1B contract, block catalog, API sketch, 11A–D).
 - Wired Phases §24, IMPLEMENTATION_AUDIT, Soft Gift reference pointer, Memory.
 - **No code.** No ecommerce/CMS re-audit. No Creator audit.
 - Next when asked: Phase 11A implement **or** audit executions per Memory §4.
@@ -1996,7 +2034,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 - Load smoke: `scripts/phase9-load-smoke.sh` (20×3 concurrent hot paths) OK
 - DR smoke: `scripts/dr-smoke.sh` restore→verify→drop temp DB OK
-- Security headers middleware + Next `headers()`; `Docs/SECURITY.md`
+- Security headers middleware + Next `headers()`; `docs/SECURITY.md`
 - Launch checklist signed for VPS-local; Q7 resolved; Phase 9 → **CLOSED**
 - Phases 0–9 delivery sequence complete for local stack; public GA items deferred
 
@@ -2006,7 +2044,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 - Creator discovery: `GET /creator/creators?niche=`
 - Phase 8 → **CLOSED**; Phase 9 → **IN PROGRESS**
 - Rate limits: auth login/register/refresh (20/15m/IP); checkout place-order (60/min/IP)
-- Docs: `Docs/RUNBOOKS.md` (launch checklist, SLOs, backup/restore, webhooks, queue, rollback, PII)
+- Docs: `docs/RUNBOOKS.md` (launch checklist, SLOs, backup/restore, webhooks, queue, rollback, PII)
 - Script: `scripts/backup-postgres.sh` (drill OK — dump written under `backups/`)
 - Platform admin: live `/ready` + `/version` snapshot
 - Remaining Phase 9: load test, pentest, on-call names, full DR sign-off
@@ -2137,7 +2175,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ### Session — 2026-07-20 (Cross-check + Phase 4 ops console)
 
-- Cross-check: created `Docs/IMPLEMENTATION_AUDIT.md` (Phases 0–3 vs repo)
+- Cross-check: created `docs/IMPLEMENTATION_AUDIT.md` (Phases 0–3 vs repo)
 - Phase 3 partial closeout logged; Phase 4 active
 - Done:
   - Schema: `OrderNote`, `CommerceSetting`; migration `20260720140424_phase4_ops`
@@ -2194,7 +2232,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
   - Added Dockerfiles + `docker-compose.prod.yml` + `scripts/deploy-vps.sh`
   - Hardened CI; added `deploy-vps.yml` (verify → SSH → VPS BuildKit)
 - Changed files:
-  - `Docs/Memory.md`, Dockerfiles, compose prod, GHA workflows, README
+  - `docs/Memory.md`, Dockerfiles, compose prod, GHA workflows, README
 - Decisions:
   - Images build on VPS; loopback smoke `3001`/`4001`; Caddy later
 - Blockers:

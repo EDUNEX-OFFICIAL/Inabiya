@@ -1,12 +1,12 @@
 ---
 description: Inabiya ports 3001/4001 vs 3101/4101, Caddy, vps_edge, postgres role
-globs: "{**/docker-compose*.{yml,yaml},**/Dockerfile*,**/Caddyfile*,**/sites.d/**,Docs/PORTS.md,scripts/deploy*.sh}"
+globs: "{**/docker-compose*.{yml,yaml},**/Dockerfile*,**/Caddyfile*,**/sites.d/**,docs/PORTS.md,scripts/deploy*.sh}"
 alwaysApply: false
 ---
 
 # Ops & Port Isolation
 
-Follow `/srv/VPS_MULTI_PROJECT_GUIDELINE.md` + `/srv/scripts/PORT_REGISTRY.md`. Inabiya cheat-sheet: `Docs/PORTS.md`.
+Follow `/srv/VPS_MULTI_PROJECT_GUIDELINE.md` + `/srv/scripts/PORT_REGISTRY.md`. Inabiya cheat-sheet: `docs/PORTS.md`.
 
 ## Inabiya reserved ports (host loopback)
 

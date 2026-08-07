@@ -122,8 +122,8 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
   if (error && !invoice) {
     return (
       <main className="mx-auto max-w-[720px] px-gs-4 py-gs-8">
-        <p className="text-sm text-danger">{error}</p>
-        <Link href={`/orders/${params.id}`} className="gift-link mt-gs-4 inline-block text-sm">
+        <p className="text-body text-danger">{error}</p>
+        <Link href={`/orders/${params.id}`} className="gift-link mt-gs-4 inline-block text-body">
           ← Back to order
         </Link>
       </main>
@@ -132,7 +132,7 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
 
   if (!invoice) {
     return (
-      <main className="mx-auto max-w-[720px] px-gs-4 py-gs-8 text-sm opacity-70">
+      <main className="mx-auto max-w-[720px] px-gs-4 py-gs-8 text-body opacity-70">
         Loading invoice…
       </main>
     );
@@ -145,20 +145,20 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
   return (
     <main className="invoice-sheet mx-auto max-w-[720px] px-gs-3 py-gs-4 sm:px-gs-6 sm:py-gs-6">
       <div className="mb-gs-4 flex flex-wrap items-center justify-between gap-gs-3 print:hidden">
-        <Link href={`/orders/${params.id}`} className="gift-link text-sm">
+        <Link href={`/orders/${params.id}`} className="gift-link text-body">
           ← Back to order
         </Link>
         <div className="flex flex-wrap gap-gs-2">
           <button
             type="button"
-            className="clay-btn-secondary text-sm"
+            className="clay-btn-secondary text-body"
             onClick={() => window.print()}
           >
             Print
           </button>
           <button
             type="button"
-            className="clay-btn text-sm"
+            className="clay-btn text-body"
             disabled={busy}
             onClick={() => void downloadPdf()}
           >
@@ -166,45 +166,45 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
           </button>
         </div>
       </div>
-      {error ? <p className="mb-gs-3 text-sm text-danger print:hidden">{error}</p> : null}
+      {error ? <p className="mb-gs-3 text-body text-danger print:hidden">{error}</p> : null}
 
-      <article className="invoice-doc rounded-clay border border-[rgba(45,36,48,0.08)] bg-white p-gs-5 shadow-sm sm:p-gs-8">
+      <article className="invoice-doc rounded-clay border border-border-subtle bg-white p-gs-5 shadow-sm sm:p-gs-8">
         {/* Header */}
-        <header className="flex flex-wrap items-start justify-between gap-gs-4 border-b border-[rgba(45,36,48,0.1)] pb-gs-5">
+        <header className="flex flex-wrap items-start justify-between gap-gs-4 border-b border-border-subtle pb-gs-5">
           <div>
-            <p className="font-display text-2xl tracking-tight text-primary sm:text-3xl">Inabiya</p>
-            <p className="mt-1 text-xs opacity-60">Thoughtfully personalised baby gifts</p>
+            <p className="gift-h1 text-primary">Inabiya</p>
+            <p className="mt-gs-1 text-caption opacity-60">Thoughtfully personalised baby gifts</p>
           </div>
           <div className="text-right">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+            <p className="text-caption font-semibold uppercase tracking-[0.1em] text-primary">
               Tax invoice
             </p>
-            <p className="mt-1 font-mono text-sm font-medium">{invoice.invoiceNumber}</p>
-            <p className="mt-2 inline-flex rounded-full bg-[rgba(255,107,157,0.12)] px-2.5 py-0.5 text-xs font-medium text-primary">
+            <p className="mt-gs-1 font-mono text-body font-medium">{invoice.invoiceNumber}</p>
+            <p className="mt-gs-2 inline-flex rounded-pill bg-primary/12 px-gs-3 py-gs-1 text-caption font-medium text-primary">
               {invoice.status.replaceAll('_', ' ')}
             </p>
           </div>
         </header>
 
         {/* Meta */}
-        <dl className="mt-gs-5 grid grid-cols-2 gap-x-gs-4 gap-y-gs-3 text-sm sm:grid-cols-4">
+        <dl className="mt-gs-5 grid grid-cols-2 gap-x-gs-4 gap-y-gs-3 text-body sm:grid-cols-4">
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-wide opacity-50">Order</dt>
-            <dd className="mt-0.5 font-medium">{invoice.orderNumber}</dd>
+            <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">Order</dt>
+            <dd className="mt-gs-1 font-medium">{invoice.orderNumber}</dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-wide opacity-50">Issued</dt>
-            <dd className="mt-0.5">{formatDate(invoice.issuedAt)}</dd>
+            <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">Issued</dt>
+            <dd className="mt-gs-1">{formatDate(invoice.issuedAt)}</dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-wide opacity-50">Paid</dt>
-            <dd className="mt-0.5">{invoice.paidAt ? formatDate(invoice.paidAt) : '—'}</dd>
+            <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">Paid</dt>
+            <dd className="mt-gs-1">{invoice.paidAt ? formatDate(invoice.paidAt) : '—'}</dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-wide opacity-50">
+            <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">
               Payment
             </dt>
-            <dd className="mt-0.5">
+            <dd className="mt-gs-1">
               {paymentLabel(invoice.paymentProvider, invoice.paymentStatus)}
             </dd>
           </div>
@@ -212,35 +212,35 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
 
         {/* Parties */}
         <div className="mt-gs-6 grid gap-gs-3 sm:grid-cols-3">
-          <section className="rounded-lg border border-[rgba(45,36,48,0.08)] bg-[rgba(255,247,250,0.6)] p-gs-3 text-sm">
-            <h2 className="text-[10px] font-semibold uppercase tracking-wide opacity-50">
+          <section className="rounded-control border border-border-subtle bg-surface-soft p-gs-3 text-body">
+            <h2 className="text-caption font-semibold uppercase tracking-wide opacity-50">
               Bill to
             </h2>
             <p className="mt-gs-2 font-medium">{invoice.customerName ?? invoice.customerEmail}</p>
-            <p className="mt-0.5 text-xs opacity-70">{invoice.customerEmail}</p>
+            <p className="mt-gs-1 text-caption opacity-70">{invoice.customerEmail}</p>
           </section>
-          <section className="rounded-lg border border-[rgba(45,36,48,0.08)] p-gs-3 text-sm">
-            <h2 className="text-[10px] font-semibold uppercase tracking-wide opacity-50">
+          <section className="rounded-control border border-border-subtle p-gs-3 text-body">
+            <h2 className="text-caption font-semibold uppercase tracking-wide opacity-50">
               Ship to
             </h2>
-            <div className="mt-gs-2 space-y-0.5 text-xs leading-relaxed opacity-90">
+            <div className="mt-gs-2 space-y-gs-1 text-caption leading-relaxed opacity-90">
               {shipLines.map((l, i) => (
-                <p key={i} className={i === 0 ? 'font-medium text-sm' : undefined}>
+                <p key={i} className={i === 0 ? 'font-medium text-body' : undefined}>
                   {l}
                 </p>
               ))}
             </div>
-            <p className="mt-gs-2 text-[11px] opacity-55">
+            <p className="mt-gs-2 text-caption opacity-55">
               {shippingLabel(invoice.shippingMethod)}
             </p>
           </section>
-          <section className="rounded-lg border border-[rgba(45,36,48,0.08)] p-gs-3 text-sm">
-            <h2 className="text-[10px] font-semibold uppercase tracking-wide opacity-50">
+          <section className="rounded-control border border-border-subtle p-gs-3 text-body">
+            <h2 className="text-caption font-semibold uppercase tracking-wide opacity-50">
               Billing
             </h2>
-            <div className="mt-gs-2 space-y-0.5 text-xs leading-relaxed opacity-90">
+            <div className="mt-gs-2 space-y-gs-1 text-caption leading-relaxed opacity-90">
               {billLines.map((l, i) => (
-                <p key={i} className={i === 0 ? 'font-medium text-sm' : undefined}>
+                <p key={i} className={i === 0 ? 'font-medium text-body' : undefined}>
                   {l}
                 </p>
               ))}
@@ -250,26 +250,26 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
 
         {/* Line items table */}
         <div className="mt-gs-6 overflow-x-auto">
-          <table className="w-full min-w-[520px] border-collapse text-sm">
+          <table className="w-full min-w-[520px] border-collapse text-body">
             <thead>
-              <tr className="border-b-2 border-[rgba(45,36,48,0.12)] text-left text-[10px] font-semibold uppercase tracking-wide opacity-50">
+              <tr className="border-b-2 border-border-strong text-left text-caption font-semibold uppercase tracking-wide opacity-50">
                 <th className="pb-2 pr-2 font-semibold">Item</th>
-                <th className="pb-2 px-2 text-center font-semibold w-14">Qty</th>
-                <th className="pb-2 px-2 text-right font-semibold w-24">Price</th>
+                <th className="pb-2 px-gs-2 text-center font-semibold w-14">Qty</th>
+                <th className="pb-2 px-gs-2 text-right font-semibold w-24">Price</th>
                 <th className="pb-2 pl-2 text-right font-semibold w-28">Amount</th>
               </tr>
             </thead>
             <tbody>
               {invoice.items.map((item, i) => (
-                <tr key={i} className="border-b border-[rgba(45,36,48,0.06)] align-top">
+                <tr key={i} className="border-b border-border-subtle align-top">
                   <td className="py-3 pr-2">
                     <p className="font-medium">
                       {item.title} <span className="font-normal opacity-60">({item.label})</span>
                     </p>
-                    <p className="mt-0.5 font-mono text-[11px] opacity-45">SKU {item.sku}</p>
+                    <p className="mt-gs-1 font-mono text-caption opacity-45">SKU {item.sku}</p>
                   </td>
-                  <td className="py-3 px-2 text-center tabular-nums">{item.quantity}</td>
-                  <td className="py-3 px-2 text-right tabular-nums whitespace-nowrap">
+                  <td className="py-3 px-gs-2 text-center tabular-nums">{item.quantity}</td>
+                  <td className="py-3 px-gs-2 text-right tabular-nums whitespace-nowrap">
                     {formatInr(item.unitPricePaise)}
                   </td>
                   <td className="py-3 pl-2 text-right font-medium tabular-nums whitespace-nowrap">
@@ -283,35 +283,35 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
 
         {/* Totals */}
         <div className="mt-gs-4 flex justify-end">
-          <table className="w-full max-w-[260px] text-sm">
+          <table className="w-full max-w-[260px] text-body">
             <tbody>
               <tr>
-                <td className="py-1 opacity-70">Subtotal</td>
-                <td className="py-1 text-right tabular-nums">{formatInr(invoice.subtotalPaise)}</td>
+                <td className="py-gs-1 opacity-70">Subtotal</td>
+                <td className="py-gs-1 text-right tabular-nums">{formatInr(invoice.subtotalPaise)}</td>
               </tr>
               {invoice.discountPaise > 0 ? (
                 <tr>
-                  <td className="py-1 opacity-70">
+                  <td className="py-gs-1 opacity-70">
                     Discount{invoice.couponCode ? ` (${invoice.couponCode})` : ''}
                   </td>
-                  <td className="py-1 text-right tabular-nums">
+                  <td className="py-gs-1 text-right tabular-nums">
                     −{formatInr(invoice.discountPaise)}
                   </td>
                 </tr>
               ) : null}
               <tr>
-                <td className="py-1 opacity-70">Shipping</td>
-                <td className="py-1 text-right tabular-nums">{formatInr(invoice.shippingPaise)}</td>
+                <td className="py-gs-1 opacity-70">Shipping</td>
+                <td className="py-gs-1 text-right tabular-nums">{formatInr(invoice.shippingPaise)}</td>
               </tr>
               {invoice.taxPaise > 0 ? (
                 <tr>
-                  <td className="py-1 opacity-70">Tax</td>
-                  <td className="py-1 text-right tabular-nums">{formatInr(invoice.taxPaise)}</td>
+                  <td className="py-gs-1 opacity-70">Tax</td>
+                  <td className="py-gs-1 text-right tabular-nums">{formatInr(invoice.taxPaise)}</td>
                 </tr>
               ) : null}
-              <tr className="border-t-2 border-[rgba(45,36,48,0.12)]">
-                <td className="pt-3 text-base font-semibold">Total</td>
-                <td className="pt-3 text-right text-base font-semibold tabular-nums text-primary">
+              <tr className="border-t-2 border-border-strong">
+                <td className="pt-gs-3 text-body font-semibold">Total</td>
+                <td className="pt-gs-3 text-right text-body font-semibold tabular-nums text-primary">
                   {formatInr(invoice.totalPaise)}
                 </td>
               </tr>
@@ -319,7 +319,7 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
           </table>
         </div>
 
-        <footer className="mt-gs-8 border-t border-[rgba(45,36,48,0.08)] pt-gs-4 text-xs opacity-55">
+        <footer className="mt-gs-8 border-t border-border-subtle pt-gs-4 text-caption opacity-55">
           <p>This is a computer-generated tax invoice / payment receipt for your Inabiya order.</p>
           <p className="mt-1">
             Questions?{' '}

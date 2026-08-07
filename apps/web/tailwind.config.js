@@ -80,6 +80,8 @@ module.exports = {
         display: ['var(--text-display)', { lineHeight: 'var(--leading-display)' }],
         h1: ['var(--text-h1)', { lineHeight: 'var(--leading-tight)' }],
         h2: ['var(--text-h2)', { lineHeight: '1.25' }],
+        body: ['var(--text-body)', { lineHeight: 'var(--leading-body)' }],
+        'body-lg': ['var(--text-body-lg)', { lineHeight: 'var(--leading-body)' }],
         caption: ['var(--text-caption)', { lineHeight: '1.4', letterSpacing: '0.1em' }],
       },
       borderRadius: {

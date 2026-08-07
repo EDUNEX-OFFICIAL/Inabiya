@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -61,16 +62,16 @@ export default function WishlistPage() {
 
   return (
     <main className="gift-page max-w-2xl">
-      <Link href="/gift/products" className="gift-link text-sm">
+      <Link href="/gift/products" className="gift-link text-body">
         ← Continue shopping
       </Link>
       <h1 className="gift-h1 mt-gs-4">Wishlist</h1>
-      <p className="mt-gs-2 text-sm opacity-80">Saved gifts — move to cart when ready.</p>
-      {msg ? <p className="mt-gs-3 text-sm text-success">{msg}</p> : null}
+      <p className="mt-gs-2 text-body opacity-80">Saved gifts — move to cart when ready.</p>
+      {msg ? <p className="mt-gs-3 text-body text-success">{msg}</p> : null}
 
       {rows.length === 0 ? (
         <div className="clay-panel mt-gs-6 p-gs-6 text-center sm:p-gs-6">
-          <p className="text-sm opacity-80">Wishlist is empty.</p>
+          <p className="text-body opacity-80">Wishlist is empty.</p>
           <Link href="/gift/products" className="clay-btn mt-gs-5 inline-flex">
             Browse gifts
           </Link>
@@ -78,14 +79,17 @@ export default function WishlistPage() {
       ) : (
         <ul className="mt-gs-6 space-y-gs-4">
           {rows.map((r) => (
-            <li key={r.id} className="clay-card overflow-hidden text-sm sm:flex sm:items-center">
+            <li key={r.id} className="clay-card overflow-hidden text-body sm:flex sm:items-center">
               {r.product.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={r.product.imageUrl}
-                  alt=""
-                  className="h-36 w-full object-cover sm:h-28 sm:w-28 sm:shrink-0"
-                />
+                <div className="relative h-36 w-full sm:h-28 sm:w-28 sm:shrink-0">
+                  <Image
+                    src={r.product.imageUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 640px) 100vw, 112px"
+                    className="object-cover"
+                  />
+                </div>
               ) : (
                 <div className="h-36 w-full gift-media-fallback sm:h-28 sm:w-28 sm:shrink-0" />
               )}

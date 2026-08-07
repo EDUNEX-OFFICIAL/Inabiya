@@ -55,7 +55,7 @@ export default function PlatformAdminPage() {
     <main className="min-h-screen p-8 bg-[var(--background)] text-[var(--foreground)] max-w-2xl">
       <h1 className="font-display text-3xl">Platform Admin</h1>
       <p className="mt-2 text-sm opacity-70">
-        Phase 9 ops snapshot — see <code className="text-xs">Docs/RUNBOOKS.md</code>
+        Phase 9 ops snapshot — see <code className="text-xs">docs/RUNBOOKS.md</code>
       </p>
       {err ? <p className="mt-4 text-sm text-red-600">{err}</p> : null}
       <section className="mt-6 rounded border p-4 text-sm space-y-2">

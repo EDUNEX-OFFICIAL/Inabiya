@@ -15,7 +15,7 @@ QA
 Marketing
 AI Coding Assistants
 
-Last Updated: July 28, 2026
+Last Updated: July 28, 2026 (φ Soft Gift scale — Aug 7 2026)
 
 ---
 
@@ -138,13 +138,17 @@ Defined in `apps/web/app/globals.css` under `[data-theme='gift']`. Brand hex liv
 
 | Layer | Tokens |
 |---|---|
-| Space | Shared `:root` `--space-1`…`--space-8` → Tailwind `gs-1`…`gs-8` |
+| Space | Shared `:root` `--space-1`…`--space-4` (controls) + **gift φ** `--space-5`…`--space-8` → Tailwind `gs-1`…`gs-8` |
+| Type (φ) | Gift overrides `--text-caption/body/h2/h1/display` (+ `-lg`) and `--leading-body: 1.618` |
 | Radius | Gift overrides `--radius-pill` / `--radius-card` / `--radius-control` → `rounded-pill` / `rounded-clay` / `rounded-control` |
 | Surface | `--surface`, `--surface-soft`, `--surface-nav` |
 | Border / focus | `--border-subtle`, `--border-strong`, `--border-focus`, `--ring` |
 | Elevation | `--clay-shadow`, `--clay-shadow-hover`, `--clay-shadow-press` → `shadow-clay*` |
 | Status | `--success`/`--success-bg`, `--warning`/`--warning-bg`, `--danger`/`--danger-bg`, `--info`/`--info-bg` |
 | Control | `--input-bg`, `--input-border`, `--input-border-error`, `--tap-min` |
+| Misc gift | `--gift-whatsapp`, `--gift-sticky-offset`, `--gift-pad-x/y` |
+
+**φ note (Soft Gift only):** body base `1rem`; steps ≈1.618. Caption floors at `0.75rem` (a11y). Blog/Creator keep shared `:root` ladder — do not copy gift overrides.
 
 **Recipes (prefer over one-off classes):** `.clay-btn` / `.clay-btn-secondary` / `.clay-btn-ghost` (hover/active/disabled/focus-visible), `.clay-input` (hover/focus/disabled/`aria-invalid`), `.clay-card` / `.clay-panel` / `.clay-chip` / `.clay-nav`, `.gift-page` / `.gift-section` / `.gift-stack*`, `.gift-banner--success|warning|danger|info`, type: `.gift-display` / `.gift-h1` / `.gift-h2` / `.gift-body` / `.gift-muted` / `.gift-overline`. Homepage polish (Soft Gift–interpreted, not third-party clone): `.gift-band--blush|mint|sky|lavender|soft`, `.gift-doodle`, `.gift-toys` (faded corner SVGs), `.gift-wave-card` (recipient/category cards only), `.gift-pill-overlap`, `.gift-usp`. Avoid `100vw` full-bleed (scrollbar overflow).
 
@@ -200,10 +204,23 @@ Exact HSL conversions should live in theme CSS; hex above is brand source.
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-  --space-8: 4rem;
+  /* Gift φ section rhythm (controls stay on 1–4) */
+  --space-5: 1.618rem;
+  --space-6: 2.618rem;
+  --space-7: 4.236rem;
+  --space-8: 6.854rem;
+
+  /* Gift φ type (body = 1rem) */
+  --text-caption: 0.75rem;
+  --text-body: 1rem;
+  --text-body-lg: 1rem;
+  --text-h2: 1.25rem;
+  --text-h2-lg: 1.618rem;
+  --text-h1: 1.618rem;
+  --text-h1-lg: 2.618rem;
+  --text-display: 2.618rem;
+  --text-display-lg: 4.236rem;
+  --leading-body: 1.618;
 
   --tap-min: 48px;
   --btn-height: 56px;
@@ -222,16 +239,18 @@ Exact HSL conversions should live in theme CSS; hex above is brand source.
 | Display / headings | Fraunces | medium editorial |
 | Body / UI | Plus Jakarta Sans | regular/semibold |
 
+Soft Gift uses a **φ (≈1.618) type scale** scoped under `[data-theme='gift']` (see §4.2a). Prefer CSS recipes / Tailwind token aliases — never raw hex in TSX.
+
 #### Type scale recipes
 
-| Level | Recipe |
-|---|---|
-| Display / H1 hero | `font-serif text-4xl sm:text-5xl font-medium tracking-tight text-[#2D2640] leading-[1.1]` |
-| H2 section | `font-serif text-2xl sm:text-3xl font-medium tracking-tight text-[#2D2640]` |
-| H3 card | `font-sans text-lg sm:text-xl font-semibold text-[#2D2640]` |
-| Body | `font-sans text-base text-[#3C3352] leading-relaxed` |
-| Small | `font-sans text-sm text-[#3C3352]` |
-| Overline/label | `font-sans text-xs uppercase tracking-[0.15em] font-bold text-[#FF6B9D]` |
+| Level | Recipe (preferred) | Token (mobile → lg) |
+|---|---|---|
+| Display / hero | `.gift-display` or `.gift-hero-split__headline` | `--text-display` → `--text-display-lg` (`2.618` → `4.236rem`) |
+| H1 | `.gift-h1` / `text-h1` | `1.618` → `2.618rem` |
+| H2 section | `.gift-h2` / `text-h2` | `1.25` → `1.618rem` |
+| Body | `.gift-body` / `text-body` | `1rem` (`--leading-body: 1.618`) |
+| Muted | `.gift-muted` | same body size, lower opacity |
+| Overline/label | `.gift-overline` / `text-caption` | `0.75rem`, uppercase, `0.1em` tracking |
 
 Line length for reading: aim ~60–75ch on article pages.
 
@@ -239,18 +258,21 @@ Line length for reading: aim ~60–75ch on article pages.
 
 | Token | Value |
 |---|---|
-| Card radius | `rounded-2xl` / `rounded-3xl` |
-| Pill controls | `rounded-full` |
-| Shadows | minimal ambient / light pink-tint brand shadow |
-| Sticky chrome | `bg-white/85 backdrop-blur-xl` |
+| Card radius | `rounded-clay` (`--radius-card`) |
+| Pill controls | `rounded-pill` |
+| Control radius | `rounded-control` |
+| Shadows | `shadow-clay` / `shadow-brand` (minimal ambient) |
+| Sticky chrome | `bg-surface-nav` + backdrop blur |
 
 ### 4.7 Spacing & layout
 
-- Prefer `--space-*` / Tailwind `gs-*` only inside Soft Gift (no raw `p-5` / `px-6` mixes)
+- Prefer `--space-*` / Tailwind `gs-*` only inside Soft Gift (no raw `p-5` / `px-6` / half-step `gap-1.5` mixes)
+- Controls: `gs-1`…`gs-4` (4/8 grid). Section rhythm: gift φ `gs-5`…`gs-8`
 - Page chrome: `.gift-page` (token padding) or `.gift-section` / `.gift-stack`
 - Mobile feeds: 1 col or dense 2 col
 - Desktop catalogs: 3–4 col / bento
 - Premium = generous whitespace (favor `gs-6`–`gs-8` between sections)
+- Sticky mobile chrome under nav: `top-[var(--gift-sticky-offset)]`
 
 ### 4.8 Motion (System A)
 

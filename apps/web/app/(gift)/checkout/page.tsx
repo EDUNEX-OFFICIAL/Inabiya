@@ -170,19 +170,19 @@ export default function CheckoutPage() {
   }
 
   if (gate === 'checking') {
-    return <main className="gift-page max-w-xl text-sm opacity-70">Preparing checkout…</main>;
+    return <main className="gift-page max-w-xl text-body opacity-70">Preparing checkout…</main>;
   }
 
   if (gate === 'need_login') {
     return (
       <main className="gift-page max-w-md">
         <div className="clay-panel p-gs-5 sm:p-gs-6">
-          <h1 className="gift-h2 sm:text-3xl">Sign in to checkout</h1>
-          <p className="mt-gs-3 text-sm opacity-80">
+          <h1 className="gift-h2">Sign in to checkout</h1>
+          <p className="mt-gs-3 text-body opacity-80">
             Checkout needs an account so we can save your order and address. Cart items stay on this
             device until you sign in.
           </p>
-          <div className="mt-gs-6 flex w-full flex-col gap-gs-3 text-sm sm:w-auto sm:flex-row sm:flex-wrap">
+          <div className="mt-gs-6 flex w-full flex-col gap-gs-3 text-body sm:w-auto sm:flex-row sm:flex-wrap">
             <Link href="/login?next=/checkout" className="clay-btn w-full justify-center sm:w-auto">
               Sign in
             </Link>
@@ -193,7 +193,7 @@ export default function CheckoutPage() {
               Create account
             </Link>
           </div>
-          <Link href="/gift/cart" className="mt-gs-5 inline-block gift-link text-sm">
+          <Link href="/gift/cart" className="mt-gs-5 inline-block gift-link text-body">
             ← Back to cart
           </Link>
         </div>
@@ -205,8 +205,8 @@ export default function CheckoutPage() {
     return (
       <main className="gift-page max-w-md">
         <div className="clay-panel p-gs-5 text-center sm:p-gs-6">
-          <h1 className="gift-h2 sm:text-3xl">Cart is empty</h1>
-          <p className="mt-gs-3 text-sm opacity-80">
+          <h1 className="gift-h2">Cart is empty</h1>
+          <p className="mt-gs-3 text-body opacity-80">
             Add something from the gift shop before checkout.
           </p>
           <Link
@@ -224,9 +224,9 @@ export default function CheckoutPage() {
     return (
       <main className="gift-page max-w-md">
         <div className="clay-panel p-gs-5 sm:p-gs-6">
-          <h1 className="gift-h2 sm:text-3xl">Checkout unavailable</h1>
-          <p className="mt-gs-3 text-sm text-danger">{error ?? 'Something went wrong.'}</p>
-          <div className="mt-gs-6 flex gap-gs-4 text-sm">
+          <h1 className="gift-h2">Checkout unavailable</h1>
+          <p className="mt-gs-3 text-body text-danger">{error ?? 'Something went wrong.'}</p>
+          <div className="mt-gs-6 flex gap-gs-4 text-body">
             <Link href="/gift/cart" className="hover:text-primary">
               Back to cart
             </Link>
@@ -241,17 +241,17 @@ export default function CheckoutPage() {
 
   return (
     <main className="gift-page max-w-xl">
-      <Link href="/gift/cart" className="gift-link text-sm">
+      <Link href="/gift/cart" className="gift-link text-body">
         ← Back to cart
       </Link>
       <h1 className="gift-h1 mt-gs-4">Checkout</h1>
-      <p className="mt-gs-2 text-sm opacity-70">{cart.items.length} item(s) ready to gift</p>
+      <p className="mt-gs-2 text-body opacity-70">{cart.items.length} item(s) ready to gift</p>
 
       <form onSubmit={onSubmit} className="clay-panel mt-gs-6 space-y-gs-4 p-gs-4 sm:p-gs-6">
         <fieldset className="space-y-gs-3">
-          <legend className="font-display text-xl">Shipping address</legend>
+          <legend className="gift-h2">Shipping address</legend>
           {addresses.length > 0 ? (
-            <label className="block text-sm">
+            <label className="block text-body">
               Saved address
               <select
                 className={inputClass}
@@ -268,7 +268,7 @@ export default function CheckoutPage() {
             </label>
           ) : null}
           {(['fullName', 'phone', 'line1', 'line2'] as const).map((key) => (
-            <label key={key} className="block text-sm">
+            <label key={key} className="block text-body">
               {FIELD_LABELS[key]}
               <input
                 required={key !== 'line2'}
@@ -284,7 +284,7 @@ export default function CheckoutPage() {
           ))}
           <div className="grid gap-gs-3 sm:grid-cols-2">
             {(['city', 'state'] as const).map((key) => (
-              <label key={key} className="block text-sm">
+              <label key={key} className="block text-body">
                 {FIELD_LABELS[key]}
                 <input
                   required
@@ -299,7 +299,7 @@ export default function CheckoutPage() {
               </label>
             ))}
           </div>
-          <label className="block max-w-xs text-sm">
+          <label className="block max-w-xs text-body">
             {FIELD_LABELS.postalCode}
             <input
               required
@@ -316,7 +316,7 @@ export default function CheckoutPage() {
           </label>
         </fieldset>
 
-        <label className="block text-sm">
+        <label className="block text-body">
           Shipping method
           <select
             className={inputClass}
@@ -328,7 +328,7 @@ export default function CheckoutPage() {
           </select>
         </label>
 
-        <label className="block text-sm">
+        <label className="block text-body">
           Gift message
           <textarea
             className={inputClass}
@@ -338,7 +338,7 @@ export default function CheckoutPage() {
           />
         </label>
 
-        <div className="clay-card space-y-gs-1 p-gs-4 text-sm">
+        <div className="clay-card space-y-gs-1 p-gs-4 text-body">
           <p>Subtotal: {formatInr(preview.subtotalPaise)}</p>
           {preview.discountPaise > 0 ? (
             <p className="text-success">Discount: −{formatInr(preview.discountPaise)}</p>
@@ -350,12 +350,12 @@ export default function CheckoutPage() {
           </p>
         </div>
 
-        <div className="gift-banner gift-banner--info text-sm" role="status">
+        <div className="gift-banner gift-banner--info text-body" role="status">
           <strong>Dev mock payment.</strong> No real card charge — confirm uses the mock provider
           (`PAYMENT_PROVIDER=mock`). Razorpay is deferred until after project complete.
         </div>
 
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <p className="text-body text-danger">{error}</p> : null}
 
         <button
           type="submit"

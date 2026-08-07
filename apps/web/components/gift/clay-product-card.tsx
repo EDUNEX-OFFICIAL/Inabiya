@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
@@ -84,22 +85,19 @@ function HamperContentsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={dialogTitleId}
-        className="relative flex max-h-[min(88vh,36rem)] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-foreground/8 bg-[var(--surface,#fff)] shadow-[0_24px_60px_-20px_rgba(60,51,82,0.35)]"
+        className="relative flex max-h-[min(88vh,36rem)] w-full max-w-md flex-col overflow-hidden rounded-clay border border-border-subtle bg-surface shadow-clay-hover"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 border-b border-foreground/6 bg-primary/[0.06] px-gs-5 pb-gs-3 pt-gs-4">
+        <div className="shrink-0 border-b border-border-subtle bg-primary/[0.06] px-gs-5 pb-gs-3 pt-gs-4">
           <div className="flex items-start justify-between gap-gs-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
+              <p className="text-caption font-semibold uppercase tracking-[0.1em] text-primary/80">
                 Ready-made hamper
               </p>
-              <h2
-                id={dialogTitleId}
-                className="mt-1 font-display text-xl tracking-tight text-foreground sm:text-2xl"
-              >
+              <h2 id={dialogTitleId} className="gift-h2 mt-gs-1">
                 What’s inside
               </h2>
-              <p className="mt-1 truncate text-sm text-foreground/65">
+              <p className="gift-muted mt-gs-1 truncate">
                 {product.title}
                 {itemCount > 0 ? ` · ${itemCount} items` : ''}
               </p>
@@ -107,7 +105,7 @@ function HamperContentsModal({
             <button
               ref={closeRef}
               type="button"
-              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-foreground/10 bg-white/90 text-lg leading-none text-foreground/70 hover:bg-white hover:text-foreground"
+              className="flex size-9 shrink-0 items-center justify-center rounded-pill border border-border-subtle bg-surface text-lg leading-none text-foreground/70 hover:bg-surface-soft hover:text-foreground"
               onClick={onClose}
               aria-label="Close"
             >
@@ -120,12 +118,17 @@ function HamperContentsModal({
           {items.map((item) => (
             <li
               key={item.id}
-              className="flex gap-gs-3 rounded-2xl border border-foreground/6 bg-white/70 p-gs-3"
+              className="flex gap-gs-3 rounded-control border border-border-subtle bg-surface/70 p-gs-3"
             >
-              <div className="size-14 shrink-0 overflow-hidden rounded-xl bg-foreground/5 ring-1 ring-foreground/5 sm:size-16">
+              <div className="relative size-14 shrink-0 overflow-hidden rounded-control bg-foreground/5 ring-1 ring-border-subtle sm:size-16">
                 {item.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+                  <Image
+                    src={item.imageUrl}
+                    alt=""
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
                 ) : (
                   <div className="gift-media-fallback h-full w-full" />
                 )}
@@ -134,16 +137,16 @@ function HamperContentsModal({
                 <p className="font-medium leading-snug text-foreground">
                   {item.title}
                   {item.qty > 1 ? (
-                    <span className="ml-1 text-xs font-normal opacity-60">×{item.qty}</span>
+                    <span className="ml-gs-1 text-caption font-normal opacity-60">×{item.qty}</span>
                   ) : null}
                 </p>
                 {item.brandName ? (
-                  <p className="mt-0.5 text-xs text-foreground/55">
+                  <p className="mt-gs-1 text-caption text-foreground/55">
                     <span className="font-semibold uppercase tracking-wide">Brand:</span>{' '}
                     {item.brandName}
                   </p>
                 ) : null}
-                <p className="mt-gs-1 text-sm font-semibold text-primary">
+                <p className="mt-gs-1 text-body font-semibold text-primary">
                   {formatInr(item.unitPricePaise)}
                 </p>
               </div>
@@ -151,34 +154,34 @@ function HamperContentsModal({
           ))}
         </ul>
 
-        <div className="shrink-0 space-y-gs-3 border-t border-foreground/8 bg-foreground/[0.02] px-gs-5 py-gs-4">
+        <div className="shrink-0 space-y-gs-3 border-t border-border-subtle bg-foreground/[0.02] px-gs-5 py-gs-4">
           <div className="flex flex-wrap items-end justify-between gap-gs-2">
             <div>
               {product.contentsValuePaise != null && product.contentsValuePaise > product.fromPricePaise ? (
-                <p className="text-xs text-foreground/50 line-through">
+                <p className="text-caption text-foreground/50 line-through">
                   Worth {formatInr(product.contentsValuePaise)}
                 </p>
               ) : null}
-              <p className="font-display text-2xl font-semibold tracking-tight text-primary">
+              <p className="font-display text-h2 font-semibold tracking-tight text-primary">
                 {formatInr(product.fromPricePaise)}
               </p>
             </div>
             {savings > 0 ? (
-              <span className="rounded-full bg-[color:var(--danger)]/10 px-gs-3 py-1 text-xs font-semibold text-[color:var(--danger)]">
+              <span className="rounded-pill bg-[color:var(--danger)]/10 px-gs-3 py-gs-1 text-caption font-semibold text-[color:var(--danger)]">
                 Save {formatInr(savings)}
               </span>
             ) : null}
           </div>
           <Link
             href={href}
-            className="clay-btn flex w-full !min-h-0 justify-center !px-gs-4 !py-gs-3 text-center text-sm"
+            className="clay-btn flex w-full !min-h-0 justify-center !px-gs-4 !py-gs-3 text-center text-body"
             onClick={onClose}
           >
             Gift this · {formatInr(product.fromPricePaise)}
           </Link>
           <Link
             href={href}
-            className="block text-center text-sm font-medium text-foreground/65 underline-offset-2 hover:text-primary hover:underline"
+            className="block text-center text-body font-medium text-foreground/65 underline-offset-2 hover:text-primary hover:underline"
             onClick={onClose}
           >
             View full details
@@ -200,12 +203,11 @@ function HamperThumbStrip({ items }: { items: HamperItem[] }) {
       {visible.map((item, i) => (
         <li
           key={item.id}
-          className="size-8 overflow-hidden rounded-full border-2 border-[var(--surface,#fff)] bg-white/70 shadow-sm"
+          className="relative size-8 overflow-hidden rounded-pill border-2 border-surface bg-white/70 shadow-sm"
           style={{ marginLeft: i === 0 ? 0 : -6 }}
         >
           {item.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+            <Image src={item.imageUrl} alt="" fill sizes="32px" className="object-cover" />
           ) : (
             <div className="gift-media-fallback h-full w-full" />
           )}
@@ -213,7 +215,7 @@ function HamperThumbStrip({ items }: { items: HamperItem[] }) {
       ))}
       {more > 0 ? (
         <li
-          className="flex size-8 items-center justify-center rounded-full border-2 border-[var(--surface,#fff)] bg-foreground text-[10px] font-semibold text-background shadow-sm"
+          className="flex size-8 items-center justify-center rounded-pill border-2 border-surface bg-foreground text-caption font-semibold text-background shadow-sm"
           style={{ marginLeft: -6 }}
         >
           +{more}
@@ -271,21 +273,22 @@ export function ClayProductCard({
   return (
     <li className="clay-card flex h-full list-none flex-col overflow-hidden">
       <Link href={href} className="block min-w-0">
-        <div className="relative bg-white/50">
+        <div className={`relative bg-white/50 ${imageHeightClass} w-full`}>
           {img?.url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={img.url}
               alt={img.altText ?? product.title}
-              className={`${imageHeightClass} w-full object-cover`}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover"
             />
           ) : (
-            <div className={`${imageHeightClass} w-full gift-media-fallback`} />
+            <div className="gift-media-fallback absolute inset-0" />
           )}
           <div className="pointer-events-none absolute inset-x-gs-2 top-gs-2 z-10 flex items-start justify-between gap-gs-2">
             <div className="min-w-0 shrink">
               {isHamper && itemCount > 0 ? (
-                <span className="inline-block rounded-full bg-foreground/85 px-gs-2 py-1 text-[11px] font-semibold text-background">
+                <span className="inline-block rounded-pill bg-foreground/85 px-gs-2 py-gs-1 text-caption font-semibold text-background">
                   {itemCount} items
                 </span>
               ) : null}
@@ -302,7 +305,7 @@ export function ClayProductCard({
               type="button"
               onClick={(e) => void quickAdd(e)}
               disabled={busy}
-              className="pointer-events-auto absolute bottom-gs-2 right-gs-2 z-10 rounded-full bg-white/95 px-gs-3 py-1.5 text-xs font-semibold text-primary shadow-clay hover:bg-white disabled:opacity-50"
+              className="pointer-events-auto absolute bottom-gs-2 right-gs-2 z-10 rounded-pill bg-white/95 px-gs-3 py-gs-2 text-caption font-semibold text-primary shadow-clay hover:bg-white disabled:opacity-50"
               aria-label={`Quick add ${product.title} to cart`}
             >
               {busy ? '…' : msg === 'Added' ? 'Added ✓' : 'Quick add +'}
@@ -311,17 +314,17 @@ export function ClayProductCard({
         </div>
         <div className="p-gs-4 pb-0">
           <p className="font-medium leading-snug text-foreground">{product.title}</p>
-          <ProductBrandLine brands={brands} className="mt-gs-1 !text-xs" />
-          <p className="mt-gs-2 text-sm font-semibold text-primary">
+          <ProductBrandLine brands={brands} className="mt-gs-1 !text-caption" />
+          <p className="mt-gs-2 text-body font-semibold text-primary">
             {formatInr(product.fromPricePaise)}
             {isHamper && (product.hamperSavingsPaise ?? 0) > 0 ? (
-              <span className="ml-gs-2 text-xs font-semibold text-[color:var(--danger)]">
+              <span className="ml-gs-2 text-caption font-semibold text-[color:var(--danger)]">
                 Save {formatInr(product.hamperSavingsPaise!)}
               </span>
             ) : null}
           </p>
           {isHamper && hamperItems.length > 0 ? (
-            <p className="mt-gs-1 line-clamp-2 text-xs opacity-70">
+            <p className="mt-gs-1 line-clamp-2 text-caption opacity-70">
               {hamperItems
                 .slice(0, 3)
                 .map((i) => i.title)
@@ -329,8 +332,8 @@ export function ClayProductCard({
               {hamperItems.length > 3 ? ` +${hamperItems.length - 3}` : ''}
             </p>
           ) : null}
-          {out ? <p className="mt-gs-2 text-xs text-danger">Out of stock</p> : null}
-          {msg && msg !== 'Added' ? <p className="mt-gs-1 text-xs text-danger">{msg}</p> : null}
+          {out ? <p className="mt-gs-2 text-caption text-danger">Out of stock</p> : null}
+          {msg && msg !== 'Added' ? <p className="mt-gs-1 text-caption text-danger">{msg}</p> : null}
         </div>
       </Link>
 
@@ -340,7 +343,7 @@ export function ClayProductCard({
             <HamperThumbStrip items={hamperItems} />
             <button
               type="button"
-              className="text-left text-sm font-medium text-primary underline-offset-2 hover:underline"
+              className="text-left text-body font-medium text-primary underline-offset-2 hover:underline"
               onClick={() => setContentsOpen(true)}
               aria-haspopup="dialog"
               aria-expanded={contentsOpen}
@@ -352,7 +355,7 @@ export function ClayProductCard({
 
         <Link
           href={href}
-          className={`clay-btn w-full !min-h-0 justify-center !px-gs-4 !py-gs-2.5 text-center text-sm ${
+          className={`clay-btn w-full !min-h-0 justify-center !px-gs-4 !py-gs-2 text-center text-body ${
             out ? 'pointer-events-none opacity-50' : ''
           }`}
           aria-disabled={out || undefined}

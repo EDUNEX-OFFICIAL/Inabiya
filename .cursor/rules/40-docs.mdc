@@ -1,12 +1,12 @@
 ---
 description: Docs ownership map, Memory vs PRD, no LMS bleed, surgical edits
-globs: "{docs/**/*.md,Docs/**/*.md}"
+globs: "docs/**/*.md"
 alwaysApply: false
 ---
 
 # Documentation
 
-Path: `/srv/Inabiya/Docs/` (`docs` → `Docs` symlink for Cursor rules).
+Path: `/srv/Inabiya/docs/` (canonical)
 
 | Doc | Owns | Not for |
 |---|---|---|

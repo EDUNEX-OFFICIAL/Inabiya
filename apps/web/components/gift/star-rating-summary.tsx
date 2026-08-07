@@ -19,7 +19,7 @@ export function StarRatingSummary({
       : 'No reviews yet — be the first to write a review';
 
   return (
-    <p className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-sm ${className}`.trim()}>
+    <p className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-body ${className}`.trim()}>
       <span className="inline-flex tracking-tight" aria-label={label} role="img">
         {[1, 2, 3, 4, 5].map((n) => (
           <span key={n} className={n <= filled ? 'text-primary' : 'text-foreground/25'} aria-hidden>

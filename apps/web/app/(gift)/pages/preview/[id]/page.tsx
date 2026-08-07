@@ -39,8 +39,8 @@ export default function MarketingPagePreview({ params }: { params: { id: string 
   if (error) {
     return (
       <main className="gift-page max-w-3xl">
-        <p className="text-sm text-danger">{error}</p>
-        <Link href="/admin/cms/pages" className="mt-gs-4 inline-block text-sm underline">
+        <p className="text-body text-danger">{error}</p>
+        <Link href="/admin/cms/pages" className="mt-gs-4 inline-block text-body underline">
           ← Pages
         </Link>
       </main>
@@ -48,12 +48,12 @@ export default function MarketingPagePreview({ params }: { params: { id: string 
   }
 
   if (!page) {
-    return <main className="gift-page max-w-3xl text-sm opacity-70">Loading preview…</main>;
+    return <main className="gift-page max-w-3xl text-body opacity-70">Loading preview…</main>;
   }
 
   return (
     <main className={page.slug === 'home' ? '' : 'gift-page max-w-3xl'}>
-      <div className="mb-gs-4 flex flex-wrap items-center justify-between gap-gs-2 px-gs-4 pt-gs-4 text-sm sm:px-gs-6">
+      <div className="mb-gs-4 flex flex-wrap items-center justify-between gap-gs-2 px-gs-4 pt-gs-4 text-body sm:px-gs-6">
         <Link href={`/admin/cms/pages/${page.id}`} className="underline opacity-70">
           ← Edit page
         </Link>

@@ -717,7 +717,7 @@ Roadmap changes require:
 
 **Trigger:** Client homepage reference; **navbar IA** is the core feature signal. UI is improvised under Soft Gift Design — no pixel match.
 
-**Authority:** `Docs/SOFT_GIFT_HOMEPAGE_REFERENCE.md` + PRD §41.
+**Authority:** `docs/SOFT_GIFT_HOMEPAGE_REFERENCE.md` + PRD §41.
 
 ### 10A — Nav IA + taxonomy (P0)
 
@@ -758,7 +758,7 @@ Roadmap changes require:
 ## 24. Phase 11 — Marketing Page Builder (DnD)
 
 **Status:** **CLOSED** — 11A–11D shipped (2026-07-21); Soft Gift `/gift` on block engine.  
-**Authority:** [`Docs/CMS_PAGE_BUILDER.md`](CMS_PAGE_BUILDER.md).  
+**Authority:** [`docs/CMS_PAGE_BUILDER.md`](CMS_PAGE_BUILDER.md).  
 **Product decision:** Full marketing pages at `/pages/[slug]` with ordered blocks (client DnD request = **1B**). Not TipTap replacement; not homepage-only reorder as end state.
 
 ### 11A — Schema + CRUD + public renderer (P0)
@@ -799,7 +799,7 @@ Roadmap changes require:
 ## 25. Phase 12 — CMS TipTap + saleStrip + media
 
 **Status:** **CLOSED** — TipTap, `saleStrip`, and CMS media library/upload (2026-07-22).  
-**Authority:** [`Docs/CMS_PAGE_BUILDER.md`](CMS_PAGE_BUILDER.md) §12.  
+**Authority:** [`docs/CMS_PAGE_BUILDER.md`](CMS_PAGE_BUILDER.md) §12.  
 **Out of scope:** real AWS/MinIO SDK (local disk store), FAQ/testimonials.
 
 ### P0
@@ -831,7 +831,7 @@ Roadmap changes require:
 ## 26. Phase 13 — Commerce OPS Panel (professional deepen)
 
 **Status:** **OPS-9 Shipped** (2026-07-29). Phase 13 Commerce OPS Panel **complete**.  
-**Authority:** [`Docs/COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md)  
+**Authority:** [`docs/COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md)  
 **Depends on:** Phase 4 Commerce Operations Console MVP (closed)  
 **Goal:** Elevate Commerce Admin from operable MVP to professional ops console (Shopify-class density + workflows) without a fourth `admin` theme.
 

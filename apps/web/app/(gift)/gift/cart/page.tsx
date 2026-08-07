@@ -89,14 +89,14 @@ export default function CartPage() {
 
   return (
     <main className="gift-page max-w-3xl">
-      <Link href="/gift" className="gift-link text-sm">
+      <Link href="/gift" className="gift-link text-body">
         ← Continue shopping
       </Link>
       <h1 className="gift-h1 mt-gs-4">Your cart</h1>
 
       {cart.items.length === 0 ? (
         <div className="clay-panel mt-gs-6 p-gs-6 text-center">
-          <p className="text-sm opacity-80">Cart is empty.</p>
+          <p className="text-body opacity-80">Cart is empty.</p>
           <Link href="/gift/products" className="clay-btn mt-gs-5 inline-flex">
             Browse gifts
           </Link>
@@ -116,7 +116,7 @@ export default function CartPage() {
                   >
                     {item.productTitle}
                   </Link>
-                  <p className="text-sm opacity-70">
+                  <p className="text-body opacity-70">
                     {item.label} · {formatInr(item.unitPricePaise)}
                   </p>
                 </div>
@@ -133,7 +133,7 @@ export default function CartPage() {
                   <button
                     type="button"
                     onClick={() => void remove(item.id)}
-                    className="text-sm text-danger underline"
+                    className="text-body text-danger underline"
                   >
                     Remove
                   </button>
@@ -144,7 +144,7 @@ export default function CartPage() {
 
           <div className="clay-panel mt-gs-6 p-gs-4 sm:p-gs-5">
             <div className="flex flex-col gap-gs-2 sm:flex-row sm:flex-wrap sm:items-end">
-              <label className="block flex-1 text-sm">
+              <label className="block flex-1 text-body">
                 Coupon
                 <input
                   className="clay-input"
@@ -173,7 +173,7 @@ export default function CartPage() {
               )}
             </div>
 
-            <div className="mt-gs-5 space-y-gs-1 text-sm">
+            <div className="mt-gs-5 space-y-gs-1 text-body">
               <p>Subtotal: {formatInr(cart.subtotalPaise)}</p>
               {(cart.discountPaise ?? 0) > 0 ? (
                 <p className="text-success">
@@ -189,7 +189,7 @@ export default function CartPage() {
                 Total: {formatInr(cart.totalPaise ?? cart.subtotalPaise)}
               </p>
             </div>
-            {error ? <p className="text-sm text-danger mt-gs-2">{error}</p> : null}
+            {error ? <p className="text-body text-danger mt-gs-2">{error}</p> : null}
 
             <button
               type="button"
@@ -205,7 +205,7 @@ export default function CartPage() {
               {getStoredAccessToken() ? 'Proceed to checkout' : 'Sign in to checkout'}
             </button>
             {!getStoredAccessToken() ? (
-              <p className="mt-gs-2 text-xs opacity-70">
+              <p className="mt-gs-2 text-caption opacity-70">
                 Checkout needs a customer account. Cart is kept until you sign in.
               </p>
             ) : null}

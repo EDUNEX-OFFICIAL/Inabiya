@@ -113,7 +113,7 @@ export default async function GiftCollectionPage({
         </div>
 
         <div className="relative mx-auto max-w-page px-gs-4 py-gs-5 sm:px-gs-6 sm:py-gs-6 lg:py-gs-7">
-          <nav className="text-sm text-foreground/55" aria-label="Breadcrumb">
+          <nav className="text-body text-foreground/55" aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <li>
                 <Link href="/gift" className="gift-link">
@@ -142,19 +142,19 @@ export default async function GiftCollectionPage({
             <h1 id="collection-title" className="gift-h1 mt-gs-2 text-balance">
               {collection.title}
             </h1>
-            <p className="gift-muted mt-gs-2 text-sm sm:text-base">{collection.blurb}</p>
+            <p className="gift-muted mt-gs-2">{collection.blurb}</p>
             <div className="mt-gs-4 flex flex-wrap gap-gs-2">
-              <Link href={bybHref} className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-sm">
+              <Link href={bybHref} className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-body">
                 Build a custom box
               </Link>
-              <Link href="/gift/products" className="clay-btn-secondary !min-h-0 !px-gs-4 !py-gs-2 text-sm">
+              <Link href="/gift/products" className="clay-btn-secondary !min-h-0 !px-gs-4 !py-gs-2 text-body">
                 Browse all gifts
               </Link>
             </div>
           </div>
 
           {/* Mobile hero photo — short strip */}
-          <div className="relative mt-gs-5 aspect-[21/9] overflow-hidden rounded-xl md:hidden">
+          <div className="relative mt-gs-5 aspect-[21/9] overflow-hidden rounded-control md:hidden">
             <Image
               src={collection.heroImageUrl}
               alt={collection.heroImageAlt}
@@ -180,10 +180,10 @@ export default async function GiftCollectionPage({
 
             {products.length === 0 ? (
               <div className="clay-panel p-gs-6 text-center sm:p-gs-7">
-                <p className="font-display text-lg tracking-tight text-foreground">
+                <p className="gift-h2">
                   Nothing in this mix yet
                 </p>
-                <p className="gift-muted mt-gs-2 text-sm">
+                <p className="gift-muted mt-gs-2">
                   Try clearing filters, or peek at a sibling collection.
                 </p>
                 <div className="mt-gs-5 flex flex-wrap justify-center gap-gs-2">
@@ -217,7 +217,7 @@ export default async function GiftCollectionPage({
                 <h2 id="also-shop" className="gift-h2">
                   Also shop
                 </h2>
-                <p className="gift-muted mt-gs-2 text-sm">Nearby collections you might love.</p>
+                <p className="gift-muted mt-gs-2">Nearby collections you might love.</p>
                 <div className="mt-gs-4 flex flex-wrap gap-gs-2">
                   {related.map((r) => (
                     <Link key={r.slug} href={collectionHref(r.slug)} className="clay-chip">

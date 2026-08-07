@@ -276,16 +276,16 @@ function GiftBoxWizard() {
 
   return (
     <main className="gift-page max-w-3xl">
-      <Link href="/gift" className="gift-link text-sm">
+      <Link href="/gift" className="gift-link text-body">
         ← Gift home
       </Link>
       <p className="gift-overline mt-gs-4">Personalised</p>
       <h1 className="gift-h1 mt-gs-2">Build Your Box</h1>
-      <p className="gift-muted mt-gs-2 text-sm">
+      <p className="gift-muted mt-gs-2">
         Six gentle steps — budget-first, age-appropriate picks.
       </p>
 
-      <ol className="-mx-gs-1 mt-gs-6 flex gap-gs-2 overflow-x-auto px-gs-1 pb-gs-1 text-xs sm:flex-wrap sm:overflow-visible">
+      <ol className="-mx-gs-1 mt-gs-6 flex gap-gs-2 overflow-x-auto px-gs-1 pb-gs-1 text-caption sm:flex-wrap sm:overflow-visible">
         {STEPS.map((label, i) => {
           const n = i + 1;
           const active = !resumeChoice && n === step;
@@ -303,7 +303,7 @@ function GiftBoxWizard() {
                 </button>
               ) : (
                 <span
-                  className={`inline-block rounded-full px-gs-3 py-gs-2 ${
+                  className={`inline-block rounded-pill px-gs-3 py-gs-2 ${
                     active
                       ? 'bg-primary text-white shadow-clay'
                       : done
@@ -319,12 +319,12 @@ function GiftBoxWizard() {
         })}
       </ol>
 
-      {error ? <p className="mt-gs-4 text-sm text-danger">{error}</p> : null}
+      {error ? <p className="mt-gs-4 text-body text-danger">{error}</p> : null}
 
       {resumeChoice ? (
         <section className="mt-gs-6 space-y-gs-4">
           <h2 className="gift-h2">Continue your box?</h2>
-          <p className="text-sm opacity-80">
+          <p className="text-body opacity-80">
             You already started a gift box
             {box.recipient || box.ageBand || box.occasion || box.budgetPaise != null ? (
               <>
@@ -361,7 +361,7 @@ function GiftBoxWizard() {
         <section className="mt-gs-6">
           <h2 className="gift-h2">Who is it for?</h2>
           {box.items.length > 0 ? (
-            <p className="mt-gs-2 text-sm opacity-80">
+            <p className="mt-gs-2 text-body opacity-80">
               You already have {box.items.length} item(s) in this box.{' '}
               <button
                 type="button"
@@ -377,7 +377,7 @@ function GiftBoxWizard() {
               <button
                 key={r.value}
                 type="button"
-                className={`clay-card px-gs-4 py-gs-3 text-left text-sm ${
+                className={`clay-card px-gs-4 py-gs-3 text-left text-body ${
                   box.recipient === r.value ? 'ring-2 ring-[var(--primary)]' : ''
                 }`}
                 onClick={() => void savePrefs({ recipient: r.value, wizardStep: 2 })}
@@ -397,7 +397,7 @@ function GiftBoxWizard() {
               <button
                 key={a.value}
                 type="button"
-                className={`clay-card px-gs-4 py-gs-3 text-left text-sm ${
+                className={`clay-card px-gs-4 py-gs-3 text-left text-body ${
                   box.ageBand === a.value ? 'ring-2 ring-[var(--primary)]' : ''
                 }`}
                 onClick={() => void savePrefs({ ageBand: a.value, wizardStep: 3 })}
@@ -408,7 +408,7 @@ function GiftBoxWizard() {
           </div>
           <button
             type="button"
-            className="mt-gs-4 text-sm underline opacity-70"
+            className="mt-gs-4 text-body underline opacity-70"
             onClick={() => void savePrefs({ wizardStep: 1 })}
           >
             Back
@@ -424,7 +424,7 @@ function GiftBoxWizard() {
               <button
                 key={o.value}
                 type="button"
-                className={`clay-card px-gs-4 py-gs-3 text-left text-sm ${
+                className={`clay-card px-gs-4 py-gs-3 text-left text-body ${
                   box.occasion === o.value ? 'ring-2 ring-[var(--primary)]' : ''
                 }`}
                 onClick={() => void savePrefs({ occasion: o.value, wizardStep: 4 })}
@@ -435,7 +435,7 @@ function GiftBoxWizard() {
           </div>
           <button
             type="button"
-            className="mt-gs-4 text-sm underline opacity-70"
+            className="mt-gs-4 text-body underline opacity-70"
             onClick={() => void savePrefs({ wizardStep: 2 })}
           >
             Back
@@ -446,9 +446,9 @@ function GiftBoxWizard() {
       {!resumeChoice && step === 4 ? (
         <section className="mt-gs-6">
           <h2 className="gift-h2">Budget</h2>
-          <p className="gift-muted mt-gs-1 text-sm">We never add items that go over this amount.</p>
+          <p className="gift-muted mt-gs-1 text-body">We never add items that go over this amount.</p>
           <div className="mt-gs-4 flex flex-wrap gap-gs-2 items-end">
-            <label className="text-sm">
+            <label className="text-body">
               Budget (₹)
               <input
                 className="clay-input !mt-gs-1 max-w-[10rem]"
@@ -463,7 +463,7 @@ function GiftBoxWizard() {
           </div>
           <button
             type="button"
-            className="mt-gs-4 text-sm underline opacity-70"
+            className="mt-gs-4 text-body underline opacity-70"
             onClick={() => void savePrefs({ wizardStep: 3 })}
           >
             Back
@@ -474,7 +474,7 @@ function GiftBoxWizard() {
       {!resumeChoice && step === 5 ? (
         <section className="mt-gs-6">
           <h2 className="gift-h2">Categories</h2>
-          <p className="gift-muted mt-gs-1 text-sm">Pick one or more (optional).</p>
+          <p className="gift-muted mt-gs-1 text-body">Pick one or more (optional).</p>
           <div className="mt-gs-4 flex flex-wrap gap-gs-2">
             {CATEGORIES.map((c) => {
               const on = box.categorySlugs.includes(c.value);
@@ -484,8 +484,8 @@ function GiftBoxWizard() {
                   type="button"
                   className={
                     on
-                      ? 'rounded-full bg-primary px-gs-3 py-gs-2 text-sm font-medium text-primary-foreground shadow-clay'
-                      : 'clay-chip text-sm'
+                      ? 'rounded-pill bg-primary px-gs-3 py-gs-2 text-body font-medium text-primary-foreground shadow-clay'
+                      : 'clay-chip text-body'
                   }
                   onClick={() => {
                     const next = on
@@ -509,7 +509,7 @@ function GiftBoxWizard() {
             </button>
             <button
               type="button"
-              className="text-sm underline opacity-70"
+              className="text-body underline opacity-70"
               onClick={() => void savePrefs({ wizardStep: 4 })}
             >
               Back
@@ -522,7 +522,7 @@ function GiftBoxWizard() {
         <section className="mt-gs-6 space-y-gs-6">
           <div>
             <h2 className="gift-h2">Your box</h2>
-            <p className="gift-muted mt-gs-1 text-sm">
+            <p className="gift-muted mt-gs-1 text-body">
               {box.recipient ?? '—'} · {box.ageBand ?? '—'} · {box.occasion ?? '—'} · Budget{' '}
               {box.budgetPaise != null ? formatInr(box.budgetPaise) : 'not set'}
             </p>
@@ -542,16 +542,16 @@ function GiftBoxWizard() {
                   Remaining {formatInr(Math.max(0, box.remainingBudgetPaise))}
                 </p>
               ) : null}
-              <p className="text-sm opacity-70">Subtotal {formatInr(box.subtotalPaise)}</p>
+              <p className="text-body opacity-70">Subtotal {formatInr(box.subtotalPaise)}</p>
               {over ? (
-                <p className="text-sm text-danger">
+                <p className="text-body text-danger">
                   Over by {formatInr(box.overBudgetPaise ?? 0)}
                 </p>
               ) : null}
             </div>
           </div>
 
-          <ul className="space-y-gs-2 text-sm">
+          <ul className="space-y-gs-2 text-body">
             {box.items.length === 0 ? (
               <li className="opacity-70">No items yet — add from recommendations below.</li>
             ) : (
@@ -579,9 +579,9 @@ function GiftBoxWizard() {
           </ul>
 
           <div>
-            <h3 className="font-medium text-sm mb-gs-2">Recommended within budget</h3>
+            <h3 className="font-medium text-body mb-gs-2">Recommended within budget</h3>
             {suggestions.length === 0 ? (
-              <p className="text-sm opacity-70">
+              <p className="text-body opacity-70">
                 No matches within remaining budget —{' '}
                 <Link href="/gift/products" className="underline">
                   browse all products
@@ -591,7 +591,7 @@ function GiftBoxWizard() {
             ) : (
               <ul className="grid gap-gs-3 sm:grid-cols-2">
                 {suggestions.map((s) => (
-                  <li key={s.variantId} className="clay-card p-gs-3 text-sm">
+                  <li key={s.variantId} className="clay-card p-gs-3 text-body">
                     <Link
                       href={`/gift/products/${s.productSlug}`}
                       className="font-medium hover:text-primary"
@@ -604,7 +604,7 @@ function GiftBoxWizard() {
                     <button
                       type="button"
                       disabled={busy || over}
-                      className="clay-btn-secondary mt-gs-2 !min-h-0 !px-gs-3 !py-1 text-xs disabled:opacity-50"
+                      className="clay-btn-secondary mt-gs-2 !min-h-0 !px-gs-3 !py-1 text-caption disabled:opacity-50"
                       onClick={() => void addSuggestion(s.variantId)}
                     >
                       Add to box
@@ -630,7 +630,7 @@ function GiftBoxWizard() {
             <button
               type="button"
               disabled={busy}
-              className="text-sm underline opacity-70 disabled:opacity-40"
+              className="text-body underline opacity-70 disabled:opacity-40"
               onClick={() => void restartWizard()}
             >
               Start over

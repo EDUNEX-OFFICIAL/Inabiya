@@ -60,12 +60,12 @@ export default async function CorporateGiftingPage() {
         <div className="gift-band-inner mx-auto max-w-lg">
           {!blocks.length ? (
             <div className="mb-gs-5">
-              <Link href="/gift" className="gift-link text-sm">
+              <Link href="/gift" className="gift-link text-body">
                 ← Gift home
               </Link>
               <p className="gift-overline mt-gs-4">Quote</p>
               <h2 className="gift-h2 mt-gs-2">Tell us what you need</h2>
-              <p className="gift-muted mt-gs-2 text-sm">
+              <p className="gift-muted mt-gs-2">
                 Share your needs — we will follow up with pricing.
               </p>
             </div>

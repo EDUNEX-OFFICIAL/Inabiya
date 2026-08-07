@@ -1,24 +1,5 @@
 import gsap from 'gsap';
-
-/** Critical FOUC CSS — inline in hero so first paint hides before globals.css. */
-export const GIFT_HERO_FOUC_CSS = `
-.gift-hero-split:not([data-hero-ready]) [data-hero-anim],
-.gift-hero-split:not([data-hero-ready]) [data-hero-cta],
-.gift-hero-split:not([data-hero-ready]) .gift-hero-split__frame,
-.gift-hero-split:not([data-hero-ready]) .gift-hero-split__wash {
-  opacity: 0 !important;
-  visibility: hidden !important;
-}
-@media (prefers-reduced-motion: reduce) {
-  .gift-hero-split:not([data-hero-ready]) [data-hero-anim],
-  .gift-hero-split:not([data-hero-ready]) [data-hero-cta],
-  .gift-hero-split:not([data-hero-ready]) .gift-hero-split__frame,
-  .gift-hero-split:not([data-hero-ready]) .gift-hero-split__wash {
-    opacity: 1 !important;
-    visibility: visible !important;
-  }
-}
-`.trim();
+export { GIFT_HERO_FOUC_CSS } from '@/components/cms/gift-hero-fouc';
 
 type HeroEntranceEls = {
   wash?: Element | null;

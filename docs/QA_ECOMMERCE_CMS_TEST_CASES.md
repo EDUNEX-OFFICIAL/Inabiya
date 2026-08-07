@@ -199,7 +199,7 @@ Do these in order if time is short:
 | EC-06..EC-18 | B | Needs browser cart/checkout UI pass |
 | CM-02..CM-20 | B | Needs browser DnD/editor pass |
 
-Canonical eng summary also in `Docs/IMPLEMENTATION_AUDIT.md` Wave 0.
+Canonical eng summary also in `docs/IMPLEMENTATION_AUDIT.md` Wave 0.
 
 ---
 
@@ -235,7 +235,7 @@ Do **not** fail a test for these — log as “future” / enhancement:
 | F7 | Razorpay + public domain / Caddy — **post-dev** (mock pay kept) |
 | F8 | Real AWS/MinIO SDK — **post-dev** (local media OK) |
 
-Canonical eng list also in `Docs/CMS_PAGE_BUILDER.md` §12.
+Canonical eng list also in `docs/CMS_PAGE_BUILDER.md` §12.
 
 ---
 

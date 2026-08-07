@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, Heart, LogOut, Menu, Package, ShoppingBag, UserRound, X } from 'lucide-react';
@@ -120,7 +121,7 @@ function MegaPanel({
           <li key={l.href}>
             <Link
               href={l.href}
-              className="block rounded-xl px-gs-3 py-gs-2 font-medium hover:bg-surface-soft hover:text-primary"
+              className="block rounded-control px-gs-3 py-gs-2 font-medium hover:bg-surface-soft hover:text-primary"
               onClick={onNavigate}
             >
               {l.label}
@@ -131,20 +132,21 @@ function MegaPanel({
       <aside
         className={`overflow-hidden rounded-clay border border-border-subtle ${imageClass ?? ''}`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageSrc}
-          alt=""
-          className="h-28 w-full object-cover sm:h-36"
-          width={640}
-          height={360}
-        />
+        <div className="relative h-28 w-full sm:h-36">
+          <Image
+            src={imageSrc}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, 320px"
+            className="object-cover"
+          />
+        </div>
         <div className="bg-white/90 p-gs-3">
-          <p className="font-display text-lg text-foreground">{headline}</p>
-          <p className="mt-gs-1 text-xs opacity-75">{body}</p>
+          <p className="gift-h2">{headline}</p>
+          <p className="mt-gs-1 text-caption opacity-75">{body}</p>
           <Link
             href={ctaHref}
-            className="mt-gs-3 inline-flex text-sm font-semibold text-primary hover:underline"
+            className="mt-gs-3 inline-flex text-body font-semibold text-primary hover:underline"
             onClick={onNavigate}
           >
             {ctaLabel}
@@ -288,7 +290,7 @@ export function GiftNav() {
 
   return (
     <nav
-      className="flex min-w-0 flex-1 items-center justify-end gap-gs-2 text-sm"
+      className="flex min-w-0 flex-1 items-center justify-end gap-gs-2 text-body"
       aria-label="Gift shop"
     >
       {/* Desktop primary — search leftmost of links */}
@@ -299,7 +301,7 @@ export function GiftNav() {
         <GiftSearch onExpand={closeOverlays} />
         <button
           type="button"
-          className="inline-flex items-center gap-gs-1 rounded-full px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary"
+          className="inline-flex items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary"
           aria-expanded={mega === 'shop'}
           aria-haspopup="true"
           aria-controls="gift-mega-shop"
@@ -310,7 +312,7 @@ export function GiftNav() {
         </button>
         <button
           type="button"
-          className="inline-flex items-center gap-gs-1 rounded-full px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary"
+          className="inline-flex items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary"
           aria-expanded={mega === 'forWhom'}
           aria-haspopup="true"
           aria-controls="gift-mega-for-whom"
@@ -321,7 +323,7 @@ export function GiftNav() {
         </button>
         <Link
           href="/articles"
-          className="rounded-full px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary"
+          className="rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary"
           onClick={closeOverlays}
         >
           Journal
@@ -373,7 +375,7 @@ export function GiftNav() {
         <IconLink href="/gift/cart" label="Cart" onClick={() => setMenuOpen(false)}>
           <ShoppingBag className="h-5 w-5" strokeWidth={1.75} />
           {cartCount > 0 ? (
-            <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-pill bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+            <span className="absolute right-gs-1 top-gs-1 flex h-4 min-w-4 items-center justify-center rounded-pill bg-primary px-gs-1 text-caption font-semibold text-primary-foreground">
               {cartCount > 99 ? '99+' : cartCount}
             </span>
           ) : null}
@@ -404,7 +406,7 @@ export function GiftNav() {
                   <li role="none">
                     <Link
                       role="menuitem"
-                      className="flex items-center gap-gs-2 rounded-lg px-gs-3 py-gs-2 hover:bg-surface-soft"
+                      className="flex items-center gap-gs-2 rounded-control px-gs-3 py-gs-2 hover:bg-surface-soft"
                       href="/account"
                       onClick={() => setProfileOpen(false)}
                     >
@@ -415,7 +417,7 @@ export function GiftNav() {
                   <li role="none">
                     <Link
                       role="menuitem"
-                      className="flex items-center gap-gs-2 rounded-lg px-gs-3 py-gs-2 hover:bg-surface-soft"
+                      className="flex items-center gap-gs-2 rounded-control px-gs-3 py-gs-2 hover:bg-surface-soft"
                       href="/orders"
                       onClick={() => setProfileOpen(false)}
                     >
@@ -428,7 +430,7 @@ export function GiftNav() {
                     <button
                       type="button"
                       role="menuitem"
-                      className="flex w-full items-center gap-gs-2 rounded-lg px-gs-3 py-gs-2 text-left text-danger hover:bg-danger-bg"
+                      className="flex w-full items-center gap-gs-2 rounded-control px-gs-3 py-gs-2 text-left text-danger hover:bg-danger-bg"
                       onClick={signOut}
                     >
                       <LogOut className="h-4 w-4" />
@@ -439,7 +441,7 @@ export function GiftNav() {
               ) : null}
             </>
           ) : (
-            <Link href="/login?next=/gift" className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-xs">
+            <Link href="/login?next=/gift" className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-caption">
               Sign in
             </Link>
           )}
@@ -468,7 +470,7 @@ export function GiftNav() {
 
           <button
             type="button"
-            className="flex w-full items-center justify-between rounded-xl px-gs-3 py-gs-3 font-medium"
+            className="flex w-full items-center justify-between rounded-control px-gs-3 py-gs-3 font-medium"
             aria-expanded={mobileShopOpen}
             onClick={() => setMobileShopOpen((o) => !o)}
           >
@@ -480,7 +482,7 @@ export function GiftNav() {
               {shopLinks.map((l) => (
                 <li key={l.href}>
                   <Link
-                    className="block rounded-xl px-gs-3 py-gs-2 hover:bg-white/80"
+                    className="block rounded-control px-gs-3 py-gs-2 hover:bg-white/80"
                     href={l.href}
                     onClick={() => setMenuOpen(false)}
                   >
@@ -493,7 +495,7 @@ export function GiftNav() {
 
           <button
             type="button"
-            className="flex w-full items-center justify-between rounded-xl px-gs-3 py-gs-3 font-medium"
+            className="flex w-full items-center justify-between rounded-control px-gs-3 py-gs-3 font-medium"
             aria-expanded={mobileWhomOpen}
             onClick={() => setMobileWhomOpen((o) => !o)}
           >
@@ -505,7 +507,7 @@ export function GiftNav() {
               {forWhomLinks.map((l) => (
                 <li key={l.href}>
                   <Link
-                    className="block rounded-xl px-gs-3 py-gs-2 hover:bg-white/80"
+                    className="block rounded-control px-gs-3 py-gs-2 hover:bg-white/80"
                     href={l.href}
                     onClick={() => setMenuOpen(false)}
                   >
@@ -518,7 +520,7 @@ export function GiftNav() {
 
           <Link
             href="/articles"
-            className="block rounded-xl px-gs-3 py-gs-3 font-medium hover:bg-white/80"
+            className="block rounded-control px-gs-3 py-gs-3 font-medium hover:bg-white/80"
             onClick={() => setMenuOpen(false)}
           >
             Journal
@@ -529,7 +531,7 @@ export function GiftNav() {
               <ul className="flex flex-col gap-gs-1">
                 <li>
                   <Link
-                    className="flex items-center gap-gs-2 rounded-xl px-gs-3 py-gs-3 hover:bg-white/80"
+                    className="flex items-center gap-gs-2 rounded-control px-gs-3 py-gs-3 hover:bg-white/80"
                     href="/account"
                     onClick={() => setMenuOpen(false)}
                   >
@@ -539,7 +541,7 @@ export function GiftNav() {
                 </li>
                 <li>
                   <Link
-                    className="flex items-center gap-gs-2 rounded-xl px-gs-3 py-gs-3 hover:bg-white/80"
+                    className="flex items-center gap-gs-2 rounded-control px-gs-3 py-gs-3 hover:bg-white/80"
                     href="/orders"
                     onClick={() => setMenuOpen(false)}
                   >
@@ -550,7 +552,7 @@ export function GiftNav() {
                 <li>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-gs-2 rounded-xl px-gs-3 py-gs-3 text-left text-danger hover:bg-danger-bg"
+                    className="flex w-full items-center gap-gs-2 rounded-control px-gs-3 py-gs-3 text-left text-danger hover:bg-danger-bg"
                     onClick={signOut}
                   >
                     <LogOut className="h-4 w-4" />

@@ -6,7 +6,7 @@ Last Updated: 2026-07-22 (Phase 12 media library)
 
 Client asked for **drag-and-drop page creation** in CMS. Product decision (**1B**): full **marketing pages** at `/pages/[slug]`, composed of ordered blocks — not TipTap-only articles, and not “homepage section reorder only” as the end state.
 
-**This doc is the engineering contract.** Implementation = **Phase 11** + **Phase 12** (`Docs/Phases.md`). Do not invent progress in Memory until code ships.
+**This doc is the engineering contract.** Implementation = **Phase 11** + **Phase 12** (`docs/Phases.md`). Do not invent progress in Memory until code ships.
 
 Related: Homepage KV CMS (existing) · TipTap articles (Editorial) · Soft Gift Design.md · `SOFT_GIFT_HOMEPAGE_REFERENCE.md`
 

@@ -55,7 +55,7 @@ function LegacyGiftHomeFallback() {
       <div className="mx-auto max-w-5xl px-gs-4 py-gs-7 sm:px-gs-6">
         <p className="gift-muted mb-gs-7">
           Homepage CMS is not published yet — showing a minimal fallback. Publish the{' '}
-          <code className="text-xs">home</code> marketing page in admin.
+          <code className="text-caption">home</code> marketing page in admin.
         </p>
       </div>
     </main>

@@ -30,7 +30,7 @@ export function CollectionResultsToolbar({ collection, refine, productCount }: P
   return (
     <div className="mb-gs-4 space-y-gs-3">
       <div className="flex flex-wrap items-center justify-between gap-gs-3">
-        <p className="text-sm font-medium text-foreground/75" aria-live="polite">
+        <p className="text-body font-medium text-foreground/75" aria-live="polite">
           {productCount === 0
             ? 'No gifts match'
             : `${productCount} gift${productCount === 1 ? '' : 's'}`}
@@ -38,12 +38,12 @@ export function CollectionResultsToolbar({ collection, refine, productCount }: P
             <span className="font-normal text-foreground/45"> · filtered</span>
           ) : null}
         </p>
-        <label className="flex items-center gap-gs-2 text-sm">
-          <span className="sr-only sm:not-sr-only sm:text-xs sm:font-medium sm:uppercase sm:tracking-wide sm:opacity-55">
+        <label className="flex items-center gap-gs-2 text-body">
+          <span className="sr-only sm:not-sr-only sm:text-caption sm:font-medium sm:uppercase sm:tracking-wide sm:opacity-55">
             Sort
           </span>
           <select
-            className="rounded-full border border-foreground/12 bg-[var(--background)] px-gs-3 py-gs-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="rounded-pill border border-foreground/12 bg-[var(--background)] px-gs-3 py-gs-2 text-body outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             value={currentSort}
             aria-label="Sort products"
             onChange={(e) => {
@@ -71,14 +71,14 @@ export function CollectionResultsToolbar({ collection, refine, productCount }: P
             <Link
               key={chip.key}
               href={chip.clearHref}
-              className="inline-flex items-center gap-1 rounded-full bg-primary/12 px-gs-3 py-1 text-xs font-medium text-primary"
+              className="inline-flex items-center gap-gs-1 rounded-pill bg-primary/12 px-gs-3 py-gs-1 text-caption font-medium text-primary"
             >
               {chip.label}
               <X className="size-3.5 opacity-70" aria-hidden />
               <span className="sr-only">Remove {chip.label}</span>
             </Link>
           ))}
-          <Link href={clearAllHref} className="gift-link text-xs">
+          <Link href={clearAllHref} className="gift-link text-caption">
             Clear all
           </Link>
         </div>

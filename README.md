@@ -3,7 +3,7 @@
 Phase **0 — Platform Foundation** scaffold.
 
 Canonical path: `/srv/Inabiya`  
-Docs: `Docs/` (symlink `docs` → `Docs`) · Cursor rules: `.cursor/rules/`  
+Docs: `docs/` · Cursor rules: `.cursor/rules/`  
 GitHub: `https://github.com/EDUNEX-OFFICIAL/Inabiya`
 
 ## Stack

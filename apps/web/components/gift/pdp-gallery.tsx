@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { Play } from 'lucide-react';
 
@@ -50,29 +51,35 @@ export function PdpGallery({ media, title }: { media: Media[]; title: string }) 
                   onClick={() => setVideoPlaying(true)}
                   aria-label={`Play video for ${title}`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={current.posterUrl || current.url}
                     alt={current.altText ?? title}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                    priority
                   />
                   <span className="absolute inset-0 flex items-center justify-center bg-foreground/25 transition group-hover:bg-foreground/35">
-                    <span className="flex size-16 items-center justify-center rounded-full bg-white/95 text-primary shadow-clay">
+                    <span className="flex size-16 items-center justify-center rounded-pill bg-white/95 text-primary shadow-clay">
                       <Play className="size-7 fill-current pl-0.5" aria-hidden />
                     </span>
                   </span>
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/50 to-transparent px-gs-4 py-gs-4 text-left text-sm font-medium text-white">
+                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/50 to-transparent px-gs-4 py-gs-4 text-left text-body font-medium text-white">
                     See the unboxing
                   </span>
                 </button>
               )
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={current.url}
-                alt={current.altText ?? title}
-                className="aspect-square w-full object-cover"
-              />
+              <div className="relative aspect-square w-full">
+                <Image
+                  src={current.url}
+                  alt={current.altText ?? title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                  priority
+                />
+              </div>
             )
           ) : (
             <div className="aspect-square w-full gift-media-fallback" aria-hidden />
@@ -80,13 +87,13 @@ export function PdpGallery({ media, title }: { media: Media[]; title: string }) 
         </div>
         {multi ? (
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-gs-3 flex justify-center gap-1.5"
+            className="pointer-events-none absolute inset-x-0 bottom-gs-3 flex justify-center gap-gs-2"
             aria-hidden
           >
             {media.map((_, i) => (
               <span
                 key={i}
-                className={`h-1.5 w-1.5 rounded-full ${
+                className={`h-gs-1 w-gs-1 rounded-pill ${
                   i === safeIndex ? 'bg-primary' : 'bg-white/80 shadow-sm'
                 }`}
               />
@@ -96,7 +103,7 @@ export function PdpGallery({ media, title }: { media: Media[]; title: string }) 
       </div>
       {multi ? (
         <ul
-          className="-mx-1 flex gap-gs-2 overflow-x-auto px-1 pb-gs-1 [scrollbar-width:thin]"
+          className="-mx-gs-1 flex gap-gs-2 overflow-x-auto px-gs-1 pb-gs-1 [scrollbar-width:thin]"
           aria-label="Product media"
         >
           {media.map((m, i) => (
@@ -113,17 +120,18 @@ export function PdpGallery({ media, title }: { media: Media[]; title: string }) 
                     : `View image ${i + 1} of ${media.length}`
                 }
                 aria-pressed={i === safeIndex}
-                className={`relative overflow-hidden rounded-control border-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                className={`relative h-14 w-14 overflow-hidden rounded-control border-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:h-20 sm:w-20 ${
                   i === safeIndex
                     ? 'border-primary shadow-clay'
                     : 'border-transparent opacity-80 hover:opacity-100'
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={m.kind === 'VIDEO' ? m.posterUrl || m.url : m.url}
                   alt=""
-                  className="h-14 w-14 object-cover sm:h-20 sm:w-20"
+                  fill
+                  sizes="80px"
+                  className="object-cover"
                 />
                 {m.kind === 'VIDEO' ? (
                   <span className="absolute inset-0 flex items-center justify-center bg-foreground/30">

@@ -33,12 +33,12 @@ export default function OrdersPage() {
   return (
     <main className="gift-page max-w-lg">
       <h1 className="gift-h1">Your orders</h1>
-      <Link href="/account" className="mt-gs-2 inline-block gift-link text-sm">
+      <Link href="/account" className="mt-gs-2 inline-block gift-link text-body">
         ← Account
       </Link>
       <ul className="mt-gs-6 space-y-gs-3">
         {orders.length === 0 ? (
-          <li className="clay-panel p-gs-6 text-sm opacity-80">
+          <li className="clay-panel p-gs-6 text-body opacity-80">
             No orders yet.{' '}
             <Link href="/gift/products" className="font-medium text-primary">
               Browse gifts
@@ -46,7 +46,7 @@ export default function OrdersPage() {
           </li>
         ) : (
           orders.map((o) => (
-            <li key={o.id} className="clay-card p-gs-5 text-sm">
+            <li key={o.id} className="clay-card p-gs-5 text-body">
               <Link href={`/orders/${o.id}`} className="font-medium hover:text-primary">
                 {o.orderNumber}
               </Link>

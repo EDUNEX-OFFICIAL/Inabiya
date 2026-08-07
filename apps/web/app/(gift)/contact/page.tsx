@@ -45,7 +45,7 @@ export default function ContactPage() {
         </li>
       </ul>
 
-      <p className="mt-gs-7 text-sm opacity-70">
+      <p className="mt-gs-7 text-body opacity-70">
         Prefer browsing first?{' '}
         <Link href="/gift" className="gift-link">
           Back to gifts

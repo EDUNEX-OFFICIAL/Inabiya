@@ -50,7 +50,7 @@ export function CorporateInquiryForm() {
     return (
       <div className="clay-panel mt-gs-6 p-gs-6 text-center sm:p-gs-6">
         <p className="gift-h2">Thanks</p>
-        <p className="mt-gs-2 text-sm opacity-80">We received your inquiry.</p>
+        <p className="mt-gs-2 text-body opacity-80">We received your inquiry.</p>
         <Link href="/gift" className="clay-btn mt-gs-5 inline-flex">
           Back to shop
         </Link>
@@ -61,7 +61,7 @@ export function CorporateInquiryForm() {
   return (
     <form
       onSubmit={(e) => void onSubmit(e)}
-      className="clay-panel mt-gs-6 space-y-gs-3 p-gs-5 text-sm sm:p-gs-6"
+      className="clay-panel mt-gs-6 space-y-gs-3 p-gs-5 text-body sm:p-gs-6"
     >
       <label className="block">
         Type
@@ -123,7 +123,7 @@ export function CorporateInquiryForm() {
           onChange={(e) => setMessage(e.target.value)}
         />
       </label>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="text-body text-red-600">{error}</p> : null}
       <button type="submit" className="clay-btn w-full" disabled={busy}>
         {busy ? 'Sending…' : 'Submit inquiry'}
       </button>

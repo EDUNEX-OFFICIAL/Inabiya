@@ -57,12 +57,12 @@ function RegisterForm() {
     <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
       <div>
         <h1 className="gift-h1">Create account</h1>
-        <p className="mt-gs-2 text-sm opacity-75">
+        <p className="mt-gs-2 text-body opacity-75">
           Create your Inabiya account with email and password — save gifts and checkout faster.
         </p>
       </div>
       <form onSubmit={onSubmit} className="clay-panel flex flex-col gap-gs-3 p-gs-5 sm:p-gs-6">
-        <label className="flex flex-col gap-gs-1 text-sm">
+        <label className="flex flex-col gap-gs-1 text-body">
           Display name
           <input
             className="clay-input !mt-gs-1"
@@ -71,7 +71,7 @@ function RegisterForm() {
             autoComplete="name"
           />
         </label>
-        <label className="flex flex-col gap-gs-1 text-sm">
+        <label className="flex flex-col gap-gs-1 text-body">
           Email
           <input
             className="clay-input !mt-gs-1"
@@ -82,7 +82,7 @@ function RegisterForm() {
             autoComplete="username"
           />
         </label>
-        <label className="flex flex-col gap-gs-1 text-sm">
+        <label className="flex flex-col gap-gs-1 text-body">
           Password (min 8)
           <div className="relative">
             <input
@@ -104,12 +104,12 @@ function RegisterForm() {
             </button>
           </div>
         </label>
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <p className="text-body text-danger">{error}</p> : null}
         <button type="submit" disabled={busy} className="clay-btn mt-gs-1 disabled:opacity-60">
           {busy ? 'Creating…' : 'Register'}
         </button>
       </form>
-      <p className="text-sm opacity-75">
+      <p className="text-body opacity-75">
         Already have an account?{' '}
         <Link
           className="font-medium text-primary underline"
@@ -124,7 +124,7 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<main className="p-gs-6 text-sm opacity-70">Loading…</main>}>
+    <Suspense fallback={<main className="p-gs-6 text-body opacity-70">Loading…</main>}>
       <RegisterForm />
     </Suspense>
   );

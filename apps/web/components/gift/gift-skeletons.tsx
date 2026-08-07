@@ -11,21 +11,21 @@ export function PdpSkeleton() {
       <Pulse className="h-3 w-48 max-w-full rounded" />
       <div className="grid gap-gs-6 lg:grid-cols-2 lg:gap-gs-8">
         <div className="space-y-gs-3">
-          <Pulse className="aspect-square w-full rounded-2xl bg-foreground/[0.06]" />
+          <Pulse className="aspect-square w-full rounded-clay bg-foreground/[0.06]" />
           <div className="flex gap-gs-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Pulse key={i} className="size-16 shrink-0 rounded-lg sm:size-20" />
+              <Pulse key={i} className="size-16 shrink-0 rounded-control sm:size-20" />
             ))}
           </div>
         </div>
         <div className="min-w-0 space-y-gs-3">
-          <Pulse className="h-5 w-24 rounded-full" />
+          <Pulse className="h-5 w-24 rounded-pill" />
           <Pulse className="h-10 w-[80%] max-w-md rounded" />
           <Pulse className="h-4 w-32 rounded" />
           <Pulse className="mt-gs-2 h-8 w-28 rounded" />
           <Pulse className="h-20 w-full rounded-clay" />
-          <Pulse className="h-12 w-full rounded-full" />
-          <Pulse className="h-12 w-full rounded-full bg-foreground/[0.05]" />
+          <Pulse className="h-12 w-full rounded-pill" />
+          <Pulse className="h-12 w-full rounded-pill bg-foreground/[0.05]" />
         </div>
       </div>
       <div className="grid gap-gs-3 sm:grid-cols-3">
@@ -53,7 +53,7 @@ export function GiftListSkeleton({ label = 'Loading' }: { label?: string }) {
       <ul className="space-y-gs-3 pt-gs-2">
         {Array.from({ length: 3 }).map((_, i) => (
           <li key={i} className="flex gap-gs-3 rounded-clay border border-foreground/6 p-gs-3">
-            <Pulse className="size-20 shrink-0 rounded-lg sm:size-24" />
+            <Pulse className="size-20 shrink-0 rounded-control sm:size-24" />
             <div className="min-w-0 flex-1 space-y-2 py-1">
               <Pulse className="h-4 w-3/4 rounded" />
               <Pulse className="h-4 w-1/3 rounded" />

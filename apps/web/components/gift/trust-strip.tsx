@@ -62,12 +62,12 @@ export function TrustStrip() {
           key={c.title}
           className="flex min-w-0 gap-gs-3 rounded-clay border border-border-subtle bg-white/70 px-gs-4 py-gs-3"
         >
-          <span className="mt-0.5 shrink-0 text-primary" aria-hidden>
+          <span className="mt-gs-1 shrink-0 text-primary" aria-hidden>
             <CueIcon name={c.icon} />
           </span>
           <span className="min-w-0">
-            <p className="text-sm font-medium text-foreground">{c.title}</p>
-            <p className="mt-gs-1 text-xs leading-relaxed opacity-70">{c.body}</p>
+            <p className="text-body font-medium text-foreground">{c.title}</p>
+            <p className="mt-gs-1 text-caption leading-relaxed opacity-70">{c.body}</p>
           </span>
         </li>
       ))}

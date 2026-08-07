@@ -12,7 +12,7 @@ Client shared a **homepage visual reference** (screenshots). This doc captures:
 
 **Hard rule:** Do **not** pixel-match the screenshots. Soft Gift Design (`gift` theme, Fraunces + Plus Jakarta, Design.md) wins. Improvise layout wherever needed.
 
-Related: PRD §41 Gift Box Builder · `Docs/Phases.md` Phase 10 · `Docs/Memory.md`
+Related: PRD §41 Gift Box Builder · `docs/Phases.md` Phase 10 · `docs/Memory.md`
 
 **Marketing pages (DnD):** Client also wants drag-and-drop **arbitrary pages** (`/pages/[slug]`). That is **Phase 11**, not this homepage reference — see [`CMS_PAGE_BUILDER.md`](CMS_PAGE_BUILDER.md). This file stays navbar-first Soft Gift homepage IA only.
 

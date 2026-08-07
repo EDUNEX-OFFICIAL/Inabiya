@@ -5,7 +5,7 @@ export default function ProductsLoading() {
       <div className="mt-gs-3 h-4 w-80 max-w-full animate-pulse rounded bg-foreground/8" />
       <ul className="mt-gs-6 grid grid-cols-1 gap-gs-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <li key={i} className="overflow-hidden rounded-2xl bg-foreground/[0.04]">
+          <li key={i} className="overflow-hidden rounded-clay bg-foreground/[0.04]">
             <div className="aspect-[4/5] animate-pulse bg-foreground/[0.08]" />
             <div className="space-y-2 p-gs-4">
               <div className="h-4 w-3/4 animate-pulse rounded bg-foreground/10" />

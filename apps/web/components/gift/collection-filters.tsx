@@ -48,15 +48,15 @@ function FacetOption({
       onClick={onToggle}
       className={
         active
-          ? 'flex w-full items-center gap-gs-2 rounded-lg bg-primary/12 px-gs-2 py-gs-2 text-left text-sm font-medium text-primary'
-          : 'flex w-full items-center gap-gs-2 rounded-lg px-gs-2 py-gs-2 text-left text-sm text-foreground/80 hover:bg-foreground/[0.04]'
+          ? 'flex w-full items-center gap-gs-2 rounded-control bg-primary/12 px-gs-2 py-gs-2 text-left text-body font-medium text-primary'
+          : 'flex w-full items-center gap-gs-2 rounded-control px-gs-2 py-gs-2 text-left text-body text-foreground/80 hover:bg-foreground/[0.04]'
       }
       aria-pressed={active}
     >
       <span
         className={
           active
-            ? 'flex size-4 shrink-0 items-center justify-center rounded border border-primary bg-primary text-[10px] text-primary-foreground'
+            ? 'flex size-4 shrink-0 items-center justify-center rounded border border-primary bg-primary text-caption text-primary-foreground'
             : 'size-4 shrink-0 rounded border border-foreground/25 bg-transparent'
         }
         aria-hidden
@@ -79,11 +79,11 @@ function AccordionGroup({
 }) {
   return (
     <details className="group border-b border-foreground/8 pb-gs-3" open={defaultOpen}>
-      <summary className="flex cursor-pointer list-none items-center justify-between py-gs-2 text-xs font-semibold uppercase tracking-wide text-foreground/50 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between py-gs-2 text-caption font-semibold uppercase tracking-wide text-foreground/50 [&::-webkit-details-marker]:hidden">
         {title}
         <ChevronDown className="size-4 opacity-50 transition group-open:rotate-180" aria-hidden />
       </summary>
-      <div className="mt-gs-1 flex flex-col gap-0.5">{children}</div>
+      <div className="mt-gs-1 flex flex-col gap-gs-1">{children}</div>
     </details>
   );
 }
@@ -102,9 +102,9 @@ function FacetEditor({
 
   return (
     <div className="flex flex-col gap-gs-1">
-      <div className="mb-gs-3 rounded-xl bg-foreground/[0.03] px-gs-3 py-gs-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-foreground/45">Browsing</p>
-        <p className="mt-1 text-sm font-medium text-foreground">{collection.lockedLabel}</p>
+      <div className="mb-gs-3 rounded-control bg-foreground/[0.03] px-gs-3 py-gs-3">
+        <p className="text-caption font-medium uppercase tracking-wide text-foreground/45">Browsing</p>
+        <p className="mt-gs-1 text-body font-medium text-foreground">{collection.lockedLabel}</p>
       </div>
 
       {!hide.has('category') ? (
@@ -217,7 +217,7 @@ function DesktopSidebar({ collection, refine }: Props) {
           <div className="sticky bottom-0 mt-gs-4 border-t border-foreground/8 bg-[var(--background)] pt-gs-3">
             <Link
               href={collectionHref(collection.slug, refineParamsForUrl(collection, { sort: refine.sort }))}
-              className="gift-link text-sm"
+              className="gift-link text-body"
             >
               Clear filters
             </Link>
@@ -300,11 +300,11 @@ function MobileFilters({ collection, refine }: Props) {
 
   return (
     <>
-      <div className="sticky top-[4.5rem] z-20 -mx-gs-1 mb-gs-4 flex items-center gap-gs-3 border-b border-foreground/8 bg-[var(--background)]/95 px-gs-1 py-gs-3 backdrop-blur-md md:hidden">
+      <div className="sticky top-[var(--gift-sticky-offset)] z-20 -mx-gs-1 mb-gs-4 flex items-center gap-gs-3 border-b border-foreground/8 bg-[var(--background)]/95 px-gs-1 py-gs-3 backdrop-blur-md md:hidden">
         <button
           ref={openBtnRef}
           type="button"
-          className="clay-btn-secondary inline-flex items-center gap-gs-2 !min-h-0 !px-gs-3 !py-gs-2 text-sm"
+          className="clay-btn-secondary inline-flex items-center gap-gs-2 !min-h-0 !px-gs-3 !py-gs-2 text-body"
           onClick={() => setOpen(true)}
           aria-expanded={open}
           aria-haspopup="dialog"
@@ -312,7 +312,7 @@ function MobileFilters({ collection, refine }: Props) {
           <SlidersHorizontal className="size-4" aria-hidden />
           Filters
           {activeCount > 0 ? (
-            <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+            <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-pill bg-primary px-gs-2 text-caption font-semibold text-primary-foreground">
               {activeCount}
             </span>
           ) : null}
@@ -332,13 +332,13 @@ function MobileFilters({ collection, refine }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="absolute inset-x-0 bottom-0 flex max-h-[88vh] flex-col rounded-t-2xl bg-[var(--background)] shadow-clay"
+            className="absolute inset-x-0 bottom-0 flex max-h-[88vh] flex-col rounded-t-clay bg-[var(--background)] shadow-clay"
             onKeyDown={(e: ReactKeyboardEvent) => {
               if (e.key === 'Escape') close();
             }}
           >
             <div className="flex shrink-0 items-center justify-between border-b border-foreground/8 px-gs-5 py-gs-4">
-              <h2 id={titleId} className="font-display text-lg tracking-tight">
+              <h2 id={titleId} className="gift-h2">
                 Filters
               </h2>
               <button

@@ -10,7 +10,7 @@ export function ProductBrandLine({ brands, className = '' }: Props) {
   const label = list.length === 1 ? 'Brand' : 'Brands';
 
   return (
-    <p className={`text-sm leading-snug text-foreground/75 ${className}`.trim()}>
+    <p className={`text-body leading-snug text-foreground/75 ${className}`.trim()}>
       <span className="font-semibold uppercase tracking-wide text-foreground/55">{label}:</span>{' '}
       <span className="text-foreground/90">{list.join(', ')}</span>
     </p>
