@@ -18,6 +18,11 @@ import {
   Wallet,
 } from 'lucide-react';
 import { formatInr } from '@/lib/catalog';
+import {
+  fetchCatalogCategories,
+  isCategoryPlpHref,
+  resolveCatalogCategoryChips,
+} from '@/lib/catalog-categories';
 import { sanitizeArticleHtml } from '@/lib/article-html';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
 import { FaqAccordion } from '@/components/gift/faq-accordion';
@@ -34,6 +39,8 @@ type Props = {
   previewBanner?: string | null;
   /** Soft Gift storefront homepage layout (full-bleed hero, clay product cards). */
   layout?: 'page' | 'home';
+  /** When false, parent owns FAQ JSON-LD (merged @graph). Default true. */
+  emitFaqJsonLd?: boolean;
 };
 
 function GiftToysDecor({ variant = 'default' }: { variant?: 'default' | 'sky' | 'mint' }) {
@@ -1120,6 +1127,11 @@ function collectFaqJsonLd(blocks: CmsPageBlock[]): Record<string, unknown> | nul
   return faqPageJsonLd(rows);
 }
 
+/** Exported for parent pages that merge FAQ into a single @graph script. */
+export function collectCmsFaqJsonLd(blocks: CmsPageBlock[]): Record<string, unknown> | null {
+  return collectFaqJsonLd(blocks);
+}
+
 function FaqJsonLd({ blocks }: { blocks: CmsPageBlock[] }) {
   const data = collectFaqJsonLd(blocks);
   if (!data) return null;
@@ -1128,8 +1140,14 @@ function FaqJsonLd({ blocks }: { blocks: CmsPageBlock[] }) {
   );
 }
 
-function DiscoveryChipsBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
-  const items = Array.isArray(props.items)
+async function DiscoveryChipsBlock({
+  props,
+  home,
+}: {
+  props: Record<string, unknown>;
+  home?: boolean;
+}) {
+  const manualItems = Array.isArray(props.items)
     ? (props.items as Array<{
         label?: string;
         href?: string;
@@ -1144,6 +1162,18 @@ function DiscoveryChipsBlock({ props, home }: { props: Record<string, unknown>; 
         }))
         .filter((i) => i.label && i.href)
     : [];
+
+  const itemsSource = String(props.itemsSource ?? 'manual');
+  const looksLikeCategoryBlock =
+    itemsSource === 'catalogCategories' ||
+    (manualItems.length > 0 &&
+      manualItems.every((i) => isCategoryPlpHref(i.href)) &&
+      /categor/i.test(String(props.title ?? 'Shop by category')));
+  let items = manualItems;
+  if (looksLikeCategoryBlock) {
+    const cats = await fetchCatalogCategories();
+    items = resolveCatalogCategoryChips(cats, manualItems);
+  }
   if (!items.length) return null;
 
   const asCards = items.some((i) => i.imageUrl);
@@ -1534,14 +1564,19 @@ function renderRestBlock(
   return null;
 }
 
-export function MarketingPageBlocks({ blocks, previewBanner, layout = 'page' }: Props) {
+export function MarketingPageBlocks({
+  blocks,
+  previewBanner,
+  layout = 'page',
+  emitFaqJsonLd = true,
+}: Props) {
   if (layout === 'home') {
     const hero = blocks.filter((b) => b.type === 'hero');
     const rest = blocks.filter((b) => b.type !== 'hero' && b.type !== 'footer');
     const productBandIndex = { current: 0 };
     return (
       <div>
-        <FaqJsonLd blocks={blocks} />
+        {emitFaqJsonLd ? <FaqJsonLd blocks={blocks} /> : null}
         {previewBanner ? (
           <div className="gift-banner gift-banner--warning sticky top-0 z-10 text-center text-caption font-medium">
             {previewBanner}
@@ -1561,7 +1596,7 @@ export function MarketingPageBlocks({ blocks, previewBanner, layout = 'page' }: 
 
   return (
     <div className="space-y-gs-4">
-      <FaqJsonLd blocks={blocks} />
+      {emitFaqJsonLd ? <FaqJsonLd blocks={blocks} /> : null}
       {previewBanner ? (
         <div className="gift-banner gift-banner--warning sticky top-0 z-10 mb-gs-4 text-center text-caption font-medium">
           {previewBanner}

@@ -14,6 +14,7 @@ import type {
 import type { RoleCode } from '@inabiya/types';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
+import { readSeoSchemaExtras, seoSchemaExtrasWriteValue } from '../../../common/seo-schema-extras';
 
 function slugify(title: string): string {
   return title
@@ -197,6 +198,7 @@ export class ArticlesService {
       ogImageUrl: article.ogImageUrl,
       seoTitle: article.seoTitle,
       seoDescription: article.seoDescription,
+      seoSchemaExtras: readSeoSchemaExtras(article.seoSchemaExtras),
       assignee: article.assignee,
       createdBy: article.createdBy,
       comments: article.comments.map((c) => ({
@@ -258,6 +260,9 @@ export class ArticlesService {
     if (body.ogImageUrl !== undefined) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
     }
+    if (body.seoSchemaExtras !== undefined) {
+      this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN', 'SEO_EDITOR']);
+    }
     if (body.title != null) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN', 'WRITER']);
       if (actor.roles.includes('WRITER') && !this.isOps(actor) && article.assigneeId !== actor.id) {
@@ -290,6 +295,13 @@ export class ArticlesService {
           dueAt: dueAt === undefined ? undefined : dueAt,
           ...(dueAt !== undefined ? { dueReminderSentAt: null } : {}),
           ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
+          ...(body.seoSchemaExtras !== undefined
+            ? {
+                seoSchemaExtras: seoSchemaExtrasWriteValue(body.seoSchemaExtras, {
+                  hasSystemFaq: false,
+                }),
+              }
+            : {}),
         },
       });
     });

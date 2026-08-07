@@ -41,6 +41,7 @@ export type CatalogProduct = {
   robotsIndex?: boolean;
   faqItems?: Array<{ question: string; answerText: string }> | null;
   seoSections?: Array<{ heading: string; bodyText: string }> | null;
+  seoSchemaExtras?: import('@inabiya/validation').SeoSchemaEntry[] | null;
   hamperItems?: Array<{
     id: string;
     title: string;

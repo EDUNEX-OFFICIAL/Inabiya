@@ -3,6 +3,13 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { fetchArticles, type PublicArticleDetail } from '@/lib/articles';
 import { ArticleBody } from '@/components/editorial/article-body';
+import { JsonLdScript } from '@/components/seo/json-ld-script';
+import { getSiteOrigin } from '@/lib/cms-seo';
+import {
+  articleJsonLd,
+  breadcrumbJsonLd,
+  mergeSeoJsonLdWithExtras,
+} from '@/lib/seo-json-ld';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,8 +53,41 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       })
     : null;
 
+  const origin = getSiteOrigin();
+  const ld = mergeSeoJsonLdWithExtras(
+    [
+      articleJsonLd({
+        headline: article.seo.title,
+        description: article.seo.description,
+        slug: article.slug,
+        canonicalPath: article.seo.canonicalPath,
+        imageUrl: article.seo.ogImageUrl,
+        datePublished: article.publishedAt,
+        authorName: article.authorName ?? article.specialist?.name ?? null,
+        siteOrigin: origin,
+      }),
+      breadcrumbJsonLd([
+        { name: 'Articles', url: `${origin}/articles` },
+        ...(article.category
+          ? [
+              {
+                name: article.category.name,
+                url: `${origin}/articles?category=${article.category.slug}`,
+              },
+            ]
+          : []),
+        {
+          name: article.seo.title,
+          url: `${origin}${article.seo.canonicalPath.startsWith('/') ? article.seo.canonicalPath : `/${article.seo.canonicalPath}`}`,
+        },
+      ]),
+    ],
+    article.seoSchemaExtras,
+  );
+
   return (
     <main className="blog-page max-w-3xl">
+      <JsonLdScript data={ld} />
       <article>
         <Link href="/articles" className="text-sm text-primary hover:underline">
           ← Articles

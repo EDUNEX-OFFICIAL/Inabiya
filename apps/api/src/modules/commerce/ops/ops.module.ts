@@ -11,6 +11,7 @@ import {
   OpsAdminController,
   StorefrontPublicController,
   GiftChromePublicController,
+  TrustCuesPublicController,
 } from './ops.controller';
 import { StorefrontConfigService } from './storefront-config.service';
 
@@ -23,7 +24,12 @@ import { StorefrontConfigService } from './storefront-config.service';
     CartModule,
     AnalyticsModule,
   ],
-  controllers: [OpsAdminController, StorefrontPublicController, GiftChromePublicController],
+  controllers: [
+    OpsAdminController,
+    StorefrontPublicController,
+    GiftChromePublicController,
+    TrustCuesPublicController,
+  ],
   providers: [OpsDashboardService, StorefrontConfigService, CommercePolicyService],
   exports: [StorefrontConfigService, CommercePolicyService],
 })

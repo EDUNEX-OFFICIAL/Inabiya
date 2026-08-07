@@ -25,6 +25,9 @@ import { ArticleEditor } from '@/components/editorial/article-editor';
 import { CmsMediaField } from '@/components/cms/cms-media-field';
 import { ProductGridBlockEditor } from '@/components/cms/product-grid-block-editor';
 import { DiscoveryChipsBlockEditor } from '@/components/cms/discovery-chips-block-editor';
+import { SeoSchemaPanel } from '@/components/admin/seo-schema-panel';
+import { defaultPathForCmsSlug, getSiteOrigin } from '@/lib/cms-seo';
+import type { SeoSchemaEntry } from '@inabiya/validation';
 
 type BlockType =
   | 'hero'
@@ -61,6 +64,7 @@ type MarketingPage = {
   canonicalPath: string | null;
   ogImageUrl: string | null;
   robotsIndex: boolean;
+  seoSchemaExtras?: SeoSchemaEntry[] | null;
   isHomepage?: boolean;
   blocks: Array<{ id: string; type: string; props: Record<string, unknown> }>;
 };
@@ -151,6 +155,7 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     subtitle: '',
     seeAllHref: '/gift/products',
     seeAllLabel: 'See all',
+    itemsSource: 'catalogCategories',
     items:
       'Clothing | /gift/products?category=clothing | /gift/media/baby-clothes.jpg | Clothing\nBath & Skin | /gift/products?category=bath-skin | /gift/media/baby-cues.jpg | Bath\nToys | /gift/products?category=toys | /gift/media/train-toy.jpg | Toys\nMom Care | /gift/products?category=mom-care | /gift/media/baby-mom.jpg | Mom care',
   },
@@ -642,6 +647,9 @@ function toPayload(blocks: Block[]) {
           ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
           ...(b.props.seeAllHref ? { seeAllHref: b.props.seeAllHref } : {}),
           ...(b.props.seeAllLabel ? { seeAllLabel: b.props.seeAllLabel } : {}),
+          ...(b.props.itemsSource === 'catalogCategories'
+            ? { itemsSource: 'catalogCategories' }
+            : {}),
           items,
         },
       };
@@ -1106,6 +1114,7 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
   const [canonicalPath, setCanonicalPath] = useState('');
   const [ogImageUrl, setOgImageUrl] = useState('');
   const [robotsIndex, setRobotsIndex] = useState(true);
+  const [seoSchemaExtras, setSeoSchemaExtras] = useState<SeoSchemaEntry[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selected, setSelected] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
@@ -1134,6 +1143,7 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
         setCanonicalPath(p.canonicalPath ?? '');
         setOgImageUrl(p.ogImageUrl ?? '');
         setRobotsIndex(p.robotsIndex !== false);
+        setSeoSchemaExtras(p.seoSchemaExtras ?? []);
         setBlocks(toEditable(p.blocks));
       })
       .catch(() => router.replace('/admin/cms/pages'));
@@ -1194,6 +1204,7 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
           canonicalPath: canonicalPath.trim() || null,
           ogImageUrl: ogImageUrl.trim() || null,
           robotsIndex,
+          seoSchemaExtras: seoSchemaExtras.length ? seoSchemaExtras : null,
           blocks: blockPayload,
         },
       });
@@ -1201,6 +1212,7 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
       setCanonicalPath(updated.canonicalPath ?? '');
       setOgImageUrl(updated.ogImageUrl ?? '');
       setRobotsIndex(updated.robotsIndex !== false);
+      setSeoSchemaExtras(updated.seoSchemaExtras ?? []);
       setBlocks(toEditable(updated.blocks));
       setMsg('Saved');
     } catch (err) {
@@ -1399,6 +1411,37 @@ export default function AdminCmsPageEditor({ params }: { params: { id: string } 
             />
             Allow search indexing (robots index)
           </label>
+          <SeoSchemaPanel
+            value={seoSchemaExtras}
+            onChange={setSeoSchemaExtras}
+            hasSystemFaq={blocks.some((b) => {
+              if (b.type !== 'faq') return false;
+              try {
+                const parsed = JSON.parse(b.props.itemsJson || '[]') as unknown;
+                return Array.isArray(parsed) && parsed.length > 0;
+              } catch {
+                return false;
+              }
+            })}
+            autoTypes={
+              blocks.some((b) => {
+                if (b.type !== 'faq') return false;
+                try {
+                  const parsed = JSON.parse(b.props.itemsJson || '[]') as unknown;
+                  return Array.isArray(parsed) && parsed.length > 0;
+                } catch {
+                  return false;
+                }
+              })
+                ? ['WebPage', 'FAQ']
+                : ['WebPage']
+            }
+            publicUrl={
+              page
+                ? `${getSiteOrigin()}${page.canonicalPath?.trim() || defaultPathForCmsSlug(page.slug)}`
+                : null
+            }
+          />
           {current ? (
             <div className="border-t pt-3 space-y-2">
               <p className="font-medium">Props · {current.type}</p>

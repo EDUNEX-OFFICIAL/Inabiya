@@ -369,8 +369,8 @@ export function ArticleEditor({
         <MediaLibraryModal
           open={libraryOpen}
           onClose={() => setLibraryOpen(false)}
-          onPick={(url) => {
-            editor.chain().focus().setImage({ src: url }).run();
+          onPick={(pick) => {
+            editor.chain().focus().setImage({ src: pick.url }).run();
           }}
         />
       ) : null}

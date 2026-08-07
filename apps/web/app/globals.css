@@ -569,7 +569,7 @@ h3 {
     font-size: 0.8125rem;
   }
 
-  /* Buttons */
+  /* Buttons — no translateY lift on the control itself; icon motion only (see gift icon micro-motion). */
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn,
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn-secondary,
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn-ghost {
@@ -582,10 +582,10 @@ h3 {
     font-size: var(--text-body);
     padding: var(--btn-pad-y) var(--btn-pad-x);
     transition:
-      transform var(--duration-fast) var(--ease-standard),
       box-shadow var(--duration-fast) var(--ease-standard),
       background var(--duration-fast) var(--ease-standard),
-      border-color var(--duration-fast) var(--ease-standard);
+      border-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
   }
 
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn {
@@ -598,11 +598,9 @@ h3 {
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn:hover {
     background: var(--primary-hover);
     box-shadow: var(--clay-shadow-hover);
-    transform: translateY(-1px);
   }
 
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn:active {
-    transform: translateY(1px);
     box-shadow: var(--clay-shadow-press);
   }
 
@@ -617,7 +615,6 @@ h3 {
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn-secondary:disabled,
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn-ghost:disabled {
     opacity: 0.5;
-    transform: none;
     box-shadow: var(--clay-shadow);
     cursor: not-allowed;
   }
@@ -630,12 +627,10 @@ h3 {
   }
 
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn-secondary:hover {
-    transform: translateY(-1px);
     box-shadow: var(--clay-shadow-hover);
   }
 
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn-secondary:active {
-    transform: translateY(1px);
     box-shadow: var(--clay-shadow-press);
   }
 
@@ -914,10 +909,10 @@ h3 {
     font-size: var(--text-body);
     padding: var(--btn-pad-y) var(--btn-pad-x);
     transition:
-      transform var(--duration-fast) var(--ease-standard),
       background var(--duration-fast) var(--ease-standard),
       border-color var(--duration-fast) var(--ease-standard),
-      box-shadow var(--duration-fast) var(--ease-standard);
+      box-shadow var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
   }
 
   [data-theme='blog'] .blog-btn {
@@ -929,11 +924,9 @@ h3 {
 
   [data-theme='blog'] .blog-btn:hover {
     background: var(--primary-hover);
-    transform: translateY(-1px);
   }
 
   [data-theme='blog'] .blog-btn:active {
-    transform: translateY(1px);
     box-shadow: var(--clay-shadow-press);
   }
 
@@ -945,7 +938,6 @@ h3 {
 
   [data-theme='blog'] .blog-btn-secondary:hover {
     background: var(--surface-soft);
-    transform: translateY(-1px);
   }
 
   [data-theme='blog'] .blog-btn-ghost {
@@ -1177,10 +1169,10 @@ h3 {
     font-size: var(--text-body);
     padding: var(--btn-pad-y) var(--btn-pad-x);
     transition:
-      transform var(--duration-fast) var(--ease-standard),
       background var(--duration-fast) var(--ease-standard),
       border-color var(--duration-fast) var(--ease-standard),
-      box-shadow var(--duration-fast) var(--ease-standard);
+      box-shadow var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
   }
 
   [data-theme='creator'] .creator-btn {
@@ -1191,11 +1183,9 @@ h3 {
 
   [data-theme='creator'] .creator-btn:hover {
     background: var(--primary-hover);
-    transform: translateY(-1px);
   }
 
   [data-theme='creator'] .creator-btn:active {
-    transform: translateY(1px);
     box-shadow: var(--clay-shadow-press);
   }
 
@@ -1207,7 +1197,6 @@ h3 {
 
   [data-theme='creator'] .creator-btn-secondary:hover {
     background: var(--creator-terracotta-hover);
-    transform: translateY(-1px);
   }
 
   [data-theme='creator'] .creator-btn-ghost {
@@ -1733,15 +1722,13 @@ h3 {
     transition:
       background 160ms ease,
       border-color 160ms ease,
-      color 160ms ease,
-      transform 160ms ease;
+      color 160ms ease;
   }
 
   [data-theme='gift'] .gift-footer__social-btn:hover {
     background: color-mix(in srgb, var(--inabiya-pink) 85%, white);
     border-color: transparent;
     color: white;
-    transform: translateY(-1px);
   }
 
   [data-theme='gift'] .gift-footer__col-title {
@@ -2270,6 +2257,10 @@ h3 {
       transform: translateX(3px);
     }
 
+    [data-theme='gift'] .clay-btn-ghost:hover svg {
+      transform: translateY(-1px);
+    }
+
     [data-theme='gift'] .gift-hero-split__trust-icon {
       transition: transform var(--duration-med) var(--ease-standard);
     }
@@ -2593,11 +2584,10 @@ h3 {
     color: var(--inabiya-pink-dark, #e65688);
     font-weight: 650;
     box-shadow: var(--shadow-soft);
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    transition: box-shadow 0.18s ease;
   }
 
   [data-theme='gift'] .gift-byb-banner__cta:hover {
-    transform: translateY(-1px);
     box-shadow: var(--clay-shadow-hover);
   }
 
@@ -3320,6 +3310,12 @@ h3 {
   :is([data-theme='gift'], [data-theme='blog']) .clay-card:hover,
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn:hover,
   :is([data-theme='gift'], [data-theme='blog']) .clay-btn-secondary:hover {
+    transform: none;
+  }
+
+  :is([data-theme='gift'], [data-theme='blog']) .clay-btn:hover svg,
+  :is([data-theme='gift'], [data-theme='blog']) .clay-btn-secondary:hover svg,
+  :is([data-theme='gift'], [data-theme='blog']) .clay-btn-ghost:hover svg {
     transform: none;
   }
 

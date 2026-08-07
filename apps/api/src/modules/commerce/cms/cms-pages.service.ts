@@ -10,7 +10,11 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { CatalogService } from '../catalog/catalog.service';
 import { parseProductGridResolution } from './resolve-product-grid-query';
-
+import {
+  cmsBlocksHaveSystemFaq,
+  readSeoSchemaExtras,
+  seoSchemaExtrasWriteValue,
+} from '../../../common/seo-schema-extras';
 type PageWithBlocks = {
   id: string;
   slug: string;
@@ -21,6 +25,7 @@ type PageWithBlocks = {
   canonicalPath: string | null;
   ogImageUrl: string | null;
   robotsIndex: boolean;
+  seoSchemaExtras?: unknown;
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -178,6 +183,18 @@ export class CmsPagesService {
           });
         }
       }
+      const blocksForFaq =
+        body.blocks !== undefined
+          ? body.blocks.map((b) => ({ type: b.type, props: b.props }))
+          : (await tx.pageBlock.findMany({ where: { pageId: id } })).map((b) => ({
+              type: b.type,
+              props: b.props,
+            }));
+      const hasSystemFaq = cmsBlocksHaveSystemFaq(blocksForFaq);
+      const extrasWrite =
+        body.seoSchemaExtras !== undefined
+          ? seoSchemaExtrasWriteValue(body.seoSchemaExtras, { hasSystemFaq })
+          : undefined;
       return tx.marketingPage.update({
         where: { id },
         data: {
@@ -187,6 +204,7 @@ export class CmsPagesService {
           ...(body.canonicalPath !== undefined ? { canonicalPath: body.canonicalPath } : {}),
           ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
           ...(body.robotsIndex !== undefined ? { robotsIndex: body.robotsIndex } : {}),
+          ...(extrasWrite !== undefined ? { seoSchemaExtras: extrasWrite } : {}),
         },
         include: { blocks: { orderBy: { sortOrder: 'asc' } } },
       });
@@ -482,6 +500,7 @@ export class CmsPagesService {
       canonicalPath: page.canonicalPath,
       ogImageUrl: page.ogImageUrl,
       robotsIndex: page.robotsIndex,
+      seoSchemaExtras: readSeoSchemaExtras(page.seoSchemaExtras),
       publishedAt: page.publishedAt,
       createdAt: page.createdAt,
       updatedAt: page.updatedAt,

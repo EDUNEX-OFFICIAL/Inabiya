@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 7, 2026 (Soft Gift Lenis + marketing RSC split)
+Last Updated: August 8, 2026 (Support products + deploy)
 
 
 ---
@@ -141,11 +141,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **Human:** Soft Gift visual QA at 375 / 768 / 1280 (φ + leftover type + perf split)
-2. Replace CC0 demo MP4 with real unboxing when assets ready
+1. **Human:** Hard-refresh QA Soft Gift desks (reviews/returns/support/inquiries + reports/customers/orders)
+2. **Human:** Spot-check Support lookup product hits → `/admin/commerce/products/[id]`
 3. Cloudflare SSL / public DNS — **post-dev**
-4. Razorpay / real AWS+SMTP — **post-dev**
-5. OPS P1 leftovers when prioritized (orders cursor, product CSV, gallery picker)
+4. OPS P1 leftovers when prioritized (orders cursor, product CSV, gallery picker, reservation visibility)
+5. Commit pending Soft Gift polish when ready (working tree still dirty vs `origin/main`)
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -178,6 +178,32 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-08 — Dedicated PDP product video (Phase 13 override)
+
+- **Override:** Phase 13 complete; human: dedicated video below trust badges (not primary gallery swap)
+- Admin: Media → **Product video** (YouTube or direct `.mp4`/`.webm`) + optional poster; gallery images-only
+- Storefront: `PdpVideoBand` click-to-play facade; YouTube via `youtube-nocookie` only after click; gallery LCP = images only
+- Data: existing `ProductMedia` VIDEO row (no migration); one video per product
+- Smoke: `pnpm exec tsx scripts/smoke-product-video.ts` → PASS
+- Out of scope: Vimeo/arbitrary iframe, video MIME upload expansion
+
+### 2026-08-07 — Admin SEO Schema Control (Phase 13 override)
+
+- **Override:** Phase 13 complete; client asked for admin control to add Schema.org JSON-LD on all SEO surfaces
+- Surfaces: CMS marketing pages + products + articles
+- UX: guided presets + Advanced JSON (`SeoSchemaPanel`); auto Product/Article/WebPage/FAQ stay authoritative
+- Data: `seoSchemaExtras` Json on Product/Article/MarketingPage; migration `20260807120000_seo_schema_extras`
+- Smoke: `pnpm exec tsx scripts/smoke-seo-schema-extras.ts` → PASS
+- Forbidden: custom Product/Offer/AggregateRating/Article overrides; FAQPage extras when system FAQ exists
+
+### 2026-08-07 — Soft Gift PDP CMS About + trust + media (Phase 13 override)
+
+- **Override:** Phase 13 complete; human polish for PDP CMS content
+- About this gift = TipTap via existing `seoSections` (admin label renamed); empty → description + auto highlights
+- Trust strip = global `CommerceSetting` `pdp.trust_cues` (Settings Policy tab) + public GET
+- Gallery editor: IMAGE|VIDEO kind + poster URL (paste URL; media upload still image-only MIME)
+- Demo: `lavender-bath-essentials` 3 gallery images + TipTap about HTML
 
 ### 2026-07-29 — Phase 13 IMPLEMENTATION_AUDIT cross-check
 
@@ -1033,6 +1059,206 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-08 (Support products leftover + deploy)
+
+- Support desk: show API `products` hits → `/admin/commerce/products/[id]`; only non-empty result sections; placeholder includes product.
+- Build: Next.js production build OK inside deploy; web `tsc` clean earlier.
+- **Live:** `deploy-vps.sh web api` @ `6976f9e` — migrate none pending; smoke health/ready 200; containers healthy.
+
+### Session — 2026-08-08 (CRM desks Soft Gift cross-check)
+
+- Verified Soft Gift parity (chips/search/cards/table/Refresh) + URL defaults (reviews PENDING, returns REQUESTED / `?status=REQUESTED` deep-link).
+- Fixes: reviews empty copy (`filterActive || status` bug); notice after moderate (load was clearing it); Support Refresh re-runs lookup when results open; NEW badge amber (match inquiries).
+- AuthZ UX: hide review Approve/Reject + returns Save/moderate unless COMMERCE_ADMIN|SUPER_ADMIN (API already restricted; SUPPORT read stays).
+- Known leftover (pre-existing): support search API returns `products` but UI still omits product hits.
+- Web tsc clean. **Deploy:** pending (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Reviews / returns / support / inquiries Soft Gift)
+
+- **Override:** Phase 13 complete — human: polish reviews, returns, support, gifting-inquiries to Soft Gift desk parity.
+- Reviews: clay-chip Pending/Approved/Rejected/All; search pill; mobile cards + table; Approve/Reject; soft Refresh; no guide copy.
+- Returns: Requested default + status chips; search; compact return-window panel; Approve+refund/Reject; Settings link; mobile cards + table.
+- Support: search pill lookup; clay-panel results + badges; recent inquiries; drop “3 clicks” description.
+- Inquiries: type + New chips; search; mobile cards (More/Less) + table; Support/Customer links.
+- No API/migration. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Reports charts + filters)
+
+- **Override:** Phase 13 complete — human: shadcn graphs + relevant filters on `/admin/commerce/reports`.
+- Dep: `recharts@2.15.4`; shadcn-style `components/ui/chart.tsx`; Soft Gift chart helpers in `reports-charts.tsx`.
+- Charts: Sales area (revenue/orders); Products/Inventory/Coupons/Funnel bars; Returns donut.
+- Filters (URL): window `1d|7d|14d|30d` chips; Sales `metric`; Products `top`+`sort`; Returns `rstatus`; Coupons `active=1`.
+- No API/migration. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Reports Soft Gift desk polish)
+
+- **Override:** Phase 13 complete — human: polish `/admin/commerce/reports` UI/UX + responsive.
+- Clay-chip report tabs (no gallery blurbs); window select; URL `?report=&days=`; soft Refresh; drop guide description.
+- Sales KPI clay-panels + delta tones; mobile cards + clay-panel tables; soft status badges; empty panels; inventory link `?stock=low`.
+- No API/migration. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Customers Soft Gift desk polish)
+
+- **Override:** Phase 13 complete — human: polish `/admin/commerce/customers` (+ 360) to Soft Gift desk parity.
+- List: clay-chip All/Active/Suspended; search pill + 300ms debounce; Clear + count; Refresh soft-refresh; mobile cards + clay-panel table; drop guide description.
+- 360: badges (account/orders/inquiries); clay-panel sections; skeleton/empty; Refresh; emerald/red banners; no notes how-to copy; Suspend AuthZ unchanged.
+- No API/migration. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Orders case-file Soft Gift polish)
+
+- **Override:** Phase 13 complete — human: continue orders improvements (list gaps + case file).
+- List: sticky bulk bar (products pattern); clear selection on filter change.
+- Case file `/admin/commerce/orders/[id]`: drop header description; status/payment badges; skeleton/empty; soft Refresh; emerald/red banners; shortened exception labels; section chrome; timeline badges; note submit via form Enter; load error (no silent redirect).
+- AuthZ/actions unchanged. No API/migration. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Orders Soft Gift desk polish)
+
+- **Override:** Phase 13 complete — human: polish `/admin/commerce/orders` to Soft Gift desk parity (products/categories/inventory).
+- UI only: clay-chip status + Pay issues; search pill + 300ms debounce; Age select; Clear + count; RefreshCw soft-refresh; drop header description.
+- List: mobile cards + clay-panel desktop table; status/payment soft badges; skeleton/empty banners; pin views as clay chips.
+- Preserved: List/Board, pin views, bulk → PROCESSING, exceptions, `?focus=failed-payments`, AuthZ.
+- No API/migration; cursor pagination still P1. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Stock CSV import cross-check)
+
+- **Override:** Phase 13 — human: cross-check last import polish.
+- Fixes: `canSubmit` no longer waits on deferred parse (paste lag); sticky bar + page `pb` use safe-area; mobile Inventory link; AbortError ignore.
+- Verified: Soft Gift clay/gift-banner; dry-run→commit gate; API path + Zod max 500 unchanged; web tsc clean.
+- **Deploy:** still pending (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Stock CSV import polish)
+
+- **Override:** Phase 13 complete — human: design / perf / responsive polish on `/admin/commerce/import`.
+- Soft Gift ops: clay-panel editor, reason chips, Upload CSV, gift-banner errors, result status pills.
+- Responsive: mobile sticky Dry-run/Commit bar; mobile result cards + desktop table; Inventory link sm+.
+- Perf: `useDeferredValue` live parse count; `startTransition` for results; AbortController cancel; paginate results (80).
+- No API/migration. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Inventory desk cross-check)
+
+- **Override:** Phase 13 — human: verify adjust/history + UI/UX + responsive + performance.
+- Fixes: modal backdrop was covering dialog (clicks dead); stale load/history race via seq refs; soft refresh (no list unmount flicker); modal-local adjust/history errors; Esc close; Enter submit on Adjust; history clear+skeleton; mobile Import link; Out-only “N of M” count.
+- Adjust preview still mirrors API available≥0; web tsc clean. Deploy still pending.
+
+### Session — 2026-08-08 (Inventory desk Soft Gift polish)
+
+- **Override:** Phase 13 complete — human: polish `/admin/commerce/inventory` to Soft Gift desk parity (products/categories).
+- UI only: clay-chip All/Low/Out; search pill + 300ms debounce; sort Available↑↓/SKU/Product; Clear + count; mobile cards + clay-panel table; Import + Refresh header; drop guide description.
+- Adjust/History modals: clay surfaces, reason labels, available-after preview (blocks Apply if &lt; 0 client-side; API still enforces).
+- Legacy `?lowStock=1` still maps to Low chip; URL now prefers `?stock=low|out`.
+- No API/migration. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Categories desk filters)
+
+- **Override:** Phase 13 complete — human: useful filters on categories desk; no deploy.
+- Chips: All / With products / Empty; sort: sort order · name · product count; search includes description; Clear + count.
+- Client-side only (small list).
+
+### Session — 2026-08-08 (Dedicated PDP product video)
+
+- **Override:** Phase 13 complete — human: YouTube/link video section below trust badges; not as primary image.
+- Lib: `product-video.ts` (YouTube id parse + direct file); smoke `scripts/smoke-product-video.ts` PASS.
+- Storefront: `ProductVideoPlayer` facade; `PdpVideoBand` rewired; gallery filters out VIDEO for LCP.
+- Admin: `ProductVideoField`; gallery editor images-only; edit hydrate/save merges one VIDEO row.
+- `next.config.js`: `i.ytimg.com` remote pattern for YouTube posters.
+- **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-07 (Category assign + dynamic storefront)
+
+- **Override:** Phase 13 complete — human: product edit category picker + stop hardcoding category chips/nav.
+- Admin product edit: Discovery → Categories chips from `/admin/catalog/categories`; PATCH `categorySlugs`.
+- Shared `lib/catalog-categories.ts`: fetch/merge helpers; check OK.
+- Gift chrome `getGiftChrome`: non-category shopLinks + live catalog categories (auto after create).
+- PLP chips, collection filters, BYB step, CMS product-grid category select → live catalog.
+- Homepage discoveryChips: `itemsSource=catalogCategories` (+ auto-detect category PLP blocks); media hints kept by slug.
+- Seed chrome shopLinks slimmed; category discovery block tagged `itemsSource`.
+- **Deploy:** pending human (`deploy-vps.sh web api`) — skipped this session.
+
+### Session — 2026-08-07 (Categories desk UI/UX polish)
+
+- **Override:** Phase 13 complete — human: polish `/admin/commerce/categories` to products-desk Soft Gift parity (flat taxonomy; no tree/images).
+- API: admin list returns `sortOrder` + `productCount`; `PATCH`/`DELETE` categories; delete blocked when products linked; slug conflict → 409; audits `catalog.category.update|delete`.
+- Public `GET /catalog/categories` stays slim (no counts).
+- UI: clay header/search/create panel; mobile cards + desktop table; inline edit + guarded delete; product count → products `?category=`.
+- Check: `category-ops.check.ts` ok; validation rebuild; api/web tsc clean.
+- **Live:** `deploy-vps.sh web api` @ `6976f9e` — smoke OK (health/ready 200); no pending migrations.
+
+### Session — 2026-08-07 (No button translate hover)
+
+- **Override:** Phase 13 complete — human: button lift looks childish; animate icons only.
+- Removed `translateY` hover/active from `.clay-btn*` / `.blog-btn*` / `.creator-btn*` + footer social + floating WA/top.
+- Kept Soft Gift icon micro-motion (`.clay-btn:hover svg`); logged in Design.md + `12-design-themes.mdc`.
+- **Live:** `deploy-vps.sh web` — also ships mobile products hierarchy + Filters popover polish; smoke OK.
+
+### Session — 2026-08-07 (Products mobile hierarchy)
+
+- **Override:** Phase 13 complete — human mobile QA on products desk.
+- Root: `.clay-btn-ghost { display:inline-flex }` overrode Tailwind `hidden` → Import/Categories/Merch leaked on phone; wrapped in `hidden sm:flex`.
+- Mobile cards: title > price/stock/sku > tags as muted text (no pill chips); actions as text links + icon View.
+- Toolbar: status + Filters one row; OpsPageHeader title + New product side-by-side.
+
+### Session — 2026-08-07 (Products filters → single button)
+
+- **Override:** Phase 13 complete — human: don't fill page with filters.
+- Collapsed stock/type/merch/recipient/occasion/category/sort into one **Filters** popover (badge count, click-outside + Esc).
+- Toolbar stays: status chips + Filters + count/Clear.
+- **Live:** `deploy-vps.sh web api` — smoke OK (health/ready 200); no pending migrations.
+
+### Session — 2026-08-07 (Products desk filters + sort)
+
+- **Override:** Phase 13 complete — human: more useful filters/sort + responsive.
+- API `adminCatalogListQuerySchema`: stock (low/out/in), hamper, storefrontLabel, recipient, occasion, category, sort (updated|title|created|price).
+- Stock uses available (onHand−reserved) vs policy threshold; price sort ranked in-memory ≤500 (ponytail).
+- UI: status chips + responsive select grid (1/2/3/4 cols) + Clear filters; URL-backed.
+- Check: `admin-catalog-cursor.check.ts` ok; validation + api/web tsc clean.
+
+### Session — 2026-08-07 (Products status filter readability)
+
+- **Override:** Phase 13 complete — human QA: All/Published/Draft/Archived chips hard to read on blush wash.
+- Audit: inactive used `border-subtle` + `opacity-80` + `text-xs` → borders vanished, contrast too low vs active pill.
+- Fix: Soft Gift `.clay-chip` base; inactive `foreground` ink + surface fill; active primary tint; `text-sm font-medium`; `aria-pressed`.
+- Scope: `/admin/commerce/products` only (orders/inventory still share old chip pattern).
+
+### Session — 2026-08-07 (Schema auto review UX)
+
+- Auto Product/FAQ chips clarified as Generated; live JSON-LD preview from product fields/FAQs.
+- Product admin passes `autoPreviewNodes`; FAQ builder shared via `lib/product-faq.ts`.
+
+### Session — 2026-08-07 (Media library + gallery DnD)
+
+- **Override:** Phase 13 complete — human: library modal polish + drag reorder.
+- `MediaAsset.altText` + PATCH `/media/:id`; library modal: select → edit alt/name → Use image.
+- Product gallery: `@dnd-kit` drag handle (CMS-style), arrow buttons removed.
+- Migration `20260807220000_media_asset_alt_text`.
+- **Live:** `deploy-vps.sh web api` — migrate applied; smoke OK.
+
+### Session — 2026-08-07 (Gallery + Schema UX polish)
+
+- **Override:** Phase 13 complete — human UX feedback after schema ship.
+- Gallery: compact 80px thumbs (row layout); hide Image URL for uploads; **Show source** / Paste URL when needed.
+- Schema panel: auto-first chips (Product/FAQ, WebPage, Article…); extras + Advanced JSON collapsed by default.
+- Next: deploy web for live admin
+- **Live:** `deploy-vps.sh web` — smoke OK; hard-refresh product Media + Schema sections
+
+### Session — 2026-08-07 (Admin SEO Schema Control)
+
+- **Override:** Phase 13 complete — client: admin schema control on CMS pages + products + articles (1C + 2A guided+JSON).
+- Prisma `seoSchemaExtras` on Product/Article/MarketingPage; Zod presets + custom; conflict rules (no Product/Article override; no second FAQPage when system FAQ).
+- Shared `SeoSchemaPanel`; auto Product/Article JSON-LD; public merge into single `@graph`.
+- Check: `pnpm exec tsx scripts/smoke-seo-schema-extras.ts` → PASS; api+web tsc clean.
+- Env/migrations: `20260807120000_seo_schema_extras` deployed.
+- **Live:** `bash scripts/deploy-vps.sh web api` @ `6976f9e` — health/ready OK; migrate no pending.
+- Next: Rich Results Test smoke on one of each surface
+
+### Session — 2026-08-07 (PDP CMS About + trust strip + media)
+
+- **Override:** Phase 13 complete — Soft Gift PDP CMS polish (human: 1C TipTap About, 2A global trust).
+- About: TipTap `seoSections` renders in About band; admin label “About this gift”; duplicate ProductSeoSections removed; empty → description + auto highlights.
+- Trust: `pdp.trust_cues` in CommerceSetting; policy GET/POST + Settings UI; public `GET /api/v1/commerce/storefront/trust-cues`; TrustStrip fetches with defaults.
+- Gallery editor: per-row IMAGE|VIDEO + poster URL (paste URL path).
+- Demo: `lavender-bath-essentials` → 3 images + TipTap about HTML; seed updated; api+web rebuilt/redeployed.
+- Next: human viewport QA
 
 ### Session — 2026-08-07 (push + deploy Soft Gift polish)
 

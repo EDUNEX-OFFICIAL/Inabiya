@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { apiUrl } from '@/lib/api-base';
+import {
+  categoriesToOptions,
+  fetchCatalogCategoriesClient,
+  type CategoryOption,
+} from '@/lib/catalog-categories';
 
 type CatalogLite = { slug: string; title: string };
 
@@ -12,16 +17,6 @@ const SOURCES = [
   { value: 'editors', label: "Editor's picks" },
   { value: 'new', label: 'New arrivals' },
   { value: 'on_sale', label: 'On sale' },
-] as const;
-
-const CATEGORIES = [
-  '',
-  'newborn',
-  'keepsakes',
-  'clothing',
-  'bath-skin',
-  'toys',
-  'mom-care',
 ] as const;
 
 const OCCASIONS = ['', 'welcome-baby', 'baby-shower', 'naming', 'birthday'] as const;
@@ -36,6 +31,7 @@ type Props = {
 export function ProductGridBlockEditor({ props, onChange }: Props) {
   const [catalog, setCatalog] = useState<CatalogLite[]>([]);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
   const source = props.source || 'auto';
   const selectedSlugs = useMemo(
     () =>
@@ -65,6 +61,16 @@ export function ProductGridBlockEditor({ props, onChange }: Props) {
         }
       }
     })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchCatalogCategoriesClient('/admin/catalog/categories').then((rows) => {
+      if (!cancelled) setCategoryOptions(categoriesToOptions(rows));
+    });
     return () => {
       cancelled = true;
     };
@@ -148,9 +154,10 @@ export function ProductGridBlockEditor({ props, onChange }: Props) {
             value={props.category ?? ''}
             onChange={(e) => onChange('category', e.target.value)}
           >
-            {CATEGORIES.map((c) => (
-              <option key={c || 'any'} value={c}>
-                {c || '— any —'}
+            <option value="">— any —</option>
+            {categoryOptions.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
               </option>
             ))}
           </select>

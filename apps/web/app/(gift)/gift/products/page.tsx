@@ -2,6 +2,10 @@ import Link from 'next/link';
 import { ClayProductCard } from '@/components/gift/clay-product-card';
 import { TrackView } from '@/components/track-view';
 import { fetchCatalog, type CatalogProduct } from '@/lib/catalog';
+import {
+  categoryPlpHref,
+  fetchCatalogCategories,
+} from '@/lib/catalog-categories';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,16 +16,19 @@ function first(v: string | string[] | undefined): string | undefined {
   return v;
 }
 
-function titleFromFilters(sp: {
-  recipient?: string;
-  age?: string;
-  hamper?: string;
-  category?: string;
-  occasion?: string;
-  q?: string;
-  storefrontLabel?: string;
-  onSale?: string;
-}): string {
+function titleFromFilters(
+  sp: {
+    recipient?: string;
+    age?: string;
+    hamper?: string;
+    category?: string;
+    occasion?: string;
+    q?: string;
+    storefrontLabel?: string;
+    onSale?: string;
+  },
+  categoryName?: string,
+): string {
   if (sp.q) return `Search: “${sp.q}”`;
   if (sp.storefrontLabel === 'BESTSELLER') return 'Best sellers';
   if (sp.storefrontLabel === 'EDITORS_PICK') return "Editor's picks";
@@ -33,7 +40,7 @@ function titleFromFilters(sp: {
   if (sp.age === 'newborn') return 'Shop by age — newborn';
   if (sp.age === 'infant') return 'Shop by age — infant';
   if (sp.age === 'toddler') return 'Shop by age — toddler';
-  if (sp.category) return `Category: ${sp.category}`;
+  if (sp.category) return categoryName ? categoryName : `Category: ${sp.category}`;
   if (sp.occasion) return `Occasion: ${sp.occasion}`;
   return 'All gifts';
 }
@@ -51,7 +58,7 @@ type FilterDef = {
   }) => boolean;
 };
 
-const FILTERS: FilterDef[] = [
+const BASE_FILTERS: FilterDef[] = [
   {
     href: '/gift/products',
     label: 'All',
@@ -77,16 +84,6 @@ const FILTERS: FilterDef[] = [
     href: '/gift/collections/for-expecting-mom',
     label: 'Mom',
     match: (sp) => sp.recipient === 'mom',
-  },
-  {
-    href: '/gift/products?category=clothing',
-    label: 'Clothing',
-    match: (sp) => sp.category === 'clothing',
-  },
-  {
-    href: '/gift/products?category=toys',
-    label: 'Toys',
-    match: (sp) => sp.category === 'toys',
   },
 ];
 
@@ -118,6 +115,16 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
   const sortRaw = first(searchParams.sort) ?? 'newest';
   const sort = SORTS.some((s) => s.value === sortRaw) ? sortRaw : 'newest';
 
+  const categories = await fetchCatalogCategories();
+  const FILTERS: FilterDef[] = [
+    ...BASE_FILTERS,
+    ...categories.map((c) => ({
+      href: categoryPlpHref(c.slug),
+      label: c.name,
+      match: (sp: { category?: string }) => sp.category === c.slug,
+    })),
+  ];
+
   const filterState = { recipient, age, hamper, category, q, occasion };
   const keep: Record<string, string | undefined> = {
     recipient,
@@ -148,16 +155,23 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
     products = [];
   }
 
-  const heading = titleFromFilters({
-    recipient,
-    age,
-    hamper,
-    category,
-    occasion,
-    q,
-    storefrontLabel,
-    onSale,
-  });
+  const categoryName = category
+    ? categories.find((c) => c.slug === category)?.name
+    : undefined;
+
+  const heading = titleFromFilters(
+    {
+      recipient,
+      age,
+      hamper,
+      category,
+      occasion,
+      q,
+      storefrontLabel,
+      onSale,
+    },
+    categoryName,
+  );
 
   return (
     <main className="gift-page">

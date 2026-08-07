@@ -3,8 +3,10 @@ import {
   Delete,
   Get,
   Header,
+  Body,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -17,7 +19,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
-import { mediaListQuerySchema } from '@inabiya/validation';
+import { mediaListQuerySchema, updateMediaBodySchema } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser } from '../identity/current-user.decorator';
 import { JwtAuthGuard, type AuthedRequest } from '../identity/jwt-auth.guard';
@@ -97,6 +99,18 @@ export class MediaController {
   @Roles('COMMERCE_ADMIN', 'CONTENT_ADMIN', 'SUPER_ADMIN')
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return this.media.getById(id);
+  }
+
+  @Patch(':id')
+  @Roles('COMMERCE_ADMIN', 'CONTENT_ADMIN', 'SUPER_ADMIN')
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(updateMediaBodySchema))
+    body: { altText?: string | null; originalName?: string | null },
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.media.update(id, body, user.id, String(req.id ?? ''));
   }
 
   @Delete(':id')

@@ -275,6 +275,8 @@ export const COLLECTION_CATEGORIES = [
   { value: 'keepsakes', label: 'Keepsakes' },
 ] as const;
 
+/** Offline fallback for chip labels when live catalog is unavailable. */
+
 export const COLLECTION_AGES = [
   { value: 'newborn', label: 'Newborn' },
   { value: 'infant', label: 'Infant' },

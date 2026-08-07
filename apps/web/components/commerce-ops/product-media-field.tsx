@@ -149,7 +149,7 @@ export function ProductMediaField({
       <MediaLibraryModal
         open={open}
         onClose={() => setOpen(false)}
-        onPick={onUrlChange}
+        onPick={(pick) => onUrlChange(pick.url)}
         imagesOnly
       />
     </div>

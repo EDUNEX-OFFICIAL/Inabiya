@@ -60,6 +60,19 @@ export const mediaListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional().default(20),
 });
 
+export const updateMediaBodySchema = z.object({
+  altText: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+    z.string().trim().max(200).nullable().optional(),
+  ),
+  originalName: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+    z.string().trim().max(255).nullable().optional(),
+  ),
+});
+
+export type UpdateMediaBody = z.infer<typeof updateMediaBodySchema>;
+
 export const upsertFeatureFlagBodySchema = z.object({
   enabled: z.boolean(),
   description: z.string().trim().max(500).nullable().optional(),
@@ -167,6 +180,301 @@ export const productHamperItemSchema = z.object({
   sortOrder: z.number().int().min(0).optional(),
 });
 
+/** Schema.org admin extras — guided presets + custom JSON-LD */
+export const SEO_SCHEMA_PRESETS = [
+  'HowTo',
+  'Organization',
+  'BreadcrumbList',
+  'Person',
+  'ImageObject',
+  'FAQPage',
+  'ItemList',
+] as const;
+
+export type SeoSchemaPreset = (typeof SEO_SCHEMA_PRESETS)[number];
+
+export const SEO_SCHEMA_EXTRAS_MAX_ENTRIES = 8;
+export const SEO_SCHEMA_EXTRAS_MAX_BYTES = 24_000;
+
+/** Types that must come from verified system builders — never admin custom/preset overrides. */
+export const SEO_SCHEMA_FORBIDDEN_OVERRIDE_TYPES = [
+  'Product',
+  'Offer',
+  'AggregateOffer',
+  'AggregateRating',
+  'Article',
+  'BlogPosting',
+] as const;
+
+const seoHowToFieldsSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(2000).optional(),
+  steps: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(200),
+        text: z.string().trim().min(1).max(2000),
+      }),
+    )
+    .min(1)
+    .max(30),
+});
+
+const seoOrganizationFieldsSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  url: z.string().trim().url().max(500).optional(),
+  logoUrl: z.string().trim().max(500).optional(),
+  description: z.string().trim().max(1000).optional(),
+});
+
+const seoBreadcrumbFieldsSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(200),
+        url: z.string().trim().min(1).max(500),
+      }),
+    )
+    .min(1)
+    .max(20),
+});
+
+const seoPersonFieldsSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  jobTitle: z.string().trim().max(200).optional(),
+  url: z.string().trim().url().max(500).optional(),
+  imageUrl: z.string().trim().max(500).optional(),
+});
+
+const seoImageObjectFieldsSchema = z.object({
+  url: z.string().trim().min(1).max(500),
+  caption: z.string().trim().max(300).optional(),
+  width: z.number().int().positive().max(10_000).optional(),
+  height: z.number().int().positive().max(10_000).optional(),
+});
+
+const seoFaqPageFieldsSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        question: z.string().trim().min(1).max(300),
+        answerText: z.string().trim().min(1).max(4000),
+      }),
+    )
+    .min(1)
+    .max(20),
+});
+
+const seoItemListFieldsSchema = z.object({
+  name: z.string().trim().max(200).optional(),
+  items: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(200),
+        url: z.string().trim().min(1).max(500),
+      }),
+    )
+    .min(1)
+    .max(40),
+});
+
+export const seoSchemaPresetFieldsSchemas = {
+  HowTo: seoHowToFieldsSchema,
+  Organization: seoOrganizationFieldsSchema,
+  BreadcrumbList: seoBreadcrumbFieldsSchema,
+  Person: seoPersonFieldsSchema,
+  ImageObject: seoImageObjectFieldsSchema,
+  FAQPage: seoFaqPageFieldsSchema,
+  ItemList: seoItemListFieldsSchema,
+} as const;
+
+const seoSchemaCustomJsonSchema = z
+  .record(z.unknown())
+  .refine((obj) => Object.keys(obj).length > 0, { message: 'Custom JSON cannot be empty' })
+  .refine(
+    (obj) => {
+      const types = collectSeoJsonTypes(obj);
+      return types.length > 0;
+    },
+    { message: 'Custom JSON must include @type' },
+  );
+
+const seoSchemaPresetEntrySchema = z.discriminatedUnion('preset', [
+  z.object({
+    id: z.string().uuid(),
+    enabled: z.boolean(),
+    mode: z.literal('preset'),
+    preset: z.literal('HowTo'),
+    fields: seoHowToFieldsSchema,
+  }),
+  z.object({
+    id: z.string().uuid(),
+    enabled: z.boolean(),
+    mode: z.literal('preset'),
+    preset: z.literal('Organization'),
+    fields: seoOrganizationFieldsSchema,
+  }),
+  z.object({
+    id: z.string().uuid(),
+    enabled: z.boolean(),
+    mode: z.literal('preset'),
+    preset: z.literal('BreadcrumbList'),
+    fields: seoBreadcrumbFieldsSchema,
+  }),
+  z.object({
+    id: z.string().uuid(),
+    enabled: z.boolean(),
+    mode: z.literal('preset'),
+    preset: z.literal('Person'),
+    fields: seoPersonFieldsSchema,
+  }),
+  z.object({
+    id: z.string().uuid(),
+    enabled: z.boolean(),
+    mode: z.literal('preset'),
+    preset: z.literal('ImageObject'),
+    fields: seoImageObjectFieldsSchema,
+  }),
+  z.object({
+    id: z.string().uuid(),
+    enabled: z.boolean(),
+    mode: z.literal('preset'),
+    preset: z.literal('FAQPage'),
+    fields: seoFaqPageFieldsSchema,
+  }),
+  z.object({
+    id: z.string().uuid(),
+    enabled: z.boolean(),
+    mode: z.literal('preset'),
+    preset: z.literal('ItemList'),
+    fields: seoItemListFieldsSchema,
+  }),
+]);
+
+const seoSchemaCustomEntrySchema = z.object({
+  id: z.string().uuid(),
+  enabled: z.boolean(),
+  mode: z.literal('custom'),
+  json: seoSchemaCustomJsonSchema,
+});
+
+export const seoSchemaEntrySchema = z.union([seoSchemaPresetEntrySchema, seoSchemaCustomEntrySchema]);
+
+export type SeoSchemaEntry = z.infer<typeof seoSchemaEntrySchema>;
+
+function collectSeoJsonTypes(node: unknown, out: string[] = []): string[] {
+  if (!node || typeof node !== 'object') return out;
+  if (Array.isArray(node)) {
+    for (const item of node) collectSeoJsonTypes(item, out);
+    return out;
+  }
+  const obj = node as Record<string, unknown>;
+  const typeVal = obj['@type'];
+  if (typeof typeVal === 'string') out.push(typeVal);
+  else if (Array.isArray(typeVal)) {
+    for (const t of typeVal) if (typeof t === 'string') out.push(t);
+  }
+  if (Array.isArray(obj['@graph'])) {
+    for (const g of obj['@graph']) collectSeoJsonTypes(g, out);
+  }
+  return out;
+}
+
+export function collectSeoSchemaEntryTypes(entry: SeoSchemaEntry): string[] {
+  if (entry.mode === 'preset') return [entry.preset];
+  return collectSeoJsonTypes(entry.json);
+}
+
+export type SeoSchemaExtrasParseOptions = {
+  /** When true, FAQPage extras are rejected (system FAQ already emits FAQPage). */
+  hasSystemFaq?: boolean;
+};
+
+function refineSeoSchemaExtras(
+  entries: SeoSchemaEntry[],
+  ctx: z.RefinementCtx,
+  opts?: SeoSchemaExtrasParseOptions,
+) {
+  const serialized = JSON.stringify(entries);
+  if (serialized.length > SEO_SCHEMA_EXTRAS_MAX_BYTES) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Schema extras exceed ${SEO_SCHEMA_EXTRAS_MAX_BYTES} bytes`,
+    });
+  }
+  const forbidden = new Set<string>(SEO_SCHEMA_FORBIDDEN_OVERRIDE_TYPES);
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]!;
+    const types = collectSeoSchemaEntryTypes(entry);
+    for (const t of types) {
+      if (forbidden.has(t)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [i],
+          message: `${t} must come from system data — remove from custom/preset schema`,
+        });
+      }
+      if (opts?.hasSystemFaq && t === 'FAQPage') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [i],
+          message: 'FAQ schema is already generated from page FAQs — edit FAQ content instead',
+        });
+      }
+    }
+  }
+}
+
+export const seoSchemaExtrasSchema = z
+  .array(seoSchemaEntrySchema)
+  .max(SEO_SCHEMA_EXTRAS_MAX_ENTRIES)
+  .superRefine((entries, ctx) => refineSeoSchemaExtras(entries, ctx));
+
+/** Optional/nullable field for update bodies. */
+export const seoSchemaExtrasNullableSchema = z.preprocess(
+  (v) => v,
+  z
+    .array(seoSchemaEntrySchema)
+    .max(SEO_SCHEMA_EXTRAS_MAX_ENTRIES)
+    .nullable()
+    .optional()
+    .superRefine((entries, ctx) => {
+      if (!entries) return;
+      refineSeoSchemaExtras(entries, ctx);
+    }),
+);
+
+/**
+ * Parse extras with surface-specific conflict rules (e.g. system FAQ present).
+ * Use in services after Zod body parse when `hasSystemFaq` matters.
+ */
+export function parseSeoSchemaExtras(
+  raw: unknown,
+  opts?: SeoSchemaExtrasParseOptions,
+): SeoSchemaEntry[] | null {
+  if (raw === null) return null;
+  if (raw === undefined) {
+    throw new z.ZodError([
+      {
+        code: z.ZodIssueCode.custom,
+        message: 'seoSchemaExtras is required when calling parseSeoSchemaExtras',
+        path: [],
+      },
+    ]);
+  }
+  const base = seoSchemaExtrasSchema.parse(raw);
+  if (opts?.hasSystemFaq) {
+    return z
+      .array(seoSchemaEntrySchema)
+      .max(SEO_SCHEMA_EXTRAS_MAX_ENTRIES)
+      .superRefine((entries, ctx) => refineSeoSchemaExtras(entries, ctx, opts))
+      .parse(base);
+  }
+  return base;
+}
+
+export type SeoSchemaExtras = z.infer<typeof seoSchemaExtrasSchema>;
+
 export const updateProductBodySchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(5000).optional(),
@@ -187,6 +495,8 @@ export const updateProductBodySchema = z.object({
   robotsIndex: z.boolean().optional(),
   faqItems: z.array(productFaqItemSchema).max(20).nullable().optional(),
   seoSections: z.array(productSeoSectionSchema).max(12).nullable().optional(),
+  /** Admin Schema.org extras (presets + custom JSON-LD). Null clears. */
+  seoSchemaExtras: seoSchemaExtrasNullableSchema,
   /** Replace display BOM when provided (null clears). */
   hamperItems: z.array(productHamperItemSchema).max(40).nullable().optional(),
   /** Replace media gallery when provided. */
@@ -254,6 +564,28 @@ export const createCategoryBodySchema = z.object({
   sortOrder: z.number().int().optional(),
 });
 
+/** Admin: partial update for catalog categories desk. */
+export const updateCategoryBodySchema = z
+  .object({
+    slug: z
+      .string()
+      .min(2)
+      .max(80)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+      .optional(),
+    name: z.string().min(1).max(120).optional(),
+    description: z.string().max(500).nullable().optional(),
+    sortOrder: z.number().int().optional(),
+  })
+  .refine(
+    (b) =>
+      b.slug !== undefined ||
+      b.name !== undefined ||
+      b.description !== undefined ||
+      b.sortOrder !== undefined,
+    { message: 'At least one field is required' },
+  );
+
 export const catalogListQuerySchema = z.object({
   q: z.string().max(120).optional(),
   category: z.string().max(80).optional(),
@@ -306,6 +638,7 @@ export type CreateProductBody = z.infer<typeof createProductBodySchema>;
 export type UpdateProductBody = z.infer<typeof updateProductBodySchema>;
 export type UpdateVariantBody = z.infer<typeof updateVariantBodySchema>;
 export type CreateCategoryBody = z.infer<typeof createCategoryBodySchema>;
+export type UpdateCategoryBody = z.infer<typeof updateCategoryBodySchema>;
 export type GiftingInquiryBody = z.infer<typeof giftingInquiryBodySchema>;
 
 /** Phase 3 — cart, checkout, orders */
@@ -489,19 +822,31 @@ export const dashboardAlertPrefsSchema = z.object({
   lowStock: z.boolean(),
 });
 
+export const pdpTrustCueIconSchema = z.enum(['lock', 'returns', 'gift']);
+
+export const pdpTrustCueSchema = z.object({
+  title: z.string().trim().min(1).max(80),
+  body: z.string().trim().min(1).max(200),
+  icon: pdpTrustCueIconSchema,
+});
+
+export const pdpTrustCuesSchema = z.array(pdpTrustCueSchema).min(1).max(6);
+
 export const commercePolicyBodySchema = z
   .object({
     returnWindowDays: z.number().int().min(1).max(365).optional(),
     lowStockThreshold: z.number().int().min(0).max(1000).optional(),
     shippingDisplayCopy: z.string().trim().min(1).max(500).optional(),
     dashboardAlertPrefs: dashboardAlertPrefsSchema.optional(),
+    trustCues: pdpTrustCuesSchema.optional(),
   })
   .superRefine((v, ctx) => {
     if (
       v.returnWindowDays == null &&
       v.lowStockThreshold == null &&
       v.shippingDisplayCopy == null &&
-      v.dashboardAlertPrefs == null
+      v.dashboardAlertPrefs == null &&
+      v.trustCues == null
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -524,6 +869,7 @@ export const adminAuditQuerySchema = z.object({
 
 export type CommercePolicyBody = z.infer<typeof commercePolicyBodySchema>;
 export type DashboardAlertPrefs = z.infer<typeof dashboardAlertPrefsSchema>;
+export type PdpTrustCue = z.infer<typeof pdpTrustCueSchema>;
 export type AdminAuditQuery = z.infer<typeof adminAuditQuerySchema>;
 
 export type CreateReturnBody = z.infer<typeof createReturnBodySchema>;
@@ -586,6 +932,8 @@ export const updateArticleBodySchema = z.object({
     (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
     cmsMediaUrlSchema.nullable().optional(),
   ),
+  /** Admin Schema.org extras (presets + custom JSON-LD). Null clears. */
+  seoSchemaExtras: seoSchemaExtrasNullableSchema,
 });
 
 export const articleTransitionBodySchema = z.object({
@@ -682,6 +1030,19 @@ export const bulkProductsBodySchema = z.object({
 export const adminCatalogListQuerySchema = z.object({
   q: z.string().trim().min(1).max(120).optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+  /** Available stock vs policy threshold (onHand − reserved). */
+  stock: z.enum(['low', 'out', 'in']).optional(),
+  /** Ready-made hamper only when `1`. */
+  hamper: z.enum(['0', '1']).optional(),
+  storefrontLabel: z.enum(['BESTSELLER', 'EDITORS_PICK', 'GIFT_SET']).optional(),
+  recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).optional(),
+  occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).optional(),
+  /** Category slug. */
+  category: z.string().trim().min(1).max(80).optional(),
+  sort: z
+    .enum(['updated', 'title_asc', 'title_desc', 'created', 'price_asc', 'price_desc'])
+    .optional()
+    .default('updated'),
   /** Opaque keyset cursor from previous page `nextCursor`. */
   cursor: z.string().trim().min(1).max(200).optional(),
   limit: z.coerce.number().int().min(1).max(50).optional().default(25),
@@ -1062,6 +1423,8 @@ export const updateMarketingPageBodySchema = z.object({
   ogImageUrl: z.preprocess(emptyToNull, cmsMediaUrlSchema.nullable().optional()),
   robotsIndex: z.boolean().optional(),
   blocks: z.array(pageBlockInputSchema).max(50).optional(),
+  /** Admin Schema.org extras (presets + custom JSON-LD). Null clears. */
+  seoSchemaExtras: seoSchemaExtrasNullableSchema,
 });
 
 export type PageBlockInput = z.infer<typeof pageBlockInputSchema>;

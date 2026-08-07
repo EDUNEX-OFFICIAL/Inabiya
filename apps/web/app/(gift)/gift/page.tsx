@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
+import { JsonLdScript } from '@/components/seo/json-ld-script';
 import { apiUrl } from '@/lib/api-base';
-import { GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
-import { marketingPageMetadata, webPageJsonLd, type CmsSeoPage } from '@/lib/cms-seo';
+import { GIFT_HOMEPAGE_SLUG, type SeoSchemaEntry } from '@inabiya/validation';
+import { marketingPageMetadata, type CmsSeoPage } from '@/lib/cms-seo';
+import { marketingPageMergedJsonLd } from '@/lib/seo-json-ld/cms-page';
 
 export const dynamic = 'force-dynamic';
 
 type CmsHomePage = CmsSeoPage & {
   id: string;
+  seoSchemaExtras?: SeoSchemaEntry[] | null;
   blocks: Array<{
     id: string;
     type: string;
@@ -71,12 +74,16 @@ export default async function GiftHomePage() {
 
   // Layout owns Soft Gift footer — skip CMS footer blocks on home to avoid double footer.
   const blocks = page.blocks.filter((b) => b.type !== 'footer');
-  const ld = webPageJsonLd({ ...page, slug: GIFT_HOMEPAGE_SLUG });
+  const ld = marketingPageMergedJsonLd(
+    { ...page, slug: GIFT_HOMEPAGE_SLUG },
+    page.blocks,
+    page.seoSchemaExtras,
+  );
 
   return (
     <main>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <MarketingPageBlocks blocks={blocks} layout="home" />
+      <JsonLdScript data={ld} />
+      <MarketingPageBlocks blocks={blocks} layout="home" emitFaqJsonLd={false} />
     </main>
   );
 }

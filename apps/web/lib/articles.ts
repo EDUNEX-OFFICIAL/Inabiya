@@ -21,6 +21,7 @@ export type PublicArticleDetail = PublicArticleSummary & {
     canonicalPath: string;
     ogImageUrl: string | null;
   };
+  seoSchemaExtras?: import('@inabiya/validation').SeoSchemaEntry[] | null;
   authorName: string | null;
 };
 

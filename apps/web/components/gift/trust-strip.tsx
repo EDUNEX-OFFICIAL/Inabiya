@@ -1,22 +1,35 @@
-const CUES = [
+'use client';
+
+import { useEffect, useState } from 'react';
+import { apiUrl } from '@/lib/api-base';
+
+export type TrustCueIcon = 'lock' | 'returns' | 'gift';
+
+export type TrustCue = {
+  title: string;
+  body: string;
+  icon: TrustCueIcon;
+};
+
+export const DEFAULT_TRUST_CUES: TrustCue[] = [
   {
     title: 'Secure checkout',
     body: 'Encrypted payment — your details stay private.',
-    icon: 'lock' as const,
+    icon: 'lock',
   },
   {
     title: '14-day returns',
     body: 'Easy returns after delivery within the window.',
-    icon: 'returns' as const,
+    icon: 'returns',
   },
   {
     title: 'Gift-box ready',
     body: 'Many pieces are eligible for Build Your Box.',
-    icon: 'gift' as const,
+    icon: 'gift',
   },
-] as const;
+];
 
-function CueIcon({ name }: { name: (typeof CUES)[number]['icon'] }) {
+function CueIcon({ name }: { name: TrustCueIcon }) {
   const common = {
     width: 22,
     height: 22,
@@ -54,10 +67,51 @@ function CueIcon({ name }: { name: (typeof CUES)[number]['icon'] }) {
   );
 }
 
-export function TrustStrip() {
+function normalizeCues(raw: unknown): TrustCue[] {
+  if (!Array.isArray(raw) || raw.length === 0) return DEFAULT_TRUST_CUES;
+  const icons = new Set<TrustCueIcon>(['lock', 'returns', 'gift']);
+  const out: TrustCue[] = [];
+  for (const item of raw.slice(0, 6)) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const title = typeof o.title === 'string' ? o.title.trim() : '';
+    const body = typeof o.body === 'string' ? o.body.trim() : '';
+    const icon = o.icon;
+    if (!title || !body || typeof icon !== 'string' || !icons.has(icon as TrustCueIcon)) continue;
+    out.push({ title, body, icon: icon as TrustCueIcon });
+  }
+  return out.length > 0 ? out : DEFAULT_TRUST_CUES;
+}
+
+export function TrustStrip({ cues: cuesProp }: { cues?: TrustCue[] }) {
+  const [cues, setCues] = useState<TrustCue[]>(cuesProp ?? DEFAULT_TRUST_CUES);
+
+  useEffect(() => {
+    if (cuesProp) {
+      setCues(cuesProp);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(apiUrl('/commerce/storefront/trust-cues'), {
+          credentials: 'omit',
+        });
+        if (!res.ok) return;
+        const data: unknown = await res.json();
+        if (!cancelled) setCues(normalizeCues(data));
+      } catch {
+        /* keep defaults */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cuesProp]);
+
   return (
     <ul className="grid grid-cols-1 gap-gs-3 sm:grid-cols-3" aria-label="Shopping reassurances">
-      {CUES.map((c) => (
+      {cues.map((c) => (
         <li
           key={c.title}
           className="flex min-w-0 gap-gs-3 rounded-clay border border-border-subtle bg-white/70 px-gs-4 py-gs-3"

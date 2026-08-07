@@ -44,6 +44,7 @@ MarketingPage
   id, slug (unique), title
   status: DRAFT | PUBLISHED
   seoTitle?, seoDescription?, canonicalPath?, ogImageUrl?, robotsIndex
+  seoSchemaExtras?   # admin Schema.org presets + custom JSON-LD
   publishedAt?
   createdAt, updatedAt
   blocks: PageBlock[]
@@ -100,7 +101,7 @@ Dense **admin** shell — not Soft Gift chrome.
 
 - Route: App Router `/pages/[slug]` under Soft Gift `data-theme="gift"`
 - Unpublished / missing → **404**
-- SEO: `generateMetadata` from `seoTitle` / `seoDescription` / `canonicalPath` / `ogImageUrl` / `robotsIndex`; FAQPage + WebPage JSON-LD; `/sitemap.xml` + `/robots.txt`
+- SEO: `generateMetadata` from `seoTitle` / `seoDescription` / `canonicalPath` / `ogImageUrl` / `robotsIndex`; auto WebPage + FAQPage JSON-LD; optional admin `seoSchemaExtras` (presets + custom) merged into one `@graph`; `/sitemap.xml` + `/robots.txt`
 - Renderer: map `type` → small presentational components (no admin DnD on storefront)
 
 ---

@@ -19,6 +19,13 @@ type Policy = {
     openReturns: boolean;
     lowStock: boolean;
   };
+  trustCues: TrustCueRow[];
+};
+
+type TrustCueRow = {
+  title: string;
+  body: string;
+  icon: 'lock' | 'returns' | 'gift';
 };
 
 type AuditItem = {
@@ -59,6 +66,30 @@ const DEFAULT_ALERT_PREFS: Policy['dashboardAlertPrefs'] = {
   lowStock: true,
 };
 
+const DEFAULT_TRUST_CUES: TrustCueRow[] = [
+  {
+    title: 'Secure checkout',
+    body: 'Encrypted payment — your details stay private.',
+    icon: 'lock',
+  },
+  {
+    title: '14-day returns',
+    body: 'Easy returns after delivery within the window.',
+    icon: 'returns',
+  },
+  {
+    title: 'Gift-box ready',
+    body: 'Many pieces are eligible for Build Your Box.',
+    icon: 'gift',
+  },
+];
+
+const TRUST_ICON_OPTIONS: Array<{ value: TrustCueRow['icon']; label: string }> = [
+  { value: 'lock', label: 'Lock' },
+  { value: 'returns', label: 'Returns' },
+  { value: 'gift', label: 'Gift' },
+];
+
 function SettingsInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,6 +100,7 @@ function SettingsInner() {
   const [lowStockThreshold, setLowStockThreshold] = useState('5');
   const [shippingCopy, setShippingCopy] = useState('');
   const [alertPrefs, setAlertPrefs] = useState(DEFAULT_ALERT_PREFS);
+  const [trustCues, setTrustCues] = useState<TrustCueRow[]>(DEFAULT_TRUST_CUES);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -85,6 +117,11 @@ function SettingsInner() {
     setLowStockThreshold(String(p.lowStockThreshold));
     setShippingCopy(p.shippingDisplayCopy);
     setAlertPrefs(p.dashboardAlertPrefs ?? DEFAULT_ALERT_PREFS);
+    setTrustCues(
+      p.trustCues?.length
+        ? p.trustCues.map((c) => ({ ...c }))
+        : DEFAULT_TRUST_CUES.map((c) => ({ ...c })),
+    );
   }, []);
 
   const loadAudit = useCallback(async () => {
@@ -279,6 +316,139 @@ function SettingsInner() {
             >
               Save alert prefs
             </button>
+          </section>
+
+          <section className="rounded border border-[color:var(--gift-line)] p-4 text-sm">
+            <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">
+              PDP trust strip
+            </h2>
+            <ul className="mt-3 space-y-4">
+              {trustCues.map((cue, i) => (
+                <li
+                  key={i}
+                  className="grid gap-2 rounded-lg border border-[color:var(--gift-line)] p-3 sm:grid-cols-[7rem_1fr]"
+                >
+                  <label className="block text-xs">
+                    Icon
+                    <select
+                      className="mt-1 block w-full min-h-10 rounded border px-2 py-1 text-sm"
+                      value={cue.icon}
+                      onChange={(e) => {
+                        const icon = e.target.value as TrustCueRow['icon'];
+                        setTrustCues((rows) =>
+                          rows.map((r, idx) => (idx === i ? { ...r, icon } : r)),
+                        );
+                      }}
+                    >
+                      {TRUST_ICON_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="grid gap-2">
+                    <label className="block text-xs">
+                      Title
+                      <input
+                        className="mt-1 block w-full min-h-10 rounded border px-2 py-1 text-sm"
+                        value={cue.title}
+                        maxLength={80}
+                        onChange={(e) => {
+                          const title = e.target.value;
+                          setTrustCues((rows) =>
+                            rows.map((r, idx) => (idx === i ? { ...r, title } : r)),
+                          );
+                        }}
+                        required
+                      />
+                    </label>
+                    <label className="block text-xs">
+                      Body
+                      <input
+                        className="mt-1 block w-full min-h-10 rounded border px-2 py-1 text-sm"
+                        value={cue.body}
+                        maxLength={200}
+                        onChange={(e) => {
+                          const body = e.target.value;
+                          setTrustCues((rows) =>
+                            rows.map((r, idx) => (idx === i ? { ...r, body } : r)),
+                          );
+                        }}
+                        required
+                      />
+                    </label>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="clay-btn-secondary text-sm disabled:opacity-50"
+                disabled={busy || trustCues.length >= 6}
+                onClick={() =>
+                  setTrustCues((rows) => [
+                    ...rows,
+                    { title: '', body: '', icon: 'lock' as const },
+                  ])
+                }
+              >
+                Add cue
+              </button>
+              {trustCues.length > 1 ? (
+                <button
+                  type="button"
+                  className="clay-btn-secondary text-sm disabled:opacity-50"
+                  disabled={busy}
+                  onClick={() => setTrustCues((rows) => rows.slice(0, -1))}
+                >
+                  Remove last
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="clay-btn text-sm disabled:opacity-50"
+                disabled={busy}
+                onClick={() => {
+                  void (async () => {
+                    setBusy(true);
+                    setError(null);
+                    setMsg(null);
+                    try {
+                      const cleaned = trustCues
+                        .map((c) => ({
+                          title: c.title.trim(),
+                          body: c.body.trim(),
+                          icon: c.icon,
+                        }))
+                        .filter((c) => c.title && c.body);
+                      if (cleaned.length === 0) {
+                        setError('Add at least one trust cue with title and body.');
+                        return;
+                      }
+                      const updated = await apiAuth<Policy>('/admin/commerce/policy', {
+                        method: 'POST',
+                        json: { trustCues: cleaned },
+                      });
+                      setPolicy(updated);
+                      setTrustCues(
+                        updated.trustCues?.length
+                          ? updated.trustCues.map((c) => ({ ...c }))
+                          : DEFAULT_TRUST_CUES.map((c) => ({ ...c })),
+                      );
+                      setMsg('Trust strip saved.');
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Save failed');
+                    } finally {
+                      setBusy(false);
+                    }
+                  })();
+                }}
+              >
+                Save trust strip
+              </button>
+            </div>
           </section>
 
           <section className="rounded border border-[color:var(--gift-line)] p-4 text-sm">

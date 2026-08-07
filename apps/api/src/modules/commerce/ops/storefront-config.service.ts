@@ -18,11 +18,6 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
   shopLinks: [
     { href: '/gift/build-your-box', label: 'Build Your Box' },
     { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
-    { href: '/gift/products?category=clothing', label: 'Clothing' },
-    { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
-    { href: '/gift/products?category=toys', label: 'Toys' },
-    { href: '/gift/products?category=mom-care', label: 'Mom Care' },
-    { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
   ],
   forWhomLinks: [
     { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
@@ -143,8 +138,22 @@ export class StorefrontConfigService {
       row?.value && typeof row.value === 'object' && !Array.isArray(row.value)
         ? (row.value as GiftChromeBody)
         : {};
+    const categories = await this.prisma.category.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      select: { slug: true, name: true },
+    });
+    const authoredShop = stored.shopLinks?.length
+      ? stored.shopLinks
+      : DEFAULT_GIFT_CHROME.shopLinks;
+    const nonCategory = authoredShop.filter(
+      (l) => !String(l.href ?? '').includes('/gift/products?category='),
+    );
+    const categoryLinks = categories.map((c) => ({
+      href: `/gift/products?category=${c.slug}`,
+      label: c.name,
+    }));
     return {
-      shopLinks: stored.shopLinks?.length ? stored.shopLinks : DEFAULT_GIFT_CHROME.shopLinks,
+      shopLinks: [...nonCategory, ...categoryLinks],
       forWhomLinks: stored.forWhomLinks?.length
         ? stored.forWhomLinks
         : DEFAULT_GIFT_CHROME.forWhomLinks,

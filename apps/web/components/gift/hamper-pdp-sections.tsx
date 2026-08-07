@@ -96,7 +96,9 @@ export function HamperActionBar({ product }: { product: CatalogProduct }) {
 }
 
 import { ArticleBody } from '@/components/editorial/article-body';
+import { ProductVideoPlayer } from '@/components/gift/product-video-player';
 import { seoSectionsToHtml } from '@/lib/product-page-content';
+import { parseProductVideoUrl } from '@/lib/product-video';
 
 export function ProductSeoSections({
   sections,
@@ -112,39 +114,23 @@ export function ProductSeoSections({
   );
 }
 
-/** Standalone video band when first VIDEO media exists (below buy box story). */
+/** Standalone playable video below trust strip (YouTube or direct file). */
 export function PdpVideoBand({ product }: { product: CatalogProduct }) {
   const video = product.media.find((m) => m.kind === 'VIDEO');
-  if (!video) return null;
-  const poster = video.posterUrl || product.media.find((m) => m.kind !== 'VIDEO')?.url || video.url;
+  if (!video || !parseProductVideoUrl(video.url)) return null;
+  const fallbackPoster =
+    product.media.find((m) => m.kind !== 'VIDEO')?.url ?? null;
   return (
     <section aria-labelledby="unboxing-video">
       <h2 id="unboxing-video" className="sr-only">
         Unboxing video
       </h2>
-      <a
-        href="#gallery"
-        className="group relative block overflow-hidden rounded-clay"
-      >
-        <div className="relative aspect-[21/9] w-full">
-          <Image
-            src={poster}
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover transition group-hover:scale-[1.01]"
-          />
-        </div>
-        <span className="absolute inset-0 flex flex-col items-center justify-center bg-foreground/35 px-gs-4 text-center text-white">
-          <span className="flex size-14 items-center justify-center rounded-pill bg-white/95 text-primary shadow-clay">
-            ▶
-          </span>
-          <span className="mt-gs-3 gift-h2">
-            See the unboxing
-          </span>
-          <span className="mt-gs-1 text-body text-white/85">Right choice for your little one</span>
-        </span>
-      </a>
+      <ProductVideoPlayer
+        url={video.url}
+        title={product.title}
+        posterUrl={video.posterUrl}
+        fallbackPosterUrl={fallbackPoster}
+      />
     </section>
   );
 }

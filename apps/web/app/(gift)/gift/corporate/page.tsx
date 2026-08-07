@@ -1,16 +1,19 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { MarketingPageBlocks, type CmsPageBlock } from '@/components/cms/marketing-page-blocks';
+import { JsonLdScript } from '@/components/seo/json-ld-script';
 import { CorporateInquiryForm } from './corporate-inquiry-form';
 import { CorporateHero } from './corporate-hero';
 import { apiUrl } from '@/lib/api-base';
-import { GIFT_CORPORATE_SLUG } from '@inabiya/validation';
-import { marketingPageMetadata, webPageJsonLd, type CmsSeoPage } from '@/lib/cms-seo';
+import { GIFT_CORPORATE_SLUG, type SeoSchemaEntry } from '@inabiya/validation';
+import { marketingPageMetadata, type CmsSeoPage } from '@/lib/cms-seo';
+import { marketingPageMergedJsonLd } from '@/lib/seo-json-ld/cms-page';
 
 export const dynamic = 'force-dynamic';
 
 type CmsPage = CmsSeoPage & {
   id: string;
+  seoSchemaExtras?: SeoSchemaEntry[] | null;
   blocks: CmsPageBlock[];
 };
 
@@ -39,19 +42,20 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CorporateGiftingPage() {
   const cms = await fetchCorporatePage();
-  const ld = cms ? webPageJsonLd({ ...cms, slug: GIFT_CORPORATE_SLUG }) : null;
+  const ld = cms
+    ? marketingPageMergedJsonLd(
+        { ...cms, slug: GIFT_CORPORATE_SLUG },
+        cms.blocks,
+        cms.seoSchemaExtras,
+      )
+    : null;
   const blocks = (cms?.blocks ?? []).filter((b) => b.type !== 'footer');
 
   return (
     <main>
-      {ld ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
-        />
-      ) : null}
+      <JsonLdScript data={ld} />
       {blocks.length ? (
-        <MarketingPageBlocks blocks={blocks} layout="home" />
+        <MarketingPageBlocks blocks={blocks} layout="home" emitFaqJsonLd={false} />
       ) : (
         <CorporateHero />
       )}

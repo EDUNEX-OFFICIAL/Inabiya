@@ -14,6 +14,7 @@ import type {
 import type { RoleCode } from '@inabiya/types';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
+import { readSeoSchemaExtras } from '../../../common/seo-schema-extras';
 
 type Actor = { id: string; roles: RoleCode[] };
 
@@ -430,6 +431,7 @@ export class PublishingService {
       ogImageUrl: string | null;
       seoTitle: string | null;
       seoDescription: string | null;
+      seoSchemaExtras?: unknown;
       assignee: { displayName: string | null } | null;
     },
   ) {
@@ -442,6 +444,7 @@ export class PublishingService {
         canonicalPath: a.canonicalPath ?? `/articles/${a.slug}`,
         ogImageUrl: a.ogImageUrl,
       },
+      seoSchemaExtras: readSeoSchemaExtras(a.seoSchemaExtras),
       authorName: a.assignee?.displayName ?? null,
     };
   }

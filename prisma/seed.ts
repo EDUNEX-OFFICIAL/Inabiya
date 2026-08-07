@@ -182,6 +182,8 @@ async function main() {
     onHand: number;
     categoryId: string;
     imageUrl: string;
+    /** Extra gallery images (beyond primary imageUrl) for multi-thumb PDP demo. */
+    galleryUrls?: string[];
     recipientTags: string[];
     ageBands: string[];
     occasionTags: string[];
@@ -418,6 +420,7 @@ async function main() {
       onHand: 40,
       categoryId: bathSkin.id,
       imageUrl: media.hamper,
+      galleryUrls: [media.cues, media.mom],
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn', 'infant'],
       occasionTags: ['welcome-baby', 'baby-shower'],
@@ -425,6 +428,13 @@ async function main() {
       brandName: "Johnson’s Baby",
       storefrontLabels: ['BESTSELLER'],
       publishedAt: daysAgo(28),
+      seoSections: [
+        {
+          heading: '',
+          bodyText:
+            '<p>Gentle wash + lotion duo for bath time — curated Soft Gift quality, packed with care.</p><ul><li><strong>Gift-ready</strong> — packed with care for the people you love.</li><li><strong>Age range</strong> — perfectly sized for newborns (0–3 months) and infants.</li><li><strong>Personalise</strong> — add a name or note so the gift feels uniquely theirs.</li></ul>',
+        },
+      ],
     },
     {
       slug: 'stackable-wood-blocks',
@@ -715,6 +725,35 @@ async function main() {
       });
     }
 
+    // Extra gallery images (multi-thumb PDP)
+    if (dp.galleryUrls?.length) {
+      const existing = await prisma.productMedia.findMany({
+        where: { productId: product.id, kind: 'IMAGE' },
+        orderBy: { sortOrder: 'asc' },
+      });
+      for (let i = 0; i < dp.galleryUrls.length; i++) {
+        const url = dp.galleryUrls[i]!;
+        const sortOrder = i + 1;
+        const row = existing[i + 1];
+        if (row) {
+          await prisma.productMedia.update({
+            where: { id: row.id },
+            data: { url, altText: `${dp.title} ${sortOrder + 1}`, sortOrder },
+          });
+        } else {
+          await prisma.productMedia.create({
+            data: {
+              productId: product.id,
+              url,
+              altText: `${dp.title} ${sortOrder + 1}`,
+              kind: 'IMAGE',
+              sortOrder,
+            },
+          });
+        }
+      }
+    }
+
     // Demo unboxing video for welcome hamper PDP gallery
     if (dp.slug === 'welcome-baby-hamper') {
       const videoUrl = '/gift/media/welcome-hamper-unbox.mp4';
@@ -975,6 +1014,7 @@ async function main() {
         title: 'Shop by category',
         seeAllHref: '/gift/products',
         seeAllLabel: 'See all',
+        itemsSource: 'catalogCategories',
         items: [
           {
             label: 'Clothing',
@@ -1304,11 +1344,6 @@ async function main() {
         shopLinks: [
           { href: '/gift/build-your-box', label: 'Build Your Box' },
           { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
-          { href: '/gift/products?category=clothing', label: 'Clothing' },
-          { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
-          { href: '/gift/products?category=toys', label: 'Toys' },
-          { href: '/gift/products?category=mom-care', label: 'Mom Care' },
-          { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
         ],
         forWhomLinks: [
           { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
@@ -1366,11 +1401,6 @@ async function main() {
         shopLinks: [
           { href: '/gift/build-your-box', label: 'Build Your Box' },
           { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
-          { href: '/gift/products?category=clothing', label: 'Clothing' },
-          { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
-          { href: '/gift/products?category=toys', label: 'Toys' },
-          { href: '/gift/products?category=mom-care', label: 'Mom Care' },
-          { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
         ],
         forWhomLinks: [
           { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },

@@ -1,14 +1,17 @@
 import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
+import { JsonLdScript } from '@/components/seo/json-ld-script';
 import { apiUrl } from '@/lib/api-base';
-import { GIFT_CORPORATE_SLUG, GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
-import { marketingPageMetadata, webPageJsonLd, type CmsSeoPage } from '@/lib/cms-seo';
+import { GIFT_CORPORATE_SLUG, GIFT_HOMEPAGE_SLUG, type SeoSchemaEntry } from '@inabiya/validation';
+import { marketingPageMetadata, type CmsSeoPage } from '@/lib/cms-seo';
+import { marketingPageMergedJsonLd } from '@/lib/seo-json-ld/cms-page';
 
 export const dynamic = 'force-dynamic';
 
 type MarketingPage = CmsSeoPage & {
   id: string;
+  seoSchemaExtras?: SeoSchemaEntry[] | null;
   blocks: Array<{
     id: string;
     type: string;
@@ -56,12 +59,12 @@ export default async function MarketingPageView({ params }: { params: { slug: st
   const page = await fetchPage(params.slug);
   if (!page) notFound();
 
-  const ld = webPageJsonLd(page);
+  const ld = marketingPageMergedJsonLd(page, page.blocks, page.seoSchemaExtras);
 
   return (
     <main className="gift-page max-w-3xl">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <MarketingPageBlocks blocks={page.blocks} />
+      <JsonLdScript data={ld} />
+      <MarketingPageBlocks blocks={page.blocks} emitFaqJsonLd={false} />
     </main>
   );
 }

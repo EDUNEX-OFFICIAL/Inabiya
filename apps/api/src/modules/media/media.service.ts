@@ -106,6 +106,40 @@ export class MediaService {
     return this.mapAsset(asset, signedUrl);
   }
 
+  async update(
+    id: string,
+    body: { altText?: string | null; originalName?: string | null },
+    actorId: string,
+    requestId?: string,
+  ) {
+    const existing = await this.prisma.mediaAsset.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({
+        code: 'MEDIA_NOT_FOUND',
+        message: 'Media asset not found.',
+      });
+    }
+    const asset = await this.prisma.mediaAsset.update({
+      where: { id },
+      data: {
+        ...(body.altText !== undefined ? { altText: body.altText } : {}),
+        ...(body.originalName !== undefined ? { originalName: body.originalName } : {}),
+      },
+    });
+    await this.audit.write({
+      actorId,
+      action: 'media.updated',
+      resource: 'media_asset',
+      resourceId: asset.id,
+      metadata: {
+        fields: Object.keys(body).filter((k) => body[k as keyof typeof body] !== undefined),
+      },
+      requestId,
+    });
+    const signedUrl = await this.storage.getSignedUrl({ key: asset.storageKey });
+    return this.mapAsset(asset, signedUrl);
+  }
+
   async getPublicContent(id: string): Promise<{
     buffer: Buffer;
     mimeType: string;

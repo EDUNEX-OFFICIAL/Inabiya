@@ -165,12 +165,31 @@ export function DiscoveryChipsBlockEditor({ props, onChange }: Props) {
         />
       </label>
 
+      <label className="block">
+        Items source
+        <select
+          className="mt-1 block w-full rounded border px-2 py-1"
+          value={props.itemsSource === 'catalogCategories' ? 'catalogCategories' : 'manual'}
+          onChange={(e) => onChange('itemsSource', e.target.value)}
+        >
+          <option value="manual">Manual chips</option>
+          <option value="catalogCategories">Catalog categories (live)</option>
+        </select>
+      </label>
+
+      {props.itemsSource === 'catalogCategories' ? (
+        <p className="text-xs opacity-60">
+          Chips load from catalog. Optional rows below supply images per category slug.
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           className="rounded border px-2 py-1 text-xs"
           onClick={() => {
             onChange('title', 'Shop by occasion');
+            onChange('itemsSource', 'manual');
             onChange('seeAllHref', '/gift/products');
             setItems(OCCASION_PRESET);
           }}
@@ -182,11 +201,23 @@ export function DiscoveryChipsBlockEditor({ props, onChange }: Props) {
           className="rounded border px-2 py-1 text-xs"
           onClick={() => {
             onChange('title', 'Shop by age');
+            onChange('itemsSource', 'manual');
             onChange('seeAllHref', '/gift/products');
             setItems(AGE_PRESET);
           }}
         >
           Preset: ages
+        </button>
+        <button
+          type="button"
+          className="rounded border px-2 py-1 text-xs"
+          onClick={() => {
+            onChange('title', 'Shop by category');
+            onChange('itemsSource', 'catalogCategories');
+            onChange('seeAllHref', '/gift/products');
+          }}
+        >
+          Preset: catalog categories
         </button>
         <button type="button" className="rounded border px-2 py-1 text-xs" onClick={addCard}>
           + Add tile

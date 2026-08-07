@@ -254,3 +254,13 @@ export class GiftChromePublicController {
     return this.storefront.getGiftChrome();
   }
 }
+
+@Controller('commerce/storefront/trust-cues')
+export class TrustCuesPublicController {
+  constructor(private readonly policy: CommercePolicyService) {}
+
+  @Get()
+  trustCues() {
+    return this.policy.getTrustCues();
+  }
+}

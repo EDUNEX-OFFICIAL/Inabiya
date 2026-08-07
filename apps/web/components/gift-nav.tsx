@@ -28,11 +28,6 @@ type MegaCopy = {
 const DEFAULT_SHOP_LINKS: MegaLink[] = [
   { href: '/gift/build-your-box', label: 'Build Your Box' },
   { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
-  { href: '/gift/products?category=clothing', label: 'Clothing' },
-  { href: '/gift/products?category=bath-skin', label: 'Bath & Skin' },
-  { href: '/gift/products?category=toys', label: 'Toys' },
-  { href: '/gift/products?category=mom-care', label: 'Mom Care' },
-  { href: '/gift/products?category=keepsakes', label: 'Keepsakes' },
 ];
 
 const DEFAULT_FOR_WHOM_LINKS: MegaLink[] = [

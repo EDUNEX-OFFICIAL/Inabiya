@@ -1,10 +1,22 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import {
   bulkProductsBodySchema,
   adminCatalogListQuerySchema,
   catalogListQuerySchema,
   createCategoryBodySchema,
   createProductBodySchema,
+  updateCategoryBodySchema,
   updateInventoryBodySchema,
   updateProductBodySchema,
   updateVariantBodySchema,
@@ -12,6 +24,7 @@ import {
   type BulkProductsBody,
   type CreateCategoryBody,
   type CreateProductBody,
+  type UpdateCategoryBody,
   type UpdateProductBody,
   type UpdateVariantBody,
 } from '@inabiya/validation';
@@ -149,7 +162,7 @@ export class CatalogAdminController {
 
   @Get('categories')
   listCategories() {
-    return this.catalog.listCategories();
+    return this.catalog.listAdminCategories();
   }
 
   @Post('categories')
@@ -160,5 +173,25 @@ export class CatalogAdminController {
     @Req() req: AuthedRequest,
   ) {
     return this.catalog.createCategory(body, user.id, String(req.id ?? ''));
+  }
+
+  @Patch('categories/:id')
+  updateCategory(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateCategoryBodySchema))
+    body: UpdateCategoryBody,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.catalog.updateCategory(id, body, user.id, String(req.id ?? ''));
+  }
+
+  @Delete('categories/:id')
+  deleteCategory(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.catalog.deleteCategory(id, user.id, String(req.id ?? ''));
   }
 }

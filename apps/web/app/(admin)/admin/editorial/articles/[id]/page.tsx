@@ -7,7 +7,10 @@ import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { apiUrl } from '@/lib/api-base';
 import { ArticleEditor } from '@/components/editorial/article-editor';
 import { CmsMediaField } from '@/components/cms/cms-media-field';
+import { SeoSchemaPanel } from '@/components/admin/seo-schema-panel';
 import { sanitizeArticleHtml, normalizeArticleBody } from '@/lib/article-html';
+import { getSiteOrigin } from '@/lib/cms-seo';
+import type { SeoSchemaEntry } from '@inabiya/validation';
 
 type ArticleDetail = {
   id: string;
@@ -20,6 +23,7 @@ type ArticleDetail = {
   ogImageUrl?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  seoSchemaExtras?: SeoSchemaEntry[] | null;
   canEditBody: boolean;
   allowedTransitions: string[];
   assignee: { email: string; displayName: string | null } | null;
@@ -67,10 +71,17 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [dirty, setDirty] = useState(false);
   const [isContent, setIsContent] = useState(false);
+  const [canEditSchema, setCanEditSchema] = useState(false);
+  const [seoSchemaExtras, setSeoSchemaExtras] = useState<SeoSchemaEntry[]>([]);
 
   async function load() {
     const me = await apiAuth<{ roles: string[] }>('/auth/me');
     setIsContent(me.roles.includes('CONTENT_ADMIN') || me.roles.includes('SUPER_ADMIN'));
+    setCanEditSchema(
+      me.roles.includes('CONTENT_ADMIN') ||
+        me.roles.includes('SUPER_ADMIN') ||
+        me.roles.includes('SEO_EDITOR'),
+    );
     const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}`);
     setArticle(a);
     setBody(a.body);
@@ -78,6 +89,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
     setSeoTitle(a.seoTitle ?? a.title);
     setSeoDescription(a.seoDescription ?? '');
     setOgImageUrl(a.ogImageUrl ?? '');
+    setSeoSchemaExtras(a.seoSchemaExtras ?? []);
     const [cats, specs] = await Promise.all([
       fetch(apiUrl('/articles/categories')).then((r) => r.json() as Promise<Category[]>),
       fetch(apiUrl('/articles/specialists')).then((r) => r.json() as Promise<Specialist[]>),
@@ -165,6 +177,16 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
     setArticle(a);
     setOgImageUrl(a.ogImageUrl ?? '');
     setMsg('Cover image saved');
+  }
+
+  async function saveSchemaExtras() {
+    const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}`, {
+      method: 'PATCH',
+      json: { seoSchemaExtras: seoSchemaExtras.length ? seoSchemaExtras : null },
+    });
+    setArticle(a);
+    setSeoSchemaExtras(a.seoSchemaExtras ?? []);
+    setMsg('Schema saved');
   }
 
   async function publishNow() {
@@ -277,7 +299,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
         ))}
       </div>
 
-      {isContent &&
+      {(isContent || canEditSchema) &&
       (article.status === 'APPROVED' ||
         article.status === 'SCHEDULED' ||
         article.status === 'PUBLISHED') ? (
@@ -291,6 +313,8 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
               /articles/{article.slug}
             </Link>
           </p>
+          {isContent ? (
+            <>
           <label className="block">
             SEO title
             <input
@@ -378,6 +402,26 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
                 onClick={() => void schedule()}
               >
                 Schedule
+              </button>
+            </div>
+          ) : null}
+            </>
+          ) : null}
+          {canEditSchema ? (
+            <div className="space-y-2 border-t pt-3">
+              <SeoSchemaPanel
+                value={seoSchemaExtras}
+                onChange={setSeoSchemaExtras}
+                hasSystemFaq={false}
+                autoTypes={['Article', 'Breadcrumb']}
+                publicUrl={`${getSiteOrigin()}/articles/${article.slug}`}
+              />
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={() => void saveSchemaExtras()}
+              >
+                Save schema
               </button>
             </div>
           ) : null}

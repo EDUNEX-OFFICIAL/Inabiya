@@ -19,13 +19,18 @@ import { StarRatingSummary } from '@/components/gift/star-rating-summary';
 import { TrustStrip } from '@/components/gift/trust-strip';
 import { FaqAccordion } from '@/components/gift/faq-accordion';
 import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
+import { JsonLdScript } from '@/components/seo/json-ld-script';
 import {
   HamperActionBar,
   HamperWhatsInside,
   PdpVideoBand,
-  ProductSeoSections,
 } from '@/components/gift/hamper-pdp-sections';
 import { PdpSkeleton } from '@/components/gift/gift-skeletons';
+import { ArticleBody } from '@/components/editorial/article-body';
+import { seoSectionsToHtml } from '@/lib/product-page-content';
+import { buildProductFaqItems } from '@/lib/product-faq';
+import { getSiteOrigin } from '@/lib/cms-seo';
+import { mergeSeoJsonLdWithExtras, productJsonLd } from '@/lib/seo-json-ld';
 
 function labelTag(value: string): string {
   return value.replaceAll('-', ' ');
@@ -325,7 +330,11 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
       <div className="grid gap-gs-6 lg:grid-cols-2 lg:items-start lg:gap-gs-8">
         <div id="gallery">
-          <PdpGallery key={product.slug} media={product.media} title={product.title} />
+          <PdpGallery
+            key={product.slug}
+            media={product.media.filter((m) => m.kind !== 'VIDEO')}
+            title={product.title}
+          />
         </div>
 
         <div id="buy" className="min-w-0 lg:sticky lg:top-24 lg:self-start">
@@ -600,8 +609,6 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
       <ProductDetailsBand product={product} />
 
-      <ProductSeoSections sections={product.seoSections} />
-
       <RelatedProducts
         slug={product.slug}
         categorySlug={primaryCategory?.slug}
@@ -619,80 +626,38 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   );
 }
 
-function buildProductFaqItems(
-  product: CatalogProduct,
-): Array<{ question: string; answerText: string }> {
-  if (product.faqItems && product.faqItems.length > 0) {
-    return product.faqItems;
-  }
-  const items: Array<{ question: string; answerText: string }> = [];
-  const canPersonalise = (product.personalization?.length ?? 0) > 0;
-
-  if (canPersonalise) {
-    const labels = product.personalization
-      .map((o) => o.label)
-      .filter(Boolean)
-      .slice(0, 4);
-    items.push({
-      question: 'Can I personalise this gift?',
-      answerText: labels.length
-        ? `Yes — on this product you can set ${labels.join(', ')}. Turn on personalisation in the buy box before adding to cart; required fields must be filled to continue.`
-        : 'Yes — toggle personalisation in the buy box and fill the fields before adding to cart. Required fields must be completed to continue.',
-    });
-  } else {
-    items.push({
-      question: 'Is this gift personalised?',
-      answerText:
-        'This listing ships as shown. For name embroidery or custom options, browse other Soft Gift products with a Personalise toggle, or build a custom box.',
-    });
-  }
-
-  items.push({
-    question: 'How long does shipping take?',
-    answerText:
-      'We prepare Soft Gift orders carefully and ship across India. Delivery timing is confirmed at checkout for your pincode; express options appear when available.',
-  });
-
-  items.push({
-    question: 'What is your return policy?',
-    answerText: canPersonalise
-      ? 'Returns open for 14 days after delivery. Personalised items may have limited return eligibility — check your order page for status and how to request a return.'
-      : 'Returns open for 14 days after delivery. Start a return from your order page once the gift is delivered.',
-  });
-
-  if (product.isReadyMadeHamper) {
-    items.push({
-      question: 'What comes in this hamper?',
-      answerText:
-        product.description?.trim() ||
-        'This is a ready-made Soft Gift hamper — curated pieces packed together. See the description above for what’s included.',
-    });
-  } else {
-    items.push({
-      question: 'Can I send this as a gift?',
-      answerText:
-        'Yes. Add to cart or gift box, then enter the recipient address at checkout. You can also Build Your Box for a custom mix of Soft Gift pieces.',
-    });
-  }
-
-  return items;
-}
-
 function ProductFaqSection({ product }: { product: CatalogProduct }) {
   const faqItems = useMemo(() => buildProductFaqItems(product), [product]);
-  const ld = useMemo(
-    () => faqPageJsonLd(faqItems.map((f) => ({ question: f.question, answerText: f.answerText }))),
-    [faqItems],
-  );
+  const ld = useMemo(() => {
+    const variant = product.variants[0];
+    const available = product.variants.some((v) => v.available > 0);
+    const images = (product.media ?? [])
+      .filter((m) => m.kind !== 'VIDEO')
+      .map((m) => m.url)
+      .filter(Boolean);
+    return mergeSeoJsonLdWithExtras(
+      [
+        productJsonLd({
+          name: product.seoTitle?.trim() || product.title,
+          description: product.seoDescription ?? product.description,
+          slug: product.slug,
+          canonicalPath: product.canonicalPath,
+          imageUrls: images,
+          brandName: product.brandName ?? product.brandNames?.[0] ?? null,
+          sku: variant?.sku ?? null,
+          pricePaise: variant?.pricePaise ?? product.fromPricePaise,
+          availability: available ? 'InStock' : 'OutOfStock',
+          siteOrigin: getSiteOrigin(),
+        }),
+        faqPageJsonLd(faqItems.map((f) => ({ question: f.question, answerText: f.answerText }))),
+      ],
+      product.seoSchemaExtras,
+    );
+  }, [product, faqItems]);
 
   return (
     <>
-      {ld ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
-        />
-      ) : null}
+      <JsonLdScript data={ld} />
       <FaqAccordion
         id="faq"
         title="Frequently asked questions"
@@ -754,33 +719,37 @@ function PersonalizationField({
 }
 
 function ProductDetailsBand({ product }: { product: CatalogProduct }) {
+  const aboutHtml = seoSectionsToHtml(product.seoSections).trim();
+  const useCmsAbout = aboutHtml.length > 0;
+
   const highlights: Array<{ title: string; body: string }> = [];
-
-  highlights.push({
-    title: 'Gift-ready',
-    body: 'Curated Soft Gift quality — packed with care for the people you love.',
-  });
-
-  const ages = product.ageBands ?? [];
-  if (ages.length) {
+  if (!useCmsAbout) {
     highlights.push({
-      title: 'Age range',
-      body: ages.map((a) => AGE_COPY[a] ?? labelTag(a)).join(' · '),
+      title: 'Gift-ready',
+      body: 'Curated Soft Gift quality — packed with care for the people you love.',
     });
-  }
 
-  if (product.personalization.length > 0) {
-    highlights.push({
-      title: 'Personalise',
-      body: 'Add a name or note so this gift feels uniquely theirs.',
-    });
-  }
+    const ages = product.ageBands ?? [];
+    if (ages.length) {
+      highlights.push({
+        title: 'Age range',
+        body: ages.map((a) => AGE_COPY[a] ?? labelTag(a)).join(' · '),
+      });
+    }
 
-  if (product.isReadyMadeHamper) {
-    highlights.push({
-      title: 'Ready-made hamper',
-      body: 'A complete set — no guesswork, just open and gift.',
-    });
+    if (product.personalization.length > 0) {
+      highlights.push({
+        title: 'Personalise',
+        body: 'Add a name or note so this gift feels uniquely theirs.',
+      });
+    }
+
+    if (product.isReadyMadeHamper) {
+      highlights.push({
+        title: 'Ready-made hamper',
+        body: 'A complete set — no guesswork, just open and gift.',
+      });
+    }
   }
 
   const recipientCollection: Record<string, string> = {
@@ -829,24 +798,32 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
     <section className="grid gap-gs-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-gs-6">
       <div className="min-w-0">
         <h2 className="gift-h2">About this gift</h2>
-        <p className="mt-gs-3 text-body leading-relaxed opacity-90">
-          {product.description ??
-            'A thoughtfully chosen Soft Gift piece — ready to personalise and send with love.'}
-        </p>
-        <ul className="mt-gs-4 space-y-gs-3" aria-label="Gift highlights">
-          {highlights.map((h) => (
-            <li
-              key={h.title}
-              className="flex gap-gs-3 rounded-clay border border-border-subtle bg-white/60 px-gs-4 py-gs-3"
-            >
-              <span className="mt-gs-1 h-2 w-2 shrink-0 rounded-pill bg-primary" aria-hidden />
-              <span className="min-w-0">
-                <p className="text-body font-medium">{h.title}</p>
-                <p className="mt-gs-1 text-body leading-relaxed opacity-75">{h.body}</p>
-              </span>
-            </li>
-          ))}
-        </ul>
+        {useCmsAbout ? (
+          <div className="mt-gs-3">
+            <ArticleBody body={aboutHtml} className="text-foreground/85" />
+          </div>
+        ) : (
+          <>
+            <p className="mt-gs-3 text-body leading-relaxed opacity-90">
+              {product.description ??
+                'A thoughtfully chosen Soft Gift piece — ready to personalise and send with love.'}
+            </p>
+            <ul className="mt-gs-4 space-y-gs-3" aria-label="Gift highlights">
+              {highlights.map((h) => (
+                <li
+                  key={h.title}
+                  className="flex gap-gs-3 rounded-clay border border-border-subtle bg-white/60 px-gs-4 py-gs-3"
+                >
+                  <span className="mt-gs-1 h-2 w-2 shrink-0 rounded-pill bg-primary" aria-hidden />
+                  <span className="min-w-0">
+                    <p className="text-body font-medium">{h.title}</p>
+                    <p className="mt-gs-1 text-body leading-relaxed opacity-75">{h.body}</p>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
 
       <div className="min-w-0 space-y-gs-3">

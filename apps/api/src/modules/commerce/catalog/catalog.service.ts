@@ -1,25 +1,40 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, ProductStatus } from '@prisma/client';
 import type {
   AdminCatalogListQuery,
   CreateCategoryBody,
   CreateProductBody,
+  UpdateCategoryBody,
   UpdateProductBody,
   UpdateVariantBody,
 } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { CommercePolicyService } from '../ops/commerce-policy.service';
 import {
   adminProductKeysetAfter,
+  createdKeysetAfter,
   decodeAdminProductCursor,
-  encodeAdminProductCursor,
+  decodeCreatedCursor,
+  decodePriceCursor,
+  decodeTitleCursor,
+  encodeAdminListCursor,
+  priceRankAfter,
+  titleKeysetAfter,
+  type AdminListSort,
 } from './admin-catalog-cursor';
+import { categoryDeleteBlocked } from './category-ops';
 import {
   isManualStorefrontLabel,
   resolveStorefrontDisplayLabels,
 } from './storefront-display-labels';
-
+import { readSeoSchemaExtras, seoSchemaExtrasWriteValue } from '../../../common/seo-schema-extras';
 const productInclude = {
   variants: { include: { inventory: true }, orderBy: { createdAt: 'asc' as const } },
   media: { orderBy: { sortOrder: 'asc' as const } },
@@ -57,6 +72,7 @@ export class CatalogService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly inventory: InventoryService,
+    private readonly policy: CommercePolicyService,
   ) {}
 
   async listCategories() {
@@ -71,23 +87,128 @@ export class CatalogService {
     }));
   }
 
-  async createCategory(body: CreateCategoryBody, actorId: string, requestId?: string) {
-    const row = await this.prisma.category.create({
-      data: {
-        slug: body.slug,
-        name: body.name,
-        description: body.description,
-        sortOrder: body.sortOrder ?? 0,
-      },
+  /** Admin desk — includes sortOrder + linked product count. */
+  async listAdminCategories() {
+    const rows = await this.prisma.category.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      include: { _count: { select: { products: true } } },
     });
+    return rows.map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      name: c.name,
+      description: c.description,
+      sortOrder: c.sortOrder,
+      productCount: c._count.products,
+    }));
+  }
+
+  async createCategory(body: CreateCategoryBody, actorId: string, requestId?: string) {
+    try {
+      const row = await this.prisma.category.create({
+        data: {
+          slug: body.slug,
+          name: body.name,
+          description: body.description,
+          sortOrder: body.sortOrder ?? 0,
+        },
+      });
+      await this.audit.write({
+        actorId,
+        action: 'catalog.category.create',
+        resource: 'category',
+        resourceId: row.id,
+        requestId,
+      });
+      return {
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        description: row.description,
+        sortOrder: row.sortOrder,
+        productCount: 0,
+      };
+    } catch (e) {
+      if (typeof e === 'object' && e && 'code' in e && (e as { code: string }).code === 'P2002') {
+        throw new ConflictException({
+          code: 'CATEGORY_SLUG_TAKEN',
+          message: 'A category with this slug already exists.',
+        });
+      }
+      throw e;
+    }
+  }
+
+  async updateCategory(
+    id: string,
+    body: UpdateCategoryBody,
+    actorId: string,
+    requestId?: string,
+  ) {
+    const existing = await this.prisma.category.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Category not found.' });
+    }
+    try {
+      const row = await this.prisma.category.update({
+        where: { id },
+        data: {
+          ...(body.slug !== undefined ? { slug: body.slug } : {}),
+          ...(body.name !== undefined ? { name: body.name } : {}),
+          ...(body.description !== undefined ? { description: body.description } : {}),
+          ...(body.sortOrder !== undefined ? { sortOrder: body.sortOrder } : {}),
+        },
+        include: { _count: { select: { products: true } } },
+      });
+      await this.audit.write({
+        actorId,
+        action: 'catalog.category.update',
+        resource: 'category',
+        resourceId: row.id,
+        requestId,
+      });
+      return {
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        description: row.description,
+        sortOrder: row.sortOrder,
+        productCount: row._count.products,
+      };
+    } catch (e) {
+      if (typeof e === 'object' && e && 'code' in e && (e as { code: string }).code === 'P2002') {
+        throw new ConflictException({
+          code: 'CATEGORY_SLUG_TAKEN',
+          message: 'A category with this slug already exists.',
+        });
+      }
+      throw e;
+    }
+  }
+
+  async deleteCategory(id: string, actorId: string, requestId?: string) {
+    const existing = await this.prisma.category.findUnique({
+      where: { id },
+      include: { _count: { select: { products: true } } },
+    });
+    if (!existing) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Category not found.' });
+    }
+    if (categoryDeleteBlocked(existing._count.products)) {
+      throw new ConflictException({
+        code: 'CATEGORY_HAS_PRODUCTS',
+        message: 'Unassign products from this category before deleting.',
+      });
+    }
+    await this.prisma.category.delete({ where: { id } });
     await this.audit.write({
       actorId,
-      action: 'catalog.category.create',
+      action: 'catalog.category.delete',
       resource: 'category',
-      resourceId: row.id,
+      resourceId: id,
       requestId,
     });
-    return row;
+    return { ok: true as const };
   }
 
   async listPublishedProducts(query: {
@@ -176,6 +297,7 @@ export class CatalogService {
 
   async listAdminProducts(query: AdminCatalogListQuery) {
     const limit = query.limit ?? 25;
+    const sort = (query.sort ?? 'updated') as AdminListSort;
     const andParts: Prisma.ProductWhereInput[] = [];
 
     if (query.status) andParts.push({ status: query.status });
@@ -192,25 +314,84 @@ export class CatalogService {
       });
     }
 
+    if (query.hamper === '1') andParts.push({ isReadyMadeHamper: true });
+    if (query.hamper === '0') andParts.push({ isReadyMadeHamper: false });
+
+    if (query.storefrontLabel) {
+      andParts.push({ storefrontLabels: { has: query.storefrontLabel } });
+    }
+
+    if (query.recipient === 'girl' || query.recipient === 'boy') {
+      andParts.push({ recipientTags: { hasSome: [query.recipient, 'unisex'] } });
+    } else if (query.recipient) {
+      andParts.push({ recipientTags: { has: query.recipient } });
+    }
+
+    if (query.occasion) {
+      andParts.push({ occasionTags: { has: query.occasion } });
+    }
+
+    if (query.category?.trim()) {
+      andParts.push({
+        categories: { some: { category: { slug: query.category.trim() } } },
+      });
+    }
+
+    if (query.stock) {
+      const threshold = await this.policy.getLowStockThreshold();
+      const stockIds = await this.productIdsMatchingStock(query.stock, threshold);
+      if (stockIds.length === 0) {
+        return { items: [], nextCursor: null, limit };
+      }
+      andParts.push({ id: { in: stockIds } });
+    }
+
+    const where: Prisma.ProductWhereInput = andParts.length > 0 ? { AND: andParts } : {};
+
+    // ponytail: price sorts rank in memory (≤500) → SQL min-price keyset if catalog grows
+    if (sort === 'price_asc' || sort === 'price_desc') {
+      return this.listAdminProductsByPrice(where, sort, query.cursor, limit);
+    }
+
     if (query.cursor) {
-      let decoded;
       try {
-        decoded = decodeAdminProductCursor(query.cursor);
+        if (sort === 'updated') {
+          andParts.push(
+            adminProductKeysetAfter(decodeAdminProductCursor(query.cursor)) as Prisma.ProductWhereInput,
+          );
+        } else if (sort === 'title_asc' || sort === 'title_desc') {
+          andParts.push(
+            titleKeysetAfter(sort, decodeTitleCursor(sort, query.cursor)) as Prisma.ProductWhereInput,
+          );
+        } else if (sort === 'created') {
+          andParts.push(
+            createdKeysetAfter(decodeCreatedCursor(query.cursor)) as Prisma.ProductWhereInput,
+          );
+        }
       } catch {
         throw new BadRequestException({
           code: 'INVALID_CURSOR',
           message: 'Invalid pagination cursor.',
         });
       }
-      andParts.push(adminProductKeysetAfter(decoded) as Prisma.ProductWhereInput);
     }
 
-    const where: Prisma.ProductWhereInput = andParts.length > 0 ? { AND: andParts } : {};
+    const whereWithCursor: Prisma.ProductWhereInput =
+      andParts.length > 0 ? { AND: andParts } : {};
+
+    const orderBy: Prisma.ProductOrderByWithRelationInput[] =
+      sort === 'title_asc'
+        ? [{ title: 'asc' }, { id: 'asc' }]
+        : sort === 'title_desc'
+          ? [{ title: 'desc' }, { id: 'desc' }]
+          : sort === 'created'
+            ? [{ createdAt: 'desc' }, { id: 'desc' }]
+            : [{ updatedAt: 'desc' }, { id: 'desc' }];
 
     const rows = await this.prisma.product.findMany({
-      where,
+      where: whereWithCursor,
       include: adminListInclude,
-      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      orderBy,
       take: limit + 1,
     });
 
@@ -220,10 +401,122 @@ export class CatalogService {
     const last = page[page.length - 1];
     const nextCursor =
       hasMore && last
-        ? encodeAdminProductCursor({ updatedAt: last.updatedAt, id: last.id })
+        ? encodeAdminListCursor(sort, {
+            id: last.id,
+            updatedAt: last.updatedAt,
+            createdAt: last.createdAt,
+            title: last.title,
+          })
         : null;
 
     return { items, nextCursor, limit };
+  }
+
+  /** Price rank for ops desk — capped candidate set, then keyset-style slice. */
+  private async listAdminProductsByPrice(
+    where: Prisma.ProductWhereInput,
+    sort: 'price_asc' | 'price_desc',
+    cursorRaw: string | undefined,
+    limit: number,
+  ) {
+    const candidates = await this.prisma.product.findMany({
+      where,
+      select: {
+        id: true,
+        variants: { select: { pricePaise: true } },
+      },
+      take: 500,
+    });
+
+    let ranked = candidates
+      .map((p) => ({
+        id: p.id,
+        fromPricePaise:
+          p.variants.length > 0
+            ? Math.min(...p.variants.map((v) => v.pricePaise))
+            : Number.POSITIVE_INFINITY,
+      }))
+      .sort((a, b) => {
+        if (a.fromPricePaise !== b.fromPricePaise) {
+          return sort === 'price_asc'
+            ? a.fromPricePaise - b.fromPricePaise
+            : b.fromPricePaise - a.fromPricePaise;
+        }
+        return sort === 'price_asc' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id);
+      });
+
+    if (cursorRaw) {
+      try {
+        ranked = priceRankAfter(sort, ranked, decodePriceCursor(sort, cursorRaw));
+      } catch {
+        throw new BadRequestException({
+          code: 'INVALID_CURSOR',
+          message: 'Invalid pagination cursor.',
+        });
+      }
+    }
+
+    const pageMeta = ranked.slice(0, limit);
+    const hasMore = ranked.length > limit;
+    if (pageMeta.length === 0) {
+      return { items: [], nextCursor: null, limit };
+    }
+
+    const rows = await this.prisma.product.findMany({
+      where: { id: { in: pageMeta.map((p) => p.id) } },
+      include: adminListInclude,
+    });
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const page = pageMeta.map((m) => byId.get(m.id)).filter(Boolean) as Array<
+      Prisma.ProductGetPayload<{ include: typeof adminListInclude }>
+    >;
+    const items = page.map((p) => this.mapAdminListProduct(p));
+    const lastMeta = pageMeta[pageMeta.length - 1];
+    const nextCursor =
+      hasMore && lastMeta
+        ? encodeAdminListCursor(sort, {
+            id: lastMeta.id,
+            fromPricePaise:
+              lastMeta.fromPricePaise === Number.POSITIVE_INFINITY ? 0 : lastMeta.fromPricePaise,
+          })
+        : null;
+
+    return { items, nextCursor, limit };
+  }
+
+  private async productIdsMatchingStock(
+    stock: 'low' | 'out' | 'in',
+    threshold: number,
+  ): Promise<string[]> {
+    if (stock === 'low') {
+      const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT DISTINCT p.id
+        FROM products p
+        INNER JOIN product_variants v ON v.product_id = p.id
+        INNER JOIN inventory_items i ON i.variant_id = v.id
+        WHERE (i.on_hand - i.reserved) <= ${threshold}
+      `;
+      return rows.map((r) => r.id);
+    }
+    if (stock === 'out') {
+      const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT p.id
+        FROM products p
+        LEFT JOIN product_variants v ON v.product_id = p.id
+        LEFT JOIN inventory_items i ON i.variant_id = v.id
+        GROUP BY p.id
+        HAVING COALESCE(MAX(i.on_hand - i.reserved), 0) <= 0
+      `;
+      return rows.map((r) => r.id);
+    }
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT DISTINCT p.id
+      FROM products p
+      INNER JOIN product_variants v ON v.product_id = p.id
+      INNER JOIN inventory_items i ON i.variant_id = v.id
+      WHERE (i.on_hand - i.reserved) > 0
+    `;
+    return rows.map((r) => r.id);
   }
 
   async getAdminProduct(id: string) {
@@ -398,6 +691,14 @@ export class CatalogService {
             : {}),
           ...(body.seoSections !== undefined
             ? { seoSections: body.seoSections === null ? Prisma.DbNull : body.seoSections }
+            : {}),
+          ...(body.seoSchemaExtras !== undefined
+            ? {
+                seoSchemaExtras: seoSchemaExtrasWriteValue(body.seoSchemaExtras, {
+                  // PDP always emits FAQPage from faqItems / built-in fallbacks
+                  hasSystemFaq: true,
+                }),
+              }
             : {}),
         },
         include: productInclude,
@@ -667,6 +968,7 @@ export class CatalogService {
       robotsIndex: product.robotsIndex,
       faqItems: parseProductFaqItems(product.faqItems),
       seoSections: parseProductSeoSections(product.seoSections),
+      seoSchemaExtras: readSeoSchemaExtras(product.seoSchemaExtras),
       hamperItems,
       hamperItemCount,
       contentsValuePaise,

@@ -5,6 +5,11 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
+import {
+  categoriesToOptions,
+  fetchCatalogCategoriesClient,
+  type CategoryOption,
+} from '@/lib/catalog-categories';
 import { ProductBrandLine } from '@/components/gift/product-brand-line';
 import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
 
@@ -64,15 +69,6 @@ const OCCASIONS = [
   { value: 'birthday', label: 'Birthday' },
 ] as const;
 
-const CATEGORIES = [
-  { value: 'clothing', label: 'Clothing' },
-  { value: 'bath-skin', label: 'Bath & Skin' },
-  { value: 'toys', label: 'Toys' },
-  { value: 'mom-care', label: 'Mom Care' },
-  { value: 'newborn', label: 'Newborn' },
-  { value: 'keepsakes', label: 'Keepsakes' },
-] as const;
-
 export default function GiftBoxPage() {
   return (
     <Suspense fallback={<GiftListSkeleton label="Loading gift box" />}>
@@ -93,6 +89,17 @@ function GiftBoxWizard() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   /** When a prior session left a filled step-6 box, ask before dumping into review. */
   const [resumeChoice, setResumeChoice] = useState(false);
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchCatalogCategoriesClient().then((rows) => {
+      if (!cancelled) setCategoryOptions(categoriesToOptions(rows));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadSuggestions = useCallback(async (b: GiftBox) => {
     try {
@@ -476,7 +483,7 @@ function GiftBoxWizard() {
           <h2 className="gift-h2">Categories</h2>
           <p className="gift-muted mt-gs-1 text-body">Pick one or more (optional).</p>
           <div className="mt-gs-4 flex flex-wrap gap-gs-2">
-            {CATEGORIES.map((c) => {
+            {categoryOptions.map((c) => {
               const on = box.categorySlugs.includes(c.value);
               return (
                 <button

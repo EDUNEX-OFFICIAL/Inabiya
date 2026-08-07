@@ -41,3 +41,5 @@ Forest/cream/terracotta via HSL CSS vars. Fonts: Playfair Display + Manrope. Nev
 ## Interaction
 
 `data-testid` kebab-case on critical controls. Tap targets ≥ 48px (primary CTAs ~56px). Soft Gift motion: calm 0.2–0.6s GSAP — see `15-gsap-motion`.
+
+**Buttons:** never `translateY` / lift the whole control on hover or active. Color, border, and shadow OK. Prefer micro-motion on the **icon inside** the button only (e.g. `.clay-btn:hover svg`).

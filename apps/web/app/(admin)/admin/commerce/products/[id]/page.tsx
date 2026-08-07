@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { formatInr, type CatalogProduct, type ManualStorefrontLabel } from '@/lib/catalog';
@@ -11,8 +11,19 @@ import {
   ProductGalleryEditor,
   type GalleryItem,
 } from '@/components/commerce-ops/product-gallery-editor';
+import {
+  ProductVideoField,
+  type ProductVideoValue,
+} from '@/components/commerce-ops/product-video-field';
 import { ArticleEditor } from '@/components/editorial/article-editor';
+import { isValidProductVideoUrl } from '@/lib/product-video';
+import { SeoSchemaPanel } from '@/components/admin/seo-schema-panel';
 import { htmlToSeoSections, seoSectionsToHtml } from '@/lib/product-page-content';
+import { buildProductFaqItems } from '@/lib/product-faq';
+import { getSiteOrigin } from '@/lib/cms-seo';
+import { productJsonLd } from '@/lib/seo-json-ld';
+import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
+import type { SeoSchemaEntry } from '@inabiya/validation';
 
 const RECIPIENTS = ['girl', 'boy', 'mom', 'unisex'] as const;
 const AGES = ['newborn', 'infant', 'toddler', 'any'] as const;
@@ -111,6 +122,10 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [recipientTags, setRecipientTags] = useState<string[]>([]);
   const [ageBands, setAgeBands] = useState<string[]>([]);
   const [occasionTags, setOccasionTags] = useState<string[]>([]);
+  const [categorySlugs, setCategorySlugs] = useState<string[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<Array<{ slug: string; name: string }>>(
+    [],
+  );
   const [storefrontLabels, setStorefrontLabels] = useState<ManualStorefrontLabel[]>([]);
   const [isReadyMadeHamper, setIsReadyMadeHamper] = useState(false);
   const [brandName, setBrandName] = useState('');
@@ -119,7 +134,13 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [canonicalPath, setCanonicalPath] = useState('');
   const [ogImageUrl, setOgImageUrl] = useState('');
   const [robotsIndex, setRobotsIndex] = useState(true);
+  const [seoSchemaExtras, setSeoSchemaExtras] = useState<SeoSchemaEntry[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [productVideo, setProductVideo] = useState<ProductVideoValue>({
+    url: '',
+    posterUrl: '',
+    altText: '',
+  });
   const [faqs, setFaqs] = useState<FaqRow[]>([{ question: '', answerText: '' }]);
   const [pageContentHtml, setPageContentHtml] = useState('');
   const [hamperRows, setHamperRows] = useState<HamperRow[]>([]);
@@ -129,6 +150,47 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const schemaAutoNodes = useMemo(() => {
+    if (!product) return [];
+    const filledFaqs = faqs.filter((f) => f.question.trim() && f.answerText.trim());
+    const faqSource = buildProductFaqItems({
+      faqItems: filledFaqs.length ? filledFaqs : null,
+      personalization: product.personalization ?? [],
+      isReadyMadeHamper,
+      description: description || product.description,
+    });
+    const variant = product.variants[0];
+    const available = product.variants.some((v) => (stock[v.id] ? Number(stock[v.id]) : v.available) > 0);
+    const images = gallery.filter((g) => g.url).map((g) => g.url);
+    return [
+      productJsonLd({
+        name: seoTitle.trim() || title || product.title,
+        description: seoDescription.trim() || description || product.description,
+        slug: product.slug,
+        canonicalPath: canonicalPath.trim() || null,
+        imageUrls: images,
+        brandName: brandName.trim() || product.brandName || null,
+        sku: variant?.sku ?? null,
+        pricePaise: variant?.pricePaise ?? product.fromPricePaise,
+        availability: available ? 'InStock' : 'OutOfStock',
+        siteOrigin: getSiteOrigin(),
+      }),
+      faqPageJsonLd(faqSource),
+    ];
+  }, [
+    product,
+    faqs,
+    isReadyMadeHamper,
+    description,
+    stock,
+    gallery,
+    seoTitle,
+    title,
+    seoDescription,
+    canonicalPath,
+    brandName,
+  ]);
+
   function hydrate(p: CatalogProduct) {
     setProduct(p);
     setTitle(p.title);
@@ -136,6 +198,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     setRecipientTags(p.recipientTags ?? []);
     setAgeBands(p.ageBands ?? []);
     setOccasionTags(p.occasionTags ?? []);
+    setCategorySlugs((p.categories ?? []).map((c) => c.slug));
     setStorefrontLabels(p.storefrontLabels ?? []);
     setIsReadyMadeHamper(Boolean(p.isReadyMadeHamper));
     setBrandName(p.brandName ?? '');
@@ -144,15 +207,26 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     setCanonicalPath(p.canonicalPath ?? '');
     setOgImageUrl(p.ogImageUrl ?? '');
     setRobotsIndex(p.robotsIndex !== false);
+    setSeoSchemaExtras(p.seoSchemaExtras ?? []);
+    const media = p.media ?? [];
+    const video = media.find((m) => m.kind === 'VIDEO');
     setGallery(
-      p.media?.length
-        ? p.media.map((m) => ({
-            url: m.url,
-            altText: m.altText ?? '',
-            kind: m.kind === 'VIDEO' ? 'VIDEO' : 'IMAGE',
-            posterUrl: m.posterUrl ?? undefined,
-          }))
-        : [],
+      media
+        .filter((m) => m.kind !== 'VIDEO')
+        .map((m) => ({
+          url: m.url,
+          altText: m.altText ?? '',
+          kind: 'IMAGE' as const,
+        })),
+    );
+    setProductVideo(
+      video
+        ? {
+            url: video.url,
+            posterUrl: video.posterUrl ?? '',
+            altText: video.altText ?? '',
+          }
+        : { url: '', posterUrl: '', altText: '' },
     );
     setFaqs(
       p.faqItems?.length
@@ -193,6 +267,9 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     apiAuth<CatalogProduct>(`/admin/catalog/products/${params.id}`)
       .then(hydrate)
       .catch(() => setError('Failed to load product'));
+    void apiAuth<Array<{ slug: string; name: string }>>('/admin/catalog/categories')
+      .then((rows) => setCategoryOptions(rows.map((c) => ({ slug: c.slug, name: c.name }))))
+      .catch(() => setCategoryOptions([]));
   }, [params.id, router]);
 
   async function onSave(e?: FormEvent) {
@@ -210,15 +287,36 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
 
     const seoSections = htmlToSeoSections(pageContentHtml);
 
-    const media = gallery
+    const imageMedia = gallery
       .map((row, i) => ({
         url: row.url.trim(),
         altText: row.altText.trim() || undefined,
-        kind: row.kind,
-        posterUrl: row.posterUrl?.trim() || undefined,
+        kind: 'IMAGE' as const,
         sortOrder: i,
       }))
       .filter((row) => row.url);
+
+    const videoUrl = productVideo.url.trim();
+    if (videoUrl && !isValidProductVideoUrl(videoUrl)) {
+      setError('Product video: use a YouTube link or a direct video file (.mp4, .webm, …)');
+      setSaving(false);
+      return;
+    }
+
+    const media = [
+      ...imageMedia,
+      ...(videoUrl
+        ? [
+            {
+              url: videoUrl,
+              altText: productVideo.altText.trim() || undefined,
+              kind: 'VIDEO' as const,
+              posterUrl: productVideo.posterUrl.trim() || undefined,
+              sortOrder: imageMedia.length,
+            },
+          ]
+        : []),
+    ];
 
     let hamperItems:
       | Array<{
@@ -255,6 +353,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           recipientTags,
           ageBands,
           occasionTags,
+          categorySlugs,
           isReadyMadeHamper,
           brandName: brandName.trim() || null,
           storefrontLabels,
@@ -265,6 +364,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           robotsIndex,
           faqItems: faqItems.length ? faqItems : null,
           seoSections,
+          seoSchemaExtras: seoSchemaExtras.length ? seoSchemaExtras : null,
           hamperItems,
           media,
         },
@@ -356,7 +456,10 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     );
   }
 
-  const primary = gallery[0]?.url ?? product.media[0]?.url;
+  const primary =
+    gallery[0]?.url ??
+    product.media.find((m) => m.kind !== 'VIDEO')?.url ??
+    product.media[0]?.url;
   const published = product.status === 'PUBLISHED';
 
   return (
@@ -508,6 +611,11 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           title="Media"
         >
           <ProductGalleryEditor items={gallery} onChange={setGallery} titleHint={title} />
+          <ProductVideoField
+            value={productVideo}
+            onChange={setProductVideo}
+            titleHint={title}
+          />
         </Section>
 
         <Section
@@ -609,6 +717,24 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             </div>
           </div>
           <div>
+            <p className="text-xs opacity-70">Categories</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {categoryOptions.length === 0 ? (
+                <span className="text-xs opacity-50">No categories yet</span>
+              ) : (
+                categoryOptions.map((c) => (
+                  <Chip
+                    key={c.slug}
+                    active={categorySlugs.includes(c.slug)}
+                    onClick={() => setCategorySlugs((t) => toggle(t, c.slug))}
+                  >
+                    {c.name}
+                  </Chip>
+                ))
+              )}
+            </div>
+          </div>
+          <div>
             <p className="text-xs opacity-70">Recipient</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {RECIPIENTS.map((r) => (
@@ -705,6 +831,16 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
               placeholder="Share image URL"
             />
           </details>
+          <SeoSchemaPanel
+            value={seoSchemaExtras}
+            onChange={setSeoSchemaExtras}
+            hasSystemFaq
+            autoTypes={['Product', 'FAQ']}
+            autoPreviewNodes={schemaAutoNodes}
+            publicUrl={
+              product ? `${getSiteOrigin()}/gift/products/${product.slug}` : null
+            }
+          />
         </Section>
 
         <Section id="faqs" title="FAQs">
@@ -757,14 +893,14 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
 
         <details className="rounded-xl border border-[color:var(--border-subtle)] bg-white/80 p-4" open>
           <summary className="cursor-pointer font-display text-base">
-            Product page content
+            About this gift
           </summary>
           <div className="mt-3 overflow-hidden rounded-lg border border-[color:var(--border-subtle)] bg-white">
             <ArticleEditor
               key={product.id}
               initialContent={pageContentHtml}
               onChange={setPageContentHtml}
-              placeholder="Content…"
+              placeholder="About this gift…"
               showImages={false}
               showCode={false}
               showTable={false}
