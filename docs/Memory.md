@@ -1034,6 +1034,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-08-07 (push + deploy Soft Gift polish)
+
+- Pushed `7af91ed` to `origin/main` (φ scale, type/image leftovers, Lenis+marketing RSC split, Docs→docs).
+- Deployed `web` via `deploy-vps.sh web` — smoke healthy.
+- Next: human viewport QA at 375/768/1280
+
 ### Session — 2026-08-07 (Soft Gift Lenis + marketing RSC split)
 
 - **Override continue:** perf follow-up — Lenis deferred + marketing client islands.
