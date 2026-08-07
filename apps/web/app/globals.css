@@ -1389,6 +1389,25 @@ h3 {
     box-shadow: var(--shadow-brand);
   }
 
+  /* Mobile hero CTAs: compact + nowrap (beats .clay-btn body font/pad) */
+  @media (max-width: 639px) {
+    [data-theme='gift'] .gift-hero-split__cta {
+      min-height: 2.5rem;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.6875rem;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      gap: 0.25rem;
+    }
+  }
+
+  @media (min-width: 640px) {
+    [data-theme='gift'] .gift-hero-split__cta {
+      gap: var(--space-2);
+    }
+  }
+
   [data-theme='gift'] .gift-hero-split__frame {
     position: relative;
     overflow: hidden;

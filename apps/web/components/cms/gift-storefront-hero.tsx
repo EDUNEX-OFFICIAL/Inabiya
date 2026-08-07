@@ -157,15 +157,15 @@ export function GiftStorefrontHero({
             </p>
           ) : null}
 
-          <div className="mt-gs-3 flex w-full max-w-md flex-row items-stretch justify-center gap-gs-2 sm:mt-gs-4 sm:max-w-none sm:w-auto sm:items-center sm:gap-gs-3 lg:justify-start">
+          <div className="mt-gs-3 flex w-full max-w-md flex-row flex-nowrap items-center justify-center gap-gs-2 sm:mt-gs-4 sm:max-w-none sm:w-auto sm:gap-gs-3 lg:justify-start">
             {ctaLabel && ctaHref ? (
               <Link
                 data-hero-cta="primary"
                 data-testid="hero-cta-primary"
                 href={ctaHref}
-                className="clay-btn gift-hero-split__cta-primary inline-flex min-h-tap flex-1 items-center justify-center gap-gs-1 whitespace-nowrap px-gs-2 text-caption sm:min-h-0 sm:flex-none sm:gap-gs-2 sm:px-[var(--btn-pad-x)] sm:text-body"
+                className="clay-btn gift-hero-split__cta-primary gift-hero-split__cta inline-flex shrink-0 items-center justify-center whitespace-nowrap sm:px-[var(--btn-pad-x)]"
               >
-                <Gift className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={1.75} aria-hidden />
+                <Gift className="hidden h-4 w-4 shrink-0 sm:inline" strokeWidth={1.75} aria-hidden />
                 {ctaLabel}
               </Link>
             ) : null}
@@ -174,7 +174,7 @@ export function GiftStorefrontHero({
                 data-hero-cta="secondary"
                 data-testid="hero-cta-secondary"
                 href={ctaHref2}
-                className="clay-btn-secondary gift-hero-split__cta-secondary inline-flex min-h-tap flex-1 items-center justify-center gap-gs-1 whitespace-nowrap px-gs-2 text-caption sm:min-h-0 sm:w-auto sm:flex-none sm:gap-gs-2 sm:px-[var(--btn-pad-x)] sm:text-body"
+                className="clay-btn-secondary gift-hero-split__cta-secondary gift-hero-split__cta inline-flex shrink-0 items-center justify-center whitespace-nowrap sm:px-[var(--btn-pad-x)]"
               >
                 {ctaLabel2}
                 <ArrowRight className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={1.75} aria-hidden />
