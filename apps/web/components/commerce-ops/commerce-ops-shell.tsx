@@ -67,7 +67,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
   orders: ShoppingBag,
   products: Package,
-  categories: FolderTree,
+  collections: FolderTree,
   inventory: Boxes,
   import: Upload,
   customers: Users,

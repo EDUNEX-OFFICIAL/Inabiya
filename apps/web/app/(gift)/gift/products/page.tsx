@@ -3,9 +3,9 @@ import { ClayProductCard } from '@/components/gift/clay-product-card';
 import { TrackView } from '@/components/track-view';
 import { fetchCatalog, type CatalogProduct } from '@/lib/catalog';
 import {
-  categoryPlpHref,
-  fetchCatalogCategories,
-} from '@/lib/catalog-categories';
+  collectionPlpHref,
+  fetchCatalogCollections,
+} from '@/lib/catalog-collections';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,13 +21,13 @@ function titleFromFilters(
     recipient?: string;
     age?: string;
     hamper?: string;
-    category?: string;
+    collection?: string;
     occasion?: string;
     q?: string;
     storefrontLabel?: string;
     onSale?: string;
   },
-  categoryName?: string,
+  collectionTitle?: string,
 ): string {
   if (sp.q) return `Search: “${sp.q}”`;
   if (sp.storefrontLabel === 'BESTSELLER') return 'Best sellers';
@@ -40,7 +40,7 @@ function titleFromFilters(
   if (sp.age === 'newborn') return 'Shop by age — newborn';
   if (sp.age === 'infant') return 'Shop by age — infant';
   if (sp.age === 'toddler') return 'Shop by age — toddler';
-  if (sp.category) return categoryName ? categoryName : `Category: ${sp.category}`;
+  if (sp.collection) return collectionTitle ? collectionTitle : `Collection: ${sp.collection}`;
   if (sp.occasion) return `Occasion: ${sp.occasion}`;
   return 'All gifts';
 }
@@ -52,7 +52,7 @@ type FilterDef = {
     recipient?: string;
     age?: string;
     hamper?: string;
-    category?: string;
+    collection?: string;
     q?: string;
     occasion?: string;
   }) => boolean;
@@ -63,7 +63,7 @@ const BASE_FILTERS: FilterDef[] = [
     href: '/gift/products',
     label: 'All',
     match: (sp) =>
-      !sp.recipient && !sp.age && sp.hamper !== '1' && !sp.category && !sp.q && !sp.occasion,
+      !sp.recipient && !sp.age && sp.hamper !== '1' && !sp.collection && !sp.q && !sp.occasion,
   },
   {
     href: '/gift/collections/ready-hampers',
@@ -106,7 +106,7 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
   const recipient = first(searchParams.recipient);
   const age = first(searchParams.age);
   const hamper = first(searchParams.hamper);
-  const category = first(searchParams.category);
+  const collection = first(searchParams.collection);
   const occasion = first(searchParams.occasion);
   const storefrontLabel = first(searchParams.storefrontLabel);
   const onSale = first(searchParams.onSale);
@@ -115,34 +115,24 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
   const sortRaw = first(searchParams.sort) ?? 'newest';
   const sort = SORTS.some((s) => s.value === sortRaw) ? sortRaw : 'newest';
 
-  const categories = await fetchCatalogCategories();
+  const collections = await fetchCatalogCollections();
   const FILTERS: FilterDef[] = [
     ...BASE_FILTERS,
-    ...categories.map((c) => ({
-      href: categoryPlpHref(c.slug),
-      label: c.name,
-      match: (sp: { category?: string }) => sp.category === c.slug,
+    ...collections.slice(0, 8).map((c) => ({
+      href: collectionPlpHref(c.slug),
+      label: c.title,
+      match: (sp: { collection?: string }) => sp.collection === c.slug,
     })),
   ];
 
-  const filterState = { recipient, age, hamper, category, q, occasion };
-  const keep: Record<string, string | undefined> = {
-    recipient,
-    age,
-    hamper,
-    category,
-    occasion,
-    storefrontLabel,
-    onSale,
-    q,
-  };
+  const filterState = { recipient, age, hamper, collection, q, occasion };
 
   const qs = new URLSearchParams();
   qs.set('sort', sort);
   if (recipient) qs.set('recipient', recipient);
   if (age) qs.set('age', age);
   if (hamper) qs.set('hamper', hamper);
-  if (category) qs.set('category', category);
+  if (collection) qs.set('collection', collection);
   if (occasion) qs.set('occasion', occasion);
   if (storefrontLabel) qs.set('storefrontLabel', storefrontLabel);
   if (onSale) qs.set('onSale', onSale);
@@ -155,8 +145,8 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
     products = [];
   }
 
-  const categoryName = category
-    ? categories.find((c) => c.slug === category)?.name
+  const collectionTitle = collection
+    ? collections.find((c) => c.slug === collection)?.title
     : undefined;
 
   const heading = titleFromFilters(
@@ -164,13 +154,13 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
       recipient,
       age,
       hamper,
-      category,
+      collection,
       occasion,
       q,
       storefrontLabel,
       onSale,
     },
-    categoryName,
+    collectionTitle,
   );
 
   return (
@@ -218,34 +208,41 @@ export default async function ProductListPage({ searchParams }: { searchParams: 
 
         <div className="mt-gs-3 flex flex-wrap items-center gap-gs-2" aria-label="Sort products">
           <span className="text-caption font-medium uppercase tracking-wide opacity-55">Sort</span>
-          {SORTS.map((s) => (
-            <Link
-              key={s.value}
-              href={plpHref({ ...keep, sort: s.value })}
-              aria-current={sort === s.value ? 'page' : undefined}
-              className={
-                sort === s.value
-                  ? 'rounded-pill bg-foreground px-gs-3 py-gs-1 text-caption font-medium text-background'
-                  : 'clay-chip text-caption'
-              }
-            >
-              {s.label}
-            </Link>
-          ))}
+          {SORTS.map((s) => {
+            const active = sort === s.value;
+            return (
+              <Link
+                key={s.value}
+                href={plpHref({
+                  recipient,
+                  age,
+                  hamper,
+                  collection,
+                  occasion,
+                  storefrontLabel,
+                  onSale,
+                  q,
+                  sort: s.value,
+                })}
+                className={
+                  active
+                    ? 'rounded-pill bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)] px-gs-2 py-1 text-caption font-medium'
+                    : 'px-gs-2 py-1 text-caption opacity-60 hover:opacity-100'
+                }
+              >
+                {s.label}
+              </Link>
+            );
+          })}
         </div>
       </div>
 
-      {products.length === 0 ? (
-        <div className="clay-panel p-gs-6 text-center sm:p-gs-7">
-          <p className="text-body opacity-80">No products match these filters.</p>
-          <Link href="/gift/products" className="clay-btn mt-gs-5 inline-flex">
-            Clear filters
-          </Link>
-        </div>
-      ) : (
-        <ul className="grid grid-cols-1 gap-gs-4 sm:grid-cols-2 sm:gap-gs-5 lg:grid-cols-3">
+      {products.length === 0 ? null : (
+        <ul className="grid grid-cols-2 gap-gs-3 sm:grid-cols-3 lg:grid-cols-4">
           {products.map((p) => (
-            <ClayProductCard key={p.id} product={p} />
+            <li key={p.id}>
+              <ClayProductCard product={p} />
+            </li>
           ))}
         </ul>
       )}

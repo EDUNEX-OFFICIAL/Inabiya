@@ -138,22 +138,26 @@ export class StorefrontConfigService {
       row?.value && typeof row.value === 'object' && !Array.isArray(row.value)
         ? (row.value as GiftChromeBody)
         : {};
-    const categories = await this.prisma.category.findMany({
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      select: { slug: true, name: true },
+    const collections = await this.prisma.collection.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+      select: { slug: true, title: true },
     });
     const authoredShop = stored.shopLinks?.length
       ? stored.shopLinks
       : DEFAULT_GIFT_CHROME.shopLinks;
-    const nonCategory = authoredShop.filter(
-      (l) => !String(l.href ?? '').includes('/gift/products?category='),
-    );
-    const categoryLinks = categories.map((c) => ({
-      href: `/gift/products?category=${c.slug}`,
-      label: c.name,
+    const nonAutoCollection = authoredShop.filter((l) => {
+      const href = String(l.href ?? '');
+      return (
+        !href.includes('/gift/collections/') && !href.includes('/gift/products?category=')
+      );
+    });
+    const collectionLinks = collections.map((c) => ({
+      href: `/gift/collections/${c.slug}`,
+      label: c.title,
     }));
     return {
-      shopLinks: [...nonCategory, ...categoryLinks],
+      shopLinks: [...nonAutoCollection, ...collectionLinks],
       forWhomLinks: stored.forWhomLinks?.length
         ? stored.forWhomLinks
         : DEFAULT_GIFT_CHROME.forWhomLinks,

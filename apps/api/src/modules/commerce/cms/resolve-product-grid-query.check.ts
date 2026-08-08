@@ -29,9 +29,9 @@ const eds = parseProductGridResolution({ source: 'editors' }, now);
 assert.equal(eds.query.storefrontLabel, 'EDITORS_PICK');
 
 // on_sale
-const sale = parseProductGridResolution({ source: 'on_sale', category: 'toys' }, now);
+const sale = parseProductGridResolution({ source: 'on_sale', collection: 'toys' }, now);
 assert.equal(sale.query.onSale, true);
-assert.equal(sale.query.category, 'toys');
+assert.equal(sale.query.collection, 'toys');
 
 // new — 30-day window from now
 const neu = parseProductGridResolution({ source: 'new', newWithinDays: 14 }, now);

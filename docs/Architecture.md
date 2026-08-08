@@ -317,7 +317,7 @@ Invest deeply in core domains.
 | Media | Assets metadata + storage pointers |
 | Notifications | Templates + delivery |
 | Audit | Privileged action records |
-| Catalog | Products, variants, categories, collections, personalization config |
+| Catalog | Products, variants, **collections** (MANUAL | RULES), personalization config |
 | Inventory | Stock, reservations, adjustments |
 | Buying | Cart, checkout, pricing application |
 | Orders | Order lifecycle, tracking, returns requests |
@@ -1160,9 +1160,15 @@ Catalog ──► Inventory ──► Buying(Cart/Checkout) ──► Orders
 - Identity, titles, descriptions, SEO fields
 - Publish state (draft/published/archived)
 - Media references (IDs only)
-- Category/collection memberships
+- Collection memberships (`MANUAL` join and/or `RULES` filter JSON). Soft Gift no longer uses a separate commerce Category taxonomy (blog `EditorialCategory` is separate).
 - Personalization option definitions
 - Variant/SKU children
+
+**Collection** (merchandising, Shopify-shaped):
+
+- `MANUAL` — explicit `ProductCollection` joins (also coupon COLLECTION scope v1)
+- `RULES` — catalog filters in `rules` JSON (recipient/age/occasion/hamper/label/onSale/sort)
+- Public PLP: `/gift/collections/:slug`; admin desk: `/admin/commerce/collections`
 
 **Variant/SKU** owns:
 

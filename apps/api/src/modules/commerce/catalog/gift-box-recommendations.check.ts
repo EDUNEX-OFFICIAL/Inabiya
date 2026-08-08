@@ -5,17 +5,17 @@ const prefs = {
   recipient: 'girl',
   ageBand: 'newborn',
   occasion: 'welcome-baby',
-  categorySlugs: ['clothing'],
+  collectionSlugs: ['for-baby-girl'],
 };
 
 const full = buildGiftBoxProductWhere(prefs, 'full');
-assert.ok(full.categories);
+assert.ok(full.collections);
 assert.ok(full.occasionTags);
 assert.ok(full.ageBands);
 assert.deepEqual(full.recipientTags, { hasSome: ['girl', 'unisex'] });
 
-const noCat = buildGiftBoxProductWhere(prefs, 'noCategory');
-assert.equal(noCat.categories, undefined);
+const noCat = buildGiftBoxProductWhere(prefs, 'noCollection');
+assert.equal(noCat.collections, undefined);
 assert.ok(noCat.occasionTags);
 
 const noOcc = buildGiftBoxProductWhere(prefs, 'noOccasion');
@@ -30,7 +30,7 @@ const budgetOnly = buildGiftBoxProductWhere(prefs, 'budgetOnly');
 assert.equal(budgetOnly.recipientTags, undefined);
 assert.equal(budgetOnly.ageBands, undefined);
 assert.equal(budgetOnly.occasionTags, undefined);
-assert.equal(budgetOnly.categories, undefined);
+assert.equal(budgetOnly.collections, undefined);
 assert.deepEqual(budgetOnly.variants, { some: { giftBoxEligible: true } });
 
 // ageBand `any` must not require products tagged `any`

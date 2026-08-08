@@ -6,10 +6,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import {
-  categoriesToOptions,
-  fetchCatalogCategoriesClient,
-  type CategoryOption,
-} from '@/lib/catalog-categories';
+  collectionsToOptions,
+  fetchCatalogCollectionsClient,
+  type CollectionOption,
+} from '@/lib/catalog-collections';
 import { ProductBrandLine } from '@/components/gift/product-brand-line';
 import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
 
@@ -20,7 +20,7 @@ type GiftBox = {
   recipient: string | null;
   ageBand: string | null;
   occasion: string | null;
-  categorySlugs: string[];
+  collectionSlugs: string[];
   wizardStep: number;
   subtotalPaise: number;
   remainingBudgetPaise: number | null;
@@ -89,12 +89,12 @@ function GiftBoxWizard() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   /** When a prior session left a filled step-6 box, ask before dumping into review. */
   const [resumeChoice, setResumeChoice] = useState(false);
-  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+  const [collectionOptions, setCollectionOptions] = useState<CollectionOption[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    void fetchCatalogCategoriesClient().then((rows) => {
-      if (!cancelled) setCategoryOptions(categoriesToOptions(rows));
+    void fetchCatalogCollectionsClient().then((rows) => {
+      if (!cancelled) setCollectionOptions(collectionsToOptions(rows));
     });
     return () => {
       cancelled = true;
@@ -151,7 +151,7 @@ function GiftBoxWizard() {
       ageBand: string | null;
       occasion: string | null;
       budgetPaise: number;
-      categorySlugs: string[];
+      collectionSlugs: string[];
       wizardStep: number;
     }>,
   ) {
@@ -483,8 +483,8 @@ function GiftBoxWizard() {
           <h2 className="gift-h2">Categories</h2>
           <p className="gift-muted mt-gs-1 text-body">Pick one or more (optional).</p>
           <div className="mt-gs-4 flex flex-wrap gap-gs-2">
-            {categoryOptions.map((c) => {
-              const on = box.categorySlugs.includes(c.value);
+            {collectionOptions.map((c) => {
+              const on = box.collectionSlugs.includes(c.value);
               return (
                 <button
                   key={c.value}
@@ -496,9 +496,9 @@ function GiftBoxWizard() {
                   }
                   onClick={() => {
                     const next = on
-                      ? box.categorySlugs.filter((s) => s !== c.value)
-                      : [...box.categorySlugs, c.value];
-                    void savePrefs({ categorySlugs: next });
+                      ? box.collectionSlugs.filter((s) => s !== c.value)
+                      : [...box.collectionSlugs, c.value];
+                    void savePrefs({ collectionSlugs: next });
                   }}
                 >
                   {c.label}

@@ -19,10 +19,10 @@ import {
 } from 'lucide-react';
 import { formatInr } from '@/lib/catalog';
 import {
-  fetchCatalogCategories,
-  isCategoryPlpHref,
-  resolveCatalogCategoryChips,
-} from '@/lib/catalog-categories';
+  fetchCatalogCollections,
+  isCollectionHref,
+  resolveCatalogCollectionChips,
+} from '@/lib/catalog-collections';
 import { sanitizeArticleHtml } from '@/lib/article-html';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
 import { FaqAccordion } from '@/components/gift/faq-accordion';
@@ -1165,14 +1165,14 @@ async function DiscoveryChipsBlock({
 
   const itemsSource = String(props.itemsSource ?? 'manual');
   const looksLikeCategoryBlock =
-    itemsSource === 'catalogCategories' ||
+    itemsSource === 'catalogCollections' ||
     (manualItems.length > 0 &&
-      manualItems.every((i) => isCategoryPlpHref(i.href)) &&
-      /categor/i.test(String(props.title ?? 'Shop by category')));
+      manualItems.every((i) => isCollectionHref(i.href)) &&
+      /categor/i.test(String(props.title ?? 'Shop by collection')));
   let items = manualItems;
   if (looksLikeCategoryBlock) {
-    const cats = await fetchCatalogCategories();
-    items = resolveCatalogCategoryChips(cats, manualItems);
+    const cols = await fetchCatalogCollections();
+    items = resolveCatalogCollectionChips(cols, manualItems);
   }
   if (!items.length) return null;
 
@@ -1184,7 +1184,7 @@ async function DiscoveryChipsBlock({
     <>
       <GiftSectionHeader
         overline={props.overline ? String(props.overline) : home ? 'Browse the shop' : null}
-        title={props.title ? String(props.title) : asCards ? 'Shop by category' : 'Shop by moment'}
+        title={props.title ? String(props.title) : asCards ? 'Shop by collection' : 'Shop by moment'}
         subtitle={
           props.subtitle
             ? String(props.subtitle)

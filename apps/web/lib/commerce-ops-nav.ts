@@ -50,9 +50,9 @@ export const COMMERCE_OPS_NAV: OpsNavItem[] = [
     section: 'catalog',
   },
   {
-    id: 'categories',
-    label: 'Categories',
-    href: '/admin/commerce/categories',
+    id: 'collections',
+    label: 'Collections',
+    href: '/admin/commerce/collections',
     roles: ['COMMERCE_ADMIN'],
     match: 'prefix',
     section: 'catalog',
@@ -210,7 +210,7 @@ export function buildOpsBreadcrumbs(pathname: string): BreadcrumbCrumb[] {
   const labelMap: Record<string, string> = {
     orders: 'Orders',
     products: 'Products',
-    categories: 'Categories',
+    collections: 'Collections',
     inventory: 'Inventory',
     import: 'Import',
     customers: 'Customers',

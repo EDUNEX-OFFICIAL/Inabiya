@@ -130,29 +130,264 @@ async function main() {
     console.log(`Seeded user ${tu.email} → ${tu.roleCodes.join(',')}`);
   }
 
-  const categories = [
-    { slug: 'newborn', name: 'Newborn', description: 'Welcome baby essentials', sortOrder: 1 },
-    { slug: 'keepsakes', name: 'Keepsakes', description: 'Memory makers', sortOrder: 2 },
-    { slug: 'clothing', name: 'Clothing', description: 'Soft wear for tiny humans', sortOrder: 3 },
-    { slug: 'bath-skin', name: 'Bath & Skin', description: 'Gentle care', sortOrder: 4 },
-    { slug: 'toys', name: 'Toys', description: 'Playful gifts', sortOrder: 5 },
-    { slug: 'mom-care', name: 'Mom Care', description: 'For expecting & new moms', sortOrder: 6 },
+  const seedCollections: Array<{
+    slug: string;
+    title: string;
+    description: string;
+    overline: string;
+    heroImageUrl: string;
+    heroImageAlt: string;
+    accent: string;
+    sortOrder: number;
+    lockedLabel: string;
+    relatedSlugs: string[];
+    rules: Record<string, unknown>;
+  }> = [
+    {
+      slug: 'for-baby-girl',
+      title: 'Gifts for baby girl',
+      description: 'Blush ribbons, gentle pastels, and unisex-safe picks for her.',
+      overline: 'Shop by baby',
+      heroImageUrl: '/gift/media/baby-girl-soft.jpg',
+      heroImageAlt: 'Baby girl with soft toys',
+      accent: 'pink',
+      sortOrder: 1,
+      lockedLabel: 'Baby girl',
+      relatedSlugs: ['for-baby-boy', 'unisex-gifts', 'newborn'],
+      rules: { recipient: 'girl', hideFacets: ['recipient'] },
+    },
+    {
+      slug: 'for-baby-boy',
+      title: 'Gifts for baby boy',
+      description: 'Sky ribbons, soft brights, and unisex-safe picks for him.',
+      overline: 'Shop by baby',
+      heroImageUrl: '/gift/media/train-toy.jpg',
+      heroImageAlt: 'Wooden train set for little boys',
+      accent: 'sky',
+      sortOrder: 2,
+      lockedLabel: 'Baby boy',
+      relatedSlugs: ['for-baby-girl', 'unisex-gifts', 'newborn'],
+      rules: { recipient: 'boy', hideFacets: ['recipient'] },
+    },
+    {
+      slug: 'for-expecting-mom',
+      title: 'For expecting & new moms',
+      description: 'Calm kits, care oils, and thoughtful gifts for her too.',
+      overline: 'Shop by baby',
+      heroImageUrl: '/gift/media/baby-mom.jpg',
+      heroImageAlt: 'Care gifts for new moms',
+      accent: 'neutral',
+      sortOrder: 3,
+      lockedLabel: 'Expecting mom',
+      relatedSlugs: ['baby-shower', 'welcome-baby', 'ready-hampers'],
+      rules: { recipient: 'mom', hideFacets: ['recipient'] },
+    },
+    {
+      slug: 'unisex-gifts',
+      title: 'Unisex baby gifts',
+      description: 'Gender-neutral essentials that work for any little one.',
+      overline: 'Shop by baby',
+      heroImageUrl: '/gift/media/personalised-name-blanket.webp',
+      heroImageAlt: 'Unisex baby keepsakes',
+      accent: 'neutral',
+      sortOrder: 4,
+      lockedLabel: 'Unisex',
+      relatedSlugs: ['for-baby-girl', 'for-baby-boy', 'newborn'],
+      rules: { recipient: 'unisex', hideFacets: ['recipient'] },
+    },
+    {
+      slug: 'welcome-baby',
+      title: 'Welcome baby gifts',
+      description: 'First-hello hampers and soft essentials for the newborn days.',
+      overline: 'Shop by occasion',
+      heroImageUrl: '/gift/media/baby-boy-soft.jpg',
+      heroImageAlt: 'Welcome baby',
+      accent: 'pink',
+      sortOrder: 5,
+      lockedLabel: 'Welcome baby',
+      relatedSlugs: ['baby-shower', 'newborn', 'ready-hampers'],
+      rules: { occasion: 'welcome-baby', hideFacets: ['occasion'] },
+    },
+    {
+      slug: 'baby-shower',
+      title: 'Baby shower gifts',
+      description: 'Celebrate the bump with ready-to-gift sets and keepsakes.',
+      overline: 'Shop by occasion',
+      heroImageUrl: '/gift/media/baby-girl-soft.jpg',
+      heroImageAlt: 'Baby shower',
+      accent: 'pink',
+      sortOrder: 6,
+      lockedLabel: 'Baby shower',
+      relatedSlugs: ['welcome-baby', 'for-expecting-mom', 'naming-ceremony'],
+      rules: { occasion: 'baby-shower', hideFacets: ['occasion'] },
+    },
+    {
+      slug: 'naming-ceremony',
+      title: 'Naming ceremony gifts',
+      description: 'Personalised blankets, memory cards, and celebration-ready picks.',
+      overline: 'Shop by occasion',
+      heroImageUrl: '/gift/media/personalised-name-blanket.webp',
+      heroImageAlt: 'Naming ceremony',
+      accent: 'neutral',
+      sortOrder: 7,
+      lockedLabel: 'Naming',
+      relatedSlugs: ['welcome-baby', 'first-birthday', 'unisex-gifts'],
+      rules: { occasion: 'naming', hideFacets: ['occasion'] },
+    },
+    {
+      slug: 'first-birthday',
+      title: 'First birthday gifts',
+      description: 'Toys, soft wear, and keepsakes for turning one.',
+      overline: 'Shop by occasion',
+      heroImageUrl: '/gift/media/train-toy.jpg',
+      heroImageAlt: 'Birthday',
+      accent: 'sky',
+      sortOrder: 8,
+      lockedLabel: 'Birthday',
+      relatedSlugs: ['toddler', 'infant', 'bestsellers'],
+      rules: { occasion: 'birthday', hideFacets: ['occasion'] },
+    },
+    {
+      slug: 'newborn',
+      title: 'Newborn essentials',
+      description: 'Gentle, newborn-safe gifts for the first weeks.',
+      overline: 'Shop by age',
+      heroImageUrl: '/gift/media/baby-boy-soft.jpg',
+      heroImageAlt: 'Newborn',
+      accent: 'pink',
+      sortOrder: 9,
+      lockedLabel: 'Newborn',
+      relatedSlugs: ['infant', 'welcome-baby', 'ready-hampers'],
+      rules: { age: 'newborn', hideFacets: ['age'] },
+    },
+    {
+      slug: 'infant',
+      title: 'Infant gifts',
+      description: 'Playful and practical picks for the infant months.',
+      overline: 'Shop by age',
+      heroImageUrl: '/gift/media/baby-girl-soft.jpg',
+      heroImageAlt: 'Infant',
+      accent: 'neutral',
+      sortOrder: 10,
+      lockedLabel: 'Infant',
+      relatedSlugs: ['newborn', 'toddler', 'first-birthday'],
+      rules: { age: 'infant', hideFacets: ['age'] },
+    },
+    {
+      slug: 'toddler',
+      title: 'Toddler gifts',
+      description: 'Curious toys and soft wear for toddling explorers.',
+      overline: 'Shop by age',
+      heroImageUrl: '/gift/media/train-toy.jpg',
+      heroImageAlt: 'Toddler',
+      accent: 'sky',
+      sortOrder: 11,
+      lockedLabel: 'Toddler',
+      relatedSlugs: ['infant', 'first-birthday', 'bestsellers'],
+      rules: { age: 'toddler', hideFacets: ['age'] },
+    },
+    {
+      slug: 'ready-hampers',
+      title: 'Ready-made hampers',
+      description: 'Pre-styled gift sets — ready when you need them.',
+      overline: 'Curated',
+      heroImageUrl: '/gift/media/baby-soft-gift.jpg',
+      heroImageAlt: 'Ready-made hamper',
+      accent: 'neutral',
+      sortOrder: 12,
+      lockedLabel: 'Hampers',
+      relatedSlugs: ['bestsellers', 'welcome-baby', 'for-expecting-mom'],
+      rules: { hamper: '1', hideFacets: ['hamper'] },
+    },
+    {
+      slug: 'bestsellers',
+      title: 'Best sellers',
+      description: 'The gifts families reorder and recommend.',
+      overline: 'Curated',
+      heroImageUrl: '/gift/media/baby-cues.jpg',
+      heroImageAlt: 'Best sellers',
+      accent: 'pink',
+      sortOrder: 13,
+      lockedLabel: 'Best sellers',
+      relatedSlugs: ['editors-picks', 'new-arrivals', 'ready-hampers'],
+      rules: { storefrontLabel: 'BESTSELLER' },
+    },
+    {
+      slug: 'editors-picks',
+      title: "Editor's picks",
+      description: 'Hand-chosen favourites from the Soft Gift edit.',
+      overline: 'Curated',
+      heroImageUrl: '/gift/media/personalised-name-blanket.webp',
+      heroImageAlt: "Editor's picks",
+      accent: 'neutral',
+      sortOrder: 14,
+      lockedLabel: "Editor's picks",
+      relatedSlugs: ['bestsellers', 'new-arrivals', 'unisex-gifts'],
+      rules: { storefrontLabel: 'EDITORS_PICK' },
+    },
+    {
+      slug: 'new-arrivals',
+      title: 'New arrivals',
+      description: 'Fresh finds for the nursery and the gift pile.',
+      overline: 'Curated',
+      heroImageUrl: '/gift/media/baby-soft-gift.jpg',
+      heroImageAlt: 'New arrivals',
+      accent: 'sky',
+      sortOrder: 15,
+      lockedLabel: 'New arrivals',
+      relatedSlugs: ['bestsellers', 'on-sale', 'ready-hampers'],
+      rules: { sort: 'newest' },
+    },
+    {
+      slug: 'on-sale',
+      title: 'On sale',
+      description: 'Limited-time soft savings on thoughtful gifts.',
+      overline: 'Curated',
+      heroImageUrl: '/gift/media/baby-cues.jpg',
+      heroImageAlt: 'On sale',
+      accent: 'pink',
+      sortOrder: 16,
+      lockedLabel: 'On sale',
+      relatedSlugs: ['bestsellers', 'ready-hampers', 'new-arrivals'],
+      rules: { onSale: '1', hideFacets: ['onSale'] },
+    },
   ];
-  for (const c of categories) {
-    await prisma.category.upsert({
+
+  for (const c of seedCollections) {
+    await prisma.collection.upsert({
       where: { slug: c.slug },
-      update: { name: c.name, description: c.description, sortOrder: c.sortOrder },
-      create: c,
+      update: {
+        title: c.title,
+        description: c.description,
+        overline: c.overline,
+        heroImageUrl: c.heroImageUrl,
+        heroImageAlt: c.heroImageAlt,
+        accent: c.accent,
+        sortOrder: c.sortOrder,
+        status: 'PUBLISHED',
+        membershipMode: 'RULES',
+        rules: c.rules,
+        relatedSlugs: c.relatedSlugs,
+        lockedLabel: c.lockedLabel,
+      },
+      create: {
+        slug: c.slug,
+        title: c.title,
+        description: c.description,
+        overline: c.overline,
+        heroImageUrl: c.heroImageUrl,
+        heroImageAlt: c.heroImageAlt,
+        accent: c.accent,
+        sortOrder: c.sortOrder,
+        status: 'PUBLISHED',
+        membershipMode: 'RULES',
+        rules: c.rules,
+        relatedSlugs: c.relatedSlugs,
+        lockedLabel: c.lockedLabel,
+      },
     });
   }
-  console.log(`Seeded ${categories.length} categories`);
-
-  const newborn = await prisma.category.findUniqueOrThrow({ where: { slug: 'newborn' } });
-  const keepsakes = await prisma.category.findUniqueOrThrow({ where: { slug: 'keepsakes' } });
-  const clothing = await prisma.category.findUniqueOrThrow({ where: { slug: 'clothing' } });
-  const toys = await prisma.category.findUniqueOrThrow({ where: { slug: 'toys' } });
-  const momCare = await prisma.category.findUniqueOrThrow({ where: { slug: 'mom-care' } });
-  const bathSkin = await prisma.category.findUniqueOrThrow({ where: { slug: 'bath-skin' } });
+  console.log(`Seeded ${seedCollections.length} RULES collections`);
 
   /** Curated Soft Gift media under /gift/media (verified relevant — avoid random Unsplash IDs). */
   const media = {
@@ -180,7 +415,6 @@ async function main() {
     pricePaise: number;
     compareAtPricePaise?: number;
     onHand: number;
-    categoryId: string;
     imageUrl: string;
     /** Extra gallery images (beyond primary imageUrl) for multi-thumb PDP demo. */
     galleryUrls?: string[];
@@ -190,7 +424,6 @@ async function main() {
     isReadyMadeHamper: boolean;
     brandName: string;
     storefrontLabels: string[];
-    extraCategoryIds?: string[];
     publishedAt: Date;
     hamperItems?: Array<{
       title: string;
@@ -210,7 +443,6 @@ async function main() {
       label: 'Standard',
       pricePaise: 129900,
       onHand: 25,
-      categoryId: newborn.id,
       imageUrl: media.clothes,
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn'],
@@ -229,7 +461,6 @@ async function main() {
       pricePaise: 249900,
       compareAtPricePaise: 499800,
       onHand: 15,
-      categoryId: keepsakes.id,
       imageUrl: media.blanket,
       recipientTags: ['girl', 'unisex'],
       ageBands: ['newborn', 'infant'],
@@ -247,7 +478,6 @@ async function main() {
       label: 'Set of 3',
       pricePaise: 89900,
       onHand: 4,
-      categoryId: toys.id,
       imageUrl: media.rattle,
       recipientTags: ['boy', 'unisex'],
       ageBands: ['infant', 'toddler'],
@@ -265,7 +495,6 @@ async function main() {
       label: 'Classic',
       pricePaise: 399900,
       onHand: 12,
-      categoryId: newborn.id,
       imageUrl: media.hamper,
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn'],
@@ -273,7 +502,6 @@ async function main() {
       isReadyMadeHamper: true,
       brandName: 'Inabiya',
       storefrontLabels: ['GIFT_SET', 'BESTSELLER'],
-      extraCategoryIds: [clothing.id],
       publishedAt: daysAgo(50),
       hamperItems: [
         {
@@ -339,7 +567,6 @@ async function main() {
       pricePaise: 179900,
       compareAtPricePaise: 229900,
       onHand: 20,
-      categoryId: momCare.id,
       imageUrl: media.mom,
       recipientTags: ['mom'],
       ageBands: ['any'],
@@ -381,7 +608,6 @@ async function main() {
       pricePaise: 159900,
       compareAtPricePaise: 199900,
       onHand: 30,
-      categoryId: clothing.id,
       imageUrl: media.clothes,
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn', 'infant'],
@@ -399,7 +625,6 @@ async function main() {
       label: 'Default',
       pricePaise: 149900,
       onHand: 18,
-      categoryId: keepsakes.id,
       imageUrl: media.cues,
       recipientTags: ['unisex'],
       ageBands: ['newborn', 'infant', 'toddler'],
@@ -418,7 +643,6 @@ async function main() {
       pricePaise: 99900,
       compareAtPricePaise: 129900,
       onHand: 40,
-      categoryId: bathSkin.id,
       imageUrl: media.hamper,
       galleryUrls: [media.cues, media.mom],
       recipientTags: ['girl', 'boy', 'unisex'],
@@ -444,7 +668,6 @@ async function main() {
       label: '12 pcs',
       pricePaise: 119900,
       onHand: 22,
-      categoryId: toys.id,
       imageUrl: media.blocks,
       recipientTags: ['boy', 'unisex'],
       ageBands: ['infant', 'toddler'],
@@ -462,7 +685,6 @@ async function main() {
       label: '0–3M',
       pricePaise: 109900,
       onHand: 16,
-      categoryId: clothing.id,
       imageUrl: media.girl,
       recipientTags: ['girl'],
       ageBands: ['newborn', 'infant'],
@@ -480,7 +702,6 @@ async function main() {
       label: 'Deck',
       pricePaise: 79900,
       onHand: 35,
-      categoryId: keepsakes.id,
       imageUrl: media.blanket,
       recipientTags: ['unisex'],
       ageBands: ['newborn', 'infant'],
@@ -498,7 +719,6 @@ async function main() {
       label: 'Comfort',
       pricePaise: 349900,
       onHand: 10,
-      categoryId: momCare.id,
       imageUrl: media.mom,
       recipientTags: ['mom'],
       ageBands: ['any'],
@@ -548,7 +768,6 @@ async function main() {
       pricePaise: 219900,
       compareAtPricePaise: 279900,
       onHand: 14,
-      categoryId: newborn.id,
       imageUrl: media.train,
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn', 'infant'],
@@ -566,7 +785,6 @@ async function main() {
       label: 'Pair',
       pricePaise: 59900,
       onHand: 50,
-      categoryId: clothing.id,
       imageUrl: media.feet,
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn', 'infant'],
@@ -584,7 +802,6 @@ async function main() {
       label: 'Naming',
       pricePaise: 449900,
       onHand: 8,
-      categoryId: keepsakes.id,
       imageUrl: media.hamper,
       recipientTags: ['girl', 'boy', 'unisex'],
       ageBands: ['newborn'],
@@ -592,7 +809,6 @@ async function main() {
       isReadyMadeHamper: true,
       brandName: 'Inabiya',
       storefrontLabels: ['GIFT_SET', 'EDITORS_PICK'],
-      extraCategoryIds: [newborn.id],
       publishedAt: daysAgo(8),
       hamperItems: [
         {
@@ -666,19 +882,6 @@ async function main() {
         seoSections: dp.seoSections ?? undefined,
       },
     });
-
-    await prisma.productCategory.upsert({
-      where: { productId_categoryId: { productId: product.id, categoryId: dp.categoryId } },
-      update: {},
-      create: { productId: product.id, categoryId: dp.categoryId },
-    });
-    for (const extraId of dp.extraCategoryIds ?? []) {
-      await prisma.productCategory.upsert({
-        where: { productId_categoryId: { productId: product.id, categoryId: extraId } },
-        update: {},
-        create: { productId: product.id, categoryId: extraId },
-      });
-    }
 
     const variant = await prisma.productVariant.upsert({
       where: { sku: dp.sku },
@@ -1011,44 +1214,44 @@ async function main() {
       type: 'discoveryChips',
       sortOrder: 7,
       props: {
-        title: 'Shop by category',
+        title: 'Shop by collection',
         seeAllHref: '/gift/products',
         seeAllLabel: 'See all',
-        itemsSource: 'catalogCategories',
+        itemsSource: 'catalogCollections',
         items: [
           {
             label: 'Clothing',
-            href: '/gift/products?category=clothing',
+            href: '/gift/collections/for-baby-girl',
             imageUrl: media.clothes,
             imageAlt: 'Baby clothing',
           },
           {
             label: 'Bath & Skin',
-            href: '/gift/products?category=bath-skin',
+            href: '/gift/collections/ready-hampers',
             imageUrl: media.cues,
             imageAlt: 'Nursery bath and soft care',
           },
           {
             label: 'Toys',
-            href: '/gift/products?category=toys',
+            href: '/gift/collections/first-birthday',
             imageUrl: media.train,
             imageAlt: 'Wooden train toys',
           },
           {
             label: 'Mom Care',
-            href: '/gift/products?category=mom-care',
+            href: '/gift/collections/for-expecting-mom',
             imageUrl: media.mom,
             imageAlt: 'Care gifts for new moms',
           },
           {
             label: 'Keepsakes',
-            href: '/gift/products?category=keepsakes',
+            href: '/gift/collections/unisex-gifts',
             imageUrl: media.blanket,
             imageAlt: 'Keepsakes',
           },
           {
             label: 'Newborn',
-            href: '/gift/products?category=newborn',
+            href: '/gift/collections/newborn',
             imageUrl: media.feet,
             imageAlt: 'Newborn essentials',
           },

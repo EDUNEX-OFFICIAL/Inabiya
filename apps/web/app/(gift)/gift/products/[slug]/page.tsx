@@ -285,7 +285,8 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     return <PdpSkeleton />;
   }
 
-  const primaryCategory = product.categories[0];
+  const primaryCollection = product.collections[0];
+
   const inStock = Boolean(variant && variant.available > 0);
   const showOptionalToggle = optionalPersonalization.length > 0;
 
@@ -303,13 +304,14 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
         <span aria-hidden className="shrink-0">
           /
         </span>
-        {primaryCategory ? (
+        {primaryCollection ? (
           <>
             <Link
-              href={`/gift/products?category=${primaryCategory.slug}`}
+              href={`/gift/collections/${primaryCollection.slug}`}
               className="gift-link max-w-[40vw] truncate sm:max-w-none"
             >
-              {primaryCategory.name}
+              {primaryCollection.title}
+
             </Link>
             <span aria-hidden className="shrink-0">
               /
@@ -611,7 +613,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
       <RelatedProducts
         slug={product.slug}
-        categorySlug={primaryCategory?.slug}
+        collectionSlug={primaryCollection?.slug}
         recipient={product.recipientTags?.[0]}
       />
 
@@ -771,8 +773,8 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
   };
 
   const tags: Array<{ href: string; label: string }> = [];
-  for (const c of product.categories) {
-    tags.push({ href: `/gift/products?category=${c.slug}`, label: c.name });
+  for (const c of product.collections) {
+    tags.push({ href: `/gift/collections/${c.slug}`, label: c.title });
   }
   for (const t of product.recipientTags ?? []) {
     tags.push({
@@ -862,11 +864,11 @@ async function fetchRelatedCandidates(qs: URLSearchParams): Promise<CatalogProdu
 
 function RelatedProducts({
   slug,
-  categorySlug,
+  collectionSlug,
   recipient,
 }: {
   slug: string;
-  categorySlug?: string;
+  collectionSlug?: string;
   recipient?: string;
 }) {
   const [items, setItems] = useState<CatalogProduct[]>([]);
@@ -878,8 +880,8 @@ function RelatedProducts({
       const exclude = (list: CatalogProduct[]) => list.filter((p) => p.slug !== slug).slice(0, 4);
 
       const attempts: URLSearchParams[] = [];
-      if (categorySlug) {
-        attempts.push(new URLSearchParams({ sort: 'newest', category: categorySlug }));
+      if (collectionSlug) {
+        attempts.push(new URLSearchParams({ sort: 'newest', collection: collectionSlug }));
       }
       if (recipient) {
         attempts.push(new URLSearchParams({ sort: 'newest', recipient }));
@@ -904,7 +906,7 @@ function RelatedProducts({
     return () => {
       cancelled = true;
     };
-  }, [slug, categorySlug, recipient]);
+  }, [slug, collectionSlug, recipient]);
 
   if (items.length === 0) return null;
 
@@ -912,9 +914,9 @@ function RelatedProducts({
     <section>
       <div className="flex flex-wrap items-end justify-between gap-gs-3">
         <h2 className="gift-h2">You may also like</h2>
-        {categorySlug ? (
-          <Link href={`/gift/products?category=${categorySlug}`} className="gift-link text-body">
-            Browse category
+        {collectionSlug ? (
+          <Link href={`/gift/collections/${collectionSlug}`} className="gift-link text-body">
+            Browse collection
           </Link>
         ) : (
           <Link href="/gift/products" className="gift-link text-body">

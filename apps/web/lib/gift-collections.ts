@@ -267,13 +267,7 @@ export function allGiftCollectionSlugs(): string[] {
   return GIFT_COLLECTIONS.map((c) => c.slug);
 }
 
-export const COLLECTION_CATEGORIES = [
-  { value: 'clothing', label: 'Clothing' },
-  { value: 'bath-skin', label: 'Bath & Skin' },
-  { value: 'toys', label: 'Toys' },
-  { value: 'mom-care', label: 'Mom Care' },
-  { value: 'keepsakes', label: 'Keepsakes' },
-] as const;
+export const COLLECTION_CATEGORIES = [] as const;
 
 /** Offline fallback for chip labels when live catalog is unavailable. */
 
@@ -312,20 +306,19 @@ export type CollectionRefine = {
   recipient?: string;
   age?: string;
   occasion?: string;
-  category?: string;
   hamper?: string;
   onSale?: string;
   maxPricePaise?: string;
   sort?: string;
 };
 
-/** Merge collection base with URL refine; base keys always win. */
+/** Merge collection identity with URL refine. API resolves RULES/MANUAL via `collection` slug. */
 export function mergeCollectionCatalogQuery(
-  collection: GiftCollection,
+  collection: { slug: string; baseFilters: CollectionBaseFilters },
   refine: CollectionRefine,
 ): Record<string, string> {
   const base = collection.baseFilters;
-  const out: Record<string, string> = {};
+  const out: Record<string, string> = { collection: collection.slug };
 
   const sort =
     refine.sort && COLLECTION_SORTS.some((s) => s.value === refine.sort)
@@ -333,13 +326,11 @@ export function mergeCollectionCatalogQuery(
       : base.sort ?? 'newest';
   out.sort = sort;
 
-  const recipient = base.recipient ?? refine.recipient;
-  const age = base.age ?? refine.age;
-  const occasion = base.occasion ?? refine.occasion;
-  const hamper = base.hamper ?? refine.hamper;
-  const onSale = base.onSale ?? refine.onSale;
-  const storefrontLabel = base.storefrontLabel;
-  const category = refine.category;
+  const recipient = base.recipient ? undefined : refine.recipient;
+  const age = base.age ? undefined : refine.age;
+  const occasion = base.occasion ? undefined : refine.occasion;
+  const hamper = base.hamper ? undefined : refine.hamper;
+  const onSale = base.onSale ? undefined : refine.onSale;
   const maxPricePaise = refine.maxPricePaise;
 
   if (recipient) out.recipient = recipient;
@@ -347,8 +338,6 @@ export function mergeCollectionCatalogQuery(
   if (occasion) out.occasion = occasion;
   if (hamper) out.hamper = hamper;
   if (onSale) out.onSale = onSale;
-  if (storefrontLabel) out.storefrontLabel = storefrontLabel;
-  if (category) out.category = category;
   if (maxPricePaise) out.maxPricePaise = maxPricePaise;
 
   return out;
@@ -356,7 +345,7 @@ export function mergeCollectionCatalogQuery(
 
 /** Refine-only params for building collection URLs (excludes locked base keys). */
 export function refineParamsForUrl(
-  collection: GiftCollection,
+  collection: { baseFilters: CollectionBaseFilters },
   refine: CollectionRefine,
 ): Record<string, string | undefined> {
   const base = collection.baseFilters;
@@ -366,7 +355,6 @@ export function refineParamsForUrl(
     occasion: base.occasion ? undefined : refine.occasion,
     hamper: base.hamper ? undefined : refine.hamper,
     onSale: base.onSale ? undefined : refine.onSale,
-    category: refine.category,
     maxPricePaise: refine.maxPricePaise,
     sort: refine.sort && refine.sort !== (base.sort ?? 'newest') ? refine.sort : undefined,
   };
@@ -409,11 +397,6 @@ export function listActiveRefineChips(
   const without = (patch: Partial<CollectionRefine>) =>
     collectionHref(collection.slug, refineParamsForUrl(collection, { ...refine, ...patch }));
 
-  if (refine.category) {
-    const label =
-      COLLECTION_CATEGORIES.find((c) => c.value === refine.category)?.label ?? refine.category;
-    chips.push({ key: 'category', label, clearHref: without({ category: undefined }) });
-  }
   if (refine.age && !collection.baseFilters.age) {
     const label = COLLECTION_AGES.find((a) => a.value === refine.age)?.label ?? refine.age;
     chips.push({ key: 'age', label: `Age: ${label}`, clearHref: without({ age: undefined }) });

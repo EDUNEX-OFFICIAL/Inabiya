@@ -14,17 +14,17 @@ import {
   bulkProductsBodySchema,
   adminCatalogListQuerySchema,
   catalogListQuerySchema,
-  createCategoryBodySchema,
+  createCollectionBodySchema,
   createProductBodySchema,
-  updateCategoryBodySchema,
+  updateCollectionBodySchema,
   updateInventoryBodySchema,
   updateProductBodySchema,
   updateVariantBodySchema,
   type AdminCatalogListQuery,
   type BulkProductsBody,
-  type CreateCategoryBody,
+  type CreateCollectionBody,
   type CreateProductBody,
-  type UpdateCategoryBody,
+  type UpdateCollectionBody,
   type UpdateProductBody,
   type UpdateVariantBody,
 } from '@inabiya/validation';
@@ -39,9 +39,14 @@ import { CatalogService } from './catalog.service';
 export class CatalogPublicController {
   constructor(private readonly catalog: CatalogService) {}
 
-  @Get('categories')
-  listCategories() {
-    return this.catalog.listCategories();
+  @Get('collections')
+  listCollections() {
+    return this.catalog.listCollections();
+  }
+
+  @Get('collections/:slug')
+  getCollection(@Param('slug') slug: string) {
+    return this.catalog.getPublishedCollectionBySlug(slug);
   }
 
   @Get('products')
@@ -49,7 +54,7 @@ export class CatalogPublicController {
     @Query(new ZodValidationPipe(catalogListQuerySchema))
     query: {
       q?: string;
-      category?: string;
+      collection?: string;
       recipient?: string;
       age?: string;
       occasion?: string;
@@ -160,38 +165,43 @@ export class CatalogAdminController {
     return this.catalog.updateVariant(variantId, body, user.id, String(req.id ?? ''));
   }
 
-  @Get('categories')
-  listCategories() {
-    return this.catalog.listAdminCategories();
+  @Get('collections')
+  listCollections() {
+    return this.catalog.listAdminCollections();
   }
 
-  @Post('categories')
-  createCategory(
-    @Body(new ZodValidationPipe(createCategoryBodySchema))
-    body: CreateCategoryBody,
+  @Get('collections/:id')
+  getCollection(@Param('id') id: string) {
+    return this.catalog.getAdminCollection(id);
+  }
+
+  @Post('collections')
+  createCollection(
+    @Body(new ZodValidationPipe(createCollectionBodySchema))
+    body: CreateCollectionBody,
     @CurrentUser() user: { id: string },
     @Req() req: AuthedRequest,
   ) {
-    return this.catalog.createCategory(body, user.id, String(req.id ?? ''));
+    return this.catalog.createCollection(body, user.id, String(req.id ?? ''));
   }
 
-  @Patch('categories/:id')
-  updateCategory(
+  @Patch('collections/:id')
+  updateCollection(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(updateCategoryBodySchema))
-    body: UpdateCategoryBody,
+    @Body(new ZodValidationPipe(updateCollectionBodySchema))
+    body: UpdateCollectionBody,
     @CurrentUser() user: { id: string },
     @Req() req: AuthedRequest,
   ) {
-    return this.catalog.updateCategory(id, body, user.id, String(req.id ?? ''));
+    return this.catalog.updateCollection(id, body, user.id, String(req.id ?? ''));
   }
 
-  @Delete('categories/:id')
-  deleteCategory(
+  @Delete('collections/:id')
+  deleteCollection(
     @Param('id') id: string,
     @CurrentUser() user: { id: string },
     @Req() req: AuthedRequest,
   ) {
-    return this.catalog.deleteCategory(id, user.id, String(req.id ?? ''));
+    return this.catalog.deleteCollection(id, user.id, String(req.id ?? ''));
   }
 }

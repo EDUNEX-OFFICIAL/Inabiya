@@ -151,25 +151,25 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
   },
   discoveryChips: {
     overline: '',
-    title: 'Shop by category',
+    title: 'Shop by collection',
     subtitle: '',
     seeAllHref: '/gift/products',
     seeAllLabel: 'See all',
-    itemsSource: 'catalogCategories',
+    itemsSource: 'catalogCollections',
     items:
-      'Clothing | /gift/products?category=clothing | /gift/media/baby-clothes.jpg | Clothing\nBath & Skin | /gift/products?category=bath-skin | /gift/media/baby-cues.jpg | Bath\nToys | /gift/products?category=toys | /gift/media/train-toy.jpg | Toys\nMom Care | /gift/products?category=mom-care | /gift/media/baby-mom.jpg | Mom care',
+      'Baby girl | /gift/collections/for-baby-girl | /gift/media/baby-clothes.jpg | Baby girl\nReady hampers | /gift/collections/ready-hampers | /gift/media/baby-cues.jpg | Hampers\nBirthday | /gift/collections/first-birthday | /gift/media/train-toy.jpg | Birthday\nMom | /gift/collections/for-expecting-mom | /gift/media/baby-mom.jpg | Mom',
   },
   buildYourBoxTeaser: {
     overline: '6-step gift builder',
     title: 'Customise a box just for them.',
-    body: 'Choose recipient, age, occasion, budget and categories — we curate a perfect box that never goes over budget.',
+    body: 'Choose recipient, age, occasion, budget and collections — we curate a perfect box that never goes over budget.',
     ctaLabel: 'Build Your Box',
     ctaHref: '/gift/build-your-box',
     imageUrl: '',
     imageAlt: '',
     imageFit: 'contain',
     steps:
-      'Who is it for? | Girl, boy, mom, or unisex\nBaby age | Newborn to toddler\nOccasion | Shower, naming, birthday\nBudget | Stay on budget\nCategories | Clothing, toys, care\nYour box | Review and checkout',
+      'Who is it for? | Girl, boy, mom, or unisex\nBaby age | Newborn to toddler\nOccasion | Shower, naming, birthday\nBudget | Stay on budget\nCollections | Soft Gift themes\nYour box | Review and checkout',
   },
   articleTeasers: {
     overline: 'Journal',
@@ -647,8 +647,9 @@ function toPayload(blocks: Block[]) {
           ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
           ...(b.props.seeAllHref ? { seeAllHref: b.props.seeAllHref } : {}),
           ...(b.props.seeAllLabel ? { seeAllLabel: b.props.seeAllLabel } : {}),
-          ...(b.props.itemsSource === 'catalogCategories'
-            ? { itemsSource: 'catalogCategories' }
+          ...(b.props.itemsSource === 'catalogCollections' ||
+          b.props.itemsSource === 'catalogCategories'
+            ? { itemsSource: 'catalogCollections' }
             : {}),
           items,
         },

@@ -22,11 +22,6 @@ import {
   type CollectionRefine,
   type GiftCollection,
 } from '@/lib/gift-collections';
-import {
-  categoriesToOptions,
-  fetchCatalogCategoriesClient,
-  type CategoryOption,
-} from '@/lib/catalog-categories';
 
 type Props = {
   collection: GiftCollection;
@@ -103,29 +98,6 @@ function FacetEditor({
 }) {
   const hide = new Set(collection.hideFacets);
   const set = (patch: Partial<CollectionRefine>) => onChange({ ...value, ...patch });
-  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetchCatalogCategoriesClient().then((rows) => {
-      if (cancelled) return;
-      const opts = categoriesToOptions(rows);
-      setCategoryOptions(
-        opts.length
-          ? opts
-          : [
-              { value: 'clothing', label: 'Clothing' },
-              { value: 'bath-skin', label: 'Bath & Skin' },
-              { value: 'toys', label: 'Toys' },
-              { value: 'mom-care', label: 'Mom Care' },
-              { value: 'keepsakes', label: 'Keepsakes' },
-            ],
-      );
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   return (
     <div className="flex flex-col gap-gs-1">
@@ -133,19 +105,6 @@ function FacetEditor({
         <p className="text-caption font-medium uppercase tracking-wide text-foreground/45">Browsing</p>
         <p className="mt-gs-1 text-body font-medium text-foreground">{collection.lockedLabel}</p>
       </div>
-
-      {!hide.has('category') ? (
-        <AccordionGroup title="Category" defaultOpen>
-          {categoryOptions.map((c) => (
-            <FacetOption
-              key={c.value}
-              label={c.label}
-              active={value.category === c.value}
-              onToggle={() => set({ category: toggleValue(value.category, c.value) })}
-            />
-          ))}
-        </AccordionGroup>
-      ) : null}
 
       {!hide.has('age') ? (
         <AccordionGroup title="Age band" defaultOpen>

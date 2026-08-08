@@ -372,7 +372,7 @@ export class CmsPagesService {
       ...(resolved.overline ? { overline: resolved.overline } : {}),
       ...(resolved.subtitle ? { subtitle: resolved.subtitle } : {}),
       ...(resolved.slugs.length ? { productSlugs: resolved.slugs } : {}),
-      ...(resolved.category ? { category: resolved.category } : {}),
+      ...(resolved.collection ? { collection: resolved.collection } : {}),
       ...(resolved.occasion ? { occasion: resolved.occasion } : {}),
       ...(resolved.age ? { age: resolved.age } : {}),
       ...(resolved.recipient ? { recipient: resolved.recipient } : {}),

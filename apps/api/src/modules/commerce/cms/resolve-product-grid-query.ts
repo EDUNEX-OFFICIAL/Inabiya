@@ -9,7 +9,7 @@ export type ProductGridSource =
   | 'on_sale';
 
 export type ProductGridListQuery = {
-  category?: string;
+  collection?: string;
   recipient?: string;
   age?: string;
   occasion?: string;
@@ -27,7 +27,7 @@ export type ProductGridResolution = {
   query: ProductGridListQuery;
   limit: number;
   newWithinDays?: number;
-  category?: string;
+  collection?: string;
   occasion?: string;
   age?: string;
   recipient?: string;
@@ -63,7 +63,7 @@ export function parseProductGridResolution(
   const title = str(props.title);
   const overline = str(props.overline);
   const subtitle = str(props.subtitle);
-  const category = str(props.category);
+  const collection = str(props.collection);
   const occasion = str(props.occasion);
   const age = str(props.age);
   const recipient = str(props.recipient);
@@ -99,7 +99,7 @@ export function parseProductGridResolution(
   const limit = limitRaw ?? (hamper ? 3 : 8);
 
   const baseFilters: ProductGridListQuery = {
-    ...(category ? { category } : {}),
+    ...(collection ? { collection } : {}),
     ...(occasion ? { occasion } : {}),
     ...(age ? { age } : {}),
     ...(recipient ? { recipient } : {}),
@@ -115,7 +115,7 @@ export function parseProductGridResolution(
       query: baseFilters,
       limit,
       ...(newWithinDays ? { newWithinDays } : {}),
-      ...(category ? { category } : {}),
+      ...(collection ? { collection } : {}),
       ...(occasion ? { occasion } : {}),
       ...(age ? { age } : {}),
       ...(recipient ? { recipient } : {}),
@@ -148,7 +148,7 @@ export function parseProductGridResolution(
     query,
     limit,
     ...(newWithinDays ? { newWithinDays } : {}),
-    ...(category ? { category } : {}),
+    ...(collection ? { collection } : {}),
     ...(occasion ? { occasion } : {}),
     ...(age ? { age } : {}),
     ...(recipient ? { recipient } : {}),

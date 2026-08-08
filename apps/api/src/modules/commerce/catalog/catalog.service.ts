@@ -7,9 +7,9 @@ import {
 import { Prisma, ProductStatus } from '@prisma/client';
 import type {
   AdminCatalogListQuery,
-  CreateCategoryBody,
+  CreateCollectionBody,
   CreateProductBody,
-  UpdateCategoryBody,
+  UpdateCollectionBody,
   UpdateProductBody,
   UpdateVariantBody,
 } from '@inabiya/validation';
@@ -29,7 +29,12 @@ import {
   titleKeysetAfter,
   type AdminListSort,
 } from './admin-catalog-cursor';
-import { categoryDeleteBlocked } from './category-ops';
+import { collectionDeleteBlocked } from './collection-ops';
+import {
+  applyCollectionRulesToWhere,
+  parseCollectionRules,
+  rulesDefaultSort,
+} from './collection-rules';
 import {
   isManualStorefrontLabel,
   resolveStorefrontDisplayLabels,
@@ -38,12 +43,12 @@ import { readSeoSchemaExtras, seoSchemaExtrasWriteValue } from '../../../common/
 const productInclude = {
   variants: { include: { inventory: true }, orderBy: { createdAt: 'asc' as const } },
   media: { orderBy: { sortOrder: 'asc' as const } },
-  categories: { include: { category: true } },
+  collections: { include: { collection: true } },
   personalizationOpts: { orderBy: { sortOrder: 'asc' as const } },
   hamperItems: { orderBy: { sortOrder: 'asc' as const } },
 } satisfies Prisma.ProductInclude;
 
-/** Desk list — no SEO/hamper/personalization/categories; one thumb + variants for stock/price. */
+/** Desk list — no SEO/hamper/personalization/collections; one thumb + variants for stock/price. */
 const adminListInclude = {
   variants: {
     select: {
@@ -75,145 +80,298 @@ export class CatalogService {
     private readonly policy: CommercePolicyService,
   ) {}
 
-  async listCategories() {
-    const rows = await this.prisma.category.findMany({
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+  async listCollections() {
+    const rows = await this.prisma.collection.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
     });
-    return rows.map((c) => ({
-      id: c.id,
-      slug: c.slug,
-      name: c.name,
-      description: c.description,
-    }));
+    return rows.map((c) => this.mapCollectionPublic(c));
   }
 
-  /** Admin desk — includes sortOrder + linked product count. */
-  async listAdminCategories() {
-    const rows = await this.prisma.category.findMany({
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+  async getPublishedCollectionBySlug(slug: string) {
+    const row = await this.prisma.collection.findFirst({
+      where: { slug, status: 'PUBLISHED' },
+    });
+    if (!row) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Collection not found.' });
+    }
+    return this.mapCollectionPublic(row);
+  }
+
+  /** Admin desk — includes sortOrder + MANUAL linked product count. */
+  async listAdminCollections() {
+    const rows = await this.prisma.collection.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
       include: { _count: { select: { products: true } } },
     });
-    return rows.map((c) => ({
-      id: c.id,
-      slug: c.slug,
-      name: c.name,
-      description: c.description,
-      sortOrder: c.sortOrder,
-      productCount: c._count.products,
-    }));
+    return rows.map((c) => this.mapCollectionAdmin(c));
   }
 
-  async createCategory(body: CreateCategoryBody, actorId: string, requestId?: string) {
-    try {
-      const row = await this.prisma.category.create({
-        data: {
-          slug: body.slug,
-          name: body.name,
-          description: body.description,
-          sortOrder: body.sortOrder ?? 0,
+  async getAdminCollection(id: string) {
+    const row = await this.prisma.collection.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { products: true } },
+        products: {
+          include: { product: { select: { id: true, slug: true, title: true } } },
+          orderBy: { sortOrder: 'asc' },
         },
+      },
+    });
+    if (!row) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Collection not found.' });
+    }
+    return {
+      ...this.mapCollectionAdmin(row),
+      products: row.products.map((pc) => ({
+        id: pc.product.id,
+        slug: pc.product.slug,
+        title: pc.product.title,
+        sortOrder: pc.sortOrder,
+      })),
+    };
+  }
+
+  async createCollection(body: CreateCollectionBody, actorId: string, requestId?: string) {
+    const mode = body.membershipMode ?? 'MANUAL';
+    if (mode === 'RULES' && body.productSlugs?.length) {
+      throw new BadRequestException({
+        code: 'INVALID_MEMBERSHIP',
+        message: 'RULES collections cannot assign productSlugs.',
+      });
+    }
+    try {
+      const row = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.collection.create({
+          data: {
+            slug: body.slug,
+            title: body.title,
+            description: body.description,
+            overline: body.overline,
+            heroImageUrl: body.heroImageUrl,
+            heroImageAlt: body.heroImageAlt,
+            accent: body.accent ?? 'neutral',
+            sortOrder: body.sortOrder ?? 0,
+            status: body.status ?? 'DRAFT',
+            membershipMode: mode,
+            rules: mode === 'RULES' ? (body.rules ?? {}) : Prisma.DbNull,
+            relatedSlugs: body.relatedSlugs ?? [],
+            lockedLabel: body.lockedLabel,
+          },
+        });
+        if (mode === 'MANUAL' && body.productSlugs?.length) {
+          await this.replaceManualProducts(tx, created.id, body.productSlugs);
+        }
+        return tx.collection.findUniqueOrThrow({
+          where: { id: created.id },
+          include: { _count: { select: { products: true } } },
+        });
       });
       await this.audit.write({
         actorId,
-        action: 'catalog.category.create',
-        resource: 'category',
+        action: 'catalog.collection.create',
+        resource: 'collection',
         resourceId: row.id,
         requestId,
       });
-      return {
-        id: row.id,
-        slug: row.slug,
-        name: row.name,
-        description: row.description,
-        sortOrder: row.sortOrder,
-        productCount: 0,
-      };
+      return this.mapCollectionAdmin(row);
     } catch (e) {
       if (typeof e === 'object' && e && 'code' in e && (e as { code: string }).code === 'P2002') {
         throw new ConflictException({
-          code: 'CATEGORY_SLUG_TAKEN',
-          message: 'A category with this slug already exists.',
+          code: 'COLLECTION_SLUG_TAKEN',
+          message: 'A collection with this slug already exists.',
         });
       }
       throw e;
     }
   }
 
-  async updateCategory(
+  async updateCollection(
     id: string,
-    body: UpdateCategoryBody,
+    body: UpdateCollectionBody,
     actorId: string,
     requestId?: string,
   ) {
-    const existing = await this.prisma.category.findUnique({ where: { id } });
+    const existing = await this.prisma.collection.findUnique({ where: { id } });
     if (!existing) {
-      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Category not found.' });
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Collection not found.' });
+    }
+    const nextMode = body.membershipMode ?? existing.membershipMode;
+    if (nextMode === 'RULES' && body.productSlugs?.length) {
+      throw new BadRequestException({
+        code: 'INVALID_MEMBERSHIP',
+        message: 'RULES collections cannot assign productSlugs.',
+      });
     }
     try {
-      const row = await this.prisma.category.update({
-        where: { id },
-        data: {
-          ...(body.slug !== undefined ? { slug: body.slug } : {}),
-          ...(body.name !== undefined ? { name: body.name } : {}),
-          ...(body.description !== undefined ? { description: body.description } : {}),
-          ...(body.sortOrder !== undefined ? { sortOrder: body.sortOrder } : {}),
-        },
-        include: { _count: { select: { products: true } } },
+      const row = await this.prisma.$transaction(async (tx) => {
+        const modeChanged =
+          body.membershipMode !== undefined && body.membershipMode !== existing.membershipMode;
+        if (modeChanged && body.membershipMode === 'RULES') {
+          await tx.productCollection.deleteMany({ where: { collectionId: id } });
+        }
+        await tx.collection.update({
+          where: { id },
+          data: {
+            ...(body.slug !== undefined ? { slug: body.slug } : {}),
+            ...(body.title !== undefined ? { title: body.title } : {}),
+            ...(body.description !== undefined ? { description: body.description } : {}),
+            ...(body.overline !== undefined ? { overline: body.overline } : {}),
+            ...(body.heroImageUrl !== undefined ? { heroImageUrl: body.heroImageUrl } : {}),
+            ...(body.heroImageAlt !== undefined ? { heroImageAlt: body.heroImageAlt } : {}),
+            ...(body.accent !== undefined ? { accent: body.accent } : {}),
+            ...(body.sortOrder !== undefined ? { sortOrder: body.sortOrder } : {}),
+            ...(body.status !== undefined ? { status: body.status } : {}),
+            ...(body.membershipMode !== undefined ? { membershipMode: body.membershipMode } : {}),
+            ...(body.rules !== undefined
+              ? { rules: nextMode === 'RULES' ? (body.rules ?? {}) : Prisma.DbNull }
+              : modeChanged && nextMode === 'MANUAL'
+                ? { rules: Prisma.DbNull }
+                : {}),
+            ...(body.relatedSlugs !== undefined ? { relatedSlugs: body.relatedSlugs } : {}),
+            ...(body.lockedLabel !== undefined ? { lockedLabel: body.lockedLabel } : {}),
+          },
+        });
+        if (nextMode === 'MANUAL' && body.productSlugs !== undefined) {
+          await this.replaceManualProducts(tx, id, body.productSlugs);
+        }
+        return tx.collection.findUniqueOrThrow({
+          where: { id },
+          include: { _count: { select: { products: true } } },
+        });
       });
       await this.audit.write({
         actorId,
-        action: 'catalog.category.update',
-        resource: 'category',
+        action: 'catalog.collection.update',
+        resource: 'collection',
         resourceId: row.id,
         requestId,
       });
-      return {
-        id: row.id,
-        slug: row.slug,
-        name: row.name,
-        description: row.description,
-        sortOrder: row.sortOrder,
-        productCount: row._count.products,
-      };
+      return this.mapCollectionAdmin(row);
     } catch (e) {
       if (typeof e === 'object' && e && 'code' in e && (e as { code: string }).code === 'P2002') {
         throw new ConflictException({
-          code: 'CATEGORY_SLUG_TAKEN',
-          message: 'A category with this slug already exists.',
+          code: 'COLLECTION_SLUG_TAKEN',
+          message: 'A collection with this slug already exists.',
         });
       }
       throw e;
     }
   }
 
-  async deleteCategory(id: string, actorId: string, requestId?: string) {
-    const existing = await this.prisma.category.findUnique({
+  async deleteCollection(id: string, actorId: string, requestId?: string) {
+    const existing = await this.prisma.collection.findUnique({
       where: { id },
       include: { _count: { select: { products: true } } },
     });
     if (!existing) {
-      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Category not found.' });
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Collection not found.' });
     }
-    if (categoryDeleteBlocked(existing._count.products)) {
+    if (collectionDeleteBlocked(existing.membershipMode, existing._count.products)) {
       throw new ConflictException({
-        code: 'CATEGORY_HAS_PRODUCTS',
-        message: 'Unassign products from this category before deleting.',
+        code: 'COLLECTION_HAS_PRODUCTS',
+        message: 'Unassign products from this collection before deleting.',
       });
     }
-    await this.prisma.category.delete({ where: { id } });
+    await this.prisma.collection.delete({ where: { id } });
     await this.audit.write({
       actorId,
-      action: 'catalog.category.delete',
-      resource: 'category',
+      action: 'catalog.collection.delete',
+      resource: 'collection',
       resourceId: id,
       requestId,
     });
     return { ok: true as const };
   }
 
+  private mapCollectionPublic(c: {
+    id: string;
+    slug: string;
+    title: string;
+    description: string | null;
+    overline: string | null;
+    heroImageUrl: string | null;
+    heroImageAlt: string | null;
+    accent: string;
+    sortOrder: number;
+    membershipMode: 'MANUAL' | 'RULES';
+    rules: unknown;
+    relatedSlugs: string[];
+    lockedLabel: string | null;
+  }) {
+    return {
+      id: c.id,
+      slug: c.slug,
+      title: c.title,
+      description: c.description,
+      overline: c.overline,
+      heroImageUrl: c.heroImageUrl,
+      heroImageAlt: c.heroImageAlt,
+      accent: c.accent,
+      sortOrder: c.sortOrder,
+      membershipMode: c.membershipMode,
+      rules: parseCollectionRules(c.rules),
+      relatedSlugs: c.relatedSlugs,
+      lockedLabel: c.lockedLabel,
+    };
+  }
+
+  private mapCollectionAdmin(
+    c: {
+      id: string;
+      slug: string;
+      title: string;
+      description: string | null;
+      overline: string | null;
+      heroImageUrl: string | null;
+      heroImageAlt: string | null;
+      accent: string;
+      sortOrder: number;
+      status: 'DRAFT' | 'PUBLISHED';
+      membershipMode: 'MANUAL' | 'RULES';
+      rules: unknown;
+      relatedSlugs: string[];
+      lockedLabel: string | null;
+      _count: { products: number };
+    },
+  ) {
+    return {
+      ...this.mapCollectionPublic(c),
+      status: c.status,
+      productCount: c._count.products,
+    };
+  }
+
+  private async replaceManualProducts(
+    tx: Prisma.TransactionClient,
+    collectionId: string,
+    productSlugs: string[],
+  ) {
+    await tx.productCollection.deleteMany({ where: { collectionId } });
+    if (!productSlugs.length) return;
+    const products = await tx.product.findMany({
+      where: { slug: { in: productSlugs } },
+      select: { id: true, slug: true },
+    });
+    if (products.length !== productSlugs.length) {
+      throw new BadRequestException({
+        code: 'PRODUCT_SLUGS_INVALID',
+        message: 'One or more product slugs were not found.',
+      });
+    }
+    const bySlug = new Map(products.map((p) => [p.slug, p.id]));
+    await tx.productCollection.createMany({
+      data: productSlugs.map((slug, i) => ({
+        collectionId,
+        productId: bySlug.get(slug)!,
+        sortOrder: i,
+      })),
+    });
+  }
+
   async listPublishedProducts(query: {
     q?: string;
-    category?: string;
+    collection?: string;
     recipient?: string;
     age?: string;
     occasion?: string;
@@ -224,7 +382,7 @@ export class CatalogService {
     publishedSince?: Date;
     maxPricePaise?: number;
   }) {
-    const where: Prisma.ProductWhereInput = {
+    let where: Prisma.ProductWhereInput = {
       status: ProductStatus.PUBLISHED,
       ...(query.q
         ? {
@@ -234,7 +392,6 @@ export class CatalogService {
             ],
           }
         : {}),
-      ...(query.category ? { categories: { some: { category: { slug: query.category } } } } : {}),
       ...(query.recipient === 'girl' || query.recipient === 'boy'
         ? { recipientTags: { hasSome: [query.recipient, 'unisex'] } }
         : query.recipient
@@ -258,6 +415,30 @@ export class CatalogService {
         : {}),
     };
 
+    let sort = query.sort;
+    if (query.collection) {
+      const col = await this.prisma.collection.findFirst({
+        where: { slug: query.collection, status: 'PUBLISHED' },
+      });
+      if (!col) {
+        return [];
+      }
+      if (col.membershipMode === 'MANUAL') {
+        where = {
+          ...where,
+          collections: { some: { collectionId: col.id } },
+        };
+      } else {
+        const rules = parseCollectionRules(col.rules);
+        where = applyCollectionRulesToWhere(where, rules);
+        if (!sort) sort = rulesDefaultSort(rules);
+        if (rules.onSale === '1' && query.onSale === undefined) {
+          // ensure onSale post-filter below
+          query = { ...query, onSale: true };
+        }
+      }
+    }
+
     const products = await this.prisma.product.findMany({
       where,
       include: productInclude,
@@ -276,9 +457,9 @@ export class CatalogService {
     if (query.maxPricePaise != null) {
       mapped = mapped.filter((p) => p.fromPricePaise <= query.maxPricePaise!);
     }
-    if (query.sort === 'price_asc') {
+    if (sort === 'price_asc') {
       mapped.sort((a, b) => a.fromPricePaise - b.fromPricePaise);
-    } else if (query.sort === 'price_desc') {
+    } else if (sort === 'price_desc') {
       mapped.sort((a, b) => b.fromPricePaise - a.fromPricePaise);
     }
     return mapped;
@@ -331,9 +512,9 @@ export class CatalogService {
       andParts.push({ occasionTags: { has: query.occasion } });
     }
 
-    if (query.category?.trim()) {
+    if (query.collection?.trim()) {
       andParts.push({
-        categories: { some: { category: { slug: query.category.trim() } } },
+        collections: { some: { collection: { slug: query.collection.trim() } } },
       });
     }
 
@@ -531,7 +712,7 @@ export class CatalogService {
   }
 
   async createProduct(body: CreateProductBody, actorId: string, requestId?: string) {
-    const categoryIds = await this.resolveCategoryIds(body.categorySlugs ?? []);
+    const collectionIds = await this.resolveManualCollectionIds(body.collectionSlugs ?? []);
 
     const product = await this.prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
@@ -551,8 +732,8 @@ export class CatalogService {
           ...(body.canonicalPath !== undefined ? { canonicalPath: body.canonicalPath } : {}),
           ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
           ...(body.robotsIndex !== undefined ? { robotsIndex: body.robotsIndex } : {}),
-          categories: {
-            create: categoryIds.map((categoryId) => ({ categoryId })),
+          collections: {
+            create: collectionIds.map((collectionId) => ({ collectionId })),
           },
           media: body.media?.length
             ? {
@@ -620,17 +801,17 @@ export class CatalogService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Product not found.' });
     }
 
-    const categoryIds =
-      body.categorySlugs !== undefined
-        ? await this.resolveCategoryIds(body.categorySlugs)
+    const collectionIds =
+      body.collectionSlugs !== undefined
+        ? await this.resolveManualCollectionIds(body.collectionSlugs)
         : undefined;
 
     const product = await this.prisma.$transaction(async (tx) => {
-      if (categoryIds !== undefined) {
-        await tx.productCategory.deleteMany({ where: { productId: id } });
-        if (categoryIds.length) {
-          await tx.productCategory.createMany({
-            data: categoryIds.map((categoryId) => ({ productId: id, categoryId })),
+      if (collectionIds !== undefined) {
+        await tx.productCollection.deleteMany({ where: { productId: id } });
+        if (collectionIds.length) {
+          await tx.productCollection.createMany({
+            data: collectionIds.map((collectionId) => ({ productId: id, collectionId })),
           });
         }
       }
@@ -847,16 +1028,18 @@ export class CatalogService {
     };
   }
 
-  private async resolveCategoryIds(slugs: string[]) {
+  private async resolveManualCollectionIds(slugs: string[]) {
     if (!slugs.length) return [];
-    const cats = await this.prisma.category.findMany({ where: { slug: { in: slugs } } });
-    if (cats.length !== slugs.length) {
+    const cols = await this.prisma.collection.findMany({
+      where: { slug: { in: slugs }, membershipMode: 'MANUAL' },
+    });
+    if (cols.length !== slugs.length) {
       throw new BadRequestException({
-        code: 'INVALID_CATEGORY',
-        message: 'One or more category slugs were not found.',
+        code: 'INVALID_COLLECTION',
+        message: 'One or more collection slugs were not found or are not MANUAL membership.',
       });
     }
-    return cats.map((c) => c.id);
+    return cols.map((c) => c.id);
   }
 
   mapAdminListProduct(product: Prisma.ProductGetPayload<{ include: typeof adminListInclude }>) {
@@ -973,9 +1156,9 @@ export class CatalogService {
       hamperItemCount,
       contentsValuePaise,
       hamperSavingsPaise,
-      categories: product.categories.map((pc) => ({
-        slug: pc.category.slug,
-        name: pc.category.name,
+      collections: product.collections.map((pc) => ({
+        slug: pc.collection.slug,
+        title: pc.collection.title,
       })),
       media: product.media.map((m) => ({
         id: m.id,

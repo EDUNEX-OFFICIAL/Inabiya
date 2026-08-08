@@ -48,7 +48,7 @@ type ProductListFilters = {
   storefrontLabel: LabelFilter;
   recipient: RecipientFilter;
   occasion: OccasionFilter;
-  category: string;
+  collection: string;
   sort: SortFilter;
 };
 
@@ -58,7 +58,7 @@ type AdminProductListResponse = {
   limit: number;
 };
 
-type CategoryOption = { id: string; slug: string; name: string };
+type CollectionOption = { id: string; slug: string; title: string };
 
 const PAGE_LIMIT = 25;
 
@@ -198,7 +198,7 @@ function ProductsDeskInner() {
       storefrontLabel: (searchParams.get('storefrontLabel') ?? '') as LabelFilter,
       recipient: (searchParams.get('recipient') ?? '') as RecipientFilter,
       occasion: (searchParams.get('occasion') ?? '') as OccasionFilter,
-      category: searchParams.get('category') ?? '',
+      collection: searchParams.get('collection') ?? '',
       sort: parseSort(searchParams.get('sort')),
     }),
     [searchParams],
@@ -212,7 +212,7 @@ function ProductsDeskInner() {
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [qInput, setQInput] = useState(filters.q);
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [collections, setCollections] = useState<CollectionOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -229,7 +229,7 @@ function ProductsDeskInner() {
     filters.storefrontLabel,
     filters.recipient,
     filters.occasion,
-    filters.category,
+    filters.collection,
     filters.sort,
   ].join('\0');
 
@@ -245,7 +245,7 @@ function ProductsDeskInner() {
           next.storefrontLabel !== undefined ? next.storefrontLabel : src.storefrontLabel,
         recipient: next.recipient !== undefined ? next.recipient : src.recipient,
         occasion: next.occasion !== undefined ? next.occasion : src.occasion,
-        category: next.category !== undefined ? next.category : src.category,
+        collection: next.collection !== undefined ? next.collection : src.collection,
         sort: next.sort !== undefined ? next.sort : src.sort,
       };
       const params = new URLSearchParams();
@@ -256,7 +256,7 @@ function ProductsDeskInner() {
       if (merged.storefrontLabel) params.set('storefrontLabel', merged.storefrontLabel);
       if (merged.recipient) params.set('recipient', merged.recipient);
       if (merged.occasion) params.set('occasion', merged.occasion);
-      if (merged.category) params.set('category', merged.category);
+      if (merged.collection) params.set('collection', merged.collection);
       if (merged.sort && merged.sort !== 'updated') params.set('sort', merged.sort);
       if (next.cursor) params.set('cursor', next.cursor);
       const qs = params.toString();
@@ -277,7 +277,7 @@ function ProductsDeskInner() {
       if (filters.storefrontLabel) params.set('storefrontLabel', filters.storefrontLabel);
       if (filters.recipient) params.set('recipient', filters.recipient);
       if (filters.occasion) params.set('occasion', filters.occasion);
-      if (filters.category) params.set('category', filters.category);
+      if (filters.collection) params.set('collection', filters.collection);
       if (filters.sort && filters.sort !== 'updated') params.set('sort', filters.sort);
       if (cursorParam) params.set('cursor', cursorParam);
       params.set('limit', String(PAGE_LIMIT));
@@ -316,9 +316,9 @@ function ProductsDeskInner() {
   }, [filters.q]);
 
   useEffect(() => {
-    void apiAuth<CategoryOption[]>('/admin/catalog/categories')
-      .then(setCategories)
-      .catch(() => setCategories([]));
+    void apiAuth<CollectionOption[]>('/admin/catalog/collections')
+      .then(setCollections)
+      .catch(() => setCollections([]));
   }, []);
 
   // New filters → drop Prev stack (URL cursor cleared by applyFilters).
@@ -351,7 +351,7 @@ function ProductsDeskInner() {
       storefrontLabel: '',
       recipient: '',
       occasion: '',
-      category: '',
+      collection: '',
       sort: 'updated',
       cursor: null,
     });
@@ -463,7 +463,7 @@ function ProductsDeskInner() {
     filters.storefrontLabel,
     filters.recipient,
     filters.occasion,
-    filters.category,
+    filters.collection,
     filters.sort !== 'updated' ? filters.sort : '',
   ].filter(Boolean).length;
 
@@ -501,8 +501,8 @@ function ProductsDeskInner() {
                 <Upload className="h-3.5 w-3.5 opacity-70" aria-hidden />
                 Import
               </Link>
-              <Link href="/admin/commerce/categories" className="clay-btn-ghost min-h-10 text-sm">
-                Categories
+              <Link href="/admin/commerce/collections" className="clay-btn-ghost min-h-10 text-sm">
+                Collections
               </Link>
               <Link href="/admin/commerce/merchandising" className="clay-btn-ghost min-h-10 text-sm">
                 Merch
@@ -710,14 +710,14 @@ function ProductsDeskInner() {
                     </span>
                     <select
                       className={filterSelectClass()}
-                      value={filters.category}
-                      aria-label="Category"
-                      onChange={(e) => applyFilters({ category: e.target.value, cursor: null })}
+                      value={filters.collection}
+                      aria-label="Collection"
+                      onChange={(e) => applyFilters({ collection: e.target.value, cursor: null })}
                     >
-                      <option value="">Any category</option>
-                      {categories.map((c) => (
+                      <option value="">Any collection</option>
+                      {collections.map((c) => (
                         <option key={c.id} value={c.slug}>
-                          {c.name}
+                          {c.title}
                         </option>
                       ))}
                     </select>

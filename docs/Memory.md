@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 8, 2026 (cross-check + Support ?q= + deploy)
+Last Updated: August 8, 2026 (collections replace categories)
 
 
 ---
@@ -141,10 +141,10 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **Human:** QA Support/Finance `g` chords — no admin-only Not available landings
-2. **Human:** Spot-check reports tab switch (only active endpoint) + coupons Prev/Next
-3. Cloudflare SSL / public DNS — **post-dev**
-4. OPS P1 leftovers when prioritized (product CSV, gallery picker, reservation visibility)
+1. **Deploy:** `bash scripts/deploy-vps.sh web api` then migrate on VPS + ensure collections seeded
+2. **QA:** `/admin/commerce/collections` + `/gift/collections/for-baby-girl` + gift chrome shop links
+3. **QA:** Coupons COLLECTION scope needs a MANUAL collection (create one, assign products)
+4. Cloudflare SSL / public DNS — **post-dev**
 5. —
 
 
@@ -1067,6 +1067,24 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-08 (Collections cross-check)
+
+- Cross-check vs plan: schema/API/admin/storefront/seed/docs mostly PASS; tsc + unit checks green; DB 16 RULES collections, `categories` table gone.
+- Fixed leftover: CMS page block defaults still `catalogCategories` / `?category=` → `catalogCollections` + `/gift/collections/…`; save path normalizes old source to `catalogCollections`.
+- Remaining gaps (non-blocking / known): admin desk missing hero/related/MANUAL product multi-select UI fields; `GIFT_COLLECTIONS` registry still in repo (PLP uses API); prod deploy + MarketingPage JSON rewrite still pending; coupon COLLECTION needs MANUAL collection.
+- Next: deploy web+api; QA collections PLP + admin desk.
+
+### Session — 2026-08-08 (Collections replace Categories — 1A hybrid · 2B fresh)
+
+- **Override:** Phase 13 complete — human: drop commerce Categories; Collections only (Shopify-shaped). Blog `EditorialCategory` untouched.
+- Schema: `Collection` + `ProductCollection`; drop `Category`/`ProductCategory`; `GiftBox.collectionSlugs`; `CouponScope.COLLECTION` + `collectionIds`. Migration `20260808120000_collections_replace_categories`.
+- Membership: `MANUAL` (join) | `RULES` (JSON filters). Coupon COLLECTION = MANUAL joins only (v1).
+- API: `/catalog/collections`, admin CRUD; products `collectionSlugs` / `?collection=`.
+- Admin: `/admin/commerce/collections` desk; categories page removed; nav/products/coupons remapped.
+- Storefront: collection PLP loads from API; PLP/chrome/BYB/CMS off category; seed 16 RULES collections from former registry.
+- Checks: validation rebuild; collection-ops, coupon-lifecycle, gift-box-rec, catalog-collections, nav, product-grid; api+web tsc clean. Local migrate + seed 16 collections.
+- Next: `deploy-vps.sh web api`; hard-refresh admin collections + `/gift/collections/for-baby-girl`; optional MANUAL collection for coupon QA.
 
 ### Session — 2026-08-08 (Cross-check audit fixes + Support ?q= restore + deploy)
 

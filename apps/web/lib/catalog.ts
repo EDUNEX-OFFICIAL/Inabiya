@@ -63,7 +63,7 @@ export type CatalogProduct = {
     sortOrder?: number;
     id?: string;
   }>;
-  categories: Array<{ slug: string; name: string }>;
+  collections: Array<{ slug: string; title: string }>;
   variants: Array<{
     id: string;
     sku: string;

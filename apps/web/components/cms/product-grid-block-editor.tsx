@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { apiUrl } from '@/lib/api-base';
 import {
-  categoriesToOptions,
-  fetchCatalogCategoriesClient,
-  type CategoryOption,
-} from '@/lib/catalog-categories';
+  collectionsToOptions,
+  fetchCatalogCollectionsClient,
+  type CollectionOption,
+} from '@/lib/catalog-collections';
 
 type CatalogLite = { slug: string; title: string };
 
@@ -31,7 +31,7 @@ type Props = {
 export function ProductGridBlockEditor({ props, onChange }: Props) {
   const [catalog, setCatalog] = useState<CatalogLite[]>([]);
   const [loadErr, setLoadErr] = useState<string | null>(null);
-  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+  const [collectionOptions, setCollectionOptions] = useState<CollectionOption[]>([]);
   const source = props.source || 'auto';
   const selectedSlugs = useMemo(
     () =>
@@ -68,8 +68,8 @@ export function ProductGridBlockEditor({ props, onChange }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchCatalogCategoriesClient('/admin/catalog/categories').then((rows) => {
-      if (!cancelled) setCategoryOptions(categoriesToOptions(rows));
+    void fetchCatalogCollectionsClient('/admin/catalog/collections').then((rows) => {
+      if (!cancelled) setCollectionOptions(collectionsToOptions(rows));
     });
     return () => {
       cancelled = true;
@@ -148,14 +148,14 @@ export function ProductGridBlockEditor({ props, onChange }: Props) {
 
       <div className="grid grid-cols-2 gap-2">
         <label className="block">
-          Category
+          Collection
           <select
             className="mt-1 block w-full rounded border px-2 py-1"
-            value={props.category ?? ''}
-            onChange={(e) => onChange('category', e.target.value)}
+            value={props.collection ?? ''}
+            onChange={(e) => onChange('collection', e.target.value)}
           >
             <option value="">— any —</option>
-            {categoryOptions.map((c) => (
+            {collectionOptions.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
               </option>

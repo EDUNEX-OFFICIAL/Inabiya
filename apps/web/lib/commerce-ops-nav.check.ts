@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   buildOpsBreadcrumbs,
   canAccessCommerceOps,
+  COMMERCE_OPS_NAV,
   defaultOpsLanding,
   filterNavForRoles,
   isNavItemActive,
@@ -12,7 +13,9 @@ const supportNav = filterNavForRoles(['SUPPORT']);
 assert.ok(!supportNav.some((i) => i.id === 'promotions'));
 assert.ok(!supportNav.some((i) => i.id === 'settings'));
 assert.ok(!supportNav.some((i) => i.id === 'products'));
-assert.ok(!supportNav.some((i) => i.id === 'categories'));
+assert.ok(!supportNav.some((i) => i.id === 'collections'));
+assert.ok(COMMERCE_OPS_NAV.some((i) => i.id === 'collections'));
+assert.ok(!COMMERCE_OPS_NAV.some((i) => i.id === 'categories'));
 assert.ok(!supportNav.some((i) => i.id === 'import'));
 assert.ok(supportNav.some((i) => i.id === 'support'));
 assert.ok(supportNav.some((i) => i.id === 'orders'));

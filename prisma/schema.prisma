@@ -165,17 +165,39 @@ enum ProductMediaKind {
   VIDEO
 }
 
-model Category {
-  id          String            @id @default(uuid()) @db.Uuid
-  slug        String            @unique
-  name        String
-  description String?
-  sortOrder   Int               @default(0) @map("sort_order")
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
-  products    ProductCategory[]
+enum CollectionStatus {
+  DRAFT
+  PUBLISHED
+}
 
-  @@map("categories")
+enum CollectionMembershipMode {
+  MANUAL
+  RULES
+}
+
+/// Soft Gift merchandising group (Shopify-style). Replaces commerce Category.
+model Collection {
+  id              String                   @id @default(uuid()) @db.Uuid
+  slug            String                   @unique
+  title           String
+  description     String?
+  overline        String?
+  heroImageUrl    String?                  @map("hero_image_url")
+  heroImageAlt    String?                  @map("hero_image_alt")
+  accent          String                   @default("neutral")
+  sortOrder       Int                      @default(0) @map("sort_order")
+  status          CollectionStatus         @default(DRAFT)
+  membershipMode  CollectionMembershipMode @default(MANUAL) @map("membership_mode")
+  /// RULES mode: { recipient?, age?, occasion?, hamper?, storefrontLabel?, onSale?, sort?, hideFacets? }
+  rules           Json?
+  relatedSlugs    String[]                 @default([]) @map("related_slugs")
+  lockedLabel     String?                  @map("locked_label")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                 @updatedAt @map("updated_at")
+  products        ProductCollection[]
+
+  @@index([status, sortOrder])
+  @@map("collections")
 }
 
 model Product {
@@ -207,7 +229,7 @@ model Product {
   publishedAt          DateTime?              @map("published_at")
   variants             ProductVariant[]
   media                ProductMedia[]
-  categories           ProductCategory[]
+  collections          ProductCollection[]
   personalizationOpts  PersonalizationOption[]
   reviews              ProductReview[]
   hamperItems          ProductHamperItem[]
@@ -238,14 +260,16 @@ model ProductHamperItem {
   @@map("product_hamper_items")
 }
 
-model ProductCategory {
-  productId  String   @map("product_id") @db.Uuid
-  categoryId String   @map("category_id") @db.Uuid
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+model ProductCollection {
+  productId    String     @map("product_id") @db.Uuid
+  collectionId String     @map("collection_id") @db.Uuid
+  sortOrder    Int        @default(0) @map("sort_order")
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
-  @@id([productId, categoryId])
-  @@map("product_categories")
+  @@id([productId, collectionId])
+  @@index([collectionId])
+  @@map("product_collections")
 }
 
 model ProductVariant {
@@ -366,7 +390,7 @@ model GiftBox {
   recipient     String?
   ageBand       String?       @map("age_band")
   occasion      String?
-  categorySlugs String[]      @default([]) @map("category_slugs")
+  collectionSlugs String[]    @default([]) @map("collection_slugs")
   wizardStep    Int           @default(1) @map("wizard_step")
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
@@ -479,7 +503,7 @@ model CustomerAddress {
 enum CouponScope {
   CART
   PRODUCT
-  CATEGORY
+  COLLECTION
 }
 
 model Coupon {
@@ -494,10 +518,10 @@ model Coupon {
   active           Boolean     @default(true)
   startsAt         DateTime?   @map("starts_at")
   expiresAt        DateTime?   @map("expires_at")
-  /// CART = whole cart; PRODUCT / CATEGORY = discount only on matching lines.
+  /// CART = whole cart; PRODUCT / COLLECTION = discount only on matching lines (MANUAL joins only).
   scope            CouponScope @default(CART)
   productIds       String[]    @default([]) @map("product_ids")
-  categoryIds      String[]    @default([]) @map("category_ids")
+  collectionIds    String[]    @default([]) @map("collection_ids")
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
 

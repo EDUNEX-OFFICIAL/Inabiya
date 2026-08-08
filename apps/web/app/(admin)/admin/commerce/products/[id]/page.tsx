@@ -107,8 +107,8 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [recipientTags, setRecipientTags] = useState<string[]>([]);
   const [ageBands, setAgeBands] = useState<string[]>([]);
   const [occasionTags, setOccasionTags] = useState<string[]>([]);
-  const [categorySlugs, setCategorySlugs] = useState<string[]>([]);
-  const [categoryOptions, setCategoryOptions] = useState<Array<{ slug: string; name: string }>>(
+  const [collectionSlugs, setCollectionSlugs] = useState<string[]>([]);
+  const [collectionOptions, setCollectionOptions] = useState<Array<{ slug: string; title: string }>>(
     [],
   );
   const [storefrontLabels, setStorefrontLabels] = useState<ManualStorefrontLabel[]>([]);
@@ -183,7 +183,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     setRecipientTags(p.recipientTags ?? []);
     setAgeBands(p.ageBands ?? []);
     setOccasionTags(p.occasionTags ?? []);
-    setCategorySlugs((p.categories ?? []).map((c) => c.slug));
+    setCollectionSlugs((p.collections ?? []).map((c) => c.slug));
     setStorefrontLabels(p.storefrontLabels ?? []);
     setIsReadyMadeHamper(Boolean(p.isReadyMadeHamper));
     setBrandName(p.brandName ?? '');
@@ -252,9 +252,17 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     apiAuth<CatalogProduct>(`/admin/catalog/products/${params.id}`)
       .then(hydrate)
       .catch(() => setError('Failed to load product'));
-    void apiAuth<Array<{ slug: string; name: string }>>('/admin/catalog/categories')
-      .then((rows) => setCategoryOptions(rows.map((c) => ({ slug: c.slug, name: c.name }))))
-      .catch(() => setCategoryOptions([]));
+    void apiAuth<Array<{ slug: string; title: string; membershipMode?: string }>>(
+      '/admin/catalog/collections',
+    )
+      .then((rows) =>
+        setCollectionOptions(
+          rows
+            .filter((c) => c.membershipMode === 'MANUAL')
+            .map((c) => ({ slug: c.slug, title: c.title })),
+        ),
+      )
+      .catch(() => setCollectionOptions([]));
   }, [params.id, router]);
 
   async function onSave(e?: FormEvent) {
@@ -338,7 +346,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           recipientTags,
           ageBands,
           occasionTags,
-          categorySlugs,
+          collectionSlugs,
           isReadyMadeHamper,
           brandName: brandName.trim() || null,
           storefrontLabels,
@@ -713,16 +721,16 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           <div>
             <p className="text-xs opacity-70">Categories</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {categoryOptions.length === 0 ? (
-                <span className="text-xs opacity-50">No categories yet</span>
+              {collectionOptions.length === 0 ? (
+                <span className="text-xs opacity-50">No MANUAL collections yet</span>
               ) : (
-                categoryOptions.map((c) => (
+                collectionOptions.map((c) => (
                   <Chip
                     key={c.slug}
-                    active={categorySlugs.includes(c.slug)}
-                    onClick={() => setCategorySlugs((t) => toggle(t, c.slug))}
+                    active={collectionSlugs.includes(c.slug)}
+                    onClick={() => setCollectionSlugs((t) => toggle(t, c.slug))}
                   >
-                    {c.name}
+                    {c.title}
                   </Chip>
                 ))
               )}

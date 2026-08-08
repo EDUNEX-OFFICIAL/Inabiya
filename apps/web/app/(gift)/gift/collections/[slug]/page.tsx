@@ -8,12 +8,19 @@ import { CollectionResultsToolbar } from '@/components/gift/collection-results-t
 import { TrackView } from '@/components/track-view';
 import { fetchCatalog, type CatalogProduct } from '@/lib/catalog';
 import {
+  fetchCatalogCollectionBySlug,
+  fetchCatalogCollections,
+  type CatalogCollection,
+} from '@/lib/catalog-collections';
+import {
   bybHrefForCollection,
   collectionBreadcrumb,
   collectionHref,
-  getGiftCollection,
   mergeCollectionCatalogQuery,
+  type CollectionBaseFilters,
+  type CollectionFacet,
   type CollectionRefine,
+  type GiftCollection,
 } from '@/lib/gift-collections';
 
 export const dynamic = 'force-dynamic';
@@ -30,11 +37,43 @@ function parseRefine(sp: SearchParams): CollectionRefine {
     recipient: first(sp.recipient),
     age: first(sp.age),
     occasion: first(sp.occasion),
-    category: first(sp.category),
     hamper: first(sp.hamper),
     onSale: first(sp.onSale),
     maxPricePaise: first(sp.maxPricePaise),
     sort: first(sp.sort),
+  };
+}
+
+function rulesToBaseFilters(rules: Record<string, unknown> | null | undefined): CollectionBaseFilters {
+  const r = rules ?? {};
+  return {
+    ...(typeof r.recipient === 'string' ? { recipient: r.recipient } : {}),
+    ...(typeof r.age === 'string' ? { age: r.age } : {}),
+    ...(typeof r.occasion === 'string' ? { occasion: r.occasion } : {}),
+    ...(typeof r.hamper === 'string' ? { hamper: r.hamper } : {}),
+    ...(typeof r.storefrontLabel === 'string' ? { storefrontLabel: r.storefrontLabel } : {}),
+    ...(typeof r.onSale === 'string' ? { onSale: r.onSale } : {}),
+    ...(typeof r.sort === 'string' ? { sort: r.sort } : {}),
+  };
+}
+
+function toGiftCollection(row: CatalogCollection): GiftCollection {
+  const rules = (row.rules ?? {}) as Record<string, unknown>;
+  const hideFacets = Array.isArray(rules.hideFacets)
+    ? (rules.hideFacets as CollectionFacet[])
+    : [];
+  return {
+    slug: row.slug,
+    title: row.title,
+    overline: row.overline ?? 'Collection',
+    blurb: row.description ?? '',
+    heroImageUrl: row.heroImageUrl ?? '/gift/media/baby-soft-gift.jpg',
+    heroImageAlt: row.heroImageAlt ?? row.title,
+    accent: (row.accent as 'pink' | 'sky' | 'neutral') || 'neutral',
+    baseFilters: rulesToBaseFilters(row.rules),
+    hideFacets,
+    relatedSlugs: row.relatedSlugs ?? [],
+    lockedLabel: row.lockedLabel ?? row.title,
   };
 }
 
@@ -43,15 +82,15 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const collection = getGiftCollection(params.slug);
-  if (!collection) return { title: 'Collection' };
+  const row = await fetchCatalogCollectionBySlug(params.slug);
+  if (!row) return { title: 'Collection' };
   return {
-    title: `${collection.title} | Inabiya`,
-    description: collection.blurb,
+    title: `${row.title} | Inabiya`,
+    description: row.description ?? undefined,
     openGraph: {
-      title: collection.title,
-      description: collection.blurb,
-      images: collection.heroImageUrl ? [{ url: collection.heroImageUrl }] : undefined,
+      title: row.title,
+      description: row.description ?? undefined,
+      images: row.heroImageUrl ? [{ url: row.heroImageUrl }] : undefined,
     },
   };
 }
@@ -63,8 +102,9 @@ export default async function GiftCollectionPage({
   params: { slug: string };
   searchParams: SearchParams;
 }) {
-  const collection = getGiftCollection(params.slug);
-  if (!collection) notFound();
+  const row = await fetchCatalogCollectionBySlug(params.slug);
+  if (!row) notFound();
+  const collection = toGiftCollection(row);
 
   const refine = parseRefine(searchParams);
   const catalogQuery = mergeCollectionCatalogQuery(collection, refine);
@@ -77,9 +117,11 @@ export default async function GiftCollectionPage({
     products = [];
   }
 
+  const all = await fetchCatalogCollections();
   const related = collection.relatedSlugs
-    .map((s) => getGiftCollection(s))
-    .filter((c): c is NonNullable<typeof c> => !!c);
+    .map((s) => all.find((c) => c.slug === s))
+    .filter((c): c is CatalogCollection => !!c)
+    .map(toGiftCollection);
 
   const crumb = collectionBreadcrumb(collection);
   const bybHref = bybHrefForCollection(collection);

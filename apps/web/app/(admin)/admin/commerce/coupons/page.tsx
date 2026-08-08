@@ -10,7 +10,7 @@ import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
-type CouponScope = 'CART' | 'PRODUCT' | 'CATEGORY';
+type CouponScope = 'CART' | 'PRODUCT' | 'COLLECTION';
 type CouponStatus = 'off' | 'scheduled' | 'active' | 'expired' | 'exhausted';
 type BenefitKind = 'percent' | 'fixed';
 type StatusFilter = '' | CouponStatus;
@@ -30,13 +30,13 @@ type CouponRow = {
   expiresAt: string | null;
   scope: CouponScope;
   productIds: string[];
-  categoryIds: string[];
+  collectionIds: string[];
   products: Array<{ id: string; title: string; slug: string }>;
-  categories: Array<{ id: string; name: string; slug: string }>;
+  collections: Array<{ id: string; title: string; slug: string }>;
   status: CouponStatus;
 };
 
-type CategoryOption = { id: string; slug: string; name: string };
+type CollectionOption = { id: string; slug: string; title: string };
 type ProductHit = { id: string; title: string; slug: string };
 
 type AdminCouponsListResponse = {
@@ -59,7 +59,7 @@ const STATUS_CHIPS: Array<{ value: StatusFilter; label: string }> = [
 const SCOPE_CHIPS: Array<{ value: CouponScope; label: string }> = [
   { value: 'CART', label: 'Whole cart' },
   { value: 'PRODUCT', label: 'Products' },
-  { value: 'CATEGORY', label: 'Categories' },
+  { value: 'COLLECTION', label: 'Collections' },
 ];
 
 
@@ -91,7 +91,7 @@ function statusLabel(status: CouponStatus): string {
 
 function scopeLabel(scope: CouponScope): string {
   if (scope === 'PRODUCT') return 'Products';
-  if (scope === 'CATEGORY') return 'Categories';
+  if (scope === 'COLLECTION') return 'Collections';
   return 'Cart';
 }
 
@@ -99,7 +99,7 @@ function scopeTone(scope: CouponScope): string {
   if (scope === 'PRODUCT') {
     return 'bg-[color-mix(in_srgb,var(--primary)_12%,white)] text-[var(--primary)] ring-1 ring-[color-mix(in_srgb,var(--primary)_28%,transparent)]';
   }
-  if (scope === 'CATEGORY') return 'bg-sky-50 text-sky-900 ring-1 ring-sky-200/80';
+  if (scope === 'COLLECTION') return 'bg-sky-50 text-sky-900 ring-1 ring-sky-200/80';
   return 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200/80';
 }
 
@@ -134,8 +134,8 @@ function CouponsDeskInner() {
   const [expiresAt, setExpiresAt] = useState('');
   const [scope, setScope] = useState<CouponScope>('CART');
   const [selectedProducts, setSelectedProducts] = useState<ProductHit[]>([]);
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
+  const [collections, setCollections] = useState<CollectionOption[]>([]);
   const [productQ, setProductQ] = useState('');
   const [productHits, setProductHits] = useState<ProductHit[]>([]);
   const [productSearching, setProductSearching] = useState(false);
@@ -197,9 +197,9 @@ function CouponsDeskInner() {
   }, [router, load, searchParams]);
 
   useEffect(() => {
-    void apiAuth<CategoryOption[]>('/admin/catalog/categories')
-      .then(setCategories)
-      .catch(() => setCategories([]));
+    void apiAuth<Array<CollectionOption & { membershipMode?: string }>>('/admin/catalog/collections')
+      .then((rows) => setCollections(rows.filter((c) => c.membershipMode === 'MANUAL')))
+      .catch(() => setCollections([]));
   }, []);
 
   const pageIndex = cursorStack.length + 1;
@@ -260,7 +260,7 @@ function CouponsDeskInner() {
         c.code.toLowerCase().includes(q) ||
         (c.description ?? '').toLowerCase().includes(q) ||
         c.products.some((p) => p.title.toLowerCase().includes(q)) ||
-        c.categories.some((cat) => cat.name.toLowerCase().includes(q))
+        c.collections.some((cat) => cat.title.toLowerCase().includes(q))
       );
     });
   }, [rows, statusFilter, qInput]);
@@ -279,7 +279,7 @@ function CouponsDeskInner() {
     setExpiresAt('');
     setScope('CART');
     setSelectedProducts([]);
-    setSelectedCategoryIds([]);
+    setSelectedCollectionIds([]);
     setProductQ('');
     setProductHits([]);
     setPreviewResult(null);
@@ -295,7 +295,7 @@ function CouponsDeskInner() {
       expiresAt: expiresAt || undefined,
       scope,
       productIds: scope === 'PRODUCT' ? selectedProducts.map((p) => p.id) : undefined,
-      categoryIds: scope === 'CATEGORY' ? selectedCategoryIds : undefined,
+      collectionIds: scope === 'COLLECTION' ? selectedCollectionIds : undefined,
     };
     if (includeCode) base.code = code.trim().toUpperCase();
     if (benefit === 'percent') base.discountPercent = Number(percent);
@@ -391,7 +391,7 @@ function CouponsDeskInner() {
   }
 
   function toggleCategory(id: string) {
-    setSelectedCategoryIds((prev) =>
+    setSelectedCollectionIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
@@ -579,15 +579,15 @@ function CouponsDeskInner() {
             </div>
           ) : null}
 
-          {scope === 'CATEGORY' ? (
+          {scope === 'COLLECTION' ? (
             <div className="space-y-2">
-              <p className="text-xs font-medium opacity-70">Categories</p>
-              {categories.length === 0 ? (
-                <p className="text-xs opacity-55">No categories yet.</p>
+              <p className="text-xs font-medium opacity-70">Collections</p>
+              {collections.length === 0 ? (
+                <p className="text-xs opacity-55">No MANUAL collections yet.</p>
               ) : (
                 <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
-                  {categories.map((cat) => {
-                    const on = selectedCategoryIds.includes(cat.id);
+                  {collections.map((cat) => {
+                    const on = selectedCollectionIds.includes(cat.id);
                     return (
                       <button
                         key={cat.id}
@@ -596,13 +596,13 @@ function CouponsDeskInner() {
                         className={opsChipClass(on)}
                         onClick={() => toggleCategory(cat.id)}
                       >
-                        {cat.name}
+                        {cat.title}
                       </button>
                     );
                   })}
                 </div>
               )}
-              {!selectedCategoryIds.length ? (
+              {!selectedCollectionIds.length ? (
                 <p className="text-xs opacity-55">Select at least one category.</p>
               ) : null}
             </div>
@@ -853,9 +853,9 @@ function CouponsDeskInner() {
                       {c.products.map((p) => p.title).join(' · ')}
                     </p>
                   ) : null}
-                  {c.scope === 'CATEGORY' && c.categories.length ? (
+                  {c.scope === 'COLLECTION' && c.collections.length ? (
                     <p className="mt-1.5 line-clamp-2 text-[11px] opacity-60">
-                      {c.categories.map((cat) => cat.name).join(' · ')}
+                      {c.collections.map((cat) => cat.title).join(' · ')}
                     </p>
                   ) : null}
                   <div className="mt-2 flex flex-wrap gap-3">
@@ -920,9 +920,9 @@ function CouponsDeskInner() {
                               {c.products.map((p) => p.title).join(', ')}
                             </p>
                           ) : null}
-                          {c.scope === 'CATEGORY' && c.categories.length ? (
+                          {c.scope === 'COLLECTION' && c.collections.length ? (
                             <p className="mt-1 max-w-[10rem] text-[11px] leading-snug opacity-60">
-                              {c.categories.map((cat) => cat.name).join(', ')}
+                              {c.collections.map((cat) => cat.title).join(', ')}
                             </p>
                           ) : null}
                         </td>

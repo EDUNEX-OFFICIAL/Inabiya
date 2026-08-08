@@ -11,7 +11,7 @@ const cartInclude = {
       variant: {
         include: {
           product: {
-            include: { categories: true },
+            include: { collections: true },
           },
           inventory: true,
         },
@@ -152,7 +152,7 @@ export class CartService {
       cartDto.subtotalPaise,
       cartDto.items.map((i) => ({
         productId: i.productId,
-        categoryIds: i.categoryIds,
+        collectionIds: i.collectionIds,
         lineTotalPaise: i.lineTotalPaise,
       })),
     );
@@ -245,7 +245,7 @@ export class CartService {
           mapped.subtotalPaise,
           mapped.items.map((i) => ({
             productId: i.productId,
-            categoryIds: i.categoryIds,
+            collectionIds: i.collectionIds,
             lineTotalPaise: i.lineTotalPaise,
           })),
         );
@@ -300,7 +300,7 @@ export class CartService {
             slug: string;
             title: string;
             status: ProductStatus;
-            categories: Array<{ categoryId: string }>;
+            collections: Array<{ collectionId: string }>;
           };
           inventory: { onHand: number; reserved: number } | null;
         };
@@ -316,7 +316,7 @@ export class CartService {
           id: i.id,
           variantId: i.variant.id,
           productId: i.variant.product.id,
-          categoryIds: i.variant.product.categories.map((c) => c.categoryId),
+          collectionIds: i.variant.product.collections.map((c) => c.collectionId),
           productTitle: i.variant.product.title,
           productSlug: i.variant.product.slug,
           sku: i.variant.sku,

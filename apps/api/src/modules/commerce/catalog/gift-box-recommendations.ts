@@ -4,15 +4,16 @@ export type GiftBoxRecPrefs = {
   recipient: string | null;
   ageBand: string | null;
   occasion: string | null;
-  categorySlugs: string[];
+  /** Soft Gift collection slugs — MANUAL joins (v1). */
+  collectionSlugs: string[];
 };
 
 /** Progressive relax tiers — drop filters until suggestions can appear. */
-export type RecFilterTier = 'full' | 'noCategory' | 'noOccasion' | 'noAge' | 'budgetOnly';
+export type RecFilterTier = 'full' | 'noCollection' | 'noOccasion' | 'noAge' | 'budgetOnly';
 
 export const REC_FILTER_TIERS: RecFilterTier[] = [
   'full',
-  'noCategory',
+  'noCollection',
   'noOccasion',
   'noAge',
   'budgetOnly',
@@ -46,11 +47,11 @@ export function buildGiftBoxProductWhere(
 
   if (prefs.occasion) where.occasionTags = { has: prefs.occasion };
 
-  if (tier === 'noCategory') return where;
+  if (tier === 'noCollection') return where;
 
-  if (prefs.categorySlugs.length) {
-    where.categories = {
-      some: { category: { slug: { in: prefs.categorySlugs } } },
+  if (prefs.collectionSlugs.length) {
+    where.collections = {
+      some: { collection: { slug: { in: prefs.collectionSlugs } } },
     };
   }
 

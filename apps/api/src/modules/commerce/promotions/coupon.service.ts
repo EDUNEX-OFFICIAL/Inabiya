@@ -38,21 +38,21 @@ function parseOptionalDate(raw: string | undefined, field: string): Date | null 
 function normalizeScopeIds(
   scope: CouponScopeKind,
   productIds: string[] | undefined,
-  categoryIds: string[] | undefined,
-): { productIds: string[]; categoryIds: string[] } {
+  collectionIds: string[] | undefined,
+): { productIds: string[]; collectionIds: string[] } {
   if (scope === 'PRODUCT') {
     return {
       productIds: [...new Set(productIds ?? [])],
-      categoryIds: [],
+      collectionIds: [],
     };
   }
-  if (scope === 'CATEGORY') {
+  if (scope === 'COLLECTION') {
     return {
       productIds: [],
-      categoryIds: [...new Set(categoryIds ?? [])],
+      collectionIds: [...new Set(collectionIds ?? [])],
     };
   }
-  return { productIds: [], categoryIds: [] };
+  return { productIds: [], collectionIds: [] };
 }
 
 @Injectable()
@@ -93,23 +93,23 @@ export class CouponService {
       hasMore && last ? encodeAdminCouponCursor({ createdAt: last.createdAt, id: last.id }) : null;
 
     const productIdSet = new Set(page.flatMap((c) => c.productIds));
-    const categoryIdSet = new Set(page.flatMap((c) => c.categoryIds));
-    const [products, categories] = await Promise.all([
+    const collectionIdSet = new Set(page.flatMap((c) => c.collectionIds));
+    const [products, collections] = await Promise.all([
       productIdSet.size
         ? this.prisma.product.findMany({
             where: { id: { in: [...productIdSet] } },
             select: { id: true, title: true, slug: true },
           })
         : Promise.resolve([]),
-      categoryIdSet.size
-        ? this.prisma.category.findMany({
-            where: { id: { in: [...categoryIdSet] } },
-            select: { id: true, name: true, slug: true },
+      collectionIdSet.size
+        ? this.prisma.collection.findMany({
+            where: { id: { in: [...collectionIdSet] } },
+            select: { id: true, title: true, slug: true },
           })
         : Promise.resolve([]),
     ]);
     const productMap = new Map(products.map((p) => [p.id, p]));
-    const categoryMap = new Map(categories.map((c) => [c.id, c]));
+    const collectionMap = new Map(collections.map((c) => [c.id, c]));
     const now = new Date();
     const items = page.map((c) => {
       const type =
@@ -129,15 +129,15 @@ export class CouponService {
         expiresAt: c.expiresAt,
         scope: c.scope as CouponScopeKind,
         productIds: c.productIds,
-        categoryIds: c.categoryIds,
+        collectionIds: c.collectionIds,
         products: c.productIds
           .map((id) => productMap.get(id))
           .filter(Boolean)
           .map((p) => ({ id: p!.id, title: p!.title, slug: p!.slug })),
-        categories: c.categoryIds
-          .map((id) => categoryMap.get(id))
+        collections: c.collectionIds
+          .map((id) => collectionMap.get(id))
           .filter(Boolean)
-          .map((cat) => ({ id: cat!.id, name: cat!.name, slug: cat!.slug })),
+          .map((col) => ({ id: col!.id, title: col!.title, slug: col!.slug })),
         createdAt: c.createdAt,
         status: couponLifecycle(c, now),
       };
@@ -157,7 +157,7 @@ export class CouponService {
     }
 
     const scope = (body.scope ?? 'CART') as CouponScopeKind;
-    const ids = normalizeScopeIds(scope, body.productIds, body.categoryIds);
+    const ids = normalizeScopeIds(scope, body.productIds, body.collectionIds);
 
     if (scope === 'PRODUCT' && ids.productIds.length) {
       const found = await this.prisma.product.count({
@@ -170,14 +170,14 @@ export class CouponService {
         });
       }
     }
-    if (scope === 'CATEGORY' && ids.categoryIds.length) {
-      const found = await this.prisma.category.count({
-        where: { id: { in: ids.categoryIds } },
+    if (scope === 'COLLECTION' && ids.collectionIds.length) {
+      const found = await this.prisma.collection.count({
+        where: { id: { in: ids.collectionIds }, membershipMode: 'MANUAL' },
       });
-      if (found !== ids.categoryIds.length) {
+      if (found !== ids.collectionIds.length) {
         throw new BadRequestException({
-          code: 'INVALID_CATEGORIES',
-          message: 'One or more categories were not found.',
+          code: 'INVALID_COLLECTIONS',
+          message: 'One or more MANUAL collections were not found.',
         });
       }
     }
@@ -195,7 +195,7 @@ export class CouponService {
         expiresAt,
         scope,
         productIds: ids.productIds,
-        categoryIds: ids.categoryIds,
+        collectionIds: ids.collectionIds,
       },
     });
 
@@ -214,7 +214,7 @@ export class CouponService {
         expiresAt: created.expiresAt,
         scope: created.scope,
         productIds: created.productIds,
-        categoryIds: created.categoryIds,
+        collectionIds: created.collectionIds,
       },
       requestId,
     });
@@ -280,14 +280,14 @@ export class CouponService {
     }
 
     const scope = (body.scope ?? 'CART') as CouponScopeKind;
-    const ids = normalizeScopeIds(scope, body.productIds, body.categoryIds);
+    const ids = normalizeScopeIds(scope, body.productIds, body.collectionIds);
     let eligible = body.subtotalPaise;
     if (scope !== 'CART') {
       if (lines?.length) {
         eligible = eligibleSubtotalPaise({
           scope,
           productIds: ids.productIds,
-          categoryIds: ids.categoryIds,
+          collectionIds: ids.collectionIds,
           cartSubtotalPaise: body.subtotalPaise,
           lines,
         });
@@ -301,7 +301,7 @@ export class CouponService {
         message:
           scope === 'PRODUCT'
             ? 'No matching products in cart.'
-            : 'No matching categories in cart.',
+            : 'No matching collections in cart.',
       };
     }
     if (eligible < min) {
@@ -363,7 +363,7 @@ export class CouponService {
     const eligible = eligibleSubtotalPaise({
       scope,
       productIds: coupon.productIds,
-      categoryIds: coupon.categoryIds,
+      collectionIds: coupon.collectionIds,
       cartSubtotalPaise,
       lines,
     });
@@ -374,7 +374,7 @@ export class CouponService {
         message:
           scope === 'PRODUCT'
             ? 'Coupon does not apply to items in this cart.'
-            : 'Coupon does not apply to categories in this cart.',
+            : 'Coupon does not apply to collections in this cart.',
       });
     }
 

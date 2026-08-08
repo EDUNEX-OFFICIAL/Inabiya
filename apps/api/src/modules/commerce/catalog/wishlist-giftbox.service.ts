@@ -109,7 +109,7 @@ export class GiftBoxService {
       recipient?: string | null;
       ageBand?: string | null;
       occasion?: string | null;
-      categorySlugs?: string[];
+      collectionSlugs?: string[];
       wizardStep?: number;
     },
   ) {
@@ -135,7 +135,7 @@ export class GiftBoxService {
       ...(input.recipient !== undefined ? { recipient: input.recipient } : {}),
       ...(input.ageBand !== undefined ? { ageBand: input.ageBand } : {}),
       ...(input.occasion !== undefined ? { occasion: input.occasion } : {}),
-      ...(input.categorySlugs !== undefined ? { categorySlugs: input.categorySlugs } : {}),
+      ...(input.collectionSlugs !== undefined ? { collectionSlugs: input.collectionSlugs } : {}),
       ...(input.wizardStep != null ? { wizardStep: input.wizardStep } : {}),
     };
     if (active) {
@@ -160,7 +160,7 @@ export class GiftBoxService {
         recipient: input.recipient ?? undefined,
         ageBand: input.ageBand ?? undefined,
         occasion: input.occasion ?? undefined,
-        categorySlugs: input.categorySlugs ?? [],
+        collectionSlugs: input.collectionSlugs ?? [],
         wizardStep: input.wizardStep ?? 1,
       },
       include: {
@@ -186,7 +186,7 @@ export class GiftBoxService {
       recipient: mapped.recipient,
       ageBand: mapped.ageBand,
       occasion: mapped.occasion,
-      categorySlugs: mapped.categorySlugs,
+      collectionSlugs: mapped.collectionSlugs,
     };
 
     type Suggestion = {
@@ -274,7 +274,7 @@ export class GiftBoxService {
           ageBand: null,
           occasion: null,
           budgetPaise: null,
-          categorySlugs: [],
+          collectionSlugs: [],
           wizardStep: 1,
           name: 'My gift box',
         },
@@ -406,7 +406,7 @@ export class GiftBoxService {
           ageBand: null,
           occasion: null,
           budgetPaise: null,
-          categorySlugs: [],
+          collectionSlugs: [],
           wizardStep: 1,
         },
       }),
@@ -471,7 +471,7 @@ export class GiftBoxService {
       recipient: box.recipient,
       ageBand: box.ageBand,
       occasion: box.occasion,
-      categorySlugs: box.categorySlugs,
+      collectionSlugs: box.collectionSlugs,
       wizardStep: box.wizardStep,
       subtotalPaise,
       remainingBudgetPaise,

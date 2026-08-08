@@ -117,7 +117,8 @@ export const createProductBodySchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'slug must be lowercase kebab-case'),
   title: z.string().min(1).max(200),
   description: z.string().max(5000).optional(),
-  categorySlugs: z.array(z.string()).optional(),
+  /** MANUAL collection membership only (RULES collections resolve via filters). */
+  collectionSlugs: z.array(z.string()).optional(),
   recipientTags: z.array(z.enum(['girl', 'boy', 'mom', 'unisex'])).optional(),
   ageBands: z.array(z.enum(['newborn', 'infant', 'toddler', 'any'])).optional(),
   occasionTags: z.array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday'])).optional(),
@@ -478,7 +479,7 @@ export type SeoSchemaExtras = z.infer<typeof seoSchemaExtrasSchema>;
 export const updateProductBodySchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(5000).optional(),
-  categorySlugs: z.array(z.string()).optional(),
+  collectionSlugs: z.array(z.string()).optional(),
   recipientTags: z.array(z.enum(['girl', 'boy', 'mom', 'unisex'])).optional(),
   ageBands: z.array(z.enum(['newborn', 'infant', 'toddler', 'any'])).optional(),
   occasionTags: z.array(z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday'])).optional(),
@@ -553,42 +554,87 @@ export const updateVariantBodySchema = z.object({
   compareAtPricePaise: z.number().int().min(0).nullable(),
 });
 
-export const createCategoryBodySchema = z.object({
-  slug: z
-    .string()
-    .min(2)
-    .max(80)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  name: z.string().min(1).max(120),
-  description: z.string().max(500).optional(),
-  sortOrder: z.number().int().optional(),
+const collectionSlugSchema = z
+  .string()
+  .min(2)
+  .max(80)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+
+/** RULES membership filters (mirrors Soft Gift collection baseFilters). */
+export const collectionRulesSchema = z.object({
+  recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).optional(),
+  age: z.enum(['newborn', 'infant', 'toddler', 'any']).optional(),
+  occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).optional(),
+  hamper: z.enum(['0', '1']).optional(),
+  storefrontLabel: z.enum(['BESTSELLER', 'EDITORS_PICK', 'GIFT_SET']).optional(),
+  onSale: z.enum(['0', '1']).optional(),
+  sort: z.enum(['newest', 'price_asc', 'price_desc']).optional(),
+  hideFacets: z
+    .array(
+      z.enum(['recipient', 'age', 'occasion', 'category', 'hamper', 'onSale', 'budget', 'collection']),
+    )
+    .max(12)
+    .optional(),
 });
 
-/** Admin: partial update for catalog categories desk. */
-export const updateCategoryBodySchema = z
+export const createCollectionBodySchema = z.object({
+  slug: collectionSlugSchema,
+  title: z.string().min(1).max(160),
+  description: z.string().max(1000).optional(),
+  overline: z.string().max(80).optional(),
+  heroImageUrl: z.string().max(500).optional(),
+  heroImageAlt: z.string().max(200).optional(),
+  accent: z.enum(['pink', 'sky', 'neutral']).optional(),
+  sortOrder: z.number().int().optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
+  membershipMode: z.enum(['MANUAL', 'RULES']).optional(),
+  rules: collectionRulesSchema.nullable().optional(),
+  relatedSlugs: z.array(collectionSlugSchema).max(12).optional(),
+  lockedLabel: z.string().max(80).optional(),
+  /** MANUAL mode: product slugs to assign (optional on create). */
+  productSlugs: z.array(z.string().max(120)).max(200).optional(),
+});
+
+/** Admin: partial update for catalog collections desk. */
+export const updateCollectionBodySchema = z
   .object({
-    slug: z
-      .string()
-      .min(2)
-      .max(80)
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-      .optional(),
-    name: z.string().min(1).max(120).optional(),
-    description: z.string().max(500).nullable().optional(),
+    slug: collectionSlugSchema.optional(),
+    title: z.string().min(1).max(160).optional(),
+    description: z.string().max(1000).nullable().optional(),
+    overline: z.string().max(80).nullable().optional(),
+    heroImageUrl: z.string().max(500).nullable().optional(),
+    heroImageAlt: z.string().max(200).nullable().optional(),
+    accent: z.enum(['pink', 'sky', 'neutral']).optional(),
     sortOrder: z.number().int().optional(),
+    status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
+    membershipMode: z.enum(['MANUAL', 'RULES']).optional(),
+    rules: collectionRulesSchema.nullable().optional(),
+    relatedSlugs: z.array(collectionSlugSchema).max(12).optional(),
+    lockedLabel: z.string().max(80).nullable().optional(),
+    productSlugs: z.array(z.string().max(120)).max(200).optional(),
   })
   .refine(
     (b) =>
       b.slug !== undefined ||
-      b.name !== undefined ||
+      b.title !== undefined ||
       b.description !== undefined ||
-      b.sortOrder !== undefined,
+      b.overline !== undefined ||
+      b.heroImageUrl !== undefined ||
+      b.heroImageAlt !== undefined ||
+      b.accent !== undefined ||
+      b.sortOrder !== undefined ||
+      b.status !== undefined ||
+      b.membershipMode !== undefined ||
+      b.rules !== undefined ||
+      b.relatedSlugs !== undefined ||
+      b.lockedLabel !== undefined ||
+      b.productSlugs !== undefined,
     { message: 'At least one field is required' },
   );
 
 export const catalogListQuerySchema = z.object({
   q: z.string().max(120).optional(),
-  category: z.string().max(80).optional(),
+  collection: z.string().max(80).optional(),
   recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).optional(),
   age: z.enum(['newborn', 'infant', 'toddler', 'any']).optional(),
   occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).optional(),
@@ -614,7 +660,7 @@ export const giftBoxCreateBodySchema = z.object({
   recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).nullable().optional(),
   ageBand: z.enum(['newborn', 'infant', 'toddler', 'any']).nullable().optional(),
   occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).nullable().optional(),
-  categorySlugs: z.array(z.string().max(80)).max(12).optional(),
+  collectionSlugs: z.array(z.string().max(80)).max(12).optional(),
   wizardStep: z.number().int().min(1).max(6).optional(),
 });
 
@@ -637,8 +683,9 @@ export const giftingInquiryBodySchema = z.object({
 export type CreateProductBody = z.infer<typeof createProductBodySchema>;
 export type UpdateProductBody = z.infer<typeof updateProductBodySchema>;
 export type UpdateVariantBody = z.infer<typeof updateVariantBodySchema>;
-export type CreateCategoryBody = z.infer<typeof createCategoryBodySchema>;
-export type UpdateCategoryBody = z.infer<typeof updateCategoryBodySchema>;
+export type CreateCollectionBody = z.infer<typeof createCollectionBodySchema>;
+export type UpdateCollectionBody = z.infer<typeof updateCollectionBodySchema>;
+export type CollectionRules = z.infer<typeof collectionRulesSchema>;
 export type GiftingInquiryBody = z.infer<typeof giftingInquiryBodySchema>;
 
 /** Phase 3 — cart, checkout, orders */
@@ -736,10 +783,10 @@ export const createCouponBodySchema = z
     /** ISO or datetime-local string */
     startsAt: z.string().trim().min(1).max(40).optional(),
     expiresAt: z.string().trim().min(1).max(40).optional(),
-    /** CART (default) | PRODUCT | CATEGORY — discount applies to matching lines only when scoped. */
-    scope: z.enum(['CART', 'PRODUCT', 'CATEGORY']).optional().default('CART'),
+    /** CART (default) | PRODUCT | COLLECTION — COLLECTION matches MANUAL joins only. */
+    scope: z.enum(['CART', 'PRODUCT', 'COLLECTION']).optional().default('CART'),
     productIds: couponUuidList.optional(),
-    categoryIds: couponUuidList.optional(),
+    collectionIds: couponUuidList.optional(),
   })
   .superRefine((v, ctx) => {
     if (v.discountPaise == null && v.discountPercent == null) {
@@ -757,11 +804,11 @@ export const createCouponBodySchema = z
         path: ['productIds'],
       });
     }
-    if (scope === 'CATEGORY' && !(v.categoryIds?.length)) {
+    if (scope === 'COLLECTION' && !(v.collectionIds?.length)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Select at least one category for a category coupon.',
-        path: ['categoryIds'],
+        message: 'Select at least one collection for a collection coupon.',
+        path: ['collectionIds'],
       });
     }
   });
@@ -772,7 +819,7 @@ export const couponActiveBodySchema = z.object({
 
 const couponPreviewLineSchema = z.object({
   productId: z.string().uuid(),
-  categoryIds: couponUuidList.default([]),
+  collectionIds: couponUuidList.default([]),
   lineTotalPaise: z.number().int().min(0),
 });
 
@@ -782,9 +829,9 @@ export const couponPreviewBodySchema = z.object({
   discountPaise: z.number().int().min(1).optional(),
   discountPercent: z.number().int().min(1).max(100).optional(),
   minSubtotalPaise: z.number().int().min(0).optional(),
-  scope: z.enum(['CART', 'PRODUCT', 'CATEGORY']).optional(),
+  scope: z.enum(['CART', 'PRODUCT', 'COLLECTION']).optional(),
   productIds: couponUuidList.optional(),
-  categoryIds: couponUuidList.optional(),
+  collectionIds: couponUuidList.optional(),
   /** Optional cart lines — when omitted, scoped drafts use subtotalPaise as eligible. */
   lines: z.array(couponPreviewLineSchema).max(100).optional(),
 });
@@ -1080,8 +1127,8 @@ export const adminCatalogListQuerySchema = z.object({
   storefrontLabel: z.enum(['BESTSELLER', 'EDITORS_PICK', 'GIFT_SET']).optional(),
   recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).optional(),
   occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).optional(),
-  /** Category slug. */
-  category: z.string().trim().min(1).max(80).optional(),
+  /** Collection slug (MANUAL membership filter on admin desk). */
+  collection: z.string().trim().min(1).max(80).optional(),
   sort: z
     .enum(['updated', 'title_asc', 'title_desc', 'created', 'price_asc', 'price_desc'])
     .optional()
@@ -1224,7 +1271,7 @@ const productGridPropsSchema = z.object({
   /** Resolution mode — see CmsPagesService.resolveProductGridProps. */
   source: productGridSourceSchema.optional(),
   productSlugs: z.array(z.string().max(120)).max(24).optional(),
-  category: z.string().max(80).optional(),
+  collection: z.string().max(80).optional(),
   occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).optional(),
   age: z.enum(['newborn', 'infant', 'toddler', 'any']).optional(),
   recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).optional(),

@@ -58,7 +58,7 @@ export class GiftBoxController {
       recipient?: string | null;
       ageBand?: string | null;
       occasion?: string | null;
-      categorySlugs?: string[];
+      collectionSlugs?: string[];
       wizardStep?: number;
     },
   ) {

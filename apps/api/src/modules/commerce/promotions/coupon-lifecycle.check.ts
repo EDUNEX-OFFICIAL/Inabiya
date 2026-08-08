@@ -59,15 +59,15 @@ assert.equal(computeDiscountPaise({ subtotalPaise: 10_000, discountPercent: 10 }
 assert.equal(computeDiscountPaise({ subtotalPaise: 500, discountPaise: 900 }), 500);
 
 const lines = [
-  { productId: 'p1', categoryIds: ['c1'], lineTotalPaise: 2000 },
-  { productId: 'p2', categoryIds: ['c2', 'c3'], lineTotalPaise: 3000 },
+  { productId: 'p1', collectionIds: ['c1'], lineTotalPaise: 2000 },
+  { productId: 'p2', collectionIds: ['c2', 'c3'], lineTotalPaise: 3000 },
 ];
 
 assert.equal(
   eligibleSubtotalPaise({
     scope: 'CART',
     productIds: [],
-    categoryIds: [],
+    collectionIds: [],
     cartSubtotalPaise: 5000,
     lines,
   }),
@@ -77,7 +77,7 @@ assert.equal(
   eligibleSubtotalPaise({
     scope: 'PRODUCT',
     productIds: ['p2'],
-    categoryIds: [],
+    collectionIds: [],
     cartSubtotalPaise: 5000,
     lines,
   }),
@@ -85,9 +85,9 @@ assert.equal(
 );
 assert.equal(
   eligibleSubtotalPaise({
-    scope: 'CATEGORY',
+    scope: 'COLLECTION',
     productIds: [],
-    categoryIds: ['c1'],
+    collectionIds: ['c1'],
     cartSubtotalPaise: 5000,
     lines,
   }),
@@ -97,7 +97,7 @@ assert.equal(
   eligibleSubtotalPaise({
     scope: 'PRODUCT',
     productIds: ['p9'],
-    categoryIds: [],
+    collectionIds: [],
     cartSubtotalPaise: 5000,
     lines,
   }),
@@ -107,7 +107,7 @@ assert.equal(
   eligibleSubtotalPaise({
     scope: 'PRODUCT',
     productIds: ['p1'],
-    categoryIds: [],
+    collectionIds: [],
     cartSubtotalPaise: 5000,
     lines: null,
   }),
@@ -115,9 +115,9 @@ assert.equal(
 );
 assert.equal(
   eligibleSubtotalPaise({
-    scope: 'CATEGORY',
+    scope: 'COLLECTION',
     productIds: [],
-    categoryIds: ['c1'],
+    collectionIds: ['c1'],
     cartSubtotalPaise: 5000,
     lines: [],
   }),
