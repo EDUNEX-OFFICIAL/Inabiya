@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, LifeBuoy, RefreshCw } from 'lucide-react';
-import { apiAuth, getStoredAccessToken, getStoredUser } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 
@@ -138,7 +138,7 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl(`/admin/commerce/customers/${params.id}`));
       return;
     }
     void load();

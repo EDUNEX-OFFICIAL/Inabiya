@@ -10,7 +10,9 @@ const cartInclude = {
     include: {
       variant: {
         include: {
-          product: true,
+          product: {
+            include: { categories: true },
+          },
           inventory: true,
         },
       },
@@ -145,7 +147,15 @@ export class CartService {
 
   async applyCoupon(userId: string | undefined, guestToken: string | undefined, code: string) {
     const cartDto = await this.getOrCreate(userId, guestToken);
-    await this.coupons.validate(code, cartDto.subtotalPaise);
+    await this.coupons.validate(
+      code,
+      cartDto.subtotalPaise,
+      cartDto.items.map((i) => ({
+        productId: i.productId,
+        categoryIds: i.categoryIds,
+        lineTotalPaise: i.lineTotalPaise,
+      })),
+    );
     await this.prisma.cart.update({
       where: { id: cartDto.id },
       data: { couponCode: code.toUpperCase() },
@@ -230,7 +240,15 @@ export class CartService {
     let couponRemovedReason: string | null = null;
     if (mapped.couponCode) {
       try {
-        const coupon = await this.coupons.validate(mapped.couponCode, mapped.subtotalPaise);
+        const coupon = await this.coupons.validate(
+          mapped.couponCode,
+          mapped.subtotalPaise,
+          mapped.items.map((i) => ({
+            productId: i.productId,
+            categoryIds: i.categoryIds,
+            lineTotalPaise: i.lineTotalPaise,
+          })),
+        );
         discountPaise = coupon.discountPaise;
       } catch (err) {
         await this.prisma.cart.update({
@@ -277,7 +295,13 @@ export class CartService {
           sku: string;
           label: string;
           pricePaise: number;
-          product: { slug: string; title: string; status: ProductStatus };
+          product: {
+            id: string;
+            slug: string;
+            title: string;
+            status: ProductStatus;
+            categories: Array<{ categoryId: string }>;
+          };
           inventory: { onHand: number; reserved: number } | null;
         };
       }>;
@@ -291,6 +315,8 @@ export class CartService {
         return {
           id: i.id,
           variantId: i.variant.id,
+          productId: i.variant.product.id,
+          categoryIds: i.variant.product.categories.map((c) => c.categoryId),
           productTitle: i.variant.product.title,
           productSlug: i.variant.product.slug,
           sku: i.variant.sku,

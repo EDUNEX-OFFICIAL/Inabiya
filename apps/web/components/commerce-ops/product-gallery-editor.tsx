@@ -80,7 +80,7 @@ function SortableGalleryRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="flex gap-2 rounded-lg border border-[color:var(--border-subtle)] bg-white p-2"
+      className="clay-panel flex gap-2 p-2"
     >
       <button
         type="button"
@@ -92,7 +92,7 @@ function SortableGalleryRow({
         ⋮⋮
       </button>
 
-      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-[color:var(--surface-soft)]">
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-control)] bg-[color-mix(in_srgb,var(--surface-soft)_80%,white)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={item.url} alt="" className="h-full w-full object-cover" />
         {index === 0 ? (
@@ -106,14 +106,14 @@ function SortableGalleryRow({
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            className="text-[11px] underline opacity-60"
+            className="clay-btn-ghost text-[11px]"
             onClick={onToggleSource}
           >
             {sourceOpen ? 'Hide source' : 'Show source'}
           </button>
           <button
             type="button"
-            className="ml-auto rounded border border-red-200 px-1.5 py-0.5 text-[11px] text-red-700"
+            className="clay-btn-ghost ml-auto text-[11px] text-[var(--danger)]"
             onClick={onRemove}
           >
             Remove
@@ -124,7 +124,7 @@ function SortableGalleryRow({
           <label className="block text-[11px] opacity-70">
             Image URL
             <input
-              className="mt-0.5 block w-full rounded border px-2 py-1 font-mono text-xs"
+              className="clay-input font-mono text-xs"
               value={item.url}
               onChange={(e) => onUpdate({ url: e.target.value })}
               maxLength={500}
@@ -135,7 +135,7 @@ function SortableGalleryRow({
         <label className="block text-[11px]">
           Alt text
           <input
-            className="mt-0.5 block w-full rounded border px-2 py-1 text-sm"
+            className="clay-input text-sm"
             value={item.altText}
             onChange={(e) => onUpdate({ altText: e.target.value })}
             placeholder={titleHint || 'Describe this media'}
@@ -262,7 +262,7 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
         </button>
         <button
           type="button"
-          className="text-sm underline opacity-70"
+          className="clay-btn-ghost text-sm"
           onClick={() => setPasteOpen((v) => !v)}
         >
           {pasteOpen ? 'Hide URL' : 'Paste URL'}
@@ -272,7 +272,7 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
       {pasteOpen ? (
         <div className="flex flex-wrap items-end gap-2">
           <input
-            className="min-w-0 flex-1 rounded border px-2 py-1.5 text-sm"
+            className="clay-input min-w-0 flex-1 text-sm"
             value={pasteUrl}
             onChange={(e) => setPasteUrl(e.target.value)}
             placeholder="https://… or /gift/media/…"
@@ -291,10 +291,14 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
         </div>
       ) : null}
 
-      {err ? <p className="text-xs text-red-600">{err}</p> : null}
+      {err ? (
+        <div className="gift-banner gift-banner--danger text-xs" role="alert">
+          {err}
+        </div>
+      ) : null}
 
       {imageItems.length === 0 ? (
-        <div className="flex h-16 items-center justify-center rounded-lg border border-dashed border-[color:var(--border-subtle)] bg-[color:var(--surface-soft)] text-sm opacity-60">
+        <div className="flex h-16 items-center justify-center rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface-soft)_80%,white)] text-sm opacity-60">
           No images
         </div>
       ) : (

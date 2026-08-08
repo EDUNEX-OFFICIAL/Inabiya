@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LifeBuoy, RefreshCw, Search, Users, X } from 'lucide-react';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
+import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -34,13 +35,6 @@ function parseStatus(raw: string | null): StatusFilter {
   return '';
 }
 
-function chipClass(active: boolean): string {
-  return `clay-chip min-h-8 shrink-0 cursor-pointer px-2.5 text-xs font-medium transition-colors sm:min-h-9 sm:px-3.5 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] ${
-    active
-      ? 'border-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_16%,white)] text-[var(--primary)] shadow-sm'
-      : 'text-[var(--foreground)] hover:border-[color-mix(in_srgb,var(--primary)_32%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_6%,white)]'
-  }`;
-}
 
 function accountTone(isActive: boolean): string {
   return isActive
@@ -107,7 +101,7 @@ function CustomersDeskInner() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/admin/commerce/customers'));
       return;
     }
     void load();
@@ -213,7 +207,7 @@ function CustomersDeskInner() {
                 key={c.value || 'all'}
                 type="button"
                 aria-pressed={active}
-                className={chipClass(active)}
+                className={opsChipClass(active)}
                 onClick={() => patchQuery({ status: c.value || null })}
               >
                 {c.label}

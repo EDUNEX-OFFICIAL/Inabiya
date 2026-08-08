@@ -20,7 +20,7 @@ import {
   RotateCcw,
   Upload,
 } from 'lucide-react';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { parseInventoryCsv } from '@/lib/parse-inventory-csv';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
@@ -70,7 +70,7 @@ export default function InventoryImportPage() {
 
   async function run(dryRun: boolean) {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/admin/commerce/import'));
       return;
     }
 

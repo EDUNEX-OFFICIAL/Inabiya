@@ -4,8 +4,9 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { formatInr, type CatalogProduct, type ManualStorefrontLabel } from '@/lib/catalog';
+import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import {
   ProductGalleryEditor,
@@ -67,15 +68,7 @@ function Chip({
   children: ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        active
-          ? 'rounded-full bg-[color:var(--primary)]/15 px-3 py-1.5 text-xs font-medium ring-1 ring-[color:var(--primary)]/40'
-          : 'rounded-full bg-white px-3 py-1.5 text-xs ring-1 ring-[color:var(--border-subtle)] hover:bg-[color:var(--surface-soft)]'
-      }
-    >
+    <button type="button" onClick={onClick} aria-pressed={active} className={opsChipClass(active)}>
       {children}
     </button>
   );
@@ -84,23 +77,15 @@ function Chip({
 function Section({
   id,
   title,
-  hint,
   children,
 }: {
   id: string;
   title: string;
-  hint?: string;
   children: ReactNode;
 }) {
   return (
-    <section
-      id={id}
-      className="scroll-mt-24 space-y-4 rounded-xl border border-[color:var(--border-subtle)] bg-white/80 p-4 shadow-sm sm:p-5"
-    >
-      <div>
-        <h2 className="font-display text-base">{title}</h2>
-        {hint ? <p className="mt-0.5 text-xs opacity-60">{hint}</p> : null}
-      </div>
+    <section id={id} className="clay-panel scroll-mt-24 space-y-4 p-4 sm:p-5">
+      <h2 className="font-display text-base">{title}</h2>
       {children}
     </section>
   );
@@ -261,7 +246,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login?next=/admin/commerce/products');
+      router.replace(loginUrl(`/admin/commerce/products/${params.id}`));
       return;
     }
     apiAuth<CatalogProduct>(`/admin/catalog/products/${params.id}`)
@@ -445,13 +430,25 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   }
 
   if (error && !product) {
-    return <p className="p-6 text-red-600">{error}</p>;
+    return (
+      <div className="mx-auto max-w-4xl p-6">
+        <div className="gift-banner gift-banner--danger" role="alert">
+          {error}
+        </div>
+        <Link href="/admin/commerce/products" className="clay-btn-ghost mt-4 inline-flex text-sm">
+          ← Products
+        </Link>
+      </div>
+    );
   }
   if (!product) {
     return (
-      <div className="p-6 text-sm opacity-70">
-        <div className="h-8 w-48 animate-pulse rounded bg-black/5" />
-        <div className="mt-4 h-40 animate-pulse rounded-xl bg-black/5" />
+      <div className="mx-auto max-w-4xl">
+        <div className="clay-panel space-y-3 p-4" aria-busy="true" aria-label="Loading product">
+          <div className="h-7 w-48 animate-pulse rounded bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" />
+          <div className="h-4 w-64 animate-pulse rounded bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" />
+          <div className="mt-4 h-40 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]" />
+        </div>
       </div>
     );
   }
@@ -464,14 +461,14 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
 
   return (
     <div className="relative mx-auto max-w-4xl pb-28">
-      <Link href="/admin/commerce/products" className="text-sm underline opacity-70">
+      <Link href="/admin/commerce/products" className="clay-btn-ghost text-sm">
         ← Products
       </Link>
 
       {/* Hero summary */}
-      <div className="mt-4 overflow-hidden rounded-2xl border border-[color:var(--border-subtle)] bg-gradient-to-br from-[color:var(--surface-soft)] to-white">
+      <div className="clay-panel mt-4 overflow-hidden">
         <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-stretch sm:p-5">
-          <div className="aspect-square w-full max-w-[9rem] shrink-0 overflow-hidden rounded-xl border border-[color:var(--border-subtle)] bg-white sm:w-36">
+          <div className="aspect-square w-full max-w-[9rem] shrink-0 overflow-hidden rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_92%,white)] sm:w-36">
             {primary ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={primary} alt="" className="h-full w-full object-cover" />
@@ -494,8 +491,8 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   <span
                     className={
                       published
-                        ? 'inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200'
-                        : 'inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 ring-1 ring-amber-200'
+                        ? 'inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200/80'
+                        : 'inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 ring-1 ring-amber-200/80'
                     }
                   >
                     {published ? 'Published' : 'Draft'}
@@ -537,12 +534,12 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           </div>
         </div>
 
-        <nav className="flex gap-1 overflow-x-auto border-t border-[color:var(--border-subtle)] px-3 py-2 sm:px-5">
+        <nav className="flex gap-1 overflow-x-auto border-t border-[var(--border-subtle)] px-3 py-2 sm:px-5">
           {NAV.map((item) => (
             <a
               key={item.id}
               href={`#${item.id}`}
-              className="shrink-0 rounded-full px-3 py-1.5 text-xs opacity-70 hover:bg-white hover:opacity-100"
+              className="clay-chip shrink-0 px-3 py-1.5 text-xs opacity-80 hover:opacity-100"
             >
               {item.label}
             </a>
@@ -555,7 +552,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           <label className="block">
             Title
             <input
-              className="mt-1 block w-full rounded-lg border px-3 py-2"
+              className="clay-input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -564,7 +561,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           <label className="block">
             Description
             <textarea
-              className="mt-1 block w-full rounded-lg border px-3 py-2"
+              className="clay-input"
               rows={5}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -575,7 +572,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             <label className="block">
               Brand name
               <input
-                className="mt-1 block w-full rounded-lg border px-3 py-2"
+                className="clay-input"
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
                 placeholder="e.g. Soft Nest"
@@ -625,17 +622,14 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           <div className="mb-2 flex justify-end">
             <Link
               href={`/admin/commerce/inventory?q=${encodeURIComponent(product.variants[0]?.sku ?? product.slug)}`}
-              className="text-xs underline opacity-70"
+              className="clay-btn-ghost text-xs"
             >
               Open inventory desk
             </Link>
           </div>
           <ul className="space-y-3">
             {product.variants.map((v) => (
-              <li
-                key={v.id}
-                className="rounded-xl border border-[color:var(--border-subtle)] bg-[color:var(--surface-soft)] p-4"
-              >
+              <li key={v.id} className="clay-panel p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">
@@ -649,17 +643,17 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   </div>
                   <Link
                     href={`/admin/commerce/inventory?q=${encodeURIComponent(v.sku)}`}
-                    className="text-xs underline opacity-70"
+                    className="clay-btn-ghost text-xs"
                   >
                     Ledger
                   </Link>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div className="flex flex-wrap items-end gap-2">
-                    <label className="text-xs">
+                    <label className="block w-28 text-xs">
                       On hand
                       <input
-                        className="mt-1 block w-28 rounded-lg border px-2 py-1.5"
+                        className="clay-input"
                         value={stock[v.id] ?? '0'}
                         onChange={(e) => setStock((s) => ({ ...s, [v.id]: e.target.value }))}
                       />
@@ -673,10 +667,10 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                     </button>
                   </div>
                   <div className="flex flex-wrap items-end gap-2">
-                    <label className="text-xs">
+                    <label className="block w-28 text-xs">
                       MRP (₹)
                       <input
-                        className="mt-1 block w-28 rounded-lg border px-2 py-1.5"
+                        className="clay-input"
                         value={mrpRupees[v.id] ?? ''}
                         placeholder="optional"
                         onChange={(e) =>
@@ -782,7 +776,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           <label className="block">
             SEO title
             <input
-              className="mt-1 block w-full rounded-lg border px-3 py-2"
+              className="clay-input"
               value={seoTitle}
               onChange={(e) => setSeoTitle(e.target.value)}
               placeholder={title || 'Defaults to product title'}
@@ -795,7 +789,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           <label className="block">
             SEO description
             <textarea
-              className="mt-1 block w-full rounded-lg border px-3 py-2"
+              className="clay-input"
               rows={2}
               value={seoDescription}
               onChange={(e) => setSeoDescription(e.target.value)}
@@ -806,7 +800,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           <label className="block">
             Canonical path
             <input
-              className="mt-1 block w-full rounded-lg border px-3 py-2 font-mono text-sm"
+              className="clay-input font-mono text-sm"
               value={canonicalPath}
               onChange={(e) => setCanonicalPath(e.target.value)}
               placeholder={`/gift/products/${product.slug}`}
@@ -820,12 +814,12 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             />
             Allow search indexing
           </label>
-          <details className="rounded-lg border border-[color:var(--border-subtle)] p-3">
+          <details className="clay-panel p-3">
             <summary className="cursor-pointer text-xs opacity-70">
               Custom share image
             </summary>
             <input
-              className="mt-2 block w-full rounded-lg border px-3 py-2 text-sm"
+              className="clay-input text-sm"
               value={ogImageUrl}
               onChange={(e) => setOgImageUrl(e.target.value)}
               placeholder="Share image URL"
@@ -846,11 +840,11 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
         <Section id="faqs" title="FAQs">
           <ul className="space-y-3">
             {faqs.map((row, i) => (
-              <li key={i} className="space-y-2 rounded-lg border border-[color:var(--border-subtle)] p-3">
+              <li key={i} className="clay-panel space-y-2 p-3">
                 <label className="block text-xs">
                   Question
                   <input
-                    className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                    className="clay-input text-sm"
                     value={row.question}
                     onChange={(e) =>
                       setFaqs((rows) =>
@@ -862,7 +856,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                 <label className="block text-xs">
                   Answer
                   <textarea
-                    className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                    className="clay-input text-sm"
                     rows={2}
                     value={row.answerText}
                     onChange={(e) =>
@@ -874,7 +868,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                 </label>
                 <button
                   type="button"
-                  className="text-xs text-red-700 underline"
+                  className="clay-btn-ghost text-xs text-[var(--danger)]"
                   onClick={() => setFaqs((rows) => rows.filter((_, j) => j !== i))}
                 >
                   Remove
@@ -891,11 +885,11 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           </button>
         </Section>
 
-        <details className="rounded-xl border border-[color:var(--border-subtle)] bg-white/80 p-4" open>
+        <details className="clay-panel p-4" open>
           <summary className="cursor-pointer font-display text-base">
             About this gift
           </summary>
-          <div className="mt-3 overflow-hidden rounded-lg border border-[color:var(--border-subtle)] bg-white">
+          <div className="mt-3 overflow-hidden rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_92%,white)]">
             <ArticleEditor
               key={product.id}
               initialContent={pageContentHtml}
@@ -915,14 +909,11 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           >
             <ul className="space-y-3">
               {hamperRows.map((row, i) => (
-                <li
-                  key={i}
-                  className="grid gap-2 rounded-lg border border-[color:var(--border-subtle)] p-3 sm:grid-cols-2"
-                >
+                <li key={i} className="clay-panel grid gap-2 p-3 sm:grid-cols-2">
                   <label className="block text-xs sm:col-span-2">
                     Item title
                     <input
-                      className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                      className="clay-input text-sm"
                       value={row.title}
                       onChange={(e) =>
                         setHamperRows((rows) =>
@@ -934,7 +925,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   <label className="block text-xs">
                     Brand
                     <input
-                      className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                      className="clay-input text-sm"
                       value={row.brandName}
                       onChange={(e) =>
                         setHamperRows((rows) =>
@@ -948,7 +939,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   <label className="block text-xs">
                     Qty
                     <input
-                      className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                      className="clay-input text-sm"
                       value={row.qty}
                       onChange={(e) =>
                         setHamperRows((rows) =>
@@ -960,7 +951,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   <label className="block text-xs">
                     Unit price (₹)
                     <input
-                      className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                      className="clay-input text-sm"
                       value={row.unitPriceInr}
                       onChange={(e) =>
                         setHamperRows((rows) =>
@@ -974,7 +965,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   <label className="block text-xs">
                     Image URL
                     <input
-                      className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                      className="clay-input text-sm"
                       value={row.imageUrl}
                       onChange={(e) =>
                         setHamperRows((rows) =>
@@ -988,7 +979,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   <label className="block text-xs sm:col-span-2">
                     Blurb
                     <input
-                      className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                      className="clay-input text-sm"
                       value={row.blurb}
                       onChange={(e) =>
                         setHamperRows((rows) =>
@@ -999,7 +990,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   </label>
                   <button
                     type="button"
-                    className="text-xs text-red-700 underline sm:col-span-2"
+                    className="clay-btn-ghost text-xs text-[var(--danger)] sm:col-span-2"
                     onClick={() => setHamperRows((rows) => rows.filter((_, j) => j !== i))}
                   >
                     Remove item
@@ -1031,12 +1022,20 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
 
         {/* Sticky save */}
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 md:left-56 lg:left-60">
-          <div className="pointer-events-auto flex w-full max-w-4xl flex-wrap items-center gap-2 rounded-xl border border-[color:var(--border-subtle)] bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
+          <div className="clay-panel pointer-events-auto flex w-full max-w-4xl flex-wrap items-center gap-2 px-4 py-3">
             <button type="submit" disabled={saving} className="clay-btn text-sm disabled:opacity-60">
               {saving ? 'Saving…' : 'Save changes'}
             </button>
-            {msg ? <p className="text-sm text-emerald-700">{msg}</p> : null}
-            {error ? <p className="text-sm text-red-600">{error}</p> : null}
+            {msg ? (
+              <div className="gift-banner gift-banner--success py-1.5 text-sm" role="status">
+                {msg}
+              </div>
+            ) : null}
+            {error ? (
+              <div className="gift-banner gift-banner--danger py-1.5 text-sm" role="alert">
+                {error}
+              </div>
+            ) : null}
           </div>
         </div>
       </form>

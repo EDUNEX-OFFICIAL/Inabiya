@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Package, Pin, RefreshCw, Search, X } from 'lucide-react';
-import { apiAuth, getStoredAccessToken, getStoredUser } from '@/lib/auth-client';
+import { ChevronLeft, ChevronRight, Package, Pin, RefreshCw, Search, X } from 'lucide-react';
+import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/cart-client';
+import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 import {
@@ -33,6 +34,14 @@ type AdminOrder = {
   openReturnCount: number;
 };
 
+type AdminOrderListResponse = {
+  items: AdminOrder[];
+  nextCursor: string | null;
+  limit: number;
+};
+
+const PAGE_LIMIT = 25;
+
 const STATUS_CHIPS = [
   { value: '', label: 'All' },
   { value: 'PAID', label: 'Paid' },
@@ -52,13 +61,6 @@ const EXCEPTION_LABEL: Record<string, string> = {
   sla_aging: 'SLA',
 };
 
-function chipClass(active: boolean): string {
-  return `clay-chip min-h-8 shrink-0 cursor-pointer px-2.5 text-xs font-medium transition-colors sm:min-h-9 sm:px-3.5 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] ${
-    active
-      ? 'border-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_16%,white)] text-[var(--primary)] shadow-sm'
-      : 'text-[var(--foreground)] hover:border-[color-mix(in_srgb,var(--primary)_32%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_6%,white)]'
-  }`;
-}
 
 function statusLabel(status: string): string {
   if (status === 'PENDING_PAYMENT') return 'Pending pay';
@@ -132,6 +134,10 @@ function OrdersQueueInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [pageLimit, setPageLimit] = useState(PAGE_LIMIT);
+  /** Previous page cursors ('' = first page). Enables Prev without bidirectional API. */
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,12 +157,17 @@ function OrdersQueueInner() {
   const days = searchParams.get('days') ?? '';
   const payment = searchParams.get('payment') ?? '';
   const q = searchParams.get('q') ?? '';
+  const cursorParam = searchParams.get('cursor') ?? '';
+
+  const filterKey = [status, focus, days, payment, q].join('\0');
 
   const canFulfill =
     getStoredUser()?.roles.some((r) => r === 'COMMERCE_ADMIN' || r === 'SUPER_ADMIN') ?? false;
 
   const filterActive = Boolean(status || focus || q || days || payment);
   const payIssuesActive = focus === 'failed-payments';
+  const pageIndex = cursorStack.length + 1;
+  const canPrev = cursorStack.length > 0 || Boolean(cursorParam);
 
   const patchParams = useCallback(
     (patch: Record<string, string | null>) => {
@@ -170,6 +181,11 @@ function OrdersQueueInner() {
       if (patch.focus != null && patch.focus !== '') {
         params.delete('status');
         params.delete('payment');
+      }
+      // Filter changes reset pagination; cursor-only patches keep stack managed by callers.
+      const filterKeys = ['status', 'focus', 'days', 'payment', 'q'];
+      if (Object.keys(patch).some((k) => filterKeys.includes(k))) {
+        params.delete('cursor');
       }
       const s = params.toString();
       router.replace(s ? `/admin/commerce/orders?${s}` : '/admin/commerce/orders');
@@ -192,10 +208,13 @@ function OrdersQueueInner() {
       }
       if (days) params.set('days', days);
       if (q) params.set('q', q);
-      const qs = params.toString();
-      const data = await apiAuth<AdminOrder[]>(`/admin/orders${qs ? `?${qs}` : ''}`);
+      if (cursorParam) params.set('cursor', cursorParam);
+      params.set('limit', String(PAGE_LIMIT));
+      const data = await apiAuth<AdminOrderListResponse>(`/admin/orders?${params.toString()}`);
       if (seq !== loadSeq.current) return;
-      setOrders(data);
+      setOrders(data.items);
+      setNextCursor(data.nextCursor);
+      setPageLimit(data.limit);
       hasLoadedOnce.current = true;
     } catch (e) {
       if (seq !== loadSeq.current) return;
@@ -206,15 +225,17 @@ function OrdersQueueInner() {
         setRefreshing(false);
       }
     }
-  }, [status, focus, days, payment, q]);
+  }, [status, focus, days, payment, q, cursorParam]);
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      const qs = searchParams.toString();
+      const next = `/admin/commerce/orders${qs ? `?${qs}` : ''}`;
+      router.replace(loginUrl(next));
       return;
     }
     void load();
-  }, [load, router]);
+  }, [load, router, searchParams]);
 
   useEffect(() => {
     setQInput(q);
@@ -224,6 +245,7 @@ function OrdersQueueInner() {
     const trimmed = qInput.trim();
     if (trimmed === q) return;
     const t = window.setTimeout(() => {
+      setCursorStack([]);
       patchParams({ q: trimmed || null });
     }, 300);
     return () => window.clearTimeout(t);
@@ -235,7 +257,12 @@ function OrdersQueueInner() {
 
   useEffect(() => {
     setSelected({});
-  }, [status, focus, days, payment, q]);
+  }, [status, focus, days, payment, q, cursorParam]);
+
+  // New filters → drop Prev stack (URL cursor cleared by patchParams).
+  useEffect(() => {
+    setCursorStack([]);
+  }, [filterKey]);
 
   const selectedIds = useMemo(
     () => Object.entries(selected).filter(([, v]) => v).map(([id]) => id),
@@ -244,7 +271,25 @@ function OrdersQueueInner() {
 
   function clearFilters() {
     setQInput('');
+    setCursorStack([]);
     router.replace('/admin/commerce/orders');
+  }
+
+  function goNext() {
+    if (!nextCursor) return;
+    setCursorStack((s) => [...s, cursorParam]);
+    patchParams({ cursor: nextCursor });
+  }
+
+  function goPrev() {
+    if (cursorStack.length === 0) {
+      if (!cursorParam) return;
+      patchParams({ cursor: null });
+      return;
+    }
+    const prev = cursorStack[cursorStack.length - 1] ?? '';
+    setCursorStack((s) => s.slice(0, -1));
+    patchParams({ cursor: prev || null });
   }
 
   async function markProcessing(id: string) {
@@ -321,7 +366,9 @@ function OrdersQueueInner() {
     return map;
   }, [orders]);
 
-  const countLabel = loading ? 'Loading…' : `${orders.length} orders`;
+  const countLabel = loading
+    ? 'Loading…'
+    : `${orders.length} on this page${nextCursor ? ' · more' : ''}`;
 
   function canProcess(o: AdminOrder): boolean {
     return canFulfill && o.status === 'PAID' && !o.exceptions.includes('payment_issue');
@@ -406,6 +453,7 @@ function OrdersQueueInner() {
         role="search"
         onSubmit={(e) => {
           e.preventDefault();
+          setCursorStack([]);
           patchParams({ q: qInput.trim() || null });
         }}
       >
@@ -428,6 +476,7 @@ function OrdersQueueInner() {
               aria-label="Clear search"
               onClick={() => {
                 setQInput('');
+                setCursorStack([]);
                 patchParams({ q: null });
               }}
             >
@@ -453,7 +502,7 @@ function OrdersQueueInner() {
                 key={c.value || 'all'}
                 type="button"
                 aria-pressed={active}
-                className={chipClass(active)}
+                className={opsChipClass(active)}
                 onClick={() => patchParams({ status: c.value || null, focus: null })}
               >
                 {c.label}
@@ -463,7 +512,7 @@ function OrdersQueueInner() {
           <button
             type="button"
             aria-pressed={payIssuesActive}
-            className={chipClass(payIssuesActive)}
+            className={opsChipClass(payIssuesActive)}
             onClick={() =>
               patchParams({
                 focus: payIssuesActive ? null : 'failed-payments',
@@ -810,6 +859,33 @@ function OrdersQueueInner() {
               </div>
             </OpsTableScroll>
           </div>
+        </div>
+      ) : null}
+
+      {!loading && orders.length > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <button
+            type="button"
+            className="clay-btn-secondary inline-flex min-h-9 items-center gap-1 px-3 text-xs disabled:opacity-40"
+            disabled={!canPrev || loading || refreshing}
+            onClick={goPrev}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+            Prev
+          </button>
+          <span className="tabular-nums text-xs opacity-60">
+            Page {pageIndex}
+            {pageLimit ? ` · ${pageLimit}/page` : ''}
+          </span>
+          <button
+            type="button"
+            className="clay-btn-secondary inline-flex min-h-9 items-center gap-1 px-3 text-xs disabled:opacity-40"
+            disabled={!nextCursor || loading || refreshing}
+            onClick={goNext}
+          >
+            Next
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+          </button>
         </div>
       ) : null}
     </div>

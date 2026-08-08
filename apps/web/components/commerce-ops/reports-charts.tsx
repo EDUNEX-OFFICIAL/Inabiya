@@ -52,7 +52,10 @@ export function SalesTrendChart({
   const dataKey = metric === 'revenue' ? 'revenueInr' : 'orders';
 
   return (
-    <ChartContainer config={config} className="aspect-[16/9] w-full min-h-[12rem] sm:min-h-[14rem]">
+    <ChartContainer
+      config={config}
+      className="aspect-auto h-[10.5rem] w-full sm:h-[12rem]"
+    >
       <AreaChart data={data} margin={{ left: 4, right: 8, top: 8, bottom: 0 }}>
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
         <XAxis

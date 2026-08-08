@@ -2,13 +2,48 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ExternalLink, Keyboard, LogOut, Menu, Search } from 'lucide-react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+  type SVGProps,
+} from 'react';
+import {
+  BarChart3,
+  Boxes,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  FolderTree,
+  Gift,
+  Keyboard,
+  LayoutDashboard,
+  LayoutGrid,
+  LifeBuoy,
+  LogOut,
+  Menu,
+  MessageSquareQuote,
+  Package,
+  PanelLeftClose,
+  Percent,
+  RotateCcw,
+  Search,
+  Settings,
+  ShoppingBag,
+  Upload,
+  Users,
+} from 'lucide-react';
 import {
   apiAuth,
   clearSession,
   getStoredAccessToken,
   getStoredUser,
+  loginUrl,
   subscribeAuthChanged,
   type AuthUser,
 } from '@/lib/auth-client';
@@ -23,6 +58,30 @@ import {
 } from '@/lib/commerce-ops-nav';
 
 type Props = { children: ReactNode };
+
+type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
+
+const SIDEBAR_COLLAPSED_KEY = 'inabiya.ops.sidebarCollapsed';
+
+const NAV_ICONS: Record<string, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  orders: ShoppingBag,
+  products: Package,
+  categories: FolderTree,
+  inventory: Boxes,
+  import: Upload,
+  customers: Users,
+  promotions: Percent,
+  merchandising: LayoutGrid,
+  reports: BarChart3,
+  reviews: MessageSquareQuote,
+  returns: RotateCcw,
+  support: LifeBuoy,
+  inquiries: Gift,
+  search: Search,
+  settings: Settings,
+  pages: FileText,
+};
 
 function roleLabel(roles: string[]): string {
   if (roles.includes('SUPER_ADMIN')) return 'Super admin';
@@ -59,12 +118,35 @@ export function CommerceOpsShell({ children }: Props) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [ready, setReady] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQ, setPaletteQ] = useState('');
   const [helpOpen, setHelpOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [chord, setChord] = useState<string | null>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1') {
+        setSidebarCollapsed(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
 
   const refreshUser = useCallback(() => {
     const cached = getStoredUser();
@@ -78,7 +160,7 @@ export function CommerceOpsShell({ children }: Props) {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+      router.replace(loginUrl(pathname));
       return;
     }
     apiAuth<AuthUser>('/auth/me')
@@ -88,7 +170,7 @@ export function CommerceOpsShell({ children }: Props) {
       })
       .catch(() => {
         clearSession();
-        router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+        router.replace(loginUrl(pathname));
       });
   }, [pathname, router]);
 
@@ -132,6 +214,12 @@ export function CommerceOpsShell({ children }: Props) {
       }
       if (typing || paletteOpen || helpOpen) return;
 
+      if (e.key === '[' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        toggleSidebarCollapsed();
+        return;
+      }
+
       if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setPaletteOpen(true);
@@ -150,7 +238,7 @@ export function CommerceOpsShell({ children }: Props) {
       if (chord === 'g') {
         e.preventDefault();
         setChord(null);
-        const map: Record<string, string> = {
+        const fullMap: Record<string, string> = {
           d: '/admin/commerce',
           o: '/admin/commerce/orders',
           p: '/admin/commerce/products',
@@ -160,7 +248,9 @@ export function CommerceOpsShell({ children }: Props) {
           s: '/admin/commerce/settings',
           m: '/admin/commerce/import',
         };
-        if (map[key]) router.push(map[key]);
+        const allowed = new Set(navItems.map((item) => item.href));
+        const href = fullMap[key];
+        if (href && allowed.has(href)) router.push(href);
         return;
       }
       if (key === 'g' && !e.metaKey && !e.ctrlKey && !e.altKey) {
@@ -171,7 +261,7 @@ export function CommerceOpsShell({ children }: Props) {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [paletteOpen, helpOpen, chord, router]);
+  }, [paletteOpen, helpOpen, chord, router, toggleSidebarCollapsed, navItems]);
 
   useEffect(() => {
     if (!accountOpen) return;
@@ -250,24 +340,36 @@ export function CommerceOpsShell({ children }: Props) {
     );
   }
 
-  function NavLinks({ items, onNavigate }: { items: OpsNavItem[]; onNavigate?: () => void }) {
+  function NavLinks({
+    items,
+    onNavigate,
+    collapsed,
+  }: {
+    items: OpsNavItem[];
+    onNavigate?: () => void;
+    collapsed?: boolean;
+  }) {
     return (
       <ul className="space-y-0.5">
         {items.map((item) => {
           const active = isNavItemActive(pathname, item);
+          const Icon = NAV_ICONS[item.id] ?? Package;
           return (
             <li key={item.id}>
               <Link
                 href={item.href}
                 onClick={onNavigate}
-                className={`block min-h-11 rounded-md px-2.5 py-2.5 text-sm transition-colors md:min-h-0 md:py-1.5 ${
-                  active
-                    ? 'bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] font-medium text-[var(--primary)]'
-                    : 'text-[var(--foreground)]/80 hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)]'
+                title={collapsed ? item.label : undefined}
+                className={`ops-nav-link ${active ? 'ops-nav-link--active' : ''} ${
+                  collapsed ? 'ops-nav-link--rail' : ''
                 }`}
                 aria-current={active ? 'page' : undefined}
               >
-                {item.label}
+                <span className="ops-nav-link__active-bar" aria-hidden />
+                <Icon className="ops-nav-link__icon" aria-hidden />
+                <span className={`ops-nav-link__label ${collapsed ? 'sr-only' : ''}`}>
+                  {item.label}
+                </span>
               </Link>
             </li>
           );
@@ -276,61 +378,148 @@ export function CommerceOpsShell({ children }: Props) {
     );
   }
 
-  const sidebar = (
-    <nav className="flex h-full min-h-0 flex-col" aria-label="Commerce ops">
-      <div className="shrink-0 border-b border-[var(--border-subtle)] px-3 py-3">
-        <Link
-          href="/admin/commerce"
-          className="font-display text-lg leading-tight text-[var(--foreground)]"
-          onClick={() => setMobileNav(false)}
+  function SidebarBody({
+    collapsed,
+    onNavigate,
+    showCollapseToggle,
+  }: {
+    collapsed: boolean;
+    onNavigate?: () => void;
+    showCollapseToggle?: boolean;
+  }) {
+    return (
+      <nav className="flex h-full min-h-0 flex-col" aria-label="Commerce ops">
+        <div
+          className={`shrink-0 border-b border-[var(--border-subtle)] ${
+            collapsed ? 'px-2 py-3' : 'px-3 py-3'
+          }`}
         >
-          Inabiya Ops
-        </Link>
-        <p className="mt-0.5 text-[11px] uppercase tracking-wide opacity-55">Soft Gift commerce</p>
-      </div>
-
-      <div className="ops-sidebar-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-3">
-        {grouped.map((g) => (
-          <div key={g.section} className="mb-4">
-            <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-wider opacity-45">
-              {g.label}
-            </p>
-            <NavLinks items={g.items} onNavigate={() => setMobileNav(false)} />
+          <div className={`flex gap-2 ${collapsed ? 'flex-col items-center' : 'items-center'}`}>
+            <Link
+              href="/admin/commerce"
+              className={`min-w-0 flex-1 ${collapsed ? 'flex justify-center' : ''}`}
+              onClick={onNavigate}
+              title={collapsed ? 'Inabiya Ops' : undefined}
+            >
+              {collapsed ? (
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] font-display text-sm font-semibold text-[var(--primary)]">
+                  IO
+                </span>
+              ) : (
+                <>
+                  <span className="font-display text-lg leading-tight text-[var(--foreground)]">
+                    Inabiya Ops
+                  </span>
+                  <p className="mt-0.5 text-[11px] uppercase tracking-wide opacity-55">
+                    Soft Gift commerce
+                  </p>
+                </>
+              )}
+            </Link>
+            {showCollapseToggle ? (
+              <button
+                type="button"
+                className="ops-sidebar-toggle"
+                onClick={toggleSidebarCollapsed}
+                aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                aria-expanded={!collapsed}
+                title={collapsed ? 'Expand' : 'Collapse'}
+              >
+                {collapsed ? (
+                  <ChevronRight className="h-4 w-4" aria-hidden />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" aria-hidden />
+                )}
+              </button>
+            ) : null}
           </div>
-        ))}
-        <Link
-          href="/gift"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-1 flex items-center gap-1.5 px-2.5 py-1.5 text-xs opacity-60 hover:opacity-100"
-          onClick={() => setMobileNav(false)}
-        >
-          View storefront
-          <ExternalLink className="h-3 w-3" aria-hidden />
-        </Link>
-      </div>
-
-      <div className="shrink-0 border-t border-[var(--border-subtle)] bg-[var(--surface)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="rounded-lg border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3%,var(--surface))] p-3">
-          <p className="truncate text-sm font-medium leading-tight">{displayNameOf(user)}</p>
-          <p className="mt-1 text-[11px] opacity-55">{roleLabel(user.roles)}</p>
-          <button
-            type="button"
-            className="clay-btn-secondary mt-3 flex w-full min-h-10 items-center justify-center gap-1.5 text-sm"
-            onClick={signOut}
-          >
-            <LogOut className="h-3.5 w-3.5" aria-hidden />
-            Sign out
-          </button>
         </div>
-      </div>
-    </nav>
-  );
+
+        <div
+          className={`ops-sidebar-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain py-3 ${
+            collapsed ? 'px-1.5' : 'px-2'
+          }`}
+        >
+          {grouped.map((g) => (
+            <div key={g.section} className="mb-4">
+              {!collapsed ? (
+                <p className="mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider opacity-45">
+                  {g.label}
+                </p>
+              ) : (
+                <div
+                  className="mx-auto mb-1.5 h-px w-6 bg-[color-mix(in_srgb,var(--foreground)_12%,transparent)]"
+                  aria-hidden
+                />
+              )}
+              <NavLinks items={g.items} onNavigate={onNavigate} collapsed={collapsed} />
+            </div>
+          ))}
+          <Link
+            href="/gift"
+            target="_blank"
+            rel="noopener noreferrer"
+            title={collapsed ? 'View storefront' : undefined}
+            className={`ops-nav-link ops-nav-link--muted mt-1 ${collapsed ? 'ops-nav-link--rail' : ''}`}
+            onClick={onNavigate}
+          >
+            <ExternalLink className="ops-nav-link__icon" aria-hidden />
+            <span className={`ops-nav-link__label ${collapsed ? 'sr-only' : ''}`}>
+              View storefront
+            </span>
+          </Link>
+        </div>
+
+        <div
+          className={`shrink-0 border-t border-[var(--border-subtle)] bg-[var(--surface)] pb-[max(0.75rem,env(safe-area-inset-bottom))] ${
+            collapsed ? 'p-2' : 'p-3'
+          }`}
+        >
+          {collapsed ? (
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--primary)_18%,transparent)] text-[11px] font-semibold text-[var(--primary)]"
+                title={`${displayNameOf(user!)} · ${roleLabel(user!.roles)}`}
+              >
+                {initialsOf(user!)}
+              </div>
+              <button
+                type="button"
+                className="ops-sidebar-toggle"
+                onClick={signOut}
+                aria-label="Sign out"
+                title="Sign out"
+              >
+                <LogOut className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3%,var(--surface))] p-3">
+              <p className="truncate text-sm font-medium leading-tight">{displayNameOf(user!)}</p>
+              <p className="mt-1 text-[11px] opacity-55">{roleLabel(user!.roles)}</p>
+              <button
+                type="button"
+                className="clay-btn-secondary mt-3 flex w-full min-h-10 items-center justify-center gap-1.5 text-sm"
+                onClick={signOut}
+              >
+                <LogOut className="h-3.5 w-3.5" aria-hidden />
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <div className="ops-shell flex h-[100dvh] max-h-[100dvh] overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
-      <aside className="hidden h-full w-56 shrink-0 overflow-hidden border-r border-[var(--border-subtle)] bg-[var(--surface)] md:flex md:flex-col lg:w-60">
-        {sidebar}
+      <aside
+        className={`ops-aside hidden h-full shrink-0 overflow-hidden border-r border-[var(--border-subtle)] bg-[var(--surface)] md:flex md:flex-col ${
+          sidebarCollapsed ? 'ops-aside--collapsed' : 'ops-aside--expanded'
+        }`}
+      >
+        <SidebarBody collapsed={sidebarCollapsed} showCollapseToggle />
       </aside>
 
       {mobileNav ? (
@@ -341,8 +530,8 @@ export function CommerceOpsShell({ children }: Props) {
             aria-label="Close menu"
             onClick={() => setMobileNav(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-[min(18rem,88vw)] max-w-full flex-col overflow-hidden bg-[var(--surface)] shadow-lg pt-[env(safe-area-inset-top)]">
-            {sidebar}
+          <aside className="ops-mobile-drawer absolute inset-y-0 left-0 flex w-[min(18rem,88vw)] max-w-full flex-col overflow-hidden bg-[var(--surface)] shadow-lg pt-[env(safe-area-inset-top)]">
+            <SidebarBody collapsed={false} onNavigate={() => setMobileNav(false)} />
           </aside>
         </div>
       ) : null}
@@ -360,6 +549,21 @@ export function CommerceOpsShell({ children }: Props) {
                 aria-expanded={mobileNav}
               >
                 <Menu className="h-4 w-4" aria-hidden />
+              </button>
+
+              <button
+                type="button"
+                className="ops-sidebar-toggle hidden shrink-0 md:inline-flex"
+                onClick={toggleSidebarCollapsed}
+                aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                aria-expanded={!sidebarCollapsed}
+                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {sidebarCollapsed ? (
+                  <ChevronRight className="h-4 w-4" aria-hidden />
+                ) : (
+                  <ChevronLeft className="h-4 w-4" aria-hidden />
+                )}
               </button>
 
               <nav
@@ -494,23 +698,27 @@ export function CommerceOpsShell({ children }: Props) {
               {paletteHits.length === 0 ? (
                 <li className="px-3 py-2 text-sm opacity-60">No matches</li>
               ) : (
-                paletteHits.map((item) => (
+                paletteHits.map((item) => {
+                  const Icon = NAV_ICONS[item.id] ?? Package;
+                  return (
                   <li key={item.id}>
                     <button
                       type="button"
-                      className="flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm hover:bg-[color-mix(in_srgb,var(--primary)_8%,transparent)]"
+                      className="ops-palette-item flex min-h-11 w-full items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-[color-mix(in_srgb,var(--primary)_8%,transparent)]"
                       onClick={() => {
                         setPaletteOpen(false);
                         router.push(item.href);
                       }}
                     >
-                      <span>{item.label}</span>
+                      <Icon className="h-4 w-4 shrink-0 opacity-55" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
                       <span className="shrink-0 text-[11px] opacity-45">
                         {item.href.replace('/admin/commerce', '') || '/'}
                       </span>
                     </button>
                   </li>
-                ))
+                  );
+                })
               )}
             </ul>
             <p className="shrink-0 border-t border-[var(--border-subtle)] px-3 py-2 text-[11px] opacity-50 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
@@ -558,6 +766,9 @@ export function CommerceOpsShell({ children }: Props) {
                 <kbd className="rounded border px-1 text-xs">s</kbd> settings ·{' '}
                 <kbd className="rounded border px-1 text-xs">m</kbd> import ·{' '}
                 <kbd className="rounded border px-1 text-xs">?</kbd> this help
+              </li>
+              <li>
+                <kbd className="rounded border px-1 text-xs">[</kbd> — collapse / expand sidebar
               </li>
             </ul>
             <button

@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
-import { computeDiscountPaise, couponLifecycle } from './coupon-lifecycle';
+import {
+  computeDiscountPaise,
+  couponLifecycle,
+  eligibleSubtotalPaise,
+} from './coupon-lifecycle';
 
 const now = new Date('2026-07-29T12:00:00Z');
 
@@ -53,5 +57,71 @@ assert.equal(
 
 assert.equal(computeDiscountPaise({ subtotalPaise: 10_000, discountPercent: 10 }), 1_000);
 assert.equal(computeDiscountPaise({ subtotalPaise: 500, discountPaise: 900 }), 500);
+
+const lines = [
+  { productId: 'p1', categoryIds: ['c1'], lineTotalPaise: 2000 },
+  { productId: 'p2', categoryIds: ['c2', 'c3'], lineTotalPaise: 3000 },
+];
+
+assert.equal(
+  eligibleSubtotalPaise({
+    scope: 'CART',
+    productIds: [],
+    categoryIds: [],
+    cartSubtotalPaise: 5000,
+    lines,
+  }),
+  5000,
+);
+assert.equal(
+  eligibleSubtotalPaise({
+    scope: 'PRODUCT',
+    productIds: ['p2'],
+    categoryIds: [],
+    cartSubtotalPaise: 5000,
+    lines,
+  }),
+  3000,
+);
+assert.equal(
+  eligibleSubtotalPaise({
+    scope: 'CATEGORY',
+    productIds: [],
+    categoryIds: ['c1'],
+    cartSubtotalPaise: 5000,
+    lines,
+  }),
+  2000,
+);
+assert.equal(
+  eligibleSubtotalPaise({
+    scope: 'PRODUCT',
+    productIds: ['p9'],
+    categoryIds: [],
+    cartSubtotalPaise: 5000,
+    lines,
+  }),
+  0,
+);
+assert.equal(
+  eligibleSubtotalPaise({
+    scope: 'PRODUCT',
+    productIds: ['p1'],
+    categoryIds: [],
+    cartSubtotalPaise: 5000,
+    lines: null,
+  }),
+  5000,
+);
+assert.equal(
+  eligibleSubtotalPaise({
+    scope: 'CATEGORY',
+    productIds: [],
+    categoryIds: ['c1'],
+    cartSubtotalPaise: 5000,
+    lines: [],
+  }),
+  0,
+);
 
 console.log('coupon-lifecycle.check: ok');

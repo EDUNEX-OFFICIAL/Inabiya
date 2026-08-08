@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { apiAuth, type AuthUser } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
+import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -221,7 +222,7 @@ export default function CommerceAdminPage() {
         id: 'lowStock',
         title: 'Low stock SKUs',
         count: dash.alerts.lowStock.length,
-        href: '/admin/commerce/inventory?lowStock=1',
+        href: '/admin/commerce/inventory?stock=low',
         tone: dash.alerts.lowStock.length > 0 ? 'warn' : 'ok',
         icon: AlertTriangle,
         priority: dash.alerts.lowStock.length > 0 ? 4 : 94,
@@ -278,25 +279,24 @@ export default function CommerceAdminPage() {
         actions={
           <>
             <div
-              className="flex w-full max-w-full overflow-hidden rounded-full border border-[var(--border-subtle)] bg-[var(--surface)] p-0.5 sm:w-auto"
+              className="-mx-1 flex max-w-full gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2"
               role="group"
               aria-label="Date range"
             >
-              {RANGES.map((r) => (
-                <button
-                  key={r.days}
-                  type="button"
-                  className={`min-h-9 flex-1 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition-colors sm:flex-none ${
-                    range === r.days
-                      ? 'bg-[color-mix(in_srgb,var(--primary)_16%,transparent)] text-[var(--primary)]'
-                      : 'opacity-60 hover:opacity-100'
-                  }`}
-                  aria-pressed={range === r.days}
-                  onClick={() => setRange(r.days)}
-                >
-                  {r.label}
-                </button>
-              ))}
+              {RANGES.map((r) => {
+                const active = range === r.days;
+                return (
+                  <button
+                    key={r.days}
+                    type="button"
+className={opsChipClass(active)}
+                    aria-pressed={active}
+                    onClick={() => setRange(r.days)}
+                  >
+                    {r.label}
+                  </button>
+                );
+              })}
             </div>
             <button
               type="button"
@@ -313,10 +313,10 @@ export default function CommerceAdminPage() {
               onClick={() => void load(range)}
             >
               <RefreshCw
-                className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`}
+                className={`h-3.5 w-3.5 opacity-70 ${loading ? 'animate-spin' : ''}`}
                 aria-hidden
               />
-              {loading ? 'Refreshing…' : 'Refresh'}
+              Refresh
             </button>
           </>
         }
@@ -448,7 +448,7 @@ export default function CommerceAdminPage() {
               <div className="flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] px-3 py-3 sm:px-4">
                 <h2 className="font-display text-lg">Low stock</h2>
                 <Link
-                  href="/admin/commerce/inventory?lowStock=1"
+                  href="/admin/commerce/inventory?stock=low"
                   className="text-xs font-medium text-[var(--primary)] underline-offset-2 hover:underline"
                 >
                   Inventory

@@ -105,23 +105,21 @@ export default function NewProductPage() {
 
   return (
     <div className="w-full max-w-2xl">
-      <Link href="/admin/commerce/products" className="text-sm underline opacity-70">
+      <Link href="/admin/commerce/products" className="clay-btn-ghost text-sm">
         ← Products
       </Link>
 
       <div className="mt-4">
-        <OpsPageHeader
-          title="New product"
-        />
+        <OpsPageHeader title="New product" />
       </div>
 
       <form onSubmit={onSubmit} className="mt-2 space-y-5">
-        <section className="space-y-3 rounded border border-[color:var(--gift-line)] p-4">
+        <section className="clay-panel space-y-3 p-4">
           <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">Basics</h2>
           <label className="block text-sm">
             Title
             <input
-              className="mt-1 block w-full rounded border px-2 py-1.5"
+              className="clay-input"
               value={title}
               onChange={(e) => onTitleChange(e.target.value)}
               required
@@ -131,7 +129,7 @@ export default function NewProductPage() {
           <label className="block text-sm">
             Slug (kebab-case)
             <input
-              className="mt-1 block w-full rounded border px-2 py-1.5 font-mono text-sm"
+              className="clay-input font-mono text-sm"
               value={slug}
               onChange={(e) => {
                 setSlugTouched(true);
@@ -145,7 +143,7 @@ export default function NewProductPage() {
           <label className="block text-sm">
             Description
             <textarea
-              className="mt-1 block w-full rounded border px-2 py-1.5"
+              className="clay-input"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
@@ -153,7 +151,7 @@ export default function NewProductPage() {
           </label>
         </section>
 
-        <section className="space-y-3 rounded border border-[color:var(--gift-line)] p-4">
+        <section className="clay-panel space-y-3 p-4">
           <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">
             Pricing &amp; stock
           </h2>
@@ -161,7 +159,7 @@ export default function NewProductPage() {
             <label className="block text-sm">
               SKU
               <input
-                className="mt-1 block w-full rounded border px-2 py-1.5"
+                className="clay-input"
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
                 required
@@ -170,7 +168,7 @@ export default function NewProductPage() {
             <label className="block text-sm">
               Variant label
               <input
-                className="mt-1 block w-full rounded border px-2 py-1.5"
+                className="clay-input"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
               />
@@ -178,7 +176,7 @@ export default function NewProductPage() {
             <label className="block text-sm">
               Price (₹)
               <input
-                className="mt-1 block w-full rounded border px-2 py-1.5"
+                className="clay-input"
                 value={priceInr}
                 onChange={(e) => setPriceInr(e.target.value)}
                 inputMode="decimal"
@@ -188,7 +186,7 @@ export default function NewProductPage() {
             <label className="block text-sm">
               Stock on hand
               <input
-                className="mt-1 block w-full rounded border px-2 py-1.5"
+                className="clay-input"
                 value={onHand}
                 onChange={(e) => setOnHand(e.target.value)}
                 inputMode="numeric"
@@ -197,7 +195,7 @@ export default function NewProductPage() {
           </div>
         </section>
 
-        <section className="space-y-3 rounded border border-[color:var(--gift-line)] p-4">
+        <section className="clay-panel space-y-3 p-4">
           <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">Media</h2>
           <ProductMediaField
             url={imageUrl}
@@ -209,12 +207,12 @@ export default function NewProductPage() {
           />
         </section>
 
-        <section className="space-y-3 rounded border border-[color:var(--gift-line)] p-4">
+        <section className="clay-panel space-y-3 p-4">
           <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">SEO</h2>
           <label className="block text-sm">
             SEO title
             <input
-              className="mt-1 block w-full rounded border px-2 py-1.5"
+              className="clay-input"
               value={seoTitle}
               onChange={(e) => setSeoTitle(e.target.value)}
               maxLength={200}
@@ -227,7 +225,7 @@ export default function NewProductPage() {
           <label className="block text-sm">
             SEO description
             <textarea
-              className="mt-1 block w-full rounded border px-2 py-1.5"
+              className="clay-input"
               rows={2}
               value={seoDescription}
               onChange={(e) => setSeoDescription(e.target.value)}
@@ -241,7 +239,7 @@ export default function NewProductPage() {
           <label className="block text-sm">
             Canonical path
             <input
-              className="mt-1 block w-full rounded border px-2 py-1.5 font-mono text-sm"
+              className="clay-input font-mono text-sm"
               value={canonicalPath}
               onChange={(e) => setCanonicalPath(e.target.value)}
               placeholder={slug ? `/gift/products/${slug}` : '/gift/products/…'}
@@ -258,9 +256,9 @@ export default function NewProductPage() {
         </section>
 
         {error ? (
-          <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="gift-banner gift-banner--danger" role="alert">
             {error}
-          </p>
+          </div>
         ) : null}
 
         <div className="flex flex-col gap-3 border-t border-[color:var(--gift-line)] pt-4 pb-8 sm:flex-row sm:flex-wrap sm:items-center">
@@ -279,7 +277,7 @@ export default function NewProductPage() {
           >
             {busy === 'publish' ? 'Publishing…' : 'Create & publish'}
           </button>
-          <Link href="/admin/commerce/products" className="text-sm underline opacity-70 sm:ml-1">
+          <Link href="/admin/commerce/products" className="clay-btn-ghost text-sm sm:ml-1">
             Cancel
           </Link>
         </div>

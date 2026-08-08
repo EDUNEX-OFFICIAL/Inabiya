@@ -59,7 +59,7 @@ export function ProductMediaField({
     <div className="space-y-3">
       <p className="text-sm font-medium">{label}</p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="relative aspect-square w-full max-w-[11rem] shrink-0 overflow-hidden rounded border border-[color:var(--gift-line)] bg-[color:var(--gift-cream)]/50">
+        <div className="relative aspect-square w-full max-w-[11rem] shrink-0 overflow-hidden rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface-soft)_80%,white)]">
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -101,7 +101,7 @@ export function ProductMediaField({
             {url ? (
               <button
                 type="button"
-                className="rounded border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
+                className="clay-btn-ghost text-sm text-[var(--danger)]"
                 disabled={busy}
                 onClick={() => onUrlChange('')}
               >
@@ -110,7 +110,7 @@ export function ProductMediaField({
             ) : null}
             <button
               type="button"
-              className="text-sm underline opacity-70"
+              className="clay-btn-ghost text-sm"
               onClick={() => setShowUrl((v) => !v)}
             >
               {showUrl ? 'Hide URL' : 'Paste URL'}
@@ -121,7 +121,7 @@ export function ProductMediaField({
             <label className="block text-xs">
               Image URL
               <input
-                className="mt-1 block w-full rounded border px-2 py-1.5 text-sm"
+                className="clay-input text-sm"
                 value={url}
                 onChange={(e) => onUrlChange(e.target.value)}
                 placeholder="/gift/media/… or https://…"
@@ -133,7 +133,7 @@ export function ProductMediaField({
             <label className="block text-xs">
               Alt text
               <input
-                className="mt-1 block w-full rounded border px-2 py-1.5 text-sm"
+                className="clay-input text-sm"
                 value={altText}
                 onChange={(e) => onAltChange(e.target.value)}
                 maxLength={200}
@@ -142,7 +142,11 @@ export function ProductMediaField({
             </label>
           ) : null}
 
-          {err ? <p className="text-xs text-red-600">{err}</p> : null}
+          {err ? (
+            <div className="gift-banner gift-banner--danger text-xs" role="alert">
+              {err}
+            </div>
+          ) : null}
         </div>
       </div>
 

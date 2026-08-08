@@ -14,8 +14,15 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { apiAuth, clearSession, getStoredAccessToken } from '@/lib/auth-client';
+import {
+  apiAuth,
+  clearSession,
+  getStoredAccessToken,
+  isUnauthorizedError,
+  loginUrl,
+} from '@/lib/auth-client';
 import { formatInr, type CatalogProduct } from '@/lib/catalog';
+import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -114,13 +121,6 @@ function parseSort(raw: string | null): SortFilter {
   return 'updated';
 }
 
-function chipClass(active: boolean): string {
-  return `clay-chip min-h-8 shrink-0 cursor-pointer px-2.5 text-xs font-medium transition-colors sm:min-h-9 sm:px-3.5 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] ${
-    active
-      ? 'border-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_16%,white)] text-[var(--primary)] shadow-sm'
-      : 'text-[var(--foreground)] hover:border-[color-mix(in_srgb,var(--primary)_32%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_6%,white)]'
-  }`;
-}
 
 function filterSelectClass(): string {
   return 'clay-input min-h-9 w-full min-w-0 text-sm';
@@ -290,20 +290,26 @@ function ProductsDeskInner() {
       setSelected({});
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load products');
-      clearSession();
-      router.replace('/login');
+      if (isUnauthorizedError(e)) {
+        clearSession();
+        const qs = searchParams.toString();
+        const next = `/admin/commerce/products${qs ? `?${qs}` : ''}`;
+        router.replace(loginUrl(next));
+      }
     } finally {
       setLoading(false);
     }
-  }, [filters, cursorParam, router]);
+  }, [filters, cursorParam, router, searchParams]);
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      const qs = searchParams.toString();
+      const next = `/admin/commerce/products${qs ? `?${qs}` : ''}`;
+      router.replace(loginUrl(next));
       return;
     }
     void load();
-  }, [router, load]);
+  }, [router, load, searchParams]);
 
   useEffect(() => {
     setQInput(filters.q);
@@ -555,7 +561,7 @@ function ProductsDeskInner() {
                 key={c.value || 'all'}
                 type="button"
                 aria-pressed={active}
-                className={chipClass(active)}
+                className={opsChipClass(active)}
                 onClick={() => applyFilters({ status: c.value, cursor: null })}
               >
                 {c.label}

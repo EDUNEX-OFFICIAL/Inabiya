@@ -58,9 +58,9 @@ export class OpsDashboardService {
     const lowStockThreshold = commercePolicy.lowStockThreshold;
 
     const [
-      rangeOrders,
-      prevOrders,
-      todayOrders,
+      rangeAgg,
+      prevAgg,
+      todayAgg,
       sparkOrders,
       failedPayments,
       lowStockRows,
@@ -72,26 +72,29 @@ export class OpsDashboardService {
       pendingShipAging,
       recentAuditPage,
     ] = await Promise.all([
-      this.prisma.order.findMany({
+      this.prisma.order.aggregate({
         where: {
           status: { in: PAID_STATUSES },
           paidAt: { gte: rangeStart },
         },
-        select: { totalPaise: true },
+        _sum: { totalPaise: true },
+        _count: { _all: true },
       }),
-      this.prisma.order.findMany({
+      this.prisma.order.aggregate({
         where: {
           status: { in: PAID_STATUSES },
           paidAt: { gte: prevStart, lte: prevEnd },
         },
-        select: { totalPaise: true },
+        _sum: { totalPaise: true },
+        _count: { _all: true },
       }),
-      this.prisma.order.findMany({
+      this.prisma.order.aggregate({
         where: {
           status: { in: PAID_STATUSES },
           paidAt: { gte: startOfDay },
         },
-        select: { totalPaise: true },
+        _sum: { totalPaise: true },
+        _count: { _all: true },
       }),
       this.prisma.order.findMany({
         where: {
@@ -106,7 +109,17 @@ export class OpsDashboardService {
           onHand: { lte: lowStockThreshold },
           variant: { product: { status: ProductStatus.PUBLISHED } },
         },
-        include: { variant: { include: { product: true } } },
+        select: {
+          onHand: true,
+          reserved: true,
+          variant: {
+            select: {
+              sku: true,
+              productId: true,
+              product: { select: { title: true } },
+            },
+          },
+        },
         take: 20,
         orderBy: { onHand: 'asc' },
       }),
@@ -123,12 +136,12 @@ export class OpsDashboardService {
       this.audit.list({ page: 1, pageSize: 5 }),
     ]);
 
-    const revenuePaise = rangeOrders.reduce((s, o) => s + o.totalPaise, 0);
-    const todayRevenuePaise = todayOrders.reduce((s, o) => s + o.totalPaise, 0);
-    const orderCount = rangeOrders.length;
-    const ordersToday = todayOrders.length;
-    const prevRevenuePaise = prevOrders.reduce((s, o) => s + o.totalPaise, 0);
-    const prevOrderCount = prevOrders.length;
+    const revenuePaise = rangeAgg._sum.totalPaise ?? 0;
+    const todayRevenuePaise = todayAgg._sum.totalPaise ?? 0;
+    const orderCount = rangeAgg._count._all;
+    const ordersToday = todayAgg._count._all;
+    const prevRevenuePaise = prevAgg._sum.totalPaise ?? 0;
+    const prevOrderCount = prevAgg._count._all;
 
     return {
       rangeDays,
@@ -202,25 +215,26 @@ export class OpsDashboardService {
     const prevStart = this.rangeStart(days * 2);
     const prevEnd = new Date(rangeStart.getTime() - 1);
 
-    const [currentOrders, prevOrders] = await Promise.all([
+    const [currentOrders, prevAgg] = await Promise.all([
       this.prisma.order.findMany({
         where: { paidAt: { gte: rangeStart }, status: { in: PAID_STATUSES } },
         select: { paidAt: true, totalPaise: true },
       }),
-      this.prisma.order.findMany({
+      this.prisma.order.aggregate({
         where: {
           paidAt: { gte: prevStart, lte: prevEnd },
           status: { in: PAID_STATUSES },
         },
-        select: { paidAt: true, totalPaise: true },
+        _sum: { totalPaise: true },
+        _count: { _all: true },
       }),
     ]);
 
     const daily = this.bucketDaily(currentOrders, days, rangeStart);
     const revenuePaise = currentOrders.reduce((s, o) => s + o.totalPaise, 0);
     const orderCount = currentOrders.length;
-    const prevRevenuePaise = prevOrders.reduce((s, o) => s + o.totalPaise, 0);
-    const prevOrderCount = prevOrders.length;
+    const prevRevenuePaise = prevAgg._sum.totalPaise ?? 0;
+    const prevOrderCount = prevAgg._count._all;
 
     return {
       days,
@@ -242,44 +256,32 @@ export class OpsDashboardService {
 
   async productsReport(days = 7) {
     const rangeStart = this.rangeStart(days);
-    const items = await this.prisma.orderItem.findMany({
-      where: {
-        order: {
-          paidAt: { gte: rangeStart },
-          status: { in: PAID_STATUSES },
-        },
-      },
-      select: {
-        sku: true,
-        title: true,
-        quantity: true,
-        lineTotalPaise: true,
-      },
-      take: 5000,
-    });
-
-    const map = new Map<
-      string,
-      { sku: string; title: string; units: number; revenuePaise: number }
-    >();
-    for (const i of items) {
-      const row = map.get(i.sku) ?? {
-        sku: i.sku,
-        title: i.title,
-        units: 0,
-        revenuePaise: 0,
-      };
-      row.units += i.quantity;
-      row.revenuePaise += i.lineTotalPaise;
-      map.set(i.sku, row);
-    }
+    const rows = await this.prisma.$queryRaw<
+      Array<{ sku: string; title: string; units: bigint; revenuePaise: bigint }>
+    >`
+      SELECT
+        oi.sku AS sku,
+        MAX(oi.title) AS title,
+        SUM(oi.quantity)::bigint AS units,
+        SUM(oi.line_total_paise)::bigint AS "revenuePaise"
+      FROM order_items oi
+      INNER JOIN orders o ON o.id = oi.order_id
+      WHERE o.paid_at >= ${rangeStart}
+        AND o.status IN ('PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED')
+      GROUP BY oi.sku
+      ORDER BY SUM(oi.line_total_paise) DESC
+      LIMIT 50
+    `;
 
     return {
       days,
       rangeStart: rangeStart.toISOString(),
-      rows: [...map.values()]
-        .sort((a, b) => b.revenuePaise - a.revenuePaise)
-        .slice(0, 50),
+      rows: rows.map((r) => ({
+        sku: r.sku,
+        title: r.title,
+        units: Number(r.units),
+        revenuePaise: Number(r.revenuePaise),
+      })),
     };
   }
 

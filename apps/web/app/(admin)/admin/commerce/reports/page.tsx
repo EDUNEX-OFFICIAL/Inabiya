@@ -5,14 +5,17 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
   Download,
   LayoutDashboard,
   Package,
   RefreshCw,
   TicketPercent,
 } from 'lucide-react';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
+import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 import {
@@ -99,6 +102,8 @@ const REPORT_CHIPS: Array<{ id: ReportId; label: string }> = [
 const DAYS_OPTIONS = [1, 7, 14, 30] as const;
 const REPORT_IDS = new Set<ReportId>(REPORT_CHIPS.map((c) => c.id));
 const PRODUCT_TOP_OPTIONS = [5, 10, 20] as const;
+const SALES_PAGE_SIZE = 10;
+const RETURNS_PAGE_SIZE = 8;
 
 type SalesMetric = 'revenue' | 'orders';
 type ProductsSort = 'revenue' | 'units';
@@ -128,13 +133,6 @@ function parseProductsSort(raw: string | null): ProductsSort {
   return raw === 'units' ? 'units' : 'revenue';
 }
 
-function chipClass(active: boolean): string {
-  return `clay-chip min-h-8 shrink-0 cursor-pointer px-2.5 text-xs font-medium transition-colors sm:min-h-9 sm:px-3.5 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] ${
-    active
-      ? 'border-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_16%,white)] text-[var(--primary)] shadow-sm'
-      : 'text-[var(--foreground)] hover:border-[color-mix(in_srgb,var(--primary)_32%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_6%,white)]'
-  }`;
-}
 
 function deltaLabel(current: number, previous: number): string {
   const d = current - previous;
@@ -203,6 +201,56 @@ function EmptyPanel({
   );
 }
 
+function ReportPager({
+  page,
+  pageCount,
+  total,
+  pageSize,
+  onPage,
+}: {
+  page: number;
+  pageCount: number;
+  total: number;
+  pageSize: number;
+  onPage: (next: number) => void;
+}) {
+  if (total <= pageSize) return null;
+  const from = page * pageSize + 1;
+  const to = Math.min(total, (page + 1) * pageSize);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+      <p className="text-xs tabular-nums text-[var(--muted-foreground)]">
+        {from}–{to} of {total}
+      </p>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          className="clay-btn-ghost inline-flex min-h-8 items-center gap-1 px-2 text-xs"
+          disabled={page <= 0}
+          aria-label="Previous page"
+          onClick={() => onPage(page - 1)}
+        >
+          <ChevronLeft className="h-3.5 w-3.5 opacity-70" aria-hidden />
+          Prev
+        </button>
+        <span className="min-w-[4.5rem] text-center text-xs tabular-nums text-[var(--muted-foreground)]">
+          {page + 1} / {pageCount}
+        </span>
+        <button
+          type="button"
+          className="clay-btn-ghost inline-flex min-h-8 items-center gap-1 px-2 text-xs"
+          disabled={page >= pageCount - 1}
+          aria-label="Next page"
+          onClick={() => onPage(page + 1)}
+        >
+          Next
+          <ChevronRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ReportsDeskInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -217,6 +265,8 @@ function ReportsDeskInner() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [salesPage, setSalesPage] = useState(0);
+  const [returnsPage, setReturnsPage] = useState(0);
 
   const [sales, setSales] = useState<SalesReport | null>(null);
   const [products, setProducts] = useState<ProductsReport | null>(null);
@@ -227,6 +277,8 @@ function ReportsDeskInner() {
 
   const loadSeq = useRef(0);
   const hasLoadedOnce = useRef(false);
+  /** Cache keyed by report (+ days when day-scoped). Avoids Promise.all of all 6 on every visit. */
+  const cacheRef = useRef(new Map<string, unknown>());
 
   const patchQuery = useCallback(
     (patch: Record<string, string | null>) => {
@@ -249,42 +301,82 @@ function ReportsDeskInner() {
     [router, searchParams],
   );
 
-  const load = useCallback(async () => {
-    const seq = ++loadSeq.current;
-    setError(null);
-    if (!hasLoadedOnce.current) setLoading(true);
-    else setRefreshing(true);
-    try {
-      const [s, p, inv, ret, c, f] = await Promise.all([
-        apiAuth<SalesReport>(`/admin/commerce/reports/sales?days=${days}`),
-        apiAuth<ProductsReport>(`/admin/commerce/reports/products?days=${days}`),
-        apiAuth<InventoryReport>('/admin/commerce/reports/inventory'),
-        apiAuth<ReturnsReport>(`/admin/commerce/reports/returns?days=${days}`),
-        apiAuth<CouponsReport>(`/admin/commerce/reports/coupons?days=${days}`),
-        apiAuth<Funnel>(`/admin/commerce/reports/funnel?days=${days}`),
-      ]);
-      if (seq !== loadSeq.current) return;
-      setSales(s);
-      setProducts(p);
-      setInventory(inv);
-      setReturns(ret);
-      setCoupons(c);
-      setFunnel(f);
-      hasLoadedOnce.current = true;
-    } catch (e) {
-      if (seq !== loadSeq.current) return;
-      setError(e instanceof Error ? e.message : 'Failed to load reports');
-    } finally {
-      if (seq === loadSeq.current) {
-        setLoading(false);
-        setRefreshing(false);
+  const cacheKey = useCallback(
+    (report: ReportId) => (report === 'inventory' ? 'inventory' : `${report}:${days}`),
+    [days],
+  );
+
+  const load = useCallback(
+    async (opts?: { force?: boolean }) => {
+      const seq = ++loadSeq.current;
+      setError(null);
+      const key = cacheKey(active);
+      const force = opts?.force === true;
+      const hadCache = cacheRef.current.has(key);
+      try {
+        if (!force && hadCache) {
+          if (!hasLoadedOnce.current) setLoading(true);
+          else setRefreshing(true);
+          const cached = cacheRef.current.get(key);
+          if (seq !== loadSeq.current) return;
+          if (active === 'sales') setSales(cached as SalesReport);
+          else if (active === 'products') setProducts(cached as ProductsReport);
+          else if (active === 'inventory') setInventory(cached as InventoryReport);
+          else if (active === 'returns') setReturns(cached as ReturnsReport);
+          else if (active === 'coupons') setCoupons(cached as CouponsReport);
+          else setFunnel(cached as Funnel);
+          hasLoadedOnce.current = true;
+          return;
+        }
+
+        // Skeleton when first visit or switching to an uncached tab; soft refresh otherwise.
+        if (!hasLoadedOnce.current || !hadCache) setLoading(true);
+        else setRefreshing(true);
+
+        let data: unknown;
+        if (active === 'sales') {
+          data = await apiAuth<SalesReport>(`/admin/commerce/reports/sales?days=${days}`);
+          if (seq !== loadSeq.current) return;
+          setSales(data as SalesReport);
+        } else if (active === 'products') {
+          data = await apiAuth<ProductsReport>(`/admin/commerce/reports/products?days=${days}`);
+          if (seq !== loadSeq.current) return;
+          setProducts(data as ProductsReport);
+        } else if (active === 'inventory') {
+          data = await apiAuth<InventoryReport>('/admin/commerce/reports/inventory');
+          if (seq !== loadSeq.current) return;
+          setInventory(data as InventoryReport);
+        } else if (active === 'returns') {
+          data = await apiAuth<ReturnsReport>(`/admin/commerce/reports/returns?days=${days}`);
+          if (seq !== loadSeq.current) return;
+          setReturns(data as ReturnsReport);
+        } else if (active === 'coupons') {
+          data = await apiAuth<CouponsReport>(`/admin/commerce/reports/coupons?days=${days}`);
+          if (seq !== loadSeq.current) return;
+          setCoupons(data as CouponsReport);
+        } else {
+          data = await apiAuth<Funnel>(`/admin/commerce/reports/funnel?days=${days}`);
+          if (seq !== loadSeq.current) return;
+          setFunnel(data as Funnel);
+        }
+        cacheRef.current.set(key, data);
+        hasLoadedOnce.current = true;
+      } catch (e) {
+        if (seq !== loadSeq.current) return;
+        setError(e instanceof Error ? e.message : 'Failed to load reports');
+      } finally {
+        if (seq === loadSeq.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
-    }
-  }, [days]);
+    },
+    [active, days, cacheKey],
+  );
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login?next=/admin/commerce/reports');
+      router.replace(loginUrl('/admin/commerce/reports'));
       return;
     }
     void load();
@@ -310,6 +402,34 @@ function ReportsDeskInner() {
     if (!returnsStatus) return returns.recent;
     return returns.recent.filter((r) => r.status === returnsStatus);
   }, [returns, returnsStatus]);
+
+  // Newest first for daily desk list (API may already be ascending for the chart).
+  const salesDailyNewestFirst = useMemo(() => {
+    if (!sales) return [];
+    return [...sales.daily].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  }, [sales]);
+
+  const salesPageCount = Math.max(1, Math.ceil(salesDailyNewestFirst.length / SALES_PAGE_SIZE));
+  const salesPageSafe = Math.min(salesPage, salesPageCount - 1);
+  const salesPageRows = useMemo(() => {
+    const start = salesPageSafe * SALES_PAGE_SIZE;
+    return salesDailyNewestFirst.slice(start, start + SALES_PAGE_SIZE);
+  }, [salesDailyNewestFirst, salesPageSafe]);
+
+  const returnsPageCount = Math.max(1, Math.ceil(returnRows.length / RETURNS_PAGE_SIZE));
+  const returnsPageSafe = Math.min(returnsPage, returnsPageCount - 1);
+  const returnsPageRows = useMemo(() => {
+    const start = returnsPageSafe * RETURNS_PAGE_SIZE;
+    return returnRows.slice(start, start + RETURNS_PAGE_SIZE);
+  }, [returnRows, returnsPageSafe]);
+
+  useEffect(() => {
+    setSalesPage(0);
+  }, [days, sales?.days]);
+
+  useEffect(() => {
+    setReturnsPage(0);
+  }, [days, returnsStatus, returns?.days]);
 
   function exportSalesCsv() {
     if (!sales) return;
@@ -362,7 +482,7 @@ function ReportsDeskInner() {
               type="button"
               className="clay-btn-secondary inline-flex min-h-10 items-center gap-1.5 text-sm"
               disabled={loading || refreshing}
-              onClick={() => void load()}
+              onClick={() => void load({ force: true })}
             >
               <RefreshCw
                 className={`h-3.5 w-3.5 opacity-70 ${loading || refreshing ? 'animate-spin' : ''}`}
@@ -388,7 +508,7 @@ function ReportsDeskInner() {
                 type="button"
                 role="tab"
                 aria-selected={selected}
-                className={chipClass(selected)}
+                className={opsChipClass(selected)}
                 onClick={() => patchQuery({ report: c.id })}
               >
                 {c.label}
@@ -416,7 +536,7 @@ function ReportsDeskInner() {
               key={d}
               type="button"
               aria-pressed={days === d}
-              className={chipClass(days === d)}
+              className={opsChipClass(days === d)}
               onClick={() => patchQuery({ days: String(d) })}
             >
               {d}d
@@ -429,7 +549,7 @@ function ReportsDeskInner() {
             <button
               type="button"
               aria-pressed={salesMetric === 'revenue'}
-              className={chipClass(salesMetric === 'revenue')}
+              className={opsChipClass(salesMetric === 'revenue')}
               onClick={() => patchQuery({ metric: 'revenue' })}
             >
               Revenue
@@ -437,7 +557,7 @@ function ReportsDeskInner() {
             <button
               type="button"
               aria-pressed={salesMetric === 'orders'}
-              className={chipClass(salesMetric === 'orders')}
+              className={opsChipClass(salesMetric === 'orders')}
               onClick={() => patchQuery({ metric: 'orders' })}
             >
               Orders
@@ -453,7 +573,7 @@ function ReportsDeskInner() {
                   key={n}
                   type="button"
                   aria-pressed={productsTop === n}
-                  className={chipClass(productsTop === n)}
+                  className={opsChipClass(productsTop === n)}
                   onClick={() => patchQuery({ top: String(n) })}
                 >
                   Top {n}
@@ -464,7 +584,7 @@ function ReportsDeskInner() {
               <button
                 type="button"
                 aria-pressed={productsSort === 'revenue'}
-                className={chipClass(productsSort === 'revenue')}
+                className={opsChipClass(productsSort === 'revenue')}
                 onClick={() => patchQuery({ sort: 'revenue' })}
               >
                 By revenue
@@ -472,7 +592,7 @@ function ReportsDeskInner() {
               <button
                 type="button"
                 aria-pressed={productsSort === 'units'}
-                className={chipClass(productsSort === 'units')}
+                className={opsChipClass(productsSort === 'units')}
                 onClick={() => patchQuery({ sort: 'units' })}
               >
                 By units
@@ -486,7 +606,7 @@ function ReportsDeskInner() {
             <button
               type="button"
               aria-pressed={!returnsStatus}
-              className={chipClass(!returnsStatus)}
+              className={opsChipClass(!returnsStatus)}
               onClick={() => patchQuery({ rstatus: null })}
             >
               All
@@ -496,7 +616,7 @@ function ReportsDeskInner() {
                 key={s.status}
                 type="button"
                 aria-pressed={returnsStatus === s.status}
-                className={chipClass(returnsStatus === s.status)}
+                className={opsChipClass(returnsStatus === s.status)}
                 onClick={() => patchQuery({ rstatus: s.status })}
               >
                 {statusLabel(s.status)}
@@ -509,7 +629,7 @@ function ReportsDeskInner() {
           <button
             type="button"
             aria-pressed={couponsActiveOnly}
-            className={chipClass(couponsActiveOnly)}
+            className={opsChipClass(couponsActiveOnly)}
             onClick={() => patchQuery({ active: couponsActiveOnly ? null : '1' })}
           >
             Active only
@@ -598,7 +718,7 @@ function ReportsDeskInner() {
                   </div>
 
                   <div className="md:hidden space-y-2">
-                    {sales.daily.map((r) => (
+                    {salesPageRows.map((r) => (
                       <div key={r.date} className="clay-panel flex items-center justify-between gap-3 p-2.5">
                         <div>
                           <p className="font-medium tabular-nums">{r.date}</p>
@@ -609,8 +729,15 @@ function ReportsDeskInner() {
                         <p className="tabular-nums font-medium">{formatInr(r.revenuePaise)}</p>
                       </div>
                     ))}
+                    <ReportPager
+                      page={salesPageSafe}
+                      pageCount={salesPageCount}
+                      total={salesDailyNewestFirst.length}
+                      pageSize={SALES_PAGE_SIZE}
+                      onPage={setSalesPage}
+                    />
                   </div>
-                  <div className="hidden md:block">
+                  <div className="hidden md:block space-y-2">
                     <OpsTableScroll>
                       <div className="clay-panel overflow-hidden">
                         <table className="w-full min-w-[20rem] border-collapse text-sm">
@@ -622,7 +749,7 @@ function ReportsDeskInner() {
                             </tr>
                           </thead>
                           <tbody>
-                            {sales.daily.map((r) => (
+                            {salesPageRows.map((r) => (
                               <tr
                                 key={r.date}
                                 className="border-b border-[var(--border-subtle)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)]"
@@ -640,6 +767,13 @@ function ReportsDeskInner() {
                         </table>
                       </div>
                     </OpsTableScroll>
+                    <ReportPager
+                      page={salesPageSafe}
+                      pageCount={salesPageCount}
+                      total={salesDailyNewestFirst.length}
+                      pageSize={SALES_PAGE_SIZE}
+                      onPage={setSalesPage}
+                    />
                   </div>
                 </>
               )}
@@ -839,7 +973,7 @@ function ReportsDeskInner() {
               ) : (
                 <>
                   <div className="md:hidden space-y-2">
-                    {returnRows.map((r) => (
+                    {returnsPageRows.map((r) => (
                       <div key={r.id} className="clay-panel p-2.5">
                         <div className="flex items-start justify-between gap-2">
                           <Link
@@ -862,8 +996,15 @@ function ReportsDeskInner() {
                         </p>
                       </div>
                     ))}
+                    <ReportPager
+                      page={returnsPageSafe}
+                      pageCount={returnsPageCount}
+                      total={returnRows.length}
+                      pageSize={RETURNS_PAGE_SIZE}
+                      onPage={setReturnsPage}
+                    />
                   </div>
-                  <div className="hidden md:block">
+                  <div className="hidden md:block space-y-2">
                     <OpsTableScroll>
                       <div className="clay-panel overflow-hidden">
                         <table className="w-full min-w-[32rem] border-collapse text-sm">
@@ -876,7 +1017,7 @@ function ReportsDeskInner() {
                             </tr>
                           </thead>
                           <tbody>
-                            {returnRows.map((r) => (
+                            {returnsPageRows.map((r) => (
                               <tr
                                 key={r.id}
                                 className="border-b border-[var(--border-subtle)] align-top transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)]"
@@ -908,6 +1049,13 @@ function ReportsDeskInner() {
                         </table>
                       </div>
                     </OpsTableScroll>
+                    <ReportPager
+                      page={returnsPageSafe}
+                      pageCount={returnsPageCount}
+                      total={returnRows.length}
+                      pageSize={RETURNS_PAGE_SIZE}
+                      onPage={setReturnsPage}
+                    />
                   </div>
                 </>
               )}

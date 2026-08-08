@@ -710,10 +710,15 @@ export const adminOrdersQuerySchema = z.object({
   q: z.string().trim().min(1).max(120).optional(),
   days: z.coerce.number().int().min(1).max(365).optional(),
   payment: z.enum(['FAILED', 'CAPTURED', 'PENDING', 'REFUNDED']).optional(),
+  /** Opaque keyset cursor from previous page `nextCursor`. */
+  cursor: z.string().trim().min(1).max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(25),
 });
 
 export type AdminOrderStatusBody = z.infer<typeof adminOrderStatusSchema>;
 export type AdminOrdersQuery = z.infer<typeof adminOrdersQuerySchema>;
+
+const couponUuidList = z.array(z.string().uuid()).max(50);
 
 export const createCouponBodySchema = z
   .object({
@@ -731,6 +736,10 @@ export const createCouponBodySchema = z
     /** ISO or datetime-local string */
     startsAt: z.string().trim().min(1).max(40).optional(),
     expiresAt: z.string().trim().min(1).max(40).optional(),
+    /** CART (default) | PRODUCT | CATEGORY — discount applies to matching lines only when scoped. */
+    scope: z.enum(['CART', 'PRODUCT', 'CATEGORY']).optional().default('CART'),
+    productIds: couponUuidList.optional(),
+    categoryIds: couponUuidList.optional(),
   })
   .superRefine((v, ctx) => {
     if (v.discountPaise == null && v.discountPercent == null) {
@@ -740,10 +749,31 @@ export const createCouponBodySchema = z
         path: ['discountPaise'],
       });
     }
+    const scope = v.scope ?? 'CART';
+    if (scope === 'PRODUCT' && !(v.productIds?.length)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one product for a product coupon.',
+        path: ['productIds'],
+      });
+    }
+    if (scope === 'CATEGORY' && !(v.categoryIds?.length)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one category for a category coupon.',
+        path: ['categoryIds'],
+      });
+    }
   });
 
 export const couponActiveBodySchema = z.object({
   active: z.boolean(),
+});
+
+const couponPreviewLineSchema = z.object({
+  productId: z.string().uuid(),
+  categoryIds: couponUuidList.default([]),
+  lineTotalPaise: z.number().int().min(0),
 });
 
 export const couponPreviewBodySchema = z.object({
@@ -752,11 +782,24 @@ export const couponPreviewBodySchema = z.object({
   discountPaise: z.number().int().min(1).optional(),
   discountPercent: z.number().int().min(1).max(100).optional(),
   minSubtotalPaise: z.number().int().min(0).optional(),
+  scope: z.enum(['CART', 'PRODUCT', 'CATEGORY']).optional(),
+  productIds: couponUuidList.optional(),
+  categoryIds: couponUuidList.optional(),
+  /** Optional cart lines — when omitted, scoped drafts use subtotalPaise as eligible. */
+  lines: z.array(couponPreviewLineSchema).max(100).optional(),
 });
 
 export type CreateCouponBody = z.infer<typeof createCouponBodySchema>;
 export type CouponActiveBody = z.infer<typeof couponActiveBodySchema>;
 export type CouponPreviewBody = z.infer<typeof couponPreviewBodySchema>;
+
+/** Admin promotions list — keyset cursor (createdAt DESC). */
+export const adminCouponsQuerySchema = z.object({
+  cursor: z.string().trim().min(1).max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(25),
+});
+
+export type AdminCouponsQuery = z.infer<typeof adminCouponsQuerySchema>;
 
 export const adminReportsQuerySchema = z.object({
   days: z.coerce.number().int().min(1).max(90).default(7),

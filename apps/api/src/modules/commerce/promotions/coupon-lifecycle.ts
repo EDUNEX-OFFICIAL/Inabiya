@@ -1,5 +1,13 @@
-/** Pure coupon lifecycle for OPS-6 promotions desk. */
+/** Pure coupon lifecycle + eligible-subtotal helpers for promotions desk. */
 export type CouponLifecycle = 'off' | 'scheduled' | 'active' | 'expired' | 'exhausted';
+
+export type CouponScopeKind = 'CART' | 'PRODUCT' | 'CATEGORY';
+
+export type CouponCartLine = {
+  productId: string;
+  categoryIds: string[];
+  lineTotalPaise: number;
+};
 
 export function couponLifecycle(
   c: {
@@ -31,4 +39,29 @@ export function computeDiscountPaise(input: {
     discount = Math.floor((input.subtotalPaise * input.discountPercent) / 100);
   }
   return Math.min(Math.max(0, discount), input.subtotalPaise);
+}
+
+/** Eligible line total for PRODUCT / CATEGORY scopes; CART returns cartSubtotal.
+ * When `lines` is omitted (null/undefined), scoped coupons treat cartSubtotal as eligible
+ * (admin preview without a cart). An explicit empty `lines` array yields 0. */
+export function eligibleSubtotalPaise(input: {
+  scope: CouponScopeKind;
+  productIds: string[];
+  categoryIds: string[];
+  cartSubtotalPaise: number;
+  lines?: CouponCartLine[] | null;
+}): number {
+  if (input.scope === 'CART') return input.cartSubtotalPaise;
+  if (input.lines == null) return input.cartSubtotalPaise;
+  const lines = input.lines;
+  if (input.scope === 'PRODUCT') {
+    const set = new Set(input.productIds);
+    return lines
+      .filter((l) => set.has(l.productId))
+      .reduce((s, l) => s + l.lineTotalPaise, 0);
+  }
+  const cats = new Set(input.categoryIds);
+  return lines
+    .filter((l) => l.categoryIds.some((id) => cats.has(id)))
+    .reduce((s, l) => s + l.lineTotalPaise, 0);
 }

@@ -62,11 +62,11 @@ export function ProductVideoField({ value, onChange, titleHint }: Props) {
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface-soft)]/40 p-3">
+    <div className="clay-panel space-y-3 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">Product video</p>
         {value.url.trim() || value.posterUrl.trim() ? (
-          <button type="button" className="text-[11px] underline opacity-60" onClick={clear}>
+          <button type="button" className="clay-btn-ghost text-[11px]" onClick={clear}>
             Clear
           </button>
         ) : null}
@@ -75,7 +75,7 @@ export function ProductVideoField({ value, onChange, titleHint }: Props) {
       <label className="block text-xs">
         Video URL
         <input
-          className="mt-1 block w-full rounded border px-2 py-1.5 font-mono text-sm"
+          className="clay-input font-mono text-sm"
           value={value.url}
           onChange={(e) => onChange({ ...value, url: e.target.value })}
           placeholder="YouTube link or https://…/video.mp4"
@@ -83,13 +83,17 @@ export function ProductVideoField({ value, onChange, titleHint }: Props) {
           aria-invalid={Boolean(urlError)}
         />
       </label>
-      {urlError ? <p className="text-xs text-red-600">{urlError}</p> : null}
+      {urlError ? (
+        <div className="gift-banner gift-banner--danger text-xs" role="alert">
+          {urlError}
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-end gap-2">
         <label className="min-w-0 flex-1 text-xs">
           Poster URL
           <input
-            className="mt-1 block w-full rounded border px-2 py-1.5 text-sm"
+            className="clay-input text-sm"
             value={value.posterUrl}
             onChange={(e) => onChange({ ...value, posterUrl: e.target.value })}
             placeholder="Optional cover image"
@@ -122,7 +126,7 @@ export function ProductVideoField({ value, onChange, titleHint }: Props) {
       <label className="block text-xs">
         Alt text
         <input
-          className="mt-1 block w-full rounded border px-2 py-1.5 text-sm"
+          className="clay-input text-sm"
           value={value.altText}
           onChange={(e) => onChange({ ...value, altText: e.target.value })}
           placeholder={titleHint || 'Describe this video'}
@@ -130,7 +134,11 @@ export function ProductVideoField({ value, onChange, titleHint }: Props) {
         />
       </label>
 
-      {err ? <p className="text-xs text-red-600">{err}</p> : null}
+      {err ? (
+        <div className="gift-banner gift-banner--danger text-xs" role="alert">
+          {err}
+        </div>
+      ) : null}
 
       {value.posterUrl.trim() || (parsed?.kind === 'youtube' && isValidProductVideoUrl(value.url)) ? (
         <div className="relative h-20 w-36 overflow-hidden rounded-md bg-white">

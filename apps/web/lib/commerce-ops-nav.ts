@@ -138,14 +138,6 @@ export const COMMERCE_OPS_NAV: OpsNavItem[] = [
     section: 'ops',
   },
   {
-    id: 'search',
-    label: 'Search',
-    href: '/admin/commerce/search',
-    roles: ['COMMERCE_ADMIN', 'SUPPORT', 'FINANCE'],
-    match: 'prefix',
-    section: 'main',
-  },
-  {
     id: 'settings',
     label: 'Settings',
     href: '/admin/commerce/settings',
@@ -228,7 +220,7 @@ export function buildOpsBreadcrumbs(pathname: string): BreadcrumbCrumb[] {
     reviews: 'Reviews',
     returns: 'Returns',
     support: 'Support',
-    search: 'Search',
+    search: 'Support',
     settings: 'Settings',
     'gifting-inquiries': 'Inquiries',
     new: 'New',

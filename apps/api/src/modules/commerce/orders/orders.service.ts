@@ -11,6 +11,11 @@ import {
   type InvoiceInput,
   type InvoicePreviewDto,
 } from './order-invoice';
+import {
+  adminOrderKeysetAfter,
+  decodeAdminOrderCursor,
+  encodeAdminOrderCursor,
+} from './admin-orders-cursor';
 
 const FULFILLMENT_NEXT: Partial<Record<OrderStatus, OrderStatus[]>> = {
   PAID: ['PROCESSING'],
@@ -39,6 +44,8 @@ export type AdminOrdersListQuery = {
   q?: string;
   days?: number;
   payment?: 'FAILED' | 'CAPTURED' | 'PENDING' | 'REFUNDED';
+  cursor?: string;
+  limit?: number;
 };
 
 export type AdminStatusUpdate = {
@@ -184,7 +191,8 @@ export class OrdersService {
   }
 
   async listAdmin(query: AdminOrdersListQuery = {}) {
-    const where: Prisma.OrderWhereInput = {};
+    const limit = query.limit ?? 25;
+    const andParts: Prisma.OrderWhereInput[] = [];
 
     if (query.status) {
       const statuses = query.status
@@ -192,38 +200,68 @@ export class OrdersService {
         .map((s) => s.trim())
         .filter(Boolean) as OrderStatus[];
       const valid = statuses.filter((s) => Object.values(OrderStatus).includes(s));
-      if (valid.length === 1) where.status = valid[0];
-      else if (valid.length > 1) where.status = { in: valid };
+      if (valid.length === 1) andParts.push({ status: valid[0] });
+      else if (valid.length > 1) andParts.push({ status: { in: valid } });
     }
 
     if (query.days && Number.isFinite(query.days)) {
       const since = new Date();
       since.setDate(since.getDate() - query.days);
       since.setHours(0, 0, 0, 0);
-      where.createdAt = { gte: since };
+      andParts.push({ createdAt: { gte: since } });
     }
 
     if (query.q?.trim()) {
       const term = query.q.trim();
-      where.OR = [
-        { orderNumber: { contains: term, mode: 'insensitive' } },
-        { user: { email: { contains: term, mode: 'insensitive' } } },
-        { trackingNumber: { contains: term, mode: 'insensitive' } },
-      ];
+      andParts.push({
+        OR: [
+          { orderNumber: { contains: term, mode: 'insensitive' } },
+          { user: { email: { contains: term, mode: 'insensitive' } } },
+          { trackingNumber: { contains: term, mode: 'insensitive' } },
+        ],
+      });
     }
 
     if (query.payment) {
-      where.payments = { some: { status: query.payment as PaymentStatus } };
+      andParts.push({ payments: { some: { status: query.payment as PaymentStatus } } });
     }
+
+    if (query.cursor) {
+      try {
+        andParts.push(
+          adminOrderKeysetAfter(decodeAdminOrderCursor(query.cursor)) as Prisma.OrderWhereInput,
+        );
+      } catch {
+        throw new BadRequestException({
+          code: 'INVALID_CURSOR',
+          message: 'Invalid pagination cursor.',
+        });
+      }
+    }
+
+    const where: Prisma.OrderWhereInput = andParts.length > 0 ? { AND: andParts } : {};
 
     const rows = await this.prisma.order.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-      include: {
-        user: true,
-        items: true,
-        payments: { take: 1, orderBy: { createdAt: 'desc' } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        totalPaise: true,
+        carrier: true,
+        trackingNumber: true,
+        createdAt: true,
+        paidAt: true,
+        shippingAddress: true,
+        user: { select: { email: true, displayName: true } },
+        items: { select: { quantity: true } },
+        payments: {
+          take: 1,
+          orderBy: { createdAt: 'desc' },
+          select: { status: true },
+        },
         returnRequests: {
           where: { status: { in: ['REQUESTED', 'APPROVED'] } },
           select: { id: true },
@@ -231,8 +269,10 @@ export class OrdersService {
       },
     });
 
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
     const now = new Date();
-    return rows.map((o) => {
+    const items = page.map((o) => {
       const paymentStatus = o.payments[0]?.status ?? 'PENDING';
       const exceptions: string[] = [];
       if (paymentStatus === 'FAILED' || o.status === 'PAYMENT_FAILED') {
@@ -265,6 +305,14 @@ export class OrdersService {
         openReturnCount: o.returnRequests.length,
       };
     });
+
+    const last = page[page.length - 1];
+    const nextCursor =
+      hasMore && last
+        ? encodeAdminOrderCursor({ createdAt: last.createdAt, id: last.id })
+        : null;
+
+    return { items, nextCursor, limit };
   }
 
   async getAdmin(orderId: string) {

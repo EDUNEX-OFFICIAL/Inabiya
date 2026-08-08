@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Gift,
   LifeBuoy,
@@ -13,7 +13,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 
@@ -93,15 +93,18 @@ function typeLabel(type: string): string {
   return type;
 }
 
-export default function SupportLookupPage() {
+function SupportLookupInner() {
   const router = useRouter();
-  const [q, setQ] = useState('');
+  const searchParams = useSearchParams();
+  const urlQ = searchParams.get('q') ?? '';
+  const [q, setQ] = useState(urlQ);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [recentInquiries, setRecentInquiries] = useState<Inquiry[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [lookingUp, setLookingUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lookupSeq = useRef(0);
+  const autoRan = useRef('');
 
   const loadRecent = useCallback(async () => {
     setLoadingRecent(true);
@@ -115,18 +118,10 @@ export default function SupportLookupPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!getStoredAccessToken()) {
-      router.replace('/login');
-      return;
-    }
-    void loadRecent();
-  }, [router, loadRecent]);
-
   const runLookup = useCallback(
     async (needleRaw: string) => {
       if (!getStoredAccessToken()) {
-        router.replace('/login');
+        router.replace(loginUrl('/admin/commerce/support'));
         return;
       }
       const needle = needleRaw.trim();
@@ -151,9 +146,31 @@ export default function SupportLookupPage() {
     [router],
   );
 
+  useEffect(() => {
+    if (!getStoredAccessToken()) {
+      router.replace(loginUrl('/admin/commerce/support'));
+      return;
+    }
+    void loadRecent();
+  }, [router, loadRecent]);
+
+  useEffect(() => {
+    setQ(urlQ);
+    const trimmed = urlQ.trim();
+    if (!trimmed || autoRan.current === trimmed) return;
+    autoRan.current = trimmed;
+    void runLookup(trimmed);
+  }, [urlQ, runLookup]);
+
   async function lookup(e: React.FormEvent) {
     e.preventDefault();
-    await runLookup(q);
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    const params = new URLSearchParams();
+    params.set('q', trimmed);
+    router.replace(`/admin/commerce/support?${params}`);
+    autoRan.current = trimmed;
+    await runLookup(trimmed);
   }
 
   const hasHits =
@@ -259,6 +276,8 @@ export default function SupportLookupPage() {
                 setQ('');
                 setResult(null);
                 setError(null);
+                autoRan.current = '';
+                router.replace('/admin/commerce/support');
               }}
             >
               <X className="h-3.5 w-3.5" aria-hidden />
@@ -271,9 +290,9 @@ export default function SupportLookupPage() {
       </form>
 
       {error ? (
-        <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+        <div className="gift-banner gift-banner--danger mb-3" role="alert">
           {error}
-        </p>
+        </div>
       ) : null}
 
       {lookingUp ? (
@@ -297,44 +316,37 @@ export default function SupportLookupPage() {
       {!lookingUp && result && hasHits ? (
         <div className="space-y-4">
           {result.orders.length > 0 ? (
-            <section>
-              <div className="mb-2 flex items-center gap-2">
-                <Package className="h-3.5 w-3.5 opacity-50" aria-hidden />
+            <section className="clay-panel overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] px-3 py-2.5 sm:px-4">
+                <ShoppingBag className="h-3.5 w-3.5 opacity-50" aria-hidden />
                 <h2 className="text-sm font-medium">Orders</h2>
-                <span className="text-xs text-[var(--muted-foreground)]">{result.orders.length}</span>
+                <span className="text-xs opacity-50">{result.orders.length}</span>
               </div>
-              <ul className="space-y-2">
+              <ul className="divide-y divide-[var(--border-subtle)]">
                 {result.orders.map((o) => (
-                  <li key={o.id} className="clay-panel p-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
+                  <li key={o.id} className="px-3 py-2.5 sm:px-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
                         <Link
                           href={`/admin/commerce/orders/${o.id}`}
-                          className="font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+                          className="font-mono text-sm font-medium underline-offset-2 hover:underline"
                         >
                           {o.orderNumber}
                         </Link>
                         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-                          {formatInr(o.totalPaise)} · {o.customerEmail}
+                          {o.customerEmail}
                           {o.phone ? ` · ${o.phone}` : ''}
                         </p>
                       </div>
-                      <span
-                        className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${statusTone(o.status)}`}
-                      >
-                        {o.status}
-                      </span>
-                    </div>
-                    {o.customerId ? (
-                      <p className="mt-2">
-                        <Link
-                          href={`/admin/commerce/customers/${o.customerId}`}
-                          className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${statusTone(o.status)}`}
                         >
-                          Customer 360
-                        </Link>
-                      </p>
-                    ) : null}
+                          {o.status}
+                        </span>
+                        <span className="tabular-nums text-xs">{formatInr(o.totalPaise)}</span>
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -342,31 +354,31 @@ export default function SupportLookupPage() {
           ) : null}
 
           {result.customers.length > 0 ? (
-            <section>
-              <div className="mb-2 flex items-center gap-2">
+            <section className="clay-panel overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] px-3 py-2.5 sm:px-4">
                 <Users className="h-3.5 w-3.5 opacity-50" aria-hidden />
                 <h2 className="text-sm font-medium">Customers</h2>
-                <span className="text-xs text-[var(--muted-foreground)]">{result.customers.length}</span>
+                <span className="text-xs opacity-50">{result.customers.length}</span>
               </div>
-              <ul className="space-y-2">
+              <ul className="divide-y divide-[var(--border-subtle)]">
                 {result.customers.map((c) => (
-                  <li key={c.id} className="clay-panel p-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
+                  <li key={c.id} className="px-3 py-2.5 sm:px-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
                         <Link
                           href={`/admin/commerce/customers/${c.id}`}
-                          className="font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+                          className="font-medium underline-offset-2 hover:underline"
                         >
                           {c.email}
                         </Link>
                         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-                          {c.displayName ? `${c.displayName} · ` : ''}
-                          {c.phone ?? 'No phone'}
+                          {c.displayName ?? '—'}
+                          {c.phone ? ` · ${c.phone}` : ''}
                         </p>
                       </div>
                       {c.isActive === false ? (
                         <span
-                          className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${statusTone('SUSPENDED')}`}
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${statusTone('SUSPENDED')}`}
                         >
                           Suspended
                         </span>
@@ -378,63 +390,57 @@ export default function SupportLookupPage() {
             </section>
           ) : null}
 
-          {result.products && result.products.length > 0 ? (
-            <section>
-              <div className="mb-2 flex items-center gap-2">
-                <ShoppingBag className="h-3.5 w-3.5 opacity-50" aria-hidden />
+          {(result.products?.length ?? 0) > 0 ? (
+            <section className="clay-panel overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] px-3 py-2.5 sm:px-4">
+                <Package className="h-3.5 w-3.5 opacity-50" aria-hidden />
                 <h2 className="text-sm font-medium">Products</h2>
-                <span className="text-xs text-[var(--muted-foreground)]">
-                  {result.products.length}
-                </span>
+                <span className="text-xs opacity-50">{result.products!.length}</span>
               </div>
-              <ul className="space-y-2">
-                {result.products.map((p) => (
-                  <li key={p.id} className="clay-panel p-2.5">
+              <ul className="divide-y divide-[var(--border-subtle)]">
+                {result.products!.map((p) => (
+                  <li key={p.id} className="px-3 py-2.5 sm:px-4">
                     <Link
                       href={`/admin/commerce/products/${p.id}`}
-                      className="font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+                      className="font-medium underline-offset-2 hover:underline"
                     >
                       {p.title}
                     </Link>
-                    <p className="mt-0.5 font-mono text-xs text-[var(--muted-foreground)]">{p.slug}</p>
+                    <p className="mt-0.5 font-mono text-[11px] text-[var(--muted-foreground)]">
+                      {p.slug}
+                    </p>
                   </li>
                 ))}
               </ul>
             </section>
           ) : null}
 
-          {result.inquiries && result.inquiries.length > 0 ? (
-            <section>
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Gift className="h-3.5 w-3.5 opacity-50" aria-hidden />
-                  <h2 className="text-sm font-medium">Matching inquiries</h2>
-                  <span className="text-xs text-[var(--muted-foreground)]">
-                    {result.inquiries.length}
-                  </span>
-                </div>
-                <Link
-                  href="/admin/commerce/gifting-inquiries"
-                  className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-                >
-                  All inquiries
-                </Link>
+          {(result.inquiries?.length ?? 0) > 0 ? (
+            <section className="clay-panel overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] px-3 py-2.5 sm:px-4">
+                <Gift className="h-3.5 w-3.5 opacity-50" aria-hidden />
+                <h2 className="text-sm font-medium">Inquiries</h2>
+                <span className="text-xs opacity-50">{result.inquiries!.length}</span>
               </div>
-              <ul className="space-y-2">
-                {result.inquiries.map((i) => (
-                  <li key={i.id} className="clay-panel p-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium">{i.fullName}</p>
+              <ul className="divide-y divide-[var(--border-subtle)]">
+                {result.inquiries!.map((inq) => (
+                  <li key={inq.id} className="px-3 py-2.5 sm:px-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/admin/commerce/gifting-inquiries?q=${encodeURIComponent(inq.email)}`}
+                          className="font-medium underline-offset-2 hover:underline"
+                        >
+                          {inq.fullName}
+                        </Link>
                         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-                          {typeLabel(i.type)} · {i.email}
-                          {i.phone ? ` · ${i.phone}` : ''}
+                          {typeLabel(inq.type)} · {inq.email}
                         </p>
                       </div>
                       <span
-                        className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${statusTone(i.status)}`}
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${statusTone(inq.status)}`}
                       >
-                        {i.status}
+                        {inq.status}
                       </span>
                     </div>
                   </li>
@@ -445,46 +451,50 @@ export default function SupportLookupPage() {
         </div>
       ) : null}
 
-      {!lookingUp && !result ? (
-        <section className="clay-panel p-3 sm:p-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      {!result && !lookingUp ? (
+        <section className="clay-panel overflow-hidden">
+          <div className="border-b border-[var(--border-subtle)] px-3 py-2.5 sm:px-4">
             <h2 className="text-sm font-medium">Recent inquiries</h2>
-            <Link
-              href="/admin/commerce/gifting-inquiries"
-              className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-            >
-              All
-            </Link>
           </div>
           {loadingRecent ? (
-            <div className="space-y-3" aria-busy="true" aria-label="Loading inquiries">
+            <div className="space-y-2 p-4" aria-busy="true">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-10 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]"
+                  className="h-8 animate-pulse rounded bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]"
                 />
               ))}
             </div>
           ) : recentInquiries.length === 0 ? (
-            <p className="py-6 text-center text-sm text-[var(--muted-foreground)]">
-              No recent inquiries.
-            </p>
+            <p className="px-3 py-6 text-sm opacity-55 sm:px-4">No recent inquiries.</p>
           ) : (
-            <ul className="divide-y divide-[color-mix(in_srgb,var(--foreground)_8%,transparent)]">
-              {recentInquiries.map((i) => (
-                <li key={i.id} className="flex items-start justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium leading-snug">{i.fullName}</p>
-                    <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-                      {typeLabel(i.type)} · {i.email}
-                      {i.phone ? ` · ${i.phone}` : ''} · {formatWhen(i.createdAt)}
+            <ul className="divide-y divide-[var(--border-subtle)]">
+              {recentInquiries.map((inq) => (
+                <li
+                  key={inq.id}
+                  className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-4"
+                >
+                  <div className="min-w-0">
+                    <Link
+                      href="/admin/commerce/gifting-inquiries"
+                      className="text-sm font-medium underline-offset-2 hover:underline"
+                    >
+                      {inq.fullName}
+                    </Link>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      {typeLabel(inq.type)} · {inq.email}
                     </p>
                   </div>
-                  <span
-                    className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${statusTone(i.status)}`}
-                  >
-                    {i.status}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${statusTone(inq.status)}`}
+                    >
+                      {inq.status}
+                    </span>
+                    <time className="text-[11px] opacity-50" dateTime={inq.createdAt}>
+                      {formatWhen(inq.createdAt)}
+                    </time>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -492,5 +502,20 @@ export default function SupportLookupPage() {
         </section>
       ) : null}
     </div>
+  );
+}
+
+export default function SupportLookupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="clay-panel space-y-3 p-4" aria-busy="true">
+          <div className="h-8 w-40 animate-pulse rounded bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" />
+          <div className="h-32 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" />
+        </div>
+      }
+    >
+      <SupportLookupInner />
+    </Suspense>
   );
 }

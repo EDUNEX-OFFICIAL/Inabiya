@@ -1,12 +1,26 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import type { CouponPreviewBody, CreateCouponBody } from '@inabiya/validation';
+import type { AdminCouponsQuery, CouponPreviewBody, CreateCouponBody } from '@inabiya/validation';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
-import { computeDiscountPaise, couponLifecycle } from './coupon-lifecycle';
+import {
+  adminCouponKeysetAfter,
+  decodeAdminCouponCursor,
+  encodeAdminCouponCursor,
+} from './admin-coupons-cursor';
+import {
+  computeDiscountPaise,
+  couponLifecycle,
+  eligibleSubtotalPaise,
+  type CouponCartLine,
+  type CouponScopeKind,
+} from './coupon-lifecycle';
 
 export type CouponResult = {
   code: string;
   discountPaise: number;
+  eligibleSubtotalPaise: number;
+  scope: CouponScopeKind;
 };
 
 function parseOptionalDate(raw: string | undefined, field: string): Date | null {
@@ -21,6 +35,26 @@ function parseOptionalDate(raw: string | undefined, field: string): Date | null 
   return d;
 }
 
+function normalizeScopeIds(
+  scope: CouponScopeKind,
+  productIds: string[] | undefined,
+  categoryIds: string[] | undefined,
+): { productIds: string[]; categoryIds: string[] } {
+  if (scope === 'PRODUCT') {
+    return {
+      productIds: [...new Set(productIds ?? [])],
+      categoryIds: [],
+    };
+  }
+  if (scope === 'CATEGORY') {
+    return {
+      productIds: [],
+      categoryIds: [...new Set(categoryIds ?? [])],
+    };
+  }
+  return { productIds: [], categoryIds: [] };
+}
+
 @Injectable()
 export class CouponService {
   constructor(
@@ -28,10 +62,56 @@ export class CouponService {
     private readonly audit: AuditService,
   ) {}
 
-  async listAdmin() {
-    const rows = await this.prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } });
+  async listAdmin(query: AdminCouponsQuery = { limit: 25 }) {
+    const limit = query.limit ?? 25;
+    const andParts: Prisma.CouponWhereInput[] = [];
+
+    if (query.cursor) {
+      try {
+        andParts.push(
+          adminCouponKeysetAfter(decodeAdminCouponCursor(query.cursor)) as Prisma.CouponWhereInput,
+        );
+      } catch {
+        throw new BadRequestException({
+          code: 'INVALID_CURSOR',
+          message: 'Invalid pagination cursor.',
+        });
+      }
+    }
+
+    const where: Prisma.CouponWhereInput = andParts.length > 0 ? { AND: andParts } : {};
+    const rows = await this.prisma.coupon.findMany({
+      where,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+    });
+
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const last = page[page.length - 1];
+    const nextCursor =
+      hasMore && last ? encodeAdminCouponCursor({ createdAt: last.createdAt, id: last.id }) : null;
+
+    const productIdSet = new Set(page.flatMap((c) => c.productIds));
+    const categoryIdSet = new Set(page.flatMap((c) => c.categoryIds));
+    const [products, categories] = await Promise.all([
+      productIdSet.size
+        ? this.prisma.product.findMany({
+            where: { id: { in: [...productIdSet] } },
+            select: { id: true, title: true, slug: true },
+          })
+        : Promise.resolve([]),
+      categoryIdSet.size
+        ? this.prisma.category.findMany({
+            where: { id: { in: [...categoryIdSet] } },
+            select: { id: true, name: true, slug: true },
+          })
+        : Promise.resolve([]),
+    ]);
+    const productMap = new Map(products.map((p) => [p.id, p]));
+    const categoryMap = new Map(categories.map((c) => [c.id, c]));
     const now = new Date();
-    return rows.map((c) => {
+    const items = page.map((c) => {
       const type =
         c.discountPercent != null ? ('PERCENT' as const) : ('FIXED_PAISE' as const);
       return {
@@ -47,10 +127,23 @@ export class CouponService {
         active: c.active,
         startsAt: c.startsAt,
         expiresAt: c.expiresAt,
+        scope: c.scope as CouponScopeKind,
+        productIds: c.productIds,
+        categoryIds: c.categoryIds,
+        products: c.productIds
+          .map((id) => productMap.get(id))
+          .filter(Boolean)
+          .map((p) => ({ id: p!.id, title: p!.title, slug: p!.slug })),
+        categories: c.categoryIds
+          .map((id) => categoryMap.get(id))
+          .filter(Boolean)
+          .map((cat) => ({ id: cat!.id, name: cat!.name, slug: cat!.slug })),
         createdAt: c.createdAt,
         status: couponLifecycle(c, now),
       };
     });
+
+    return { items, nextCursor, limit };
   }
 
   async createAdmin(body: CreateCouponBody, actorId: string, requestId?: string) {
@@ -61,6 +154,32 @@ export class CouponService {
         code: 'INVALID_SCHEDULE',
         message: 'expiresAt must be after startsAt.',
       });
+    }
+
+    const scope = (body.scope ?? 'CART') as CouponScopeKind;
+    const ids = normalizeScopeIds(scope, body.productIds, body.categoryIds);
+
+    if (scope === 'PRODUCT' && ids.productIds.length) {
+      const found = await this.prisma.product.count({
+        where: { id: { in: ids.productIds } },
+      });
+      if (found !== ids.productIds.length) {
+        throw new BadRequestException({
+          code: 'INVALID_PRODUCTS',
+          message: 'One or more products were not found.',
+        });
+      }
+    }
+    if (scope === 'CATEGORY' && ids.categoryIds.length) {
+      const found = await this.prisma.category.count({
+        where: { id: { in: ids.categoryIds } },
+      });
+      if (found !== ids.categoryIds.length) {
+        throw new BadRequestException({
+          code: 'INVALID_CATEGORIES',
+          message: 'One or more categories were not found.',
+        });
+      }
     }
 
     const created = await this.prisma.coupon.create({
@@ -74,6 +193,9 @@ export class CouponService {
         active: body.active ?? true,
         startsAt,
         expiresAt,
+        scope,
+        productIds: ids.productIds,
+        categoryIds: ids.categoryIds,
       },
     });
 
@@ -90,6 +212,9 @@ export class CouponService {
         maxUses: created.maxUses,
         startsAt: created.startsAt,
         expiresAt: created.expiresAt,
+        scope: created.scope,
+        productIds: created.productIds,
+        categoryIds: created.categoryIds,
       },
       requestId,
     });
@@ -125,13 +250,17 @@ export class CouponService {
   /** Preview discount for an existing code or draft fields (builder). */
   async preview(body: CouponPreviewBody) {
     const min = body.minSubtotalPaise ?? 0;
+    const lines = body.lines as CouponCartLine[] | undefined;
+
     if (body.code?.trim()) {
       try {
-        const result = await this.validate(body.code.trim(), body.subtotalPaise);
+        const result = await this.validate(body.code.trim(), body.subtotalPaise, lines);
         return {
           ok: true as const,
           code: result.code,
           discountPaise: result.discountPaise,
+          eligibleSubtotalPaise: result.eligibleSubtotalPaise,
+          scope: result.scope,
           totalAfterPaise: body.subtotalPaise - result.discountPaise,
         };
       } catch (e) {
@@ -149,14 +278,40 @@ export class CouponService {
         message: 'Provide code or draft discount fields.',
       });
     }
-    if (body.subtotalPaise < min) {
+
+    const scope = (body.scope ?? 'CART') as CouponScopeKind;
+    const ids = normalizeScopeIds(scope, body.productIds, body.categoryIds);
+    let eligible = body.subtotalPaise;
+    if (scope !== 'CART') {
+      if (lines?.length) {
+        eligible = eligibleSubtotalPaise({
+          scope,
+          productIds: ids.productIds,
+          categoryIds: ids.categoryIds,
+          cartSubtotalPaise: body.subtotalPaise,
+          lines,
+        });
+      }
+      // else: admin preview treats entered subtotal as eligible amount
+    }
+
+    if (scope !== 'CART' && eligible <= 0) {
+      return {
+        ok: false as const,
+        message:
+          scope === 'PRODUCT'
+            ? 'No matching products in cart.'
+            : 'No matching categories in cart.',
+      };
+    }
+    if (eligible < min) {
       return {
         ok: false as const,
         message: `Minimum order ${min / 100} INR required.`,
       };
     }
     const discountPaise = computeDiscountPaise({
-      subtotalPaise: body.subtotalPaise,
+      subtotalPaise: eligible,
       discountPaise: body.discountPaise,
       discountPercent: body.discountPercent,
     });
@@ -164,11 +319,17 @@ export class CouponService {
       ok: true as const,
       code: null,
       discountPaise,
+      eligibleSubtotalPaise: eligible,
+      scope,
       totalAfterPaise: body.subtotalPaise - discountPaise,
     };
   }
 
-  async validate(code: string, subtotalPaise: number): Promise<CouponResult> {
+  async validate(
+    code: string,
+    cartSubtotalPaise: number,
+    lines?: CouponCartLine[] | null,
+  ): Promise<CouponResult> {
     const coupon = await this.prisma.coupon.findUnique({
       where: { code: code.toUpperCase() },
     });
@@ -197,7 +358,27 @@ export class CouponService {
         message: 'Coupon usage limit reached.',
       });
     }
-    if (subtotalPaise < coupon.minSubtotalPaise) {
+
+    const scope = coupon.scope as CouponScopeKind;
+    const eligible = eligibleSubtotalPaise({
+      scope,
+      productIds: coupon.productIds,
+      categoryIds: coupon.categoryIds,
+      cartSubtotalPaise,
+      lines,
+    });
+
+    if (scope !== 'CART' && eligible <= 0) {
+      throw new BadRequestException({
+        code: 'COUPON_NOT_ELIGIBLE',
+        message:
+          scope === 'PRODUCT'
+            ? 'Coupon does not apply to items in this cart.'
+            : 'Coupon does not apply to categories in this cart.',
+      });
+    }
+
+    if (eligible < coupon.minSubtotalPaise) {
       throw new BadRequestException({
         code: 'COUPON_MIN_NOT_MET',
         message: `Minimum order ${coupon.minSubtotalPaise / 100} INR required.`,
@@ -205,12 +386,17 @@ export class CouponService {
     }
 
     const discountPaise = computeDiscountPaise({
-      subtotalPaise,
+      subtotalPaise: eligible,
       discountPaise: coupon.discountPaise,
       discountPercent: coupon.discountPercent,
     });
 
-    return { code: coupon.code, discountPaise };
+    return {
+      code: coupon.code,
+      discountPaise,
+      eligibleSubtotalPaise: eligible,
+      scope,
+    };
   }
 
   async incrementUsage(code: string): Promise<void> {

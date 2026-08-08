@@ -21,6 +21,26 @@ const REFRESH_KEY = 'inabiya_refresh_token';
 const USER_KEY = 'inabiya_user';
 const AUTH_CHANGED = 'inabiya-auth-changed';
 
+/** Error from apiAuth / apiAuthUpload with HTTP status (for 401 vs other failures). */
+export class ApiClientError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiClientError';
+    this.status = status;
+  }
+}
+
+export function isUnauthorizedError(err: unknown): boolean {
+  return err instanceof ApiClientError && err.status === 401;
+}
+
+/** Soft Gift / ops return path after login. */
+export function loginUrl(nextPath: string): string {
+  return `/login?next=${encodeURIComponent(nextPath)}`;
+}
+
 export function getStoredAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem(ACCESS_KEY);
@@ -142,7 +162,7 @@ export async function apiAuth<T>(
       typeof data?.error?.message === 'string'
         ? data.error.message
         : `Request failed (${res.status})`;
-    throw new Error(message);
+    throw new ApiClientError(message, res.status);
   }
   return data as T;
 }
@@ -180,7 +200,7 @@ export async function apiAuthUpload<T>(
       typeof data?.error?.message === 'string'
         ? data.error.message
         : `Upload failed (${res.status})`;
-    throw new Error(message);
+    throw new ApiClientError(message, res.status);
   }
   return data as T;
 }

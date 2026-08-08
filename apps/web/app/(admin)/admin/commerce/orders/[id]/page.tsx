@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Printer, RefreshCw } from 'lucide-react';
-import { apiAuth, getStoredAccessToken, getStoredUser } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 
@@ -187,7 +187,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl(`/admin/commerce/orders/${params.id}`));
       return;
     }
     void load();

@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MessageSquareQuote, RefreshCw, Search, X } from 'lucide-react';
-import { apiAuth, getStoredAccessToken, getStoredUser } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
+import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -37,13 +38,6 @@ function parseStatus(raw: string | null): StatusFilter {
   return 'PENDING';
 }
 
-function chipClass(active: boolean): string {
-  return `clay-chip min-h-8 shrink-0 cursor-pointer px-2.5 text-xs font-medium transition-colors sm:min-h-9 sm:px-3.5 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] ${
-    active
-      ? 'border-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_16%,white)] text-[var(--primary)] shadow-sm'
-      : 'text-[var(--foreground)] hover:border-[color-mix(in_srgb,var(--primary)_32%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_6%,white)]'
-  }`;
-}
 
 function statusLabel(status: string): string {
   if (status === 'PENDING') return 'Pending';
@@ -143,7 +137,7 @@ function ReviewsDeskInner() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/admin/commerce/reviews'));
       return;
     }
     void load();
@@ -300,7 +294,7 @@ function ReviewsDeskInner() {
                 key={c.value || 'all'}
                 type="button"
                 aria-pressed={active}
-                className={chipClass(active)}
+                className={opsChipClass(active)}
                 onClick={() => patchQuery({ status: c.value })}
               >
                 {c.label}

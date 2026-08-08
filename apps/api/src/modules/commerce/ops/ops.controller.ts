@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from
 import {
   adminSearchQuerySchema,
   adminCustomersQuerySchema,
+  adminCouponsQuerySchema,
   adminReportsQuerySchema,
   adminAuditQuerySchema,
   createCouponBodySchema,
@@ -12,6 +13,7 @@ import {
   giftChromeBodySchema,
   storefrontConfigBodySchema,
   type AdminAuditQuery,
+  type AdminCouponsQuery,
   type AdminCustomersQuery,
   type AdminReportsQuery,
   type CommercePolicyBody,
@@ -159,8 +161,10 @@ export class OpsAdminController {
   }
 
   @Get('coupons')
-  listCoupons() {
-    return this.coupons.listAdmin();
+  listCoupons(
+    @Query(new ZodValidationPipe(adminCouponsQuerySchema)) query: AdminCouponsQuery,
+  ) {
+    return this.coupons.listAdmin(query);
   }
 
   @Post('coupons/preview')

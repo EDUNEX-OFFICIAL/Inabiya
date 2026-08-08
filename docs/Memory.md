@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 8, 2026 (push Soft Gift ops batch)
+Last Updated: August 8, 2026 (cross-check + Support ?q= + deploy)
 
 
 ---
@@ -141,10 +141,10 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **Human:** Hard-refresh QA Soft Gift desks (reviews/returns/support/inquiries + reports/customers/orders)
-2. **Human:** Spot-check Support lookup product hits → `/admin/commerce/products/[id]`
+1. **Human:** QA Support/Finance `g` chords — no admin-only Not available landings
+2. **Human:** Spot-check reports tab switch (only active endpoint) + coupons Prev/Next
 3. Cloudflare SSL / public DNS — **post-dev**
-4. OPS P1 leftovers when prioritized (orders cursor, product CSV, gallery picker, reservation visibility)
+4. OPS P1 leftovers when prioritized (product CSV, gallery picker, reservation visibility)
 5. —
 
 
@@ -178,6 +178,14 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-08 — Coupon PRODUCT / CATEGORY scope (Phase 13 override)
+
+- **Override:** Phase 13 complete; client: coupons category- or product-specific
+- Schema: `CouponScope` CART|PRODUCT|CATEGORY + `productIds` / `categoryIds` arrays; migration `20260808010000_coupon_scope`
+- Checkout: discount computed on **eligible** line subtotal; empty match → `COUPON_NOT_ELIGIBLE`
+- Admin promotions desk: Applies to chips + product search / category chips; Soft Gift list polish
+- Check: `coupon-lifecycle.check.ts` (eligible helpers)
 
 ### 2026-08-08 — Dedicated PDP product video (Phase 13 override)
 
@@ -1060,6 +1068,77 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-08-08 (Cross-check audit fixes + Support ?q= restore + deploy)
+
+- Cross-check: Search→Support redirect, orders/coupons cursors, dashboard aggregates, product clay, `loginUrl`/401, reports lazy, `opsChipClass`, migrations present.
+- Gap fixed: Support had lost `useSearchParams` auto-run for `?q=` (Search redirect regression) — restored Suspense + URL sync + `loginUrl` + gift-banner.
+- Checks: api+web tsc; orders/coupons cursor + coupon-lifecycle checks OK.
+- **Live:** `deploy-vps.sh web api` @ `2261a69` — Support `?q=` restore in web image; migrate no pending; smoke health/ready 200; api+web healthy.
+- **Git:** committed + pushed Soft Gift desks + coupon scope + OPS audit fixes 1–6 (this session).
+
+### Session — 2026-08-08 (OPS cross-audit fixes 1–6 complete)
+
+- **Override:** Phase 13 — human: fix audit items 1→6 completely.
+- **1 Search:** stub → redirect Support (`?q=` preserved); nav Search removed; Support auto-runs URL q; products → admin edit.
+- **2 Orders:** keyset `{ items, nextCursor, limit }` + slim select; FE Prev/Next; cursor helpers + check.
+- **3 Dashboard/sales:** KPI aggregates (not unbounded findMany); products report SQL GROUP BY; indexes migration `20260808080000_ops_hot_indexes` (`orders.created_at+id`, `paid_at`, `payments.status`, `inventory.on_hand`).
+- **4 Product create/edit:** Soft Gift clay-panel/input/chip + gift-banner; media field chrome aligned.
+- **5 Auth UX:** `loginUrl` everywhere; products `clearSession` only on 401; shell `g` chords role-filtered.
+- **6:** `opsChipClass` shared; reports lazy-by-tab + cache; coupons cursor pagination.
+- Checks: api+web tsc clean; orders/coupons cursor checks; migrate applied locally.
+- **Live:** `deploy-vps.sh web api` @ `2261a69` — hot indexes already applied; smoke health/ready 200; containers healthy.
+
+### Session — 2026-08-08 (Fix 5/6 ops leftovers)
+
+- **Fix 5:** `loginUrl` + `ApiClientError`/`isUnauthorizedError`; bare `/login` → `loginUrl(...)` across commerce desks; products list clears session only on 401; shell `g` chords filtered by `filterNavForRoles` hrefs
+- **Fix 6:** `opsChipClass` shared helper; reports lazy-fetch by active tab + cache; coupons `listAdmin` cursor pagination `{ items, nextCursor, limit }` + FE Prev/Next; `adminCouponsQuerySchema`; validation rebuild
+- Migrations: none · Env: none
+- Risk: coupons status/search still client-filters current page only (v1)
+- Next: human QA chords + reports/coupons
+
+### Session — 2026-08-08 (Orders desk cursor pagination)
+
+- Admin orders list: consume `{ items, nextCursor, limit }` + `cursor`/`limit` query (products desk UX).
+- Prev stack, filter resets cursor, soft refresh kept; login `?next=` preserves orders URL.
+- File: `apps/web/app/(admin)/admin/commerce/orders/page.tsx`. AuthZ/bulk/board untouched.
+
+### Session — 2026-08-08 (Commerce OPS Soft Gift cross-reaudit)
+
+- Static reaudit of 21 `/admin/commerce` routes (UI parity + perf/data + AuthZ/deep-links).
+- Verdict: list desks mostly gold; outliers Search + product create/edit; scale P1s = orders take:100, dashboard unbounded paid loads, reports 6× fetch.
+- Artifact: canvas `commerce-ops-cross-audit.canvas.tsx` (20 findings · fix order 1–6).
+- No code changes this pass.
+
+### Session — 2026-08-08 (Dashboard / coupons / merchandising / settings Soft Gift)
+
+- **Override:** Phase 13 — human: polish remaining commerce desks + product/category coupons.
+- Coupons: Soft Gift desk (chips/search/cards/table/builder) + **CART | PRODUCT | CATEGORY** scope; eligible-subtotal validate in cart; Zod + migration `20260808010000_coupon_scope`.
+- Dashboard: clay-chip ranges; inventory deep-link `?stock=low`; Refresh parity.
+- Merchandising: clay-panels; product search pins; homepage CMS CTA; drop guide blurbs.
+- Settings: clay-chip Policy/Audit tabs; clay-panel forms; mobile audit cards; soft Refresh.
+- Check: `coupon-lifecycle.check.ts`; web+api tsc clean; migrate applied locally.
+- **Live:** `deploy-vps.sh web api` @ `2261a69` — migrate none pending (scope already applied); smoke health/ready 200; containers healthy.
+
+### Session — 2026-08-08 (Commerce ops sidebar live)
+
+- `deploy-vps.sh web` @ `2261a69` — container recreated; smoke health/ready 200; sidebar polish now on `127.0.0.1:3001`
+- Next: hard-refresh QA collapse/expand + mobile drawer
+
+### Session — 2026-08-08 (Commerce ops sidebar polish)
+
+- Desktop sidebar: collapsible icon rail (persists `localStorage`); header + brand toggles; `[` shortcut
+- Lucide icons on every nav item + command palette rows; active pink bar + hover micro-motion (`prefers-reduced-motion` respected)
+- Collapsed footer: avatar initials + sign-out icon; mobile drawer slide-in
+- Files: `commerce-ops-shell.tsx`, `globals.css` ops-aside / ops-nav-link
+- Next: hard-refresh QA collapse/expand + mobile drawer
+
+### Session — 2026-08-08 (Reports chart height + daily pagination)
+
+- **Override:** Phase 13 — human: Sales trend chart too tall; daily list too long; no deploy.
+- Chart: SalesTrendChart fixed height `10.5rem` / `12rem` (drop wide `aspect-video` blow-up).
+- Sales daily table/cards: 10/page, newest-first, Prev/Next pager; CSV still exports full window.
+- Returns recent list: 8/page same pager. Web tsc clean. **Deploy:** skipped per human.
+
 ### Session — 2026-08-08 (push Soft Gift ops batch)
 
 - Committed + pushed `5262fd1` → `origin/main` (84 files): Soft Gift desks, reports charts, categories/video/SEO extras.
@@ -1095,6 +1174,14 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 - Charts: Sales area (revenue/orders); Products/Inventory/Coupons/Funnel bars; Returns donut.
 - Filters (URL): window `1d|7d|14d|30d` chips; Sales `metric`; Products `top`+`sort`; Returns `rstatus`; Coupons `active=1`.
 - No API/migration. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
+
+### Session — 2026-08-08 (Product create/edit Soft Gift clay polish)
+
+- **Override:** Phase 13 complete — human: polish product create + edit forms to Soft Gift clay desk chrome.
+- `products/new`: clay-panel sections, clay-input, gift-banner errors, clay-btn / ghost Cancel.
+- `products/[id]`: clay-panel sections/hero/sticky bar; clay-input; clay-chip toggles; clay pulse skeleton; gift-banner errors/success; login `next` → product id (not list).
+- Nested chrome: `product-media-field`, `product-gallery-editor`, `product-video-field` → clay-input / clay-panel / gift-banner (TipTap/SEO/gallery/video kept).
+- AuthZ + save/publish/API unchanged. No migration. Web tsc clean. **Deploy:** pending human (`deploy-vps.sh web`).
 
 ### Session — 2026-08-08 (Reports Soft Gift desk polish)
 
