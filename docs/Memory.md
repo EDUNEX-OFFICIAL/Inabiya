@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 8, 2026 (collections replace categories)
+Last Updated: August 8, 2026 (collection edit dedicated page)
 
 
 ---
@@ -141,9 +141,9 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **Deploy:** `bash scripts/deploy-vps.sh web api` then migrate on VPS + ensure collections seeded
-2. **QA:** `/admin/commerce/collections` + `/gift/collections/for-baby-girl` + gift chrome shop links
-3. **QA:** Coupons COLLECTION scope needs a MANUAL collection (create one, assign products)
+1. **Deploy:** `bash scripts/deploy-vps.sh web api` + migrate `20260808150000_collection_smart_membership` (+ seed Smart)
+2. **QA:** Admin Hand-picked vs Smart condition builder + PLP `/gift/collections/for-baby-girl`
+3. **QA:** Product edit only shows Hand-picked; coupon COLLECTION = Hand-picked only
 4. Cloudflare SSL / public DNS — **post-dev**
 5. —
 
@@ -1067,6 +1067,43 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-08 (Push Smart collections + edit page + PLP schema)
+
+- Committed + pushed Smart membership, dedicated collection edit page, CollectionPage JSON-LD, migrations SEO+smart.
+
+### Session — 2026-08-08 (Collection PLP JSON-LD)
+
+- Auto `CollectionPage` + `ItemList` (+ breadcrumb) on `/gift/collections/[slug]`; check `collection-page.check.ts`.
+- Next: deploy web; view-source PLP for ld+json.
+
+### Session — 2026-08-08 (Collection edit → dedicated page)
+
+- List desk Edit opens `/admin/commerce/collections/[id]` (not inline). New → `/collections/new`.
+- Edit page shows matching/assigned products list + conditions + SEO; API `getAdminCollection` returns Smart live matches.
+- Next: deploy web+api; QA Edit → product list.
+
+### Session — 2026-08-08 (Smart collections deploy)
+
+- Deployed `bash scripts/deploy-vps.sh web api` (working tree; image tag still `3df96c9`) — migrate no pending; smoke health/ready 200; api+web healthy.
+- Next: hard-refresh admin Collections (Hand-picked / Smart); QA `/gift/collections/for-baby-girl`. Commit/push when ready.
+
+### Session — 2026-08-08 (Shopify-style Smart collections, easy UI)
+
+- **Override:** Phase 13 complete — human: Smart collections back, but easy to understand (no JSON).
+- Schema: `membershipMode` MANUAL|SMART + `smartRules` JSON. Migration `20260808150000_collection_smart_membership`.
+- Admin: **Hand-picked** vs **Smart (auto)**; condition rows (field / is / value); All/Any match; SEO kept.
+- Product assign + coupons: Hand-picked only. Seed 16 Smart with one condition each.
+- Next: deploy web+api; QA Smart PLP + builder.
+
+### Session — 2026-08-08 (Drop RULES — collections join-only + SEO)
+
+- **Override:** Phase 13 complete — human: remove Rules membership; product↔collection assign only.
+- Materialized 16 RULES → `ProductCollection` joins (138 links), then migration `20260808140000_collections_manual_only_seo` drops `membership_mode`/`rules`, adds collection SEO fields.
+- API/Zod/admin/storefront: no RULES; list by joins; collection SEO in create/update + `generateMetadata`.
+- Admin desk: product multi-select + SEO fields; product form label Collections (all collections).
+- Seed: MANUAL metadata + match-based joins after products.
+- Next: deploy web+api; QA collections desk + PLP SEO.
 
 ### Session — 2026-08-08 (Collections deploy + push)
 

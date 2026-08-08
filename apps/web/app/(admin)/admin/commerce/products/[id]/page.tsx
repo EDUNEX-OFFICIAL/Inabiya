@@ -258,7 +258,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
       .then((rows) =>
         setCollectionOptions(
           rows
-            .filter((c) => c.membershipMode === 'MANUAL')
+            .filter((c) => c.membershipMode !== 'SMART')
             .map((c) => ({ slug: c.slug, title: c.title })),
         ),
       )
@@ -719,10 +719,10 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             </div>
           </div>
           <div>
-            <p className="text-xs opacity-70">Categories</p>
+            <p className="text-xs opacity-70">Collections</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {collectionOptions.length === 0 ? (
-                <span className="text-xs opacity-50">No MANUAL collections yet</span>
+                <span className="text-xs opacity-50">No hand-picked collections yet</span>
               ) : (
                 collectionOptions.map((c) => (
                   <Chip

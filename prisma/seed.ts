@@ -141,7 +141,10 @@ async function main() {
     sortOrder: number;
     lockedLabel: string;
     relatedSlugs: string[];
-    rules: Record<string, unknown>;
+    smartRules: {
+      match: 'all' | 'any';
+      conditions: Array<{ field: string; op: string; value: string }>;
+    };
   }> = [
     {
       slug: 'for-baby-girl',
@@ -154,7 +157,10 @@ async function main() {
       sortOrder: 1,
       lockedLabel: 'Baby girl',
       relatedSlugs: ['for-baby-boy', 'unisex-gifts', 'newborn'],
-      rules: { recipient: 'girl', hideFacets: ['recipient'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'recipient', op: 'is', value: 'girl' }],
+      },
     },
     {
       slug: 'for-baby-boy',
@@ -167,7 +173,10 @@ async function main() {
       sortOrder: 2,
       lockedLabel: 'Baby boy',
       relatedSlugs: ['for-baby-girl', 'unisex-gifts', 'newborn'],
-      rules: { recipient: 'boy', hideFacets: ['recipient'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'recipient', op: 'is', value: 'boy' }],
+      },
     },
     {
       slug: 'for-expecting-mom',
@@ -180,7 +189,10 @@ async function main() {
       sortOrder: 3,
       lockedLabel: 'Expecting mom',
       relatedSlugs: ['baby-shower', 'welcome-baby', 'ready-hampers'],
-      rules: { recipient: 'mom', hideFacets: ['recipient'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'recipient', op: 'is', value: 'mom' }],
+      },
     },
     {
       slug: 'unisex-gifts',
@@ -193,7 +205,10 @@ async function main() {
       sortOrder: 4,
       lockedLabel: 'Unisex',
       relatedSlugs: ['for-baby-girl', 'for-baby-boy', 'newborn'],
-      rules: { recipient: 'unisex', hideFacets: ['recipient'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'recipient', op: 'is', value: 'unisex' }],
+      },
     },
     {
       slug: 'welcome-baby',
@@ -206,7 +221,10 @@ async function main() {
       sortOrder: 5,
       lockedLabel: 'Welcome baby',
       relatedSlugs: ['baby-shower', 'newborn', 'ready-hampers'],
-      rules: { occasion: 'welcome-baby', hideFacets: ['occasion'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'occasion', op: 'is', value: 'welcome-baby' }],
+      },
     },
     {
       slug: 'baby-shower',
@@ -219,7 +237,10 @@ async function main() {
       sortOrder: 6,
       lockedLabel: 'Baby shower',
       relatedSlugs: ['welcome-baby', 'for-expecting-mom', 'naming-ceremony'],
-      rules: { occasion: 'baby-shower', hideFacets: ['occasion'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'occasion', op: 'is', value: 'baby-shower' }],
+      },
     },
     {
       slug: 'naming-ceremony',
@@ -232,7 +253,10 @@ async function main() {
       sortOrder: 7,
       lockedLabel: 'Naming',
       relatedSlugs: ['welcome-baby', 'first-birthday', 'unisex-gifts'],
-      rules: { occasion: 'naming', hideFacets: ['occasion'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'occasion', op: 'is', value: 'naming' }],
+      },
     },
     {
       slug: 'first-birthday',
@@ -245,7 +269,10 @@ async function main() {
       sortOrder: 8,
       lockedLabel: 'Birthday',
       relatedSlugs: ['toddler', 'infant', 'bestsellers'],
-      rules: { occasion: 'birthday', hideFacets: ['occasion'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'occasion', op: 'is', value: 'birthday' }],
+      },
     },
     {
       slug: 'newborn',
@@ -258,7 +285,10 @@ async function main() {
       sortOrder: 9,
       lockedLabel: 'Newborn',
       relatedSlugs: ['infant', 'welcome-baby', 'ready-hampers'],
-      rules: { age: 'newborn', hideFacets: ['age'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'age', op: 'is', value: 'newborn' }],
+      },
     },
     {
       slug: 'infant',
@@ -271,7 +301,10 @@ async function main() {
       sortOrder: 10,
       lockedLabel: 'Infant',
       relatedSlugs: ['newborn', 'toddler', 'first-birthday'],
-      rules: { age: 'infant', hideFacets: ['age'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'age', op: 'is', value: 'infant' }],
+      },
     },
     {
       slug: 'toddler',
@@ -284,7 +317,10 @@ async function main() {
       sortOrder: 11,
       lockedLabel: 'Toddler',
       relatedSlugs: ['infant', 'first-birthday', 'bestsellers'],
-      rules: { age: 'toddler', hideFacets: ['age'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'age', op: 'is', value: 'toddler' }],
+      },
     },
     {
       slug: 'ready-hampers',
@@ -297,7 +333,10 @@ async function main() {
       sortOrder: 12,
       lockedLabel: 'Hampers',
       relatedSlugs: ['bestsellers', 'welcome-baby', 'for-expecting-mom'],
-      rules: { hamper: '1', hideFacets: ['hamper'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'hamper', op: 'is', value: 'yes' }],
+      },
     },
     {
       slug: 'bestsellers',
@@ -310,7 +349,10 @@ async function main() {
       sortOrder: 13,
       lockedLabel: 'Best sellers',
       relatedSlugs: ['editors-picks', 'new-arrivals', 'ready-hampers'],
-      rules: { storefrontLabel: 'BESTSELLER' },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'label', op: 'is', value: 'BESTSELLER' }],
+      },
     },
     {
       slug: 'editors-picks',
@@ -323,7 +365,10 @@ async function main() {
       sortOrder: 14,
       lockedLabel: "Editor's picks",
       relatedSlugs: ['bestsellers', 'new-arrivals', 'unisex-gifts'],
-      rules: { storefrontLabel: 'EDITORS_PICK' },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'label', op: 'is', value: 'EDITORS_PICK' }],
+      },
     },
     {
       slug: 'new-arrivals',
@@ -336,7 +381,10 @@ async function main() {
       sortOrder: 15,
       lockedLabel: 'New arrivals',
       relatedSlugs: ['bestsellers', 'on-sale', 'ready-hampers'],
-      rules: { sort: 'newest' },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'publishedWithinDays', op: 'within', value: '45' }],
+      },
     },
     {
       slug: 'on-sale',
@@ -349,12 +397,15 @@ async function main() {
       sortOrder: 16,
       lockedLabel: 'On sale',
       relatedSlugs: ['bestsellers', 'ready-hampers', 'new-arrivals'],
-      rules: { onSale: '1', hideFacets: ['onSale'] },
+      smartRules: {
+        match: 'all',
+        conditions: [{ field: 'onSale', op: 'is', value: 'yes' }],
+      },
     },
   ];
 
   for (const c of seedCollections) {
-    await prisma.collection.upsert({
+    const row = await prisma.collection.upsert({
       where: { slug: c.slug },
       update: {
         title: c.title,
@@ -365,8 +416,8 @@ async function main() {
         accent: c.accent,
         sortOrder: c.sortOrder,
         status: 'PUBLISHED',
-        membershipMode: 'RULES',
-        rules: c.rules,
+        membershipMode: 'SMART',
+        smartRules: c.smartRules,
         relatedSlugs: c.relatedSlugs,
         lockedLabel: c.lockedLabel,
       },
@@ -380,14 +431,16 @@ async function main() {
         accent: c.accent,
         sortOrder: c.sortOrder,
         status: 'PUBLISHED',
-        membershipMode: 'RULES',
-        rules: c.rules,
+        membershipMode: 'SMART',
+        smartRules: c.smartRules,
         relatedSlugs: c.relatedSlugs,
         lockedLabel: c.lockedLabel,
       },
     });
+    // Smart collections do not keep manual joins
+    await prisma.productCollection.deleteMany({ where: { collectionId: row.id } });
   }
-  console.log(`Seeded ${seedCollections.length} RULES collections`);
+  console.log(`Seeded ${seedCollections.length} Smart collections`);
 
   /** Curated Soft Gift media under /gift/media (verified relevant — avoid random Unsplash IDs). */
   const media = {

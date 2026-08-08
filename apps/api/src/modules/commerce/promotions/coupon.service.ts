@@ -177,7 +177,7 @@ export class CouponService {
       if (found !== ids.collectionIds.length) {
         throw new BadRequestException({
           code: 'INVALID_COLLECTIONS',
-          message: 'One or more MANUAL collections were not found.',
+          message: 'One or more hand-picked collections were not found.',
         });
       }
     }

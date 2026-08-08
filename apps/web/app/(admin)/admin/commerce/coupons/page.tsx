@@ -198,7 +198,7 @@ function CouponsDeskInner() {
 
   useEffect(() => {
     void apiAuth<Array<CollectionOption & { membershipMode?: string }>>('/admin/catalog/collections')
-      .then((rows) => setCollections(rows.filter((c) => c.membershipMode === 'MANUAL')))
+      .then((rows) => setCollections(rows.filter((c) => c.membershipMode !== 'SMART')))
       .catch(() => setCollections([]));
   }, []);
 

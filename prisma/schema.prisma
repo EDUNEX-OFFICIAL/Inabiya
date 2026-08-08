@@ -172,10 +172,10 @@ enum CollectionStatus {
 
 enum CollectionMembershipMode {
   MANUAL
-  RULES
+  SMART
 }
 
-/// Soft Gift merchandising group (Shopify-style). Replaces commerce Category.
+/// Soft Gift merchandising group (Shopify-style Manual + Smart).
 model Collection {
   id              String                   @id @default(uuid()) @db.Uuid
   slug            String                   @unique
@@ -187,11 +187,17 @@ model Collection {
   accent          String                   @default("neutral")
   sortOrder       Int                      @default(0) @map("sort_order")
   status          CollectionStatus         @default(DRAFT)
+  /// MANUAL = hand-picked joins; SMART = auto from smartRules conditions
   membershipMode  CollectionMembershipMode @default(MANUAL) @map("membership_mode")
-  /// RULES mode: { recipient?, age?, occasion?, hamper?, storefrontLabel?, onSale?, sort?, hideFacets? }
-  rules           Json?
+  /// { match: 'all'|'any', conditions: [{ field, op, value }] }
+  smartRules      Json?                    @map("smart_rules")
   relatedSlugs    String[]                 @default([]) @map("related_slugs")
   lockedLabel     String?                  @map("locked_label")
+  seoTitle        String?                  @map("seo_title")
+  seoDescription  String?                  @map("seo_description")
+  canonicalPath   String?                  @map("canonical_path")
+  ogImageUrl      String?                  @map("og_image_url")
+  robotsIndex     Boolean                  @default(true) @map("robots_index")
   createdAt       DateTime                 @default(now()) @map("created_at")
   updatedAt       DateTime                 @updatedAt @map("updated_at")
   products        ProductCollection[]

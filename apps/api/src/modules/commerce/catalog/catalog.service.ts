@@ -31,10 +31,11 @@ import {
 } from './admin-catalog-cursor';
 import { collectionDeleteBlocked } from './collection-ops';
 import {
-  applyCollectionRulesToWhere,
-  parseCollectionRules,
-  rulesDefaultSort,
-} from './collection-rules';
+  applySmartRulesToWhere,
+  parseSmartRules,
+  smartRulesHideFacets,
+  smartRulesNeedOnSalePostFilter,
+} from './collection-smart';
 import {
   isManualStorefrontLabel,
   resolveStorefrontDisplayLabels,
@@ -98,13 +99,21 @@ export class CatalogService {
     return this.mapCollectionPublic(row);
   }
 
-  /** Admin desk — includes sortOrder + MANUAL linked product count. */
+  /** Admin desk — MANUAL join count; SMART = live condition match count. */
   async listAdminCollections() {
     const rows = await this.prisma.collection.findMany({
       orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
       include: { _count: { select: { products: true } } },
     });
-    return rows.map((c) => this.mapCollectionAdmin(c));
+    const out = [];
+    for (const c of rows) {
+      let productCount = c._count.products;
+      if (c.membershipMode === 'SMART') {
+        productCount = await this.countSmartMatches(parseSmartRules(c.smartRules));
+      }
+      out.push(this.mapCollectionAdmin({ ...c, _count: { products: productCount } }));
+    }
+    return out;
   }
 
   async getAdminCollection(id: string) {
@@ -113,7 +122,7 @@ export class CatalogService {
       include: {
         _count: { select: { products: true } },
         products: {
-          include: { product: { select: { id: true, slug: true, title: true } } },
+          include: { product: { select: { id: true, slug: true, title: true, status: true } } },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -121,25 +130,67 @@ export class CatalogService {
     if (!row) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Collection not found.' });
     }
+
+    if (row.membershipMode === 'SMART') {
+      const rules = parseSmartRules(row.smartRules);
+      const products = await this.listSmartMatchProducts(rules);
+      return {
+        ...this.mapCollectionAdmin({ ...row, _count: { products: products.length } }),
+        products,
+        productsSource: 'smart' as const,
+      };
+    }
+
     return {
       ...this.mapCollectionAdmin(row),
       products: row.products.map((pc) => ({
         id: pc.product.id,
         slug: pc.product.slug,
         title: pc.product.title,
+        status: pc.product.status,
         sortOrder: pc.sortOrder,
       })),
+      productsSource: 'manual' as const,
     };
+  }
+
+  private async listSmartMatchProducts(rules: ReturnType<typeof parseSmartRules>) {
+    const where = applySmartRulesToWhere({ status: ProductStatus.PUBLISHED }, rules);
+    const rows = await this.prisma.product.findMany({
+      where,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        status: true,
+        variants: { select: { pricePaise: true, compareAtPricePaise: true } },
+      },
+      orderBy: { title: 'asc' },
+      take: 200,
+    });
+    let filtered = rows;
+    if (smartRulesNeedOnSalePostFilter(rules)) {
+      filtered = rows.filter((p) =>
+        p.variants.some(
+          (v) => v.compareAtPricePaise != null && v.compareAtPricePaise > v.pricePaise,
+        ),
+      );
+    }
+    return filtered.map((p, i) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      status: p.status,
+      sortOrder: i,
+    }));
+  }
+
+  private async countSmartMatches(rules: ReturnType<typeof parseSmartRules>) {
+    return (await this.listSmartMatchProducts(rules)).length;
   }
 
   async createCollection(body: CreateCollectionBody, actorId: string, requestId?: string) {
     const mode = body.membershipMode ?? 'MANUAL';
-    if (mode === 'RULES' && body.productSlugs?.length) {
-      throw new BadRequestException({
-        code: 'INVALID_MEMBERSHIP',
-        message: 'RULES collections cannot assign productSlugs.',
-      });
-    }
     try {
       const row = await this.prisma.$transaction(async (tx) => {
         const created = await tx.collection.create({
@@ -154,9 +205,14 @@ export class CatalogService {
             sortOrder: body.sortOrder ?? 0,
             status: body.status ?? 'DRAFT',
             membershipMode: mode,
-            rules: mode === 'RULES' ? (body.rules ?? {}) : Prisma.DbNull,
+            smartRules: mode === 'SMART' ? (body.smartRules ?? { match: 'all', conditions: [] }) : Prisma.DbNull,
             relatedSlugs: body.relatedSlugs ?? [],
             lockedLabel: body.lockedLabel,
+            seoTitle: body.seoTitle ?? null,
+            seoDescription: body.seoDescription ?? null,
+            canonicalPath: body.canonicalPath ?? null,
+            ogImageUrl: body.ogImageUrl ?? null,
+            robotsIndex: body.robotsIndex ?? true,
           },
         });
         if (mode === 'MANUAL' && body.productSlugs?.length) {
@@ -174,7 +230,11 @@ export class CatalogService {
         resourceId: row.id,
         requestId,
       });
-      return this.mapCollectionAdmin(row);
+      let productCount = row._count.products;
+      if (row.membershipMode === 'SMART') {
+        productCount = await this.countSmartMatches(parseSmartRules(row.smartRules));
+      }
+      return this.mapCollectionAdmin({ ...row, _count: { products: productCount } });
     } catch (e) {
       if (typeof e === 'object' && e && 'code' in e && (e as { code: string }).code === 'P2002') {
         throw new ConflictException({
@@ -197,17 +257,28 @@ export class CatalogService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Collection not found.' });
     }
     const nextMode = body.membershipMode ?? existing.membershipMode;
-    if (nextMode === 'RULES' && body.productSlugs?.length) {
+    if (nextMode === 'SMART' && body.productSlugs?.length) {
       throw new BadRequestException({
         code: 'INVALID_MEMBERSHIP',
-        message: 'RULES collections cannot assign productSlugs.',
+        message: 'Smart collections cannot assign productSlugs.',
+      });
+    }
+    if (
+      nextMode === 'SMART' &&
+      body.smartRules !== undefined &&
+      body.smartRules !== null &&
+      !body.smartRules.conditions.length
+    ) {
+      throw new BadRequestException({
+        code: 'INVALID_SMART_RULES',
+        message: 'Smart collections need at least one condition.',
       });
     }
     try {
       const row = await this.prisma.$transaction(async (tx) => {
         const modeChanged =
           body.membershipMode !== undefined && body.membershipMode !== existing.membershipMode;
-        if (modeChanged && body.membershipMode === 'RULES') {
+        if (modeChanged && nextMode === 'SMART') {
           await tx.productCollection.deleteMany({ where: { collectionId: id } });
         }
         await tx.collection.update({
@@ -223,13 +294,18 @@ export class CatalogService {
             ...(body.sortOrder !== undefined ? { sortOrder: body.sortOrder } : {}),
             ...(body.status !== undefined ? { status: body.status } : {}),
             ...(body.membershipMode !== undefined ? { membershipMode: body.membershipMode } : {}),
-            ...(body.rules !== undefined
-              ? { rules: nextMode === 'RULES' ? (body.rules ?? {}) : Prisma.DbNull }
+            ...(body.smartRules !== undefined
+              ? { smartRules: nextMode === 'SMART' ? (body.smartRules ?? Prisma.DbNull) : Prisma.DbNull }
               : modeChanged && nextMode === 'MANUAL'
-                ? { rules: Prisma.DbNull }
+                ? { smartRules: Prisma.DbNull }
                 : {}),
             ...(body.relatedSlugs !== undefined ? { relatedSlugs: body.relatedSlugs } : {}),
             ...(body.lockedLabel !== undefined ? { lockedLabel: body.lockedLabel } : {}),
+            ...(body.seoTitle !== undefined ? { seoTitle: body.seoTitle } : {}),
+            ...(body.seoDescription !== undefined ? { seoDescription: body.seoDescription } : {}),
+            ...(body.canonicalPath !== undefined ? { canonicalPath: body.canonicalPath } : {}),
+            ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
+            ...(body.robotsIndex !== undefined ? { robotsIndex: body.robotsIndex } : {}),
           },
         });
         if (nextMode === 'MANUAL' && body.productSlugs !== undefined) {
@@ -247,7 +323,11 @@ export class CatalogService {
         resourceId: row.id,
         requestId,
       });
-      return this.mapCollectionAdmin(row);
+      let productCount = row._count.products;
+      if (row.membershipMode === 'SMART') {
+        productCount = await this.countSmartMatches(parseSmartRules(row.smartRules));
+      }
+      return this.mapCollectionAdmin({ ...row, _count: { products: productCount } });
     } catch (e) {
       if (typeof e === 'object' && e && 'code' in e && (e as { code: string }).code === 'P2002') {
         throw new ConflictException({
@@ -294,11 +374,18 @@ export class CatalogService {
     heroImageAlt: string | null;
     accent: string;
     sortOrder: number;
-    membershipMode: 'MANUAL' | 'RULES';
-    rules: unknown;
+    membershipMode: 'MANUAL' | 'SMART';
+    smartRules: unknown;
     relatedSlugs: string[];
     lockedLabel: string | null;
+    seoTitle: string | null;
+    seoDescription: string | null;
+    canonicalPath: string | null;
+    ogImageUrl: string | null;
+    robotsIndex: boolean;
   }) {
+    const smartRules =
+      c.membershipMode === 'SMART' ? parseSmartRules(c.smartRules) : { match: 'all' as const, conditions: [] };
     return {
       id: c.id,
       slug: c.slug,
@@ -310,9 +397,15 @@ export class CatalogService {
       accent: c.accent,
       sortOrder: c.sortOrder,
       membershipMode: c.membershipMode,
-      rules: parseCollectionRules(c.rules),
+      smartRules: c.membershipMode === 'SMART' ? smartRules : null,
+      hideFacets: c.membershipMode === 'SMART' ? smartRulesHideFacets(smartRules) : [],
       relatedSlugs: c.relatedSlugs,
       lockedLabel: c.lockedLabel,
+      seoTitle: c.seoTitle,
+      seoDescription: c.seoDescription,
+      canonicalPath: c.canonicalPath,
+      ogImageUrl: c.ogImageUrl,
+      robotsIndex: c.robotsIndex,
     };
   }
 
@@ -328,10 +421,15 @@ export class CatalogService {
       accent: string;
       sortOrder: number;
       status: 'DRAFT' | 'PUBLISHED';
-      membershipMode: 'MANUAL' | 'RULES';
-      rules: unknown;
+      membershipMode: 'MANUAL' | 'SMART';
+      smartRules: unknown;
       relatedSlugs: string[];
       lockedLabel: string | null;
+      seoTitle: string | null;
+      seoDescription: string | null;
+      canonicalPath: string | null;
+      ogImageUrl: string | null;
+      robotsIndex: boolean;
       _count: { products: number };
     },
   ) {
@@ -429,11 +527,9 @@ export class CatalogService {
           collections: { some: { collectionId: col.id } },
         };
       } else {
-        const rules = parseCollectionRules(col.rules);
-        where = applyCollectionRulesToWhere(where, rules);
-        if (!sort) sort = rulesDefaultSort(rules);
-        if (rules.onSale === '1' && query.onSale === undefined) {
-          // ensure onSale post-filter below
+        const rules = parseSmartRules(col.smartRules);
+        where = applySmartRulesToWhere(where, rules);
+        if (smartRulesNeedOnSalePostFilter(rules) && query.onSale === undefined) {
           query = { ...query, onSale: true };
         }
       }
@@ -712,7 +808,7 @@ export class CatalogService {
   }
 
   async createProduct(body: CreateProductBody, actorId: string, requestId?: string) {
-    const collectionIds = await this.resolveManualCollectionIds(body.collectionSlugs ?? []);
+    const collectionIds = await this.resolveCollectionIds(body.collectionSlugs ?? []);
 
     const product = await this.prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
@@ -803,7 +899,7 @@ export class CatalogService {
 
     const collectionIds =
       body.collectionSlugs !== undefined
-        ? await this.resolveManualCollectionIds(body.collectionSlugs)
+        ? await this.resolveCollectionIds(body.collectionSlugs)
         : undefined;
 
     const product = await this.prisma.$transaction(async (tx) => {
@@ -1028,7 +1124,8 @@ export class CatalogService {
     };
   }
 
-  private async resolveManualCollectionIds(slugs: string[]) {
+  /** Product assign + coupon COLLECTION scope — hand-picked joins only. */
+  private async resolveCollectionIds(slugs: string[]) {
     if (!slugs.length) return [];
     const cols = await this.prisma.collection.findMany({
       where: { slug: { in: slugs }, membershipMode: 'MANUAL' },
@@ -1036,7 +1133,7 @@ export class CatalogService {
     if (cols.length !== slugs.length) {
       throw new BadRequestException({
         code: 'INVALID_COLLECTION',
-        message: 'One or more collection slugs were not found or are not MANUAL membership.',
+        message: 'One or more collection slugs were not found or are Smart (not hand-picked).',
       });
     }
     return cols.map((c) => c.id);

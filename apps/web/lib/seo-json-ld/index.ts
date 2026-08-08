@@ -255,6 +255,11 @@ export function breadcrumbJsonLd(
   };
 }
 
+export {
+  collectionPageJsonLd,
+  type CollectionPageJsonLdInput,
+} from './collection-page';
+
 export function emptyPresetFields(preset: SeoSchemaPreset): Record<string, unknown> {
   switch (preset) {
     case 'HowTo':

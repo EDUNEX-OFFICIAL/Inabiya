@@ -317,7 +317,7 @@ Invest deeply in core domains.
 | Media | Assets metadata + storage pointers |
 | Notifications | Templates + delivery |
 | Audit | Privileged action records |
-| Catalog | Products, variants, **collections** (MANUAL | RULES), personalization config |
+| Catalog | Products, variants, **collections** (Hand-picked | Smart), personalization config |
 | Inventory | Stock, reservations, adjustments |
 | Buying | Cart, checkout, pricing application |
 | Orders | Order lifecycle, tracking, returns requests |
@@ -1160,15 +1160,16 @@ Catalog ──► Inventory ──► Buying(Cart/Checkout) ──► Orders
 - Identity, titles, descriptions, SEO fields
 - Publish state (draft/published/archived)
 - Media references (IDs only)
-- Collection memberships (`MANUAL` join and/or `RULES` filter JSON). Soft Gift no longer uses a separate commerce Category taxonomy (blog `EditorialCategory` is separate).
+- Collection memberships: **Hand-picked** (`ProductCollection` joins) or **Smart** (condition rules). Soft Gift no longer uses a separate commerce Category taxonomy (blog `EditorialCategory` is separate).
 - Personalization option definitions
 - Variant/SKU children
 
 **Collection** (merchandising, Shopify-shaped):
 
-- `MANUAL` — explicit `ProductCollection` joins (also coupon COLLECTION scope v1)
-- `RULES` — catalog filters in `rules` JSON (recipient/age/occasion/hamper/label/onSale/sort)
-- Public PLP: `/gift/collections/:slug`; admin desk: `/admin/commerce/collections`
+- Hand-picked — explicit product chips / joins (coupon COLLECTION scope)
+- Smart — conditions builder (`match` all/any + field/op/value); live catalog filter
+- Optional SEO fields (`seoTitle`, `seoDescription`, `canonicalPath`, `ogImageUrl`, `robotsIndex`)
+- Public PLP: `/gift/collections/:slug` (+ auto `CollectionPage` JSON-LD); admin: list + `/admin/commerce/collections/[id]`
 
 **Variant/SKU** owns:
 

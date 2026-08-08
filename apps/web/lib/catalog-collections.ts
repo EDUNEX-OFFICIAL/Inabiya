@@ -11,10 +11,19 @@ export type CatalogCollection = {
   heroImageAlt?: string | null;
   accent?: string;
   sortOrder?: number;
-  membershipMode?: 'MANUAL' | 'RULES';
-  rules?: Record<string, unknown> | null;
+  membershipMode?: 'MANUAL' | 'SMART';
+  smartRules?: {
+    match: 'all' | 'any';
+    conditions: Array<{ field: string; op: string; value: string }>;
+  } | null;
+  hideFacets?: string[];
   relatedSlugs?: string[];
   lockedLabel?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  canonicalPath?: string | null;
+  ogImageUrl?: string | null;
+  robotsIndex?: boolean;
   status?: 'DRAFT' | 'PUBLISHED';
   productCount?: number;
 };

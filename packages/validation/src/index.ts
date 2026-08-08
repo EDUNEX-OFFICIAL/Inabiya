@@ -117,7 +117,7 @@ export const createProductBodySchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'slug must be lowercase kebab-case'),
   title: z.string().min(1).max(200),
   description: z.string().max(5000).optional(),
-  /** MANUAL collection membership only (RULES collections resolve via filters). */
+  /** Collection membership via ProductCollection joins. */
   collectionSlugs: z.array(z.string()).optional(),
   recipientTags: z.array(z.enum(['girl', 'boy', 'mom', 'unisex'])).optional(),
   ageBands: z.array(z.enum(['newborn', 'infant', 'toddler', 'any'])).optional(),
@@ -560,40 +560,74 @@ const collectionSlugSchema = z
   .max(80)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
-/** RULES membership filters (mirrors Soft Gift collection baseFilters). */
-export const collectionRulesSchema = z.object({
-  recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).optional(),
-  age: z.enum(['newborn', 'infant', 'toddler', 'any']).optional(),
-  occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).optional(),
-  hamper: z.enum(['0', '1']).optional(),
-  storefrontLabel: z.enum(['BESTSELLER', 'EDITORS_PICK', 'GIFT_SET']).optional(),
-  onSale: z.enum(['0', '1']).optional(),
-  sort: z.enum(['newest', 'price_asc', 'price_desc']).optional(),
-  hideFacets: z
-    .array(
-      z.enum(['recipient', 'age', 'occasion', 'category', 'hamper', 'onSale', 'budget', 'collection']),
-    )
-    .max(12)
-    .optional(),
+/** Shopify-like smart collection condition (admin builder — no freeform JSON). */
+export const smartConditionFieldSchema = z.enum([
+  'recipient',
+  'age',
+  'occasion',
+  'hamper',
+  'label',
+  'onSale',
+  'titleContains',
+  'publishedWithinDays',
+]);
+
+export const smartConditionOpSchema = z.enum(['is', 'is_not', 'contains', 'within']);
+
+export const smartConditionSchema = z.object({
+  field: smartConditionFieldSchema,
+  op: smartConditionOpSchema,
+  value: z.string().min(1).max(120),
 });
 
-export const createCollectionBodySchema = z.object({
-  slug: collectionSlugSchema,
-  title: z.string().min(1).max(160),
-  description: z.string().max(1000).optional(),
-  overline: z.string().max(80).optional(),
-  heroImageUrl: z.string().max(500).optional(),
-  heroImageAlt: z.string().max(200).optional(),
-  accent: z.enum(['pink', 'sky', 'neutral']).optional(),
-  sortOrder: z.number().int().optional(),
-  status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
-  membershipMode: z.enum(['MANUAL', 'RULES']).optional(),
-  rules: collectionRulesSchema.nullable().optional(),
-  relatedSlugs: z.array(collectionSlugSchema).max(12).optional(),
-  lockedLabel: z.string().max(80).optional(),
-  /** MANUAL mode: product slugs to assign (optional on create). */
-  productSlugs: z.array(z.string().max(120)).max(200).optional(),
+export const smartRulesSchema = z.object({
+  /** Shopify: products must match all / any conditions */
+  match: z.enum(['all', 'any']).default('all'),
+  conditions: z.array(smartConditionSchema).max(12),
 });
+
+export const createCollectionBodySchema = z
+  .object({
+    slug: collectionSlugSchema,
+    title: z.string().min(1).max(160),
+    description: z.string().max(1000).optional(),
+    overline: z.string().max(80).optional(),
+    heroImageUrl: z.string().max(500).optional(),
+    heroImageAlt: z.string().max(200).optional(),
+    accent: z.enum(['pink', 'sky', 'neutral']).optional(),
+    sortOrder: z.number().int().optional(),
+    status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
+    membershipMode: z.enum(['MANUAL', 'SMART']).optional(),
+    smartRules: smartRulesSchema.nullable().optional(),
+    relatedSlugs: z.array(collectionSlugSchema).max(12).optional(),
+    lockedLabel: z.string().max(80).optional(),
+    /** MANUAL only: product slugs to assign. */
+    productSlugs: z.array(z.string().max(120)).max(200).optional(),
+    seoTitle: z.preprocess(emptySeoToNull, z.string().max(200).nullable().optional()),
+    seoDescription: z.preprocess(emptySeoToNull, z.string().max(500).nullable().optional()),
+    canonicalPath: z.preprocess(emptySeoToNull, z.string().max(300).nullable().optional()),
+    ogImageUrl: z.preprocess(emptySeoToNull, productAssetUrlSchema.nullable().optional()),
+    robotsIndex: z.boolean().optional(),
+  })
+  .superRefine((b, ctx) => {
+    const mode = b.membershipMode ?? 'MANUAL';
+    if (mode === 'SMART') {
+      if (!b.smartRules?.conditions?.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Smart collections need at least one condition.',
+          path: ['smartRules'],
+        });
+      }
+      if (b.productSlugs?.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Smart collections cannot assign productSlugs.',
+          path: ['productSlugs'],
+        });
+      }
+    }
+  });
 
 /** Admin: partial update for catalog collections desk. */
 export const updateCollectionBodySchema = z
@@ -607,11 +641,16 @@ export const updateCollectionBodySchema = z
     accent: z.enum(['pink', 'sky', 'neutral']).optional(),
     sortOrder: z.number().int().optional(),
     status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
-    membershipMode: z.enum(['MANUAL', 'RULES']).optional(),
-    rules: collectionRulesSchema.nullable().optional(),
+    membershipMode: z.enum(['MANUAL', 'SMART']).optional(),
+    smartRules: smartRulesSchema.nullable().optional(),
     relatedSlugs: z.array(collectionSlugSchema).max(12).optional(),
     lockedLabel: z.string().max(80).nullable().optional(),
     productSlugs: z.array(z.string().max(120)).max(200).optional(),
+    seoTitle: z.preprocess(emptySeoToNull, z.string().max(200).nullable().optional()),
+    seoDescription: z.preprocess(emptySeoToNull, z.string().max(500).nullable().optional()),
+    canonicalPath: z.preprocess(emptySeoToNull, z.string().max(300).nullable().optional()),
+    ogImageUrl: z.preprocess(emptySeoToNull, productAssetUrlSchema.nullable().optional()),
+    robotsIndex: z.boolean().optional(),
   })
   .refine(
     (b) =>
@@ -625,10 +664,15 @@ export const updateCollectionBodySchema = z
       b.sortOrder !== undefined ||
       b.status !== undefined ||
       b.membershipMode !== undefined ||
-      b.rules !== undefined ||
+      b.smartRules !== undefined ||
       b.relatedSlugs !== undefined ||
       b.lockedLabel !== undefined ||
-      b.productSlugs !== undefined,
+      b.productSlugs !== undefined ||
+      b.seoTitle !== undefined ||
+      b.seoDescription !== undefined ||
+      b.canonicalPath !== undefined ||
+      b.ogImageUrl !== undefined ||
+      b.robotsIndex !== undefined,
     { message: 'At least one field is required' },
   );
 
@@ -685,7 +729,8 @@ export type UpdateProductBody = z.infer<typeof updateProductBodySchema>;
 export type UpdateVariantBody = z.infer<typeof updateVariantBodySchema>;
 export type CreateCollectionBody = z.infer<typeof createCollectionBodySchema>;
 export type UpdateCollectionBody = z.infer<typeof updateCollectionBodySchema>;
-export type CollectionRules = z.infer<typeof collectionRulesSchema>;
+export type SmartRules = z.infer<typeof smartRulesSchema>;
+export type SmartCondition = z.infer<typeof smartConditionSchema>;
 export type GiftingInquiryBody = z.infer<typeof giftingInquiryBodySchema>;
 
 /** Phase 3 — cart, checkout, orders */
@@ -1127,7 +1172,7 @@ export const adminCatalogListQuerySchema = z.object({
   storefrontLabel: z.enum(['BESTSELLER', 'EDITORS_PICK', 'GIFT_SET']).optional(),
   recipient: z.enum(['girl', 'boy', 'mom', 'unisex']).optional(),
   occasion: z.enum(['welcome-baby', 'baby-shower', 'naming', 'birthday']).optional(),
-  /** Collection slug (MANUAL membership filter on admin desk). */
+  /** Collection slug (join membership filter on admin desk). */
   collection: z.string().trim().min(1).max(80).optional(),
   sort: z
     .enum(['updated', 'title_asc', 'title_desc', 'created', 'price_asc', 'price_desc'])

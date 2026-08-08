@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import { ClayProductCard } from '@/components/gift/clay-product-card';
 import { CollectionFilters } from '@/components/gift/collection-filters';
 import { CollectionResultsToolbar } from '@/components/gift/collection-results-toolbar';
+import { JsonLdScript } from '@/components/seo/json-ld-script';
 import { TrackView } from '@/components/track-view';
 import { fetchCatalog, type CatalogProduct } from '@/lib/catalog';
 import {
@@ -12,16 +13,21 @@ import {
   fetchCatalogCollections,
   type CatalogCollection,
 } from '@/lib/catalog-collections';
+import { getSiteOrigin } from '@/lib/cms-seo';
 import {
   bybHrefForCollection,
   collectionBreadcrumb,
   collectionHref,
   mergeCollectionCatalogQuery,
-  type CollectionBaseFilters,
   type CollectionFacet,
   type CollectionRefine,
   type GiftCollection,
 } from '@/lib/gift-collections';
+import {
+  breadcrumbJsonLd,
+  collectionPageJsonLd,
+  mergeSeoJsonLd,
+} from '@/lib/seo-json-ld';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,24 +50,7 @@ function parseRefine(sp: SearchParams): CollectionRefine {
   };
 }
 
-function rulesToBaseFilters(rules: Record<string, unknown> | null | undefined): CollectionBaseFilters {
-  const r = rules ?? {};
-  return {
-    ...(typeof r.recipient === 'string' ? { recipient: r.recipient } : {}),
-    ...(typeof r.age === 'string' ? { age: r.age } : {}),
-    ...(typeof r.occasion === 'string' ? { occasion: r.occasion } : {}),
-    ...(typeof r.hamper === 'string' ? { hamper: r.hamper } : {}),
-    ...(typeof r.storefrontLabel === 'string' ? { storefrontLabel: r.storefrontLabel } : {}),
-    ...(typeof r.onSale === 'string' ? { onSale: r.onSale } : {}),
-    ...(typeof r.sort === 'string' ? { sort: r.sort } : {}),
-  };
-}
-
 function toGiftCollection(row: CatalogCollection): GiftCollection {
-  const rules = (row.rules ?? {}) as Record<string, unknown>;
-  const hideFacets = Array.isArray(rules.hideFacets)
-    ? (rules.hideFacets as CollectionFacet[])
-    : [];
   return {
     slug: row.slug,
     title: row.title,
@@ -70,8 +59,8 @@ function toGiftCollection(row: CatalogCollection): GiftCollection {
     heroImageUrl: row.heroImageUrl ?? '/gift/media/baby-soft-gift.jpg',
     heroImageAlt: row.heroImageAlt ?? row.title,
     accent: (row.accent as 'pink' | 'sky' | 'neutral') || 'neutral',
-    baseFilters: rulesToBaseFilters(row.rules),
-    hideFacets,
+    baseFilters: {},
+    hideFacets: (row.hideFacets ?? []) as CollectionFacet[],
     relatedSlugs: row.relatedSlugs ?? [],
     lockedLabel: row.lockedLabel ?? row.title,
   };
@@ -84,13 +73,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const row = await fetchCatalogCollectionBySlug(params.slug);
   if (!row) return { title: 'Collection' };
+  const title = row.seoTitle?.trim() || `${row.title} | Inabiya`;
+  const description = row.seoDescription?.trim() || row.description || undefined;
+  const ogImage = row.ogImageUrl || row.heroImageUrl;
+  const canonical = row.canonicalPath?.trim() || `/gift/collections/${row.slug}`;
   return {
-    title: `${row.title} | Inabiya`,
-    description: row.description ?? undefined,
+    title,
+    description,
+    alternates: { canonical },
+    robots: row.robotsIndex === false ? { index: false, follow: false } : undefined,
     openGraph: {
-      title: row.title,
-      description: row.description ?? undefined,
-      images: row.heroImageUrl ? [{ url: row.heroImageUrl }] : undefined,
+      title,
+      description,
+      images: ogImage ? [{ url: ogImage }] : undefined,
     },
   };
 }
@@ -132,8 +127,38 @@ export default async function GiftCollectionPage({
         ? 'from-sky-300/40 via-sky-100/20 to-transparent'
         : 'from-foreground/12 via-foreground/[0.04] to-transparent';
 
+  const origin = getSiteOrigin();
+  const collectionPath = row.canonicalPath?.trim() || `/gift/collections/${row.slug}`;
+  const collectionUrl = collectionPath.startsWith('http')
+    ? collectionPath
+    : `${origin}${collectionPath.startsWith('/') ? collectionPath : `/${collectionPath}`}`;
+  const seoName = row.seoTitle?.trim() || collection.title;
+  const seoDescription = row.seoDescription?.trim() || collection.blurb || null;
+  const ld = mergeSeoJsonLd([
+    collectionPageJsonLd({
+      name: seoName,
+      description: seoDescription,
+      slug: row.slug,
+      canonicalPath: row.canonicalPath,
+      imageUrl: row.ogImageUrl || row.heroImageUrl,
+      siteOrigin: origin,
+      products: products.slice(0, 48).map((p) => ({ name: p.title, slug: p.slug })),
+    }),
+    breadcrumbJsonLd([
+      { name: 'Gift home', url: `${origin}/gift` },
+      {
+        name: crumb.parentLabel,
+        url: crumb.parentHref.startsWith('http')
+          ? crumb.parentHref
+          : `${origin}${crumb.parentHref.startsWith('/') ? crumb.parentHref : `/${crumb.parentHref}`}`,
+      },
+      { name: collection.lockedLabel, url: collectionUrl },
+    ]),
+  ]);
+
   return (
     <main className="gift-page !max-w-none !px-0">
+      <JsonLdScript data={ld} />
       <TrackView name="view_plp" />
 
       {/* Full-bleed soft hero */}

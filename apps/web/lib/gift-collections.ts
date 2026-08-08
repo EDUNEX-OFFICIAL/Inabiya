@@ -312,7 +312,7 @@ export type CollectionRefine = {
   sort?: string;
 };
 
-/** Merge collection identity with URL refine. API resolves RULES/MANUAL via `collection` slug. */
+/** Merge collection identity with URL refine. API resolves membership via `collection` slug joins. */
 export function mergeCollectionCatalogQuery(
   collection: { slug: string; baseFilters: CollectionBaseFilters },
   refine: CollectionRefine,
