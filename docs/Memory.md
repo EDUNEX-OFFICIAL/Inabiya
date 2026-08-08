@@ -1068,6 +1068,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-08-08 (Collections deploy + push)
+
+- Pushed `f9e0e5a` → `origin/main`.
+- Deployed `bash scripts/deploy-vps.sh web api` @ `f9e0e5a` — api/web/worker healthy; migrate no pending; smoke health/ready 200.
+- Next: hard-refresh admin Collections + `/gift/collections/for-baby-girl` on live.
+
 ### Session — 2026-08-08 (Collections cross-check)
 
 - Cross-check vs plan: schema/API/admin/storefront/seed/docs mostly PASS; tsc + unit checks green; DB 16 RULES collections, `categories` table gone.
