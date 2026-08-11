@@ -17,6 +17,10 @@ assert.ok(!supportNav.some((i) => i.id === 'collections'));
 assert.ok(COMMERCE_OPS_NAV.some((i) => i.id === 'collections'));
 assert.ok(!COMMERCE_OPS_NAV.some((i) => i.id === 'categories'));
 assert.ok(!supportNav.some((i) => i.id === 'import'));
+assert.ok(!supportNav.some((i) => i.id === 'suppliers'));
+assert.ok(!supportNav.some((i) => i.id === 'purchase-orders'));
+assert.ok(COMMERCE_OPS_NAV.some((i) => i.id === 'suppliers'));
+assert.ok(COMMERCE_OPS_NAV.some((i) => i.id === 'purchase-orders'));
 assert.ok(supportNav.some((i) => i.id === 'support'));
 assert.ok(supportNav.some((i) => i.id === 'orders'));
 

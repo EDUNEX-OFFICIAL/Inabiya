@@ -11,6 +11,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { ReturnsModule } from './returns/returns.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { CmsModule } from './cms/cms.module';
+import { ProcurementModule } from './procurement/procurement.module';
 
 /** Commerce domain aggregator */
 @Module({
@@ -27,6 +28,7 @@ import { CmsModule } from './cms/cms.module';
     ReturnsModule,
     AnalyticsModule,
     CmsModule,
+    ProcurementModule,
   ],
 })
 export class CommerceModule {}

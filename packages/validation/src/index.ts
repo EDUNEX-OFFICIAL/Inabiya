@@ -527,6 +527,87 @@ export const inventoryImportBodySchema = z.object({
   rows: z.array(inventoryImportRowSchema).min(1).max(500),
 });
 
+/** OPS-9 P1 — product create CSV (integer paise) */
+export const productImportRowSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(2)
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'slug must be lowercase kebab-case'),
+  title: z.string().trim().min(1).max(200),
+  sku: z.string().trim().min(1).max(64),
+  pricePaise: z.number().int().min(0),
+  onHand: z.number().int().min(0).default(0),
+  description: z.string().trim().max(5000).optional(),
+  compareAtPaise: z.number().int().min(0).optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED']).default('DRAFT'),
+  imageUrl: productAssetUrlSchema.optional(),
+  label: z.string().trim().min(1).max(120).default('Default'),
+});
+
+export const productImportBodySchema = z.object({
+  dryRun: z.boolean().default(true),
+  rows: z.array(productImportRowSchema).min(1).max(100),
+});
+
+export type ProductImportBody = z.infer<typeof productImportBodySchema>;
+export type ProductImportRow = z.infer<typeof productImportRowSchema>;
+
+/** OPS-10 — procurement */
+export const createSupplierBodySchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(2)
+    .max(40)
+    .regex(/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/i, 'code must be alphanumeric with hyphens')
+    .transform((s) => s.toUpperCase()),
+  name: z.string().trim().min(1).max(200),
+  contactName: z.string().trim().min(1).max(120).optional(),
+  email: z.string().trim().email().max(320).optional(),
+  phone: z.string().trim().min(8).max(20).optional(),
+  city: z.string().trim().min(1).max(80).optional(),
+  state: z.string().trim().min(2).max(40).optional(),
+  gstin: z.string().trim().min(10).max(20).optional(),
+  notes: z.string().trim().max(1000).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const updateSupplierBodySchema = createSupplierBodySchema.partial().refine(
+  (b) => Object.keys(b).length > 0,
+  { message: 'At least one field required' },
+);
+
+export const purchaseOrderLineInputSchema = z.object({
+  variantId: z.string().uuid(),
+  quantityOrdered: z.number().int().min(1).max(100_000),
+  unitCostPaise: z.number().int().min(0),
+});
+
+export const createPurchaseOrderBodySchema = z.object({
+  supplierId: z.string().uuid(),
+  notes: z.string().trim().max(1000).optional(),
+  lines: z.array(purchaseOrderLineInputSchema).min(1).max(100),
+});
+
+export const adminPurchaseOrdersQuerySchema = z.object({
+  status: z.enum(['DRAFT', 'ORDERED', 'RECEIVED', 'CANCELLED']).optional(),
+  supplierId: z.string().uuid().optional(),
+  q: z.string().trim().min(1).max(80).optional(),
+});
+
+export const adminSuppliersQuerySchema = z.object({
+  q: z.string().trim().min(1).max(80).optional(),
+  active: z.enum(['1', '0', 'true', 'false']).optional(),
+});
+
+export type CreateSupplierBody = z.infer<typeof createSupplierBodySchema>;
+export type UpdateSupplierBody = z.infer<typeof updateSupplierBodySchema>;
+export type CreatePurchaseOrderBody = z.infer<typeof createPurchaseOrderBodySchema>;
+export type AdminPurchaseOrdersQuery = z.infer<typeof adminPurchaseOrdersQuerySchema>;
+export type AdminSuppliersQuery = z.infer<typeof adminSuppliersQuerySchema>;
+
 export const bulkOrdersBodySchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(50),
   status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED']),
@@ -916,9 +997,27 @@ export const customerStatusBodySchema = z.object({
 export const adminCustomersQuerySchema = z.object({
   q: z.string().trim().min(1).max(120).optional(),
   status: z.enum(['active', 'suspended']).optional(),
+  cursor: z.string().trim().min(1).max(500).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(25),
 });
 
 export type AdminCustomersQuery = z.infer<typeof adminCustomersQuerySchema>;
+
+/** OPS-5 P1 — internal communication log (no provider send) */
+export const customerCommunicationBodySchema = z.object({
+  channel: z.enum(['EMAIL', 'SMS', 'INTERNAL', 'SYSTEM']),
+  templateKey: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(/^[a-z0-9][a-z0-9._-]*$/i, 'templateKey must be alphanumeric with ._-'),
+  subject: z.string().trim().min(1).max(200).optional(),
+  /** Log-only stub: SENT/FAILED reserved for future providers */
+  status: z.enum(['LOGGED', 'SKIPPED']).default('LOGGED'),
+});
+
+export type CustomerCommunicationBody = z.infer<typeof customerCommunicationBodySchema>;
 
 /** Phase 5 — reviews */
 export const createReviewBodySchema = z.object({

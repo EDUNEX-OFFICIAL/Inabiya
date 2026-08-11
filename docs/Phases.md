@@ -860,4 +860,19 @@ Memory Active Phase must name the **current OPS-N** only. Full P0/P1/exit criter
 
 ---
 
+## 27. Phase 14 — Procurement OPS (suppliers / POs) — override track
+
+**Status:** **Active** (2026-08-11 human override after Phase 13 P1 closed).  
+**Authority:** [`docs/PROCUREMENT_OPS.md`](PROCUREMENT_OPS.md)  
+**Depends on:** OPS-3 inventory ledger  
+**Goal:** Single-merchant supplier + simple purchase order full-receive into inventory. **Not** multi-vendor marketplace.
+
+| Slice | Focus |
+|---|---|
+| S0–S3 | Supplier CRUD · PO DRAFT→ORDERED→RECEIVED · Receive all · Soft Gift desks |
+
+P1 later: partial receive, FINANCE read role, AP invoices.
+
+---
+
 **End of Phases.md v2.0.0**

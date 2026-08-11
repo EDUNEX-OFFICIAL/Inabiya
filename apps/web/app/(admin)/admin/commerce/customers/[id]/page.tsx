@@ -47,6 +47,15 @@ type Customer360 = {
     orderId: string;
     orderNumber: string;
   }>;
+  communications: Array<{
+    id: string;
+    channel: string;
+    templateKey: string;
+    subject: string | null;
+    status: string;
+    actorEmail: string | null;
+    createdAt: string;
+  }>;
   inquiries: Array<{
     id: string;
     type: string;
@@ -55,6 +64,8 @@ type Customer360 = {
     createdAt: string;
   }>;
 };
+
+const COMM_CHANNELS = ['INTERNAL', 'EMAIL', 'SMS', 'SYSTEM'] as const;
 
 function accountTone(isActive: boolean): string {
   return isActive
@@ -114,6 +125,11 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
   const [busy, setBusy] = useState(false);
   const [roles, setRoles] = useState<string[]>(() => getStoredUser()?.roles ?? []);
   const canSuspend = roles.includes('COMMERCE_ADMIN') || roles.includes('SUPER_ADMIN');
+  const [commChannel, setCommChannel] = useState<(typeof COMM_CHANNELS)[number]>('INTERNAL');
+  const [commTemplate, setCommTemplate] = useState('support_followup');
+  const [commSubject, setCommSubject] = useState('');
+  const [commBusy, setCommBusy] = useState(false);
+  const [commError, setCommError] = useState<string | null>(null);
 
   const load = useCallback(
     async (opts?: { soft?: boolean }) => {
@@ -161,6 +177,35 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
       setError(e instanceof Error ? e.message : 'Status update failed');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function logCommunication() {
+    const templateKey = commTemplate.trim().toLowerCase().replace(/\s+/g, '_');
+    if (!templateKey) {
+      setCommError('Template required');
+      return;
+    }
+    setCommBusy(true);
+    setCommError(null);
+    setNotice(null);
+    try {
+      await apiAuth(`/admin/commerce/customers/${params.id}/communications`, {
+        method: 'POST',
+        json: {
+          channel: commChannel,
+          templateKey,
+          subject: commSubject.trim() || undefined,
+          status: 'LOGGED',
+        },
+      });
+      setCommSubject('');
+      await load({ soft: true });
+      setNotice('Communication logged');
+    } catch (e) {
+      setCommError(e instanceof Error ? e.message : 'Log failed');
+    } finally {
+      setCommBusy(false);
     }
   }
 
@@ -371,6 +416,97 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
                       {formatInr(o.totalPaise)}
                     </span>
                   </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="clay-panel p-3 text-sm sm:p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+            Communications
+          </h2>
+          <form
+            className="mt-3 grid gap-2 sm:grid-cols-[7rem_1fr_1fr_auto]"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void logCommunication();
+            }}
+          >
+            <label className="block text-xs">
+              <span className="mb-1 block font-medium text-[var(--muted-foreground)]">Channel</span>
+              <select
+                className="clay-input min-h-10 w-full text-sm"
+                value={commChannel}
+                onChange={(e) => setCommChannel(e.target.value as (typeof COMM_CHANNELS)[number])}
+              >
+                {COMM_CHANNELS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-xs">
+              <span className="mb-1 block font-medium text-[var(--muted-foreground)]">Template</span>
+              <input
+                className="clay-input min-h-10 w-full text-sm"
+                value={commTemplate}
+                onChange={(e) => {
+                  setCommTemplate(e.target.value);
+                  setCommError(null);
+                }}
+                placeholder="support_followup"
+                autoComplete="off"
+                required
+              />
+            </label>
+            <label className="block text-xs">
+              <span className="mb-1 block font-medium text-[var(--muted-foreground)]">Subject</span>
+              <input
+                className="clay-input min-h-10 w-full text-sm"
+                value={commSubject}
+                onChange={(e) => setCommSubject(e.target.value)}
+                placeholder="Optional"
+                autoComplete="off"
+              />
+            </label>
+            <div className="flex items-end">
+              <button
+                type="submit"
+                className="clay-btn min-h-10 w-full text-sm sm:w-auto"
+                disabled={commBusy}
+              >
+                Log
+              </button>
+            </div>
+          </form>
+          {commError ? (
+            <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+              {commError}
+            </p>
+          ) : null}
+          {(data.communications ?? []).length === 0 ? (
+            <p className="mt-3 text-xs text-[var(--muted-foreground)]">No communications yet.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {(data.communications ?? []).map((c) => (
+                <li
+                  key={c.id}
+                  className="rounded-lg border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_92%,white)] p-2.5"
+                >
+                  <p className="font-medium">
+                    {c.templateKey}
+                    <span className="ml-1.5 text-xs font-normal text-[var(--muted-foreground)]">
+                      · {c.channel} · {c.status}
+                    </span>
+                  </p>
+                  {c.subject ? (
+                    <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{c.subject}</p>
+                  ) : null}
+                  <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                    {c.actorEmail ?? 'staff'} · {new Date(c.createdAt).toLocaleString('en-IN')}
+                  </p>
                 </li>
               ))}
             </ul>

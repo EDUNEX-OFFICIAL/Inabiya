@@ -307,7 +307,7 @@ export default function MerchandisingPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs opacity-55">No featured pins.</p>
+                <p className="ops-muted text-xs">No featured pins.</p>
               )}
             </div>
 

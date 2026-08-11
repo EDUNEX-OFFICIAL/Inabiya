@@ -15,6 +15,7 @@ import {
   type CouponCartLine,
   type CouponScopeKind,
 } from './coupon-lifecycle';
+import { buildConflictCodesById, type CouponConflictSlice } from './coupon-overlap';
 
 export type CouponResult = {
   code: string;
@@ -111,6 +112,36 @@ export class CouponService {
     const productMap = new Map(products.map((p) => [p.id, p]));
     const collectionMap = new Map(collections.map((c) => [c.id, c]));
     const now = new Date();
+
+    const peerRows = await this.prisma.coupon.findMany({
+      where: { active: true },
+      select: {
+        id: true,
+        code: true,
+        active: true,
+        startsAt: true,
+        expiresAt: true,
+        maxUses: true,
+        usedCount: true,
+        scope: true,
+        productIds: true,
+        collectionIds: true,
+      },
+    });
+    const peers: CouponConflictSlice[] = peerRows.map((c) => ({
+      id: c.id,
+      code: c.code,
+      active: c.active,
+      startsAt: c.startsAt,
+      expiresAt: c.expiresAt,
+      maxUses: c.maxUses,
+      usedCount: c.usedCount,
+      scope: c.scope as CouponScopeKind,
+      productIds: c.productIds,
+      collectionIds: c.collectionIds,
+    }));
+    const conflictsById = buildConflictCodesById(peers, now);
+
     const items = page.map((c) => {
       const type =
         c.discountPercent != null ? ('PERCENT' as const) : ('FIXED_PAISE' as const);
@@ -140,6 +171,7 @@ export class CouponService {
           .map((col) => ({ id: col!.id, title: col!.title, slug: col!.slug })),
         createdAt: c.createdAt,
         status: couponLifecycle(c, now),
+        conflictsWith: conflictsById.get(c.id) ?? [],
       };
     });
 
@@ -219,7 +251,37 @@ export class CouponService {
       requestId,
     });
 
-    return created;
+    const now = new Date();
+    const peerRows = await this.prisma.coupon.findMany({
+      where: { active: true },
+      select: {
+        id: true,
+        code: true,
+        active: true,
+        startsAt: true,
+        expiresAt: true,
+        maxUses: true,
+        usedCount: true,
+        scope: true,
+        productIds: true,
+        collectionIds: true,
+      },
+    });
+    const peers: CouponConflictSlice[] = peerRows.map((c) => ({
+      id: c.id,
+      code: c.code,
+      active: c.active,
+      startsAt: c.startsAt,
+      expiresAt: c.expiresAt,
+      maxUses: c.maxUses,
+      usedCount: c.usedCount,
+      scope: c.scope as CouponScopeKind,
+      productIds: c.productIds,
+      collectionIds: c.collectionIds,
+    }));
+    const conflictsWith = buildConflictCodesById(peers, now).get(created.id) ?? [];
+
+    return { ...created, conflictsWith };
   }
 
   async setActive(code: string, active: boolean, actorId: string, requestId?: string) {

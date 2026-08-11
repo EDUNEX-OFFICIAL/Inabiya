@@ -16,6 +16,7 @@ import {
   catalogListQuerySchema,
   createCollectionBodySchema,
   createProductBodySchema,
+  productImportBodySchema,
   updateCollectionBodySchema,
   updateInventoryBodySchema,
   updateProductBodySchema,
@@ -24,6 +25,7 @@ import {
   type BulkProductsBody,
   type CreateCollectionBody,
   type CreateProductBody,
+  type ProductImportBody,
   type UpdateCollectionBody,
   type UpdateProductBody,
   type UpdateVariantBody,
@@ -116,6 +118,15 @@ export class CatalogAdminController {
     @Req() req: AuthedRequest,
   ) {
     return this.catalog.bulkProducts(body.ids, body.action, user.id, String(req.id ?? ''));
+  }
+
+  @Post('products/import')
+  importProducts(
+    @Body(new ZodValidationPipe(productImportBodySchema)) body: ProductImportBody,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.catalog.importProducts(body, user.id, String(req.id ?? ''));
   }
 
   @Patch('products/:id')

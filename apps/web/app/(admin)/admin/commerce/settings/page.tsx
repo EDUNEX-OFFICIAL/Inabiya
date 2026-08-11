@@ -511,7 +511,7 @@ function SettingsInner() {
               <OpsTableScroll>
                 <table className="mt-3 w-full min-w-[28rem] border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] text-left text-[11px] uppercase tracking-wide opacity-55">
+                    <tr className="ops-th border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3.5%,transparent)] text-left">
                       <th className="py-2 pr-2 font-medium">Nav</th>
                       {ROLE_COLS.map((r) => (
                         <th key={r} className="py-2 pr-2 font-medium">
@@ -654,7 +654,7 @@ function SettingsInner() {
                   <div className="clay-panel overflow-hidden">
                     <table className="w-full min-w-[40rem] border-collapse text-sm">
                       <thead>
-                        <tr className="border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)] text-left text-[11px] uppercase tracking-wide opacity-55">
+                        <tr className="ops-th border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3.5%,transparent)] text-left">
                           <th className="px-3 py-2.5 font-medium">When</th>
                           <th className="px-2 py-2.5 pr-3 font-medium">Actor</th>
                           <th className="px-2 py-2.5 pr-3 font-medium">Action</th>

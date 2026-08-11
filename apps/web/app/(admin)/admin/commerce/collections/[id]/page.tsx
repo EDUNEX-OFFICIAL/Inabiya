@@ -196,17 +196,6 @@ export default function CollectionEditPage() {
                 </select>
               </label>
               <label className="block text-xs">
-                <span className="mb-1 block font-medium text-[var(--muted-foreground)]">
-                  Sort order
-                </span>
-                <input
-                  type="number"
-                  className="clay-input min-h-10 w-full text-sm"
-                  value={form.sortOrder}
-                  onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
-                />
-              </label>
-              <label className="block text-xs">
                 <span className="mb-1 block font-medium text-[var(--muted-foreground)]">Accent</span>
                 <select
                   className="clay-input min-h-10 w-full text-sm"
@@ -223,7 +212,7 @@ export default function CollectionEditPage() {
                   <option value="sky">Sky</option>
                 </select>
               </label>
-              <label className="block text-xs">
+              <label className="block text-xs sm:col-span-2">
                 <span className="mb-1 block font-medium text-[var(--muted-foreground)]">
                   Overline
                 </span>

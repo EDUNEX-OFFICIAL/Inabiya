@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FolderOpen, Pencil, Search, Trash2, X } from 'lucide-react';
+import { ExternalLink, FolderOpen, Pencil, Search, Trash2, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
@@ -14,7 +14,7 @@ type CollectionRow = {
   slug: string;
   title: string;
   description: string | null;
-  sortOrder: number;
+  createdAt?: string;
   status: 'DRAFT' | 'PUBLISHED';
   membershipMode: 'MANUAL' | 'SMART';
   productCount: number;
@@ -22,6 +22,9 @@ type CollectionRow = {
 
 type ModeFilter = '' | 'MANUAL' | 'SMART';
 type StatusFilter = '' | 'DRAFT' | 'PUBLISHED';
+
+const actionBtnClass =
+  'inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-medium text-[var(--foreground)] underline-offset-2 hover:bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]';
 
 export default function CollectionsDeskPage() {
   const router = useRouter();
@@ -74,9 +77,11 @@ export default function CollectionsDeskPage() {
     }
     if (mode) list = list.filter((c) => c.membershipMode === mode);
     if (status) list = list.filter((c) => c.status === status);
-    return [...list].sort(
-      (a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title),
-    );
+    return [...list].sort((a, b) => {
+      const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
+      const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
+      return ta - tb || a.title.localeCompare(b.title);
+    });
   }, [rows, q, mode, status]);
 
   async function onDelete(id: string) {
@@ -204,7 +209,7 @@ export default function CollectionsDeskPage() {
             <div className="clay-panel overflow-hidden">
               <table className="w-full min-w-[40rem] border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--border-subtle)] text-left text-[11px] uppercase tracking-wide opacity-55">
+                  <tr className="ops-th border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3.5%,transparent)] text-left">
                     <th className="px-3 py-2.5 font-medium">Title</th>
                     <th className="px-2 py-2.5 font-medium">Slug</th>
                     <th className="px-2 py-2.5 font-medium">Type</th>
@@ -234,22 +239,33 @@ export default function CollectionsDeskPage() {
                           {c.membershipMode === 'SMART' ? `~${c.productCount}` : c.productCount}
                         </td>
                         <td className="px-2 py-2.5">
-                          <div className="flex justify-end gap-3 text-sm">
+                          <div className="flex justify-end gap-1">
                             <Link
                               href={`/admin/commerce/collections/${c.id}`}
-                              className="inline-flex items-center gap-1 underline-offset-2 hover:underline"
+                              className={actionBtnClass}
+                              aria-label={`Edit ${c.title}`}
                             >
-                              <Pencil className="h-3.5 w-3.5 opacity-60" />
-                              Edit
+                              <Pencil className="h-4 w-4 opacity-70" aria-hidden />
+                              <span className="hidden sm:inline">Edit</span>
+                            </Link>
+                            <Link
+                              href={`/gift/collections/${c.slug}`}
+                              target="_blank"
+                              className={actionBtnClass}
+                              aria-label={`View ${c.title} storefront`}
+                            >
+                              <ExternalLink className="h-4 w-4 opacity-70" aria-hidden />
+                              <span className="hidden sm:inline">View</span>
                             </Link>
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 text-red-700 underline-offset-2 hover:underline disabled:opacity-40"
+                              className={`${actionBtnClass} text-red-700 disabled:opacity-40`}
                               disabled={c.membershipMode === 'MANUAL' && c.productCount > 0}
+                              aria-label={`Delete ${c.title}`}
                               onClick={() => setConfirmDeleteId(c.id)}
                             >
-                              <Trash2 className="h-3.5 w-3.5 opacity-60" />
-                              Delete
+                              <Trash2 className="h-4 w-4 opacity-70" aria-hidden />
+                              <span className="hidden sm:inline">Delete</span>
                             </button>
                           </div>
                         </td>
@@ -293,29 +309,54 @@ export default function CollectionsDeskPage() {
       {!loading && filtered.length > 0 ? (
         <ul className="space-y-2 md:hidden">
           {filtered.map((c) => (
-            <li key={c.id} className="clay-panel p-2.5">
-              <Link href={`/admin/commerce/collections/${c.id}`} className="font-medium">
-                {c.title}
-              </Link>
-              <p className="font-mono text-xs opacity-60">{c.slug}</p>
-              <p className="mt-1 text-xs opacity-70">
-                {c.membershipMode === 'SMART' ? 'Smart' : 'Hand-picked'} · {c.status} ·{' '}
-                {c.productCount}
-              </p>
-              <div className="mt-2 flex gap-3 text-sm">
-                <Link
-                  href={`/admin/commerce/collections/${c.id}`}
-                  className="underline-offset-2 hover:underline"
-                >
-                  Edit
-                </Link>
-                <Link
-                  href={`/gift/collections/${c.slug}`}
-                  className="underline-offset-2 hover:underline"
-                  target="_blank"
-                >
-                  View
-                </Link>
+            <li key={c.id} className="clay-panel p-3">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={`/admin/commerce/collections/${c.id}`}
+                    className="block text-sm font-semibold leading-snug underline-offset-2 hover:underline"
+                  >
+                    {c.title}
+                  </Link>
+                  <p className="mt-0.5 truncate font-mono text-[11px] text-[var(--muted-foreground)]">
+                    {c.slug}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] px-2 py-0.5 text-[10px] font-medium">
+                      {c.membershipMode === 'SMART' ? 'Smart' : 'Hand-picked'}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        c.status === 'PUBLISHED'
+                          ? 'bg-emerald-50 text-emerald-800'
+                          : 'bg-amber-50 text-amber-900'
+                      }`}
+                    >
+                      {c.status === 'PUBLISHED' ? 'Published' : 'Draft'}
+                    </span>
+                    <span className="text-[11px] tabular-nums text-[var(--muted-foreground)]">
+                      {c.membershipMode === 'SMART' ? `~${c.productCount}` : c.productCount}{' '}
+                      products
+                    </span>
+                  </div>
+                </div>
+                <div className="flex shrink-0 flex-col gap-1">
+                  <Link
+                    href={`/admin/commerce/collections/${c.id}`}
+                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_96%,white)]"
+                    aria-label={`Edit ${c.title}`}
+                  >
+                    <Pencil className="h-4 w-4 opacity-70" aria-hidden />
+                  </Link>
+                  <Link
+                    href={`/gift/collections/${c.slug}`}
+                    target="_blank"
+                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_96%,white)]"
+                    aria-label={`View ${c.title} storefront`}
+                  >
+                    <ExternalLink className="h-4 w-4 opacity-70" aria-hidden />
+                  </Link>
+                </div>
               </div>
             </li>
           ))}

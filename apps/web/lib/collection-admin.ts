@@ -29,7 +29,7 @@ export type CollectionDetail = {
   slug: string;
   title: string;
   description: string | null;
-  sortOrder: number;
+  createdAt?: string;
   status: 'DRAFT' | 'PUBLISHED';
   membershipMode: 'MANUAL' | 'SMART';
   smartRules?: SmartRules | null;
@@ -53,7 +53,6 @@ export type CollectionFormState = {
   title: string;
   slug: string;
   description: string;
-  sortOrder: string;
   status: 'DRAFT' | 'PUBLISHED';
   membershipMode: 'MANUAL' | 'SMART';
   smartRules: SmartRules;
@@ -80,7 +79,6 @@ export const EMPTY_COLLECTION_FORM: CollectionFormState = {
   title: '',
   slug: '',
   description: '',
-  sortOrder: '0',
   status: 'DRAFT',
   membershipMode: 'MANUAL',
   smartRules: EMPTY_SMART,
@@ -195,11 +193,6 @@ export function slugifyCollection(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-export function parseCollectionSortOrder(raw: string): number {
-  const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) ? n : 0;
-}
-
 export function toggleProductSlug(list: string[], slug: string): string[] {
   return list.includes(slug) ? list.filter((s) => s !== slug) : [...list, slug];
 }
@@ -212,7 +205,6 @@ export function detailToForm(
     title: c.title,
     slug: c.slug,
     description: c.description ?? '',
-    sortOrder: String(c.sortOrder),
     status: c.status,
     membershipMode: c.membershipMode,
     smartRules: c.smartRules?.conditions?.length ? c.smartRules : EMPTY_SMART,
@@ -236,7 +228,6 @@ export function formToCollectionBody(form: CollectionFormState) {
     title: form.title.trim(),
     slug: form.slug.trim(),
     description: form.description.trim() || undefined,
-    sortOrder: parseCollectionSortOrder(form.sortOrder),
     status: form.status,
     membershipMode: form.membershipMode,
     overline: form.overline.trim() || undefined,

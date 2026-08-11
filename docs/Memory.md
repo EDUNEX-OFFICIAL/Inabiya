@@ -13,8 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 8, 2026 (collection edit dedicated page)
-
+Last Updated: August 11, 2026 (Commerce Ops readability)
 
 ---
 
@@ -72,14 +71,14 @@ Path: `/srv/Inabiya/docs/` (canonical)
 
 | Field | Value |
 |---|---|
-| Phase | **Phase 13 / OPS-9 — Power-user polish** |
-| Status | **OPS-9 Shipped** — **Phase 13 complete** |
-| Milestone | Professional commerce ops deepen (OPS-0…9) |
+| Phase | **Phase 14 / OPS-10 — Procurement** |
+| Status | **In progress** — S0→S3 first slice (suppliers + simple PO full-receive) |
+| Milestone | Single-merchant procurement |
 | Owner | Eng |
-| Target window | 2026-07-29+ |
+| Target window | 2026-08-11+ |
 | Monorepo | `/srv/Inabiya` (GitHub: `EDUNEX-OFFICIAL/Inabiya`) |
-| Authority | [`docs/COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md) |
-| Prior | OPS-8 Settings & trust shipped |
+| Authority | [`docs/PROCUREMENT_OPS.md`](PROCUREMENT_OPS.md) |
+| Prior | Phase 13 OPS P1 closed |
 
 ### 3.2 Locked production stack
 
@@ -110,13 +109,14 @@ Path: `/srv/Inabiya/docs/` (canonical)
 | Design.md | Expanded **triple**-system authority | **2.1.0** |
 | Memory.md | Expanded living memory | **2.0.0** |
 | COMMERCE_OPS_PANEL.md | Phase 13 OPS journey; OPS-0…9 **complete** | **2.0.0** |
+| PROCUREMENT_OPS.md | Phase 14 OPS-10 suppliers/POs | **1.0.0** |
 
 ### 3.5 Product implementation status
 
 | Product | Status | Notes |
 |---|---|---|
 | A Gift Commerce | Phase 5 leftovers closed | Analytics, account, abandonment |
-| B Commerce Admin | Phase 13 OPS-0…9 **complete** | Soft Gift ops desk live |
+| B Commerce Admin | Phase 13 OPS-0…9 + **P1 closed** (2026-08-11) | Soft Gift ops desk + P1 leftovers |
 | C Editorial | Phase 7 closed | Public publish + TipTap + writer payments |
 | D Creator Collective | Phase 8 closed | Reverse-bid path + brand analytics |
 | Shared Platform | Phase 1 + 9 closed | Mail/S3 stubs; real providers deferred |
@@ -141,10 +141,10 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **Deploy:** `bash scripts/deploy-vps.sh web api` + migrate `20260808150000_collection_smart_membership` (+ seed Smart)
-2. **QA:** Admin Hand-picked vs Smart condition builder + PLP `/gift/collections/for-baby-girl`
-3. **QA:** Product edit only shows Hand-picked; coupon COLLECTION = Hand-picked only
-4. Cloudflare SSL / public DNS — **post-dev**
+1. **QA:** hard-refresh `/admin/commerce` — neutral canvas vs white panels
+2. **QA:** `/admin/commerce/suppliers` + New PO → Receive all → inventory
+3. **Commit/push** when ready
+4. Resume OPS-10 after readability QA
 5. —
 
 
@@ -168,7 +168,7 @@ Phase 10 Soft Gift nav — **Closed**. Phase 11 page builder — **CLOSED** (11A
 | Q3 | Hosting (AWS/GCP/other)? | Open | DevOps | Soft — VPS deploy in use |
 | Q4 | Rewrite Architecture.md to remove LMS contamination? | **Resolved — v2.0.0** | Architecture | Done 2026-07-20 |
 | Q5 | Single deployable vs separate web/api deploys day one? | **Resolved — compose: web+api+worker** | Eng Lead | Done 2026-07-20 |
-| Q6 | Commerce admin visual = Soft Gift dense confirmed? | Open | Design | Soft |
+| Q6 | Commerce admin visual = Soft Gift dense confirmed? | **Resolved — gift+compact semantic remap (neutral canvas, pink accents)** | Design | Done 2026-08-11 |
 | Q7 | Launch package = Commerce only, or Commerce+Editorial? | **Resolved — VPS-local = Commerce+Editorial+Creator MVP; public DNS deferred** | Product/Eng | Done 2026-07-20 |
 | Q8 | Third-party auth (Google etc.) day one? | **Resolved — No; email/password only for easy testing** | Eng | Done 2026-07-20 |
 | Q9 | Return window (days after delivery)? | **Resolved — default 14, admin-customisable via `policy.return_window_days`** | Product | Done 2026-07-20 |
@@ -178,6 +178,26 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-11 — Commerce Ops readability (human override)
+
+- **Override:** Phase 14 Procurement in progress; human: fix Commerce Control readability properly.
+- Approach: `[data-theme=gift][data-density=compact]` semantic remap (warm paper canvas, charcoal borders, darker muted) — **no `data-theme=admin`**.
+- Canvas: warm paper (blush+yellow ivory), not cool gray void; cards stay white.
+- Recipes: `.ops-muted` / `.ops-th`; flat `.clay-panel` under compact; shell + dashboard hierarchy; thead sweep on commerce desks.
+- Storefront blush unchanged (gift without compact).
+- Design.md density + Commerce admin dense notes updated.
+
+### 2026-08-11 — OPS-10 Procurement (human override)
+
+- **Override:** Phase 13 P1 closed; human: proceed with supplier/PO/receiving (not marketplace).
+- Authority: `docs/PROCUREMENT_OPS.md` v1.0.0; Phases §27 pointer.
+- Schema: `Supplier`, `PurchaseOrder`, `PurchaseOrderLine`, `ProductVariant.preferredSupplierId`; migration `20260811180000_ops10_procurement`.
+- API: `/admin/commerce/suppliers`, `/purchase-orders` (+ order/receive/cancel); Zod + COMMERCE_ADMIN; receive → inventory `RECEIVE`.
+- Web: Suppliers desk, PO list/new/detail; nav items; Soft Gift compact.
+- Seed: 3 Delhi-area suppliers + ORDERED `PO-SEED-OKHLA-001` (BATH-001, BLNK-001).
+- Check: `purchase-order-lifecycle.check.ts`; nav check updated.
+- Ceiling: no partial receive, no supplier portal, no multi-warehouse.
 
 ### 2026-08-08 — Coupon PRODUCT / CATEGORY scope (Phase 13 override)
 
@@ -1067,6 +1087,45 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-11 (Commerce Ops readability)
+
+- **Override:** Phase 14 active; human asked comprehensive plan + fix for Soft Gift ops desk washout.
+- Shipped: gift+compact token remap; clay-panel/card/chip densify; `.ops-muted`/`.ops-th`; shell chrome; dashboard (blob removed, alert/KPI contrast); thead sweep on commerce list pages; Design + Memory.
+- Storefront `/gift` untouched.
+- **Live:** `bash scripts/deploy-vps.sh web` @ `c6bb10d` — smoke health/ready 200; web recreated.
+- Follow-up: warm paper canvas (blush+yellow ivory) replaces cool gray void; redeployed web.
+- Next: hard-refresh QA on Dashboard; resume OPS-10; commit/push when human asks.
+
+### Session — 2026-08-11 (OPS-10 Procurement S0–S3)
+
+- **Override logged:** Phase 14 / OPS-10 procurement started after Phase 13 P1.
+- Shipped suppliers + simple PO full-receive path (API + Soft Gift desks + Delhi seed).
+- Next: migrate + seed + deploy; QA Receive all → inventory.
+- Deployed `web api` @ `c6bb10d` (working tree); migrate already applied; health/ready 200. Seeded Delhi suppliers locally.
+
+### Session — 2026-08-11 (Commerce OPS P1 track complete)
+
+- **Override:** Phase 13 P0 complete; human: comprehensive P1 plan + execute OPS-order one-by-one.
+- **Docs-only already shipped:** OPS-2 media picker on edit; OPS-8 alert prefs + flags link; OPS-9 mobile triage + orders keyset.
+- **OPS-3:** inventory reservations drawer — `GET …/inventory/:variantId/reservations` (PENDING_PAYMENT); migration `20260811100000_ops3_order_item_variant_index`.
+- **OPS-5:** `CustomerCommunicationLog` + POST log-only; customer 360 Communications; migration `20260811110000_ops5_customer_communication_log`.
+- **OPS-6:** scope+schedule overlap chips (`conflictsWith`) on promotions desk; check `coupon-overlap.check.ts`.
+- **OPS-9:** Product CSV import (`POST /admin/catalog/products/import`, Import Stock|Products tabs); customers keyset + Prev/Next; migration `20260811120000_ops9_users_keyset_index`.
+- Checks: inventory-reservations, customer-communication, coupon-overlap, parse-product-csv, admin-customers-cursor; api+web tsc green.
+- Deployed `bash scripts/deploy-vps.sh web api` @ image tag `c6bb10d` (working tree); migrate no pending; health/ready 200.
+- Next: live QA matrix; commit/push when human asks.
+
+### Session — 2026-08-08 (Collections mobile card uses full width)
+- Mobile list cards: title/slug/chips left, Edit/View icon stack right (no empty right gutter).
+- Deployed `web` only.
+- Next: commit/push pending admin UX batch if human asks.
+
+### Session — 2026-08-08 (Collection sort auto + list action icons)
+
+- Removed Sort order from collection edit UI; list/chrome order by `createdAt` asc.
+- Collections list Edit/View/Delete: icon+label, larger tap targets (mobile-friendly).
+- Next: deploy web+api.
 
 ### Session — 2026-08-08 (Push Smart collections + edit page + PLP schema)
 

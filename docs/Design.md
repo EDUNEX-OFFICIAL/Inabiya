@@ -15,7 +15,7 @@ QA
 Marketing
 AI Coding Assistants
 
-Last Updated: July 28, 2026 (φ Soft Gift scale — Aug 7 2026)
+Last Updated: August 11, 2026 (gift+compact ops readability remap)
 
 ---
 
@@ -88,7 +88,7 @@ Forbidden as primary: MUI, Ant, Chakra, Inter/Roboto brand stacks, emoji-icons.
 | 1 Brand primitives | `[data-theme]` | Raw hex/HSL only (e.g. `--inabiya-pink`, `--blog-ink`, creator HSL) |
 | 2 Semantics | `[data-theme]` | Same names: `--background`, `--primary`, `--primary-hover`, `--surface`, `--border-focus`, status, inputs, shadows |
 | 3 Recipes | `@layer components` | Buttons/inputs/cards/type with hover/active/focus/disabled/invalid |
-| Density | `data-density="compact"` | Tighter padding/type for CMS/admin — no new colors |
+| Density | `data-density="compact"` | Tighter padding/type for CMS/admin. Soft Gift ops may remap **semantic** surfaces / borders / muted (same family primitives) for WCAG desk readability — primary accent unchanged; **no fourth theme** |
 
 ---
 
@@ -307,10 +307,10 @@ Guidelines:
 
 #### Commerce admin (A-family dense)
 
-- Same tokens/fonts
-- Flatter tables
-- Less playful motion
-- Still no generic blue SaaS defaults
+- Same family tokens/fonts; under `data-density="compact"` remap canvas/borders/muted for desk contrast (not storefront blush)
+- White panels on neutral canvas; pink = accents/CTAs/active nav only
+- Flatter tables (`.ops-th`); less playful motion; no decorative blobs on KPIs
+- Still no generic blue SaaS defaults; **no `data-theme="admin"`**
 
 ### 4.10 Page inventory (System A)
 

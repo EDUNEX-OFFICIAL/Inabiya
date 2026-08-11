@@ -300,7 +300,7 @@ className={opsChipClass(active)}
             </div>
             <button
               type="button"
-              className={`clay-btn-ghost min-h-10 px-3 text-xs ${autoRefresh ? 'text-[var(--primary)]' : 'opacity-60'}`}
+              className={`clay-btn-ghost min-h-10 px-3 text-xs ${autoRefresh ? 'text-[var(--primary)]' : 'ops-muted'}`}
               aria-pressed={autoRefresh}
               onClick={() => setAutoRefresh((v) => !v)}
             >
@@ -348,7 +348,7 @@ className={opsChipClass(active)}
                 ) : null}
                 <Link
                   href="/admin/commerce/settings"
-                  className="text-xs opacity-55 underline-offset-2 hover:underline hover:opacity-100"
+                  className="ops-muted text-xs font-medium underline-offset-2 hover:text-[var(--foreground)] hover:underline"
                 >
                   Alert prefs
                 </Link>
@@ -378,7 +378,7 @@ className={opsChipClass(active)}
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-display text-lg">Business pulse</h2>
               {range !== 1 ? (
-                <p className="text-xs opacity-55">
+                <p className="ops-muted text-xs">
                   Today · {dash.kpis.ordersToday} orders · {formatInr(dash.kpis.todayRevenuePaise)}
                 </p>
               ) : null}
@@ -387,15 +387,11 @@ className={opsChipClass(active)}
             <div className="grid gap-2 sm:gap-3 lg:grid-cols-12">
               <Link
                 href="/admin/commerce/reports"
-                className="clay-panel group relative block overflow-hidden p-4 transition-opacity hover:opacity-95 lg:col-span-5"
+                className="clay-panel group relative block overflow-hidden p-4 transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_2%,var(--surface))] lg:col-span-5"
               >
-                <span
-                  className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]"
-                  aria-hidden
-                />
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide opacity-55">
+                    <p className="ops-muted text-[11px] font-semibold uppercase tracking-wide">
                       {range === 1 ? 'Revenue today' : `Revenue · ${range}d`}
                     </p>
                     <p className="mt-2 break-words font-display text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -457,7 +453,7 @@ className={opsChipClass(active)}
               <OpsTableScroll>
                 <table className="w-full min-w-[28rem] border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] text-left text-[11px] uppercase tracking-wide opacity-55">
+                    <tr className="ops-th border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3.5%,transparent)] text-left">
                       <th className="px-3 py-2.5 pr-3 sm:px-4">SKU</th>
                       <th className="py-2.5 pr-3">Product</th>
                       <th className="py-2.5 pr-3 sm:pr-4">Avail</th>
@@ -525,7 +521,7 @@ className={opsChipClass(active)}
               </Link>
             </div>
             {dash.recentAudit.length === 0 ? (
-              <p className="px-3 py-4 text-sm opacity-55 sm:px-4">No privileged actions yet.</p>
+              <p className="ops-muted px-3 py-4 text-sm sm:px-4">No privileged actions yet.</p>
             ) : (
               <ul className="divide-y divide-[var(--border-subtle)]">
                 {dash.recentAudit.map((row) => (
@@ -535,13 +531,13 @@ className={opsChipClass(active)}
                   >
                     <div className="min-w-0">
                       <p className="font-mono text-xs">{row.action}</p>
-                      <p className="mt-0.5 text-[11px] opacity-55">
+                      <p className="ops-muted mt-0.5 text-[11px]">
                         {row.actorEmail ?? 'system'}
                         {row.resource ? ` · ${row.resource}` : ''}
                       </p>
                     </div>
                     <time
-                      className="shrink-0 text-[11px] opacity-50"
+                      className="ops-muted shrink-0 text-[11px]"
                       dateTime={row.createdAt}
                     >
                       {relativeAge(row.createdAt)}
@@ -605,7 +601,7 @@ function DeltaBadge({ current, previous }: { current: number; previous: number }
       ? 'text-[var(--success)]'
       : tone === 'down'
         ? 'text-[var(--danger)]'
-        : 'opacity-55';
+        : 'ops-muted';
   return (
     <p className={`mt-2 text-xs font-semibold tabular-nums ${toneClass}`}>
       {label} vs prior
@@ -637,14 +633,14 @@ function Kpi({
       ? 'text-[var(--success)]'
       : tone === 'down'
         ? 'text-[var(--danger)]'
-        : 'opacity-55';
+        : 'ops-muted';
   const inner = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wide opacity-55 sm:text-[11px]">
+        <p className="ops-muted text-[10px] font-semibold uppercase tracking-wide sm:text-[11px]">
           {label}
         </p>
-        {Icon ? <Icon className="h-3.5 w-3.5 shrink-0 opacity-40" aria-hidden /> : null}
+        {Icon ? <Icon className="ops-muted h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
       </div>
       <p
         className={`mt-2 break-words text-lg font-semibold tabular-nums sm:text-xl ${
@@ -665,7 +661,7 @@ function Kpi({
     return (
       <Link
         href={href}
-        className="clay-panel block p-3 transition-opacity hover:opacity-90 sm:p-3.5"
+        className="clay-panel block p-3 transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_2%,var(--surface))] sm:p-3.5"
       >
         {inner}
       </Link>
@@ -687,27 +683,27 @@ function AlertRow({ item, slaHours }: { item: AttentionItem; slaHours: number })
       ? 'text-[var(--danger)]'
       : item.tone === 'warn'
         ? 'text-[var(--warning)]'
-        : 'opacity-40';
+        : 'ops-muted';
 
   return (
     <Link
       href={item.href}
       className="flex min-h-12 items-center gap-3 px-3 py-3 transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)] sm:px-4"
     >
-      <span className={`h-8 w-1 shrink-0 rounded-full ${toneBar}`} aria-hidden />
+      <span className={`h-8 w-1.5 shrink-0 rounded-full ${toneBar}`} aria-hidden />
       <span
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
           item.tone === 'danger'
             ? 'bg-[var(--danger-bg)] text-[var(--danger)]'
             : item.tone === 'warn'
               ? 'bg-[var(--warning-bg)] text-[var(--warning)]'
-              : 'bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] opacity-60'
+              : 'bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] text-[var(--muted-foreground)]'
         }`}
       >
-        <Icon className="h-4 w-4" aria-hidden />
+        <Icon className="h-4 w-4" strokeWidth={1.75} aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-medium">{item.title}</span>
+        <span className="block text-sm font-semibold leading-snug">{item.title}</span>
         {item.aging && item.aging > 0 ? (
           <span className="mt-0.5 block text-[11px] font-medium text-[var(--warning)]">
             {item.aging} over {slaHours}h

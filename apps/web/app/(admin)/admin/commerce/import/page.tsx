@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import {
+  Suspense,
   useDeferredValue,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -10,7 +12,7 @@ import {
   useTransition,
   type ChangeEvent,
 } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   CheckCircle2,
   CircleAlert,
@@ -18,59 +20,94 @@ import {
   Loader2,
   Package,
   RotateCcw,
+  ShoppingBag,
   Upload,
 } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { parseInventoryCsv } from '@/lib/parse-inventory-csv';
+import { parseProductCsv } from '@/lib/parse-product-csv';
+import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
+
+type ImportKind = 'stock' | 'products';
+
+type ImportResultRow = {
+  row: number;
+  sku: string;
+  slug?: string;
+  ok: boolean;
+  error?: string;
+  availableAfter?: number;
+  productId?: string;
+};
 
 type ImportResult = {
   dryRun: boolean;
   total: number;
   okCount: number;
   errorCount: number;
-  results: Array<{
-    row: number;
-    sku: string;
-    ok: boolean;
-    error?: string;
-    availableAfter?: number;
-  }>;
+  results: ImportResultRow[];
 };
 
-const SAMPLE = `sku,delta,reason,note
+const STOCK_SAMPLE = `sku,delta,reason,note
 DEMO-SKU,10,RECEIVE,restock demo
 `;
 
-const REASON_CHIPS = ['RECEIVE', 'DAMAGE', 'RECOUNT', 'CORRECTION'] as const;
+const PRODUCT_SAMPLE = `slug,title,sku,pricePaise,onHand,description,compareAtPaise,status,imageUrl,label
+sample-rose-set,Sample Rose Set,SAMPLE-ROSE-1,49900,5,Soft gift demo,59900,DRAFT,,Default
+`;
 
+const REASON_CHIPS = ['RECEIVE', 'DAMAGE', 'RECOUNT', 'CORRECTION'] as const;
 const RESULT_PAGE = 80;
 
-export default function InventoryImportPage() {
+function parseKind(raw: string | null): ImportKind {
+  return raw === 'products' ? 'products' : 'stock';
+}
+
+function ImportDeskInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const kind = parseKind(searchParams.get('kind'));
   const editorId = useId();
   const fileInputId = useId();
   const abortRef = useRef<AbortController | null>(null);
 
-  const [text, setText] = useState(SAMPLE);
+  const [text, setText] = useState(kind === 'products' ? PRODUCT_SAMPLE : STOCK_SAMPLE);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [resultLimit, setResultLimit] = useState(RESULT_PAGE);
   const [, startTransition] = useTransition();
 
+  useEffect(() => {
+    setText(kind === 'products' ? PRODUCT_SAMPLE : STOCK_SAMPLE);
+    setResult(null);
+    setError(null);
+    setResultLimit(RESULT_PAGE);
+  }, [kind]);
+
   const deferredText = useDeferredValue(text);
-  const parsePreview = useMemo(() => parseInventoryCsv(deferredText), [deferredText]);
+  const parsePreview = useMemo(
+    () => (kind === 'products' ? parseProductCsv(deferredText) : parseInventoryCsv(deferredText)),
+    [deferredText, kind],
+  );
   const parsingLag = text !== deferredText;
 
   const commitBlocked = Boolean(result?.dryRun && result.errorCount > 0);
-  // Gate on text, not deferred parse — paste/type must not wait for deferred UI lag.
   const canSubmit = !busy && text.trim().length > 0;
+
+  function setKind(next: ImportKind) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === 'stock') params.delete('kind');
+    else params.set('kind', next);
+    const qs = params.toString();
+    router.replace(qs ? `/admin/commerce/import?${qs}` : '/admin/commerce/import');
+  }
 
   async function run(dryRun: boolean) {
     if (!getStoredAccessToken()) {
-      router.replace(loginUrl('/admin/commerce/import'));
+      router.replace(loginUrl(`/admin/commerce/import${kind === 'products' ? '?kind=products' : ''}`));
       return;
     }
 
@@ -81,6 +118,32 @@ export default function InventoryImportPage() {
     setBusy(true);
     setError(null);
     setResultLimit(RESULT_PAGE);
+
+    if (kind === 'products') {
+      const parsed = parseProductCsv(text);
+      if (!parsed.rows.length) {
+        setError('No valid rows to import');
+        setResult(null);
+        setBusy(false);
+        return;
+      }
+      try {
+        const res = await apiAuth<ImportResult>('/admin/catalog/products/import', {
+          method: 'POST',
+          json: { dryRun, rows: parsed.rows },
+          signal: ac.signal,
+        });
+        if (ac.signal.aborted) return;
+        startTransition(() => setResult(res));
+      } catch (e) {
+        if (ac.signal.aborted || (e instanceof DOMException && e.name === 'AbortError')) return;
+        setError(e instanceof Error ? e.message : 'Import failed');
+        setResult(null);
+      } finally {
+        if (!ac.signal.aborted) setBusy(false);
+      }
+      return;
+    }
 
     const parsed = parseInventoryCsv(text);
     if (!parsed.rows.length) {
@@ -128,7 +191,7 @@ export default function InventoryImportPage() {
   }
 
   function resetSample() {
-    setText(SAMPLE);
+    setText(kind === 'products' ? PRODUCT_SAMPLE : STOCK_SAMPLE);
     setResult(null);
     setError(null);
     setResultLimit(RESULT_PAGE);
@@ -143,17 +206,26 @@ export default function InventoryImportPage() {
 
   const visibleResults = orderedResults.slice(0, resultLimit);
   const hiddenCount = Math.max(0, orderedResults.length - resultLimit);
+  const doneHref = kind === 'products' ? '/admin/commerce/products' : '/admin/commerce/inventory';
+  const doneLabel = kind === 'products' ? 'View products' : 'View inventory';
 
   return (
     <div className="mx-auto w-full max-w-3xl pb-[max(6.5rem,calc(env(safe-area-inset-bottom)+5.5rem))] sm:pb-6">
       <OpsPageHeader
-        title="Stock CSV import"
+        title={kind === 'products' ? 'Product CSV import' : 'Stock CSV import'}
         actions={
           <>
             <div className="hidden items-center gap-2 sm:flex">
-              <Link href="/admin/commerce/inventory" className="clay-btn-ghost min-h-10 text-sm">
-                <Package className="h-3.5 w-3.5 opacity-70" aria-hidden />
-                Inventory
+              <Link
+                href={kind === 'products' ? '/admin/commerce/products' : '/admin/commerce/inventory'}
+                className="clay-btn-ghost min-h-10 text-sm"
+              >
+                {kind === 'products' ? (
+                  <ShoppingBag className="h-3.5 w-3.5 opacity-70" aria-hidden />
+                ) : (
+                  <Package className="h-3.5 w-3.5 opacity-70" aria-hidden />
+                )}
+                {kind === 'products' ? 'Products' : 'Inventory'}
               </Link>
             </div>
             <label
@@ -173,14 +245,30 @@ export default function InventoryImportPage() {
           </>
         }
       />
-      <div className="mb-3 sm:hidden">
-        <Link
-          href="/admin/commerce/inventory"
-          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+
+      <div
+        className="mb-3 flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+        aria-label="Import type"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={kind === 'stock'}
+          className={opsChipClass(kind === 'stock')}
+          onClick={() => setKind('stock')}
         >
-          <Package className="h-3 w-3 opacity-70" aria-hidden />
-          Inventory
-        </Link>
+          Stock
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={kind === 'products'}
+          className={opsChipClass(kind === 'products')}
+          onClick={() => setKind('products')}
+        >
+          Products
+        </button>
       </div>
 
       <section className="clay-panel space-y-3 p-3 sm:p-4">
@@ -206,21 +294,39 @@ export default function InventoryImportPage() {
           </div>
         </div>
 
-        <div
-          className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          role="list"
-          aria-label="Allowed reasons"
-        >
-          {REASON_CHIPS.map((r) => (
-            <span
-              key={r}
-              role="listitem"
-              className="clay-chip shrink-0 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide sm:text-xs"
-            >
-              {r}
-            </span>
-          ))}
-        </div>
+        {kind === 'stock' ? (
+          <div
+            className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            role="list"
+            aria-label="Allowed reasons"
+          >
+            {REASON_CHIPS.map((r) => (
+              <span
+                key={r}
+                role="listitem"
+                className="clay-chip shrink-0 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide sm:text-xs"
+              >
+                {r}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div
+            className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            role="list"
+            aria-label="Status values"
+          >
+            {(['DRAFT', 'PUBLISHED'] as const).map((s) => (
+              <span
+                key={s}
+                role="listitem"
+                className="clay-chip shrink-0 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide sm:text-xs"
+              >
+                {s}
+              </span>
+            ))}
+          </div>
+        )}
 
         <textarea
           id={editorId}
@@ -235,12 +341,12 @@ export default function InventoryImportPage() {
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
-          placeholder="sku,delta,reason,note"
-          aria-describedby={`${editorId}-hint`}
+          placeholder={
+            kind === 'products'
+              ? 'slug,title,sku,pricePaise,onHand,...'
+              : 'sku,delta,reason,note'
+          }
         />
-        <p id={`${editorId}-hint`} className="sr-only">
-          Columns sku, delta, reason, optional note. Reasons RECEIVE, DAMAGE, RECOUNT, CORRECTION.
-        </p>
 
         {parsePreview.parseErrors.length > 0 ? (
           <ul className="max-h-28 space-y-1 overflow-y-auto text-xs text-amber-900 sm:text-sm">
@@ -258,7 +364,6 @@ export default function InventoryImportPage() {
           </ul>
         ) : null}
 
-        {/* Desktop actions */}
         <div className="hidden flex-wrap gap-2 sm:flex">
           <button
             type="button"
@@ -304,22 +409,24 @@ export default function InventoryImportPage() {
             </p>
             {!result.dryRun && result.errorCount === 0 ? (
               <Link
-                href="/admin/commerce/inventory"
+                href={doneHref}
                 className="text-xs font-medium underline-offset-2 hover:underline sm:text-sm"
               >
-                View inventory
+                {doneLabel}
               </Link>
             ) : null}
           </div>
 
-          {/* Mobile result cards */}
           <ul className="divide-y divide-[var(--border)] sm:hidden">
             {visibleResults.map((r) => (
-              <li key={`${r.row}-${r.sku}`} className="px-3 py-2.5 text-sm">
+              <li key={`${r.row}-${r.sku}-${r.slug ?? ''}`} className="px-3 py-2.5 text-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-mono text-xs font-medium">{r.sku}</p>
-                    <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">Row {r.row}</p>
+                    <p className="font-mono text-xs font-medium">{r.slug ?? r.sku}</p>
+                    <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                      Row {r.row}
+                      {r.slug ? ` · ${r.sku}` : ''}
+                    </p>
                   </div>
                   <span
                     className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase ${
@@ -333,29 +440,35 @@ export default function InventoryImportPage() {
                 </div>
                 <p className="mt-1 break-words text-xs text-[var(--muted-foreground)]">
                   {r.error ??
-                    (r.availableAfter != null ? `available → ${r.availableAfter}` : '—')}
+                    (r.availableAfter != null
+                      ? `available → ${r.availableAfter}`
+                      : r.productId
+                        ? 'created'
+                        : '—')}
                 </p>
               </li>
             ))}
           </ul>
 
-          {/* Desktop table */}
           <div className="hidden sm:block">
             <OpsTableScroll>
               <table className="w-full min-w-[28rem] border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-[var(--border)] text-left text-[var(--muted-foreground)]">
                     <th className="px-4 py-2 font-medium">Row</th>
-                    <th className="py-2 pr-2 font-medium">SKU</th>
+                    <th className="py-2 pr-2 font-medium">{kind === 'products' ? 'Slug' : 'SKU'}</th>
                     <th className="py-2 pr-2 font-medium">Status</th>
                     <th className="py-2 pr-4 font-medium">Detail</th>
                   </tr>
                 </thead>
                 <tbody>
                   {visibleResults.map((r) => (
-                    <tr key={`${r.row}-${r.sku}`} className="border-b border-[var(--border)] last:border-0">
+                    <tr
+                      key={`${r.row}-${r.sku}-${r.slug ?? ''}`}
+                      className="border-b border-[var(--border)] last:border-0"
+                    >
                       <td className="px-4 py-2 tabular-nums">{r.row}</td>
-                      <td className="py-2 pr-2 font-mono">{r.sku}</td>
+                      <td className="py-2 pr-2 font-mono">{r.slug ?? r.sku}</td>
                       <td className="py-2 pr-2">
                         <span
                           className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium uppercase ${
@@ -369,7 +482,11 @@ export default function InventoryImportPage() {
                       </td>
                       <td className="max-w-[18rem] truncate py-2 pr-4 text-[var(--muted-foreground)]">
                         {r.error ??
-                          (r.availableAfter != null ? `available → ${r.availableAfter}` : '—')}
+                          (r.availableAfter != null
+                            ? `available → ${r.availableAfter}`
+                            : r.productId
+                              ? 'created'
+                              : '—')}
                       </td>
                     </tr>
                   ))}
@@ -392,7 +509,6 @@ export default function InventoryImportPage() {
         </section>
       ) : null}
 
-      {/* Mobile sticky actions */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_92%,white)] px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:hidden">
         <div className="mx-auto flex max-w-3xl gap-2">
           <button
@@ -415,5 +531,20 @@ export default function InventoryImportPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ImportPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="clay-panel space-y-3 p-4" aria-busy="true" aria-label="Loading import">
+          <div className="h-7 w-48 animate-pulse rounded bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" />
+          <div className="h-40 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]" />
+        </div>
+      }
+    >
+      <ImportDeskInner />
+    </Suspense>
   );
 }

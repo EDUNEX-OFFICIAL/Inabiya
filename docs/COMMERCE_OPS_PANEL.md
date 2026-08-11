@@ -219,7 +219,7 @@ Seed low stock + unpaid/failed → dashboard shows cards → click → correct q
 
 - [x] Publish / unpublish with audit
 - [x] Bulk status publish/unpublish (category/tag bulk = P1 later)
-- [x] Media binding via existing media library patterns on **new product** (upload/library/preview/alt + SEO); edit page JSON gallery remains (picker P1)
+- [x] Media binding via existing media library patterns on **new product** (upload/library/preview/alt + SEO); edit page uses `ProductGalleryEditor` + library picker (P1 closed)
 - [x] Variant/SKU inventory hooks visible from product
 - [x] Admin list **keyset cursor pagination** (see §13)
 
@@ -251,7 +251,7 @@ Bulk unpublish → storefront hides; feature product → home/CMS reflects.
 
 - [x] States: available / reserved (damaged via DAMAGE reason decrement — no separate damaged bucket yet)
 - [x] Adjustments write ledger / audit rows
-- [ ] Reservation visibility from open orders P1
+- [x] Reservation visibility from open orders P1
 - [ ] Multi-warehouse / bins = **out of scope** (OPS-9 P2)
 
 #### Exit criteria
@@ -309,7 +309,7 @@ Paid order → processing → ship with note → delivered; failed pay order cle
 - [x] Customers table: search, status, order count, LTV (paise)
 - [x] Customer 360: profile, addresses, orders, notes, segments stub
 - [x] Support desk: order lookup by id/email/phone; recent tickets/inquiries link
-- [ ] Communication log stub (internal only) P1
+- [x] Communication log stub (internal only) P1
 
 #### Functionality
 
@@ -338,7 +338,7 @@ Lookup by email → open order → add note → visible on order timeline + cust
 
 - [x] Promotions list: type, schedule, status, usage
 - [x] Builder: conditions → benefit → schedule → preview
-- [ ] Conflict / priority display when multiple qualify P1
+- [x] Conflict / priority display when multiple qualify P1
 - [x] Coupon codes UX polish (generate, deactivate)
 
 #### Functionality
@@ -402,7 +402,7 @@ Place 2 paid orders → sales report + CSV match KPI strip.
 
 - [x] Policy keys in `commerce_settings` (return window + low stock + shipping copy)
 - [x] Audit API pagination + AuthZ
-- [ ] Feature flag surface read P1 (link to existing `/admin/platform/flags`)
+- [x] Feature flag surface read P1 (link to existing `/admin/platform/flags`)
 
 #### Exit criteria
 
@@ -425,12 +425,12 @@ Set return window 7 → ineligible order blocked; audit shows `policy.updated`.
 - [x] Keyboard shortcuts (g+o orders, / search, ? help, ⌘K)
 - [x] Bulk actions on major lists (orders PROCESSING + products publish)
 - [x] Import wizard UX (stock CSV) with dry-run errors
-- [ ] Mobile triage layout (read + status change) P1
+- [x] Mobile triage layout (read + status change) P1
 
 #### Functionality
 
-- [x] CSV import/export polish with Zod row validation (stock import)
-- [x] Performance pass on large order/product lists (indexes, cursor pagination) — **products desk keyset shipped**; orders list still seed-scale / P1 if needed
+- [x] CSV import/export polish with Zod row validation (stock import + product create import)
+- [x] Performance pass on large order/product/customer lists (indexes, cursor pagination) — products/orders/customers keyset shipped
 - [x] P2 backlog only: warehouse/bin, forecasting, full SLA engine, advanced segmentation (documented ceiling)
 
 #### Exit criteria

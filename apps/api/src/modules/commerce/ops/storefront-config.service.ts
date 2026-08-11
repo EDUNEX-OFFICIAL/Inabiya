@@ -140,7 +140,7 @@ export class StorefrontConfigService {
         : {};
     const collections = await this.prisma.collection.findMany({
       where: { status: 'PUBLISHED' },
-      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+      orderBy: [{ createdAt: 'asc' }, { title: 'asc' }],
       select: { slug: true, title: true },
     });
     const authoredShop = stored.shopLinks?.length

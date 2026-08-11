@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InventoryMovementReason, type Prisma } from '@prisma/client';
+import { InventoryMovementReason, OrderStatus, type Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { CommercePolicyService } from '../ops/commerce-policy.service';
+import { HOLD_ORDER_STATUSES, sumHoldQuantity } from './inventory-reservations';
 
 type Tx = Prisma.TransactionClient;
 
@@ -190,6 +191,65 @@ export class InventoryService {
       actorEmail: m.actor?.email ?? null,
       createdAt: m.createdAt,
     }));
+  }
+
+  /**
+   * OPS-3 P1 — which PENDING_PAYMENT orders currently hold this SKU.
+   * Counter `InventoryItem.reserved` is still source of truth for available math;
+   * this list explains the holds for ops triage.
+   */
+  async listReservations(variantId: string) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id: variantId },
+      include: { inventory: true },
+    });
+    if (!variant) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Variant not found.' });
+    }
+
+    const holdStatuses = HOLD_ORDER_STATUSES as unknown as OrderStatus[];
+    const lines = await this.prisma.orderItem.findMany({
+      where: {
+        variantId,
+        order: { status: { in: holdStatuses } },
+      },
+      orderBy: { order: { createdAt: 'desc' } },
+      take: 100,
+      select: {
+        id: true,
+        quantity: true,
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            createdAt: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
+    });
+
+    const holds = lines.map((line) => ({
+      orderItemId: line.id,
+      orderId: line.order.id,
+      orderNumber: line.order.orderNumber,
+      status: line.order.status,
+      quantity: line.quantity,
+      customerEmail: line.order.user.email,
+      createdAt: line.order.createdAt,
+    }));
+
+    const reserved = variant.inventory?.reserved ?? 0;
+    const heldQty = sumHoldQuantity(holds);
+
+    return {
+      variantId,
+      sku: variant.sku,
+      reserved,
+      heldQty,
+      holds,
+    };
   }
 
   /**

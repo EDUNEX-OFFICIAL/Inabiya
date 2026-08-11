@@ -127,16 +127,13 @@ Post-dev stubs unchanged: Razorpay, real S3/MinIO, real SMTP, public Caddy/DNS, 
 
 | Item | OPS | Severity |
 |---|---|---|
-| Media library picker on product edit (JSON gallery remains) | OPS-2 | P1 |
-| Reservation visibility from open orders | OPS-3 | P1 |
+| Reservation visibility from open orders | OPS-3 | **Closed 2026-08-11** (`GET …/reservations`, PENDING_PAYMENT) |
+| Communication log stub | OPS-5 | **Closed 2026-08-11** (`CustomerCommunicationLog`, log-only) |
+| Promo conflict/priority UI | OPS-6 | **Closed 2026-08-11** (scope+schedule overlap chips; no priority schema) |
+| Product CSV import (stock CSV only) | OPS-9 | **Closed 2026-08-11** (`POST /admin/catalog/products/import`, Import tab) |
+| Customers cursor pagination | OPS-9 | **Closed 2026-08-11** (keyset + `users(created_at,id)`) |
 | Partial shipment | OPS-4 | later |
-| Communication log stub | OPS-5 | P1 |
-| Promo conflict/priority UI | OPS-6 | P1 |
 | Scheduled report email | OPS-7 | P2 |
-| Dashboard notification prefs | OPS-8 | P1 |
-| Mobile triage layout | OPS-9 | P1 |
-| Cursor pagination on large lists | OPS-9 | **Products desk keyset done** (2026-07-29); orders/customers still P1 if needed |
-| Product CSV import (stock CSV only) | OPS-9 | P1 |
 | Multi-warehouse / bin WMS | — | **out of scope** |
 | Real Razorpay / SMTP / S3 / public DNS | — | **post-dev** |
 

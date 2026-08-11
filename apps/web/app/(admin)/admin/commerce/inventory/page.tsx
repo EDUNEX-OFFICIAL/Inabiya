@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { History, Package, Pencil, RefreshCw, Search, Upload, X } from 'lucide-react';
+import { History, Link2, Package, Pencil, RefreshCw, Search, Upload, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
@@ -33,6 +33,24 @@ type Movement = {
   reservedAfter: number;
   actorEmail: string | null;
   createdAt: string;
+};
+
+type ReservationHold = {
+  orderItemId: string;
+  orderId: string;
+  orderNumber: string;
+  status: string;
+  quantity: number;
+  customerEmail: string;
+  createdAt: string;
+};
+
+type ReservationsPayload = {
+  variantId: string;
+  sku: string;
+  reserved: number;
+  heldQty: number;
+  holds: ReservationHold[];
 };
 
 type StockFilter = '' | 'low' | 'out';
@@ -114,8 +132,14 @@ function InventoryDeskInner() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
+  const [reservesFor, setReservesFor] = useState<InventoryRow | null>(null);
+  const [reservations, setReservations] = useState<ReservationsPayload | null>(null);
+  const [reservesLoading, setReservesLoading] = useState(false);
+  const [reservesError, setReservesError] = useState<string | null>(null);
+
   const loadSeq = useRef(0);
   const historySeq = useRef(0);
+  const reservesSeq = useRef(0);
   const hasLoadedOnce = useRef(false);
 
   const patchQuery = useCallback(
@@ -186,7 +210,7 @@ function InventoryDeskInner() {
 
   // Esc closes topmost dialog
   useEffect(() => {
-    if (!adjustFor && !historyFor) return;
+    if (!adjustFor && !historyFor && !reservesFor) return;
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Escape') return;
       if (busy) return;
@@ -195,15 +219,24 @@ function InventoryDeskInner() {
         setAdjustError(null);
         return;
       }
+      if (reservesFor) {
+        reservesSeq.current += 1;
+        setReservesFor(null);
+        setReservations(null);
+        setReservesError(null);
+        setReservesLoading(false);
+        return;
+      }
       if (historyFor) {
         historySeq.current += 1;
         setHistoryFor(null);
         setHistoryError(null);
+        setHistoryLoading(false);
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [adjustFor, historyFor, busy]);
+  }, [adjustFor, historyFor, reservesFor, busy]);
 
   const displayed = useMemo(() => {
     let list = rows;
@@ -333,6 +366,52 @@ function InventoryDeskInner() {
     setHistoryLoading(false);
   }
 
+  async function openReserves(row: InventoryRow) {
+    const seq = ++reservesSeq.current;
+    setReservesFor(row);
+    setReservations(null);
+    setReservesLoading(true);
+    setReservesError(null);
+    setError(null);
+    try {
+      const data = await apiAuth<ReservationsPayload>(
+        `/admin/commerce/inventory/${row.variantId}/reservations`,
+      );
+      if (seq !== reservesSeq.current) return;
+      setReservations(data);
+    } catch (e) {
+      if (seq !== reservesSeq.current) return;
+      setReservesError(e instanceof Error ? e.message : 'Reservations failed');
+      setReservations(null);
+    } finally {
+      if (seq === reservesSeq.current) setReservesLoading(false);
+    }
+  }
+
+  function closeReserves() {
+    reservesSeq.current += 1;
+    setReservesFor(null);
+    setReservations(null);
+    setReservesError(null);
+    setReservesLoading(false);
+  }
+
+  function reservedCell(r: InventoryRow) {
+    if (r.reserved <= 0) {
+      return <span className="tabular-nums text-[var(--muted-foreground)]">0</span>;
+    }
+    return (
+      <button
+        type="button"
+        className="tabular-nums font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+        onClick={() => void openReserves(r)}
+        aria-label={`View holds for ${r.sku}`}
+      >
+        {r.reserved}
+      </button>
+    );
+  }
+
   function rowActions(r: InventoryRow) {
     return (
       <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -344,6 +423,16 @@ function InventoryDeskInner() {
           <Pencil className="h-3.5 w-3.5 opacity-60" aria-hidden />
           Adjust
         </button>
+        {r.reserved > 0 ? (
+          <button
+            type="button"
+            className="inline-flex min-h-10 items-center gap-1 font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+            onClick={() => void openReserves(r)}
+          >
+            <Link2 className="h-3.5 w-3.5 opacity-60" aria-hidden />
+            Holds
+          </button>
+        ) : null}
         <button
           type="button"
           className="inline-flex min-h-10 items-center gap-1 font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
@@ -362,7 +451,20 @@ function InventoryDeskInner() {
         <span className="tabular-nums">
           On hand · <span className="font-medium text-[var(--foreground)]">{r.onHand}</span>
         </span>
-        <span className="tabular-nums">Reserved · {r.reserved}</span>
+        <span className="tabular-nums">
+          Reserved ·{' '}
+          {r.reserved > 0 ? (
+            <button
+              type="button"
+              className="font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+              onClick={() => void openReserves(r)}
+            >
+              {r.reserved}
+            </button>
+          ) : (
+            r.reserved
+          )}
+        </span>
         <span className="inline-flex items-center gap-1 tabular-nums">
           Available ·{' '}
           <span
@@ -602,7 +704,7 @@ function InventoryDeskInner() {
               <div className="clay-panel overflow-hidden">
                 <table className="w-full min-w-[40rem] border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)] text-left text-[11px] uppercase tracking-wide opacity-55">
+                    <tr className="ops-th border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3.5%,transparent)] text-left">
                       <th className="px-3 py-2.5 font-medium">SKU</th>
                       <th className="px-2 py-2.5 pr-4 font-medium">Product</th>
                       <th className="px-2 py-2.5 pr-4 font-medium">On hand</th>
@@ -635,9 +737,7 @@ function InventoryDeskInner() {
                           </p>
                         </td>
                         <td className="px-2 py-2.5 pr-4 align-middle tabular-nums">{r.onHand}</td>
-                        <td className="px-2 py-2.5 pr-4 align-middle tabular-nums text-[var(--muted-foreground)]">
-                          {r.reserved}
-                        </td>
+                        <td className="px-2 py-2.5 pr-4 align-middle">{reservedCell(r)}</td>
                         <td className="px-2 py-2.5 pr-4 align-middle">
                           <span
                             className={`tabular-nums font-medium ${r.lowStock || r.available <= 0 ? 'text-amber-900' : ''}`}
@@ -843,6 +943,86 @@ function InventoryDeskInner() {
                 type="button"
                 className="clay-btn-secondary min-h-10 w-full text-sm"
                 onClick={closeHistory}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {reservesFor ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40"
+            aria-label="Dismiss"
+            onClick={closeReserves}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reserves-title"
+            className="clay-panel relative z-10 flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl shadow-lg sm:rounded-2xl"
+          >
+            <div className="border-b border-[var(--border-subtle)] p-4">
+              <h2 id="reserves-title" className="font-display text-lg">
+                Holds — {reservesFor.sku}
+              </h2>
+              <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                {reservesFor.productTitle}
+                {reservations
+                  ? ` · counter ${reservations.reserved} · lines ${reservations.heldQty}`
+                  : null}
+              </p>
+            </div>
+            {reservesError ? (
+              <p className="mx-4 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+                {reservesError}
+              </p>
+            ) : null}
+            <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4 text-sm">
+              {reservesLoading ? (
+                <li className="space-y-2" aria-busy="true" aria-label="Loading holds">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="h-14 animate-pulse rounded-xl bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]"
+                    />
+                  ))}
+                </li>
+              ) : null}
+              {!reservesLoading &&
+                reservations?.holds.map((h) => (
+                  <li
+                    key={h.orderItemId}
+                    className="rounded-xl border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_2%,transparent)] p-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <Link
+                        href={`/admin/commerce/orders/${h.orderId}`}
+                        className="font-medium underline-offset-2 hover:underline"
+                      >
+                        {h.orderNumber}
+                      </Link>
+                      <span className="tabular-nums text-xs text-[var(--muted-foreground)]">
+                        ×{h.quantity}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                      {h.status} · {h.customerEmail} · {new Date(h.createdAt).toLocaleString()}
+                    </p>
+                  </li>
+                ))}
+              {!reservesLoading && !reservesError && (reservations?.holds.length ?? 0) === 0 ? (
+                <li className="text-[var(--muted-foreground)]">No open holds.</li>
+              ) : null}
+            </ul>
+            <div className="border-t border-[var(--border-subtle)] p-3">
+              <button
+                type="button"
+                className="clay-btn-secondary min-h-10 w-full text-sm"
+                onClick={closeReserves}
               >
                 Close
               </button>

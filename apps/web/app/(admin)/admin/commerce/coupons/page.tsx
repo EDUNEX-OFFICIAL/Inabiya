@@ -34,6 +34,7 @@ type CouponRow = {
   products: Array<{ id: string; title: string; slug: string }>;
   collections: Array<{ id: string; title: string; slug: string }>;
   status: CouponStatus;
+  conflictsWith: string[];
 };
 
 type CollectionOption = { id: string; slug: string; title: string };
@@ -309,16 +310,24 @@ function CouponsDeskInner() {
     setError(null);
     setMsg(null);
     try {
-      await apiAuth('/admin/commerce/coupons', {
-        method: 'POST',
-        json: { ...buildDraftBody(true), code: code.trim().toUpperCase() },
-      });
+      const created = await apiAuth<{ code: string; conflictsWith?: string[] }>(
+        '/admin/commerce/coupons',
+        {
+          method: 'POST',
+          json: { ...buildDraftBody(true), code: code.trim().toUpperCase() },
+        },
+      );
       setCursorStack([]);
       if (cursorParam) setCursor(null);
       else await load();
       resetBuilder();
       setShowBuilder(false);
-      setMsg('Promotion created');
+      const overlaps = created.conflictsWith ?? [];
+      setMsg(
+        overlaps.length
+          ? `Created · overlaps ${overlaps.slice(0, 4).join(', ')}${overlaps.length > 4 ? '…' : ''}`
+          : 'Promotion created',
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Create failed');
     } finally {
@@ -847,6 +856,14 @@ function CouponsDeskInner() {
                       {c.usedCount}
                       {c.maxUses != null ? ` / ${c.maxUses}` : ''}
                     </span>
+                    {(c.conflictsWith ?? []).length > 0 ? (
+                      <span
+                        className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900"
+                        title={(c.conflictsWith ?? []).join(', ')}
+                      >
+                        Overlaps {(c.conflictsWith ?? []).length}
+                      </span>
+                    ) : null}
                   </div>
                   {c.scope === 'PRODUCT' && c.products.length ? (
                     <p className="mt-1.5 line-clamp-2 text-[11px] opacity-60">
@@ -885,7 +902,7 @@ function CouponsDeskInner() {
               <div className="clay-panel overflow-hidden">
                 <table className="w-full min-w-[52rem] border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)] text-left text-[11px] uppercase tracking-wide opacity-55">
+                    <tr className="ops-th border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3.5%,transparent)] text-left">
                       <th className="px-3 py-2.5 font-medium">Code</th>
                       <th className="px-2 py-2.5 pr-3 font-medium">Scope</th>
                       <th className="px-2 py-2.5 pr-3 font-medium">Benefit</th>
@@ -959,11 +976,24 @@ function CouponsDeskInner() {
                           {c.maxUses != null ? ` / ${c.maxUses}` : ''}
                         </td>
                         <td className="px-2 py-2.5 pr-3 align-top">
-                          <span
-                            className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${statusTone(c.status)}`}
-                          >
-                            {statusLabel(c.status)}
-                          </span>
+                          <div className="flex flex-col items-start gap-1">
+                            <span
+                              className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${statusTone(c.status)}`}
+                            >
+                              {statusLabel(c.status)}
+                            </span>
+                            {(c.conflictsWith ?? []).length > 0 ? (
+                              <span
+                                className="inline-block max-w-[11rem] truncate rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900"
+                                title={(c.conflictsWith ?? []).join(', ')}
+                              >
+                                Overlaps {(c.conflictsWith ?? []).slice(0, 2).join(', ')}
+                                {(c.conflictsWith ?? []).length > 2
+                                  ? ` +${(c.conflictsWith ?? []).length - 2}`
+                                  : ''}
+                              </span>
+                            ) : null}
+                          </div>
                         </td>
                         <td className="px-2 py-2.5 pr-3 align-top">
                           <div className="flex flex-wrap gap-2">

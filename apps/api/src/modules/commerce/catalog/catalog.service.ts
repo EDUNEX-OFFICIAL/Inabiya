@@ -9,6 +9,7 @@ import type {
   AdminCatalogListQuery,
   CreateCollectionBody,
   CreateProductBody,
+  ProductImportBody,
   UpdateCollectionBody,
   UpdateProductBody,
   UpdateVariantBody,
@@ -84,7 +85,7 @@ export class CatalogService {
   async listCollections() {
     const rows = await this.prisma.collection.findMany({
       where: { status: 'PUBLISHED' },
-      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+      orderBy: [{ createdAt: 'asc' }, { title: 'asc' }],
     });
     return rows.map((c) => this.mapCollectionPublic(c));
   }
@@ -102,7 +103,7 @@ export class CatalogService {
   /** Admin desk — MANUAL join count; SMART = live condition match count. */
   async listAdminCollections() {
     const rows = await this.prisma.collection.findMany({
-      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+      orderBy: [{ createdAt: 'asc' }, { title: 'asc' }],
       include: { _count: { select: { products: true } } },
     });
     const out = [];
@@ -374,6 +375,7 @@ export class CatalogService {
     heroImageAlt: string | null;
     accent: string;
     sortOrder: number;
+    createdAt: Date;
     membershipMode: 'MANUAL' | 'SMART';
     smartRules: unknown;
     relatedSlugs: string[];
@@ -396,6 +398,7 @@ export class CatalogService {
       heroImageAlt: c.heroImageAlt,
       accent: c.accent,
       sortOrder: c.sortOrder,
+      createdAt: c.createdAt.toISOString(),
       membershipMode: c.membershipMode,
       smartRules: c.membershipMode === 'SMART' ? smartRules : null,
       hideFacets: c.membershipMode === 'SMART' ? smartRulesHideFacets(smartRules) : [],
@@ -420,6 +423,7 @@ export class CatalogService {
       heroImageAlt: string | null;
       accent: string;
       sortOrder: number;
+      createdAt: Date;
       status: 'DRAFT' | 'PUBLISHED';
       membershipMode: 'MANUAL' | 'SMART';
       smartRules: unknown;
@@ -889,6 +893,132 @@ export class CatalogService {
       requestId,
     });
     return this.mapProduct(product);
+  }
+
+  /** OPS-9 P1 — CSV product create (dry-run validates; commit creates DRAFT then optional publish). */
+  async importProducts(input: ProductImportBody, actorId: string, requestId?: string) {
+    const results: Array<{
+      row: number;
+      slug: string;
+      sku: string;
+      ok: boolean;
+      error?: string;
+      productId?: string;
+    }> = [];
+
+    for (let i = 0; i < input.rows.length; i++) {
+      const row = input.rows[i]!;
+      const line = i + 1;
+
+      if (row.compareAtPaise != null && row.compareAtPaise < row.pricePaise) {
+        results.push({
+          row: line,
+          slug: row.slug,
+          sku: row.sku,
+          ok: false,
+          error: 'compareAtPaise must be >= pricePaise',
+        });
+        continue;
+      }
+
+      const [slugTaken, skuTaken] = await Promise.all([
+        this.prisma.product.findUnique({ where: { slug: row.slug }, select: { id: true } }),
+        this.prisma.productVariant.findFirst({
+          where: { sku: { equals: row.sku, mode: 'insensitive' } },
+          select: { id: true },
+        }),
+      ]);
+      if (slugTaken) {
+        results.push({
+          row: line,
+          slug: row.slug,
+          sku: row.sku,
+          ok: false,
+          error: 'Slug already exists',
+        });
+        continue;
+      }
+      if (skuTaken) {
+        results.push({
+          row: line,
+          slug: row.slug,
+          sku: row.sku,
+          ok: false,
+          error: 'SKU already exists',
+        });
+        continue;
+      }
+
+      if (input.dryRun) {
+        results.push({ row: line, slug: row.slug, sku: row.sku, ok: true });
+        continue;
+      }
+
+      try {
+        const created = await this.createProduct(
+          {
+            slug: row.slug,
+            title: row.title,
+            description: row.description,
+            variants: [
+              {
+                sku: row.sku,
+                label: row.label,
+                pricePaise: row.pricePaise,
+                compareAtPricePaise: row.compareAtPaise ?? null,
+                onHand: row.onHand,
+              },
+            ],
+            media: row.imageUrl
+              ? [{ url: row.imageUrl, altText: row.title, kind: 'IMAGE' as const }]
+              : undefined,
+          },
+          actorId,
+          requestId,
+        );
+        if (row.status === 'PUBLISHED') {
+          await this.publishProduct(created.id, actorId, requestId);
+        }
+        results.push({
+          row: line,
+          slug: row.slug,
+          sku: row.sku,
+          ok: true,
+          productId: created.id,
+        });
+      } catch (e) {
+        results.push({
+          row: line,
+          slug: row.slug,
+          sku: row.sku,
+          ok: false,
+          error: e instanceof Error ? e.message : 'create failed',
+        });
+      }
+    }
+
+    if (!input.dryRun) {
+      await this.audit.write({
+        actorId,
+        action: 'catalog.product.import',
+        resource: 'product',
+        metadata: {
+          dryRun: false,
+          total: results.length,
+          ok: results.filter((r) => r.ok).length,
+          failed: results.filter((r) => !r.ok).length,
+        },
+        requestId,
+      });
+    }
+
+    return {
+      dryRun: input.dryRun,
+      total: results.length,
+      okCount: results.filter((r) => r.ok).length,
+      errorCount: results.filter((r) => !r.ok).length,
+      results,
+    };
   }
 
   async updateProduct(id: string, body: UpdateProductBody, actorId: string, requestId?: string) {

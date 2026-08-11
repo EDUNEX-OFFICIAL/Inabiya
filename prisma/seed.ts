@@ -1880,6 +1880,104 @@ async function main() {
   });
   console.log('Seeded brand@ + creator@ profiles');
 
+  // OPS-10 — Delhi-area suppliers + sample ORDERED PO
+  const delhiSuppliers = [
+    {
+      code: 'OKHLA-PKG',
+      name: 'Okhla Gift Packaging Co.',
+      contactName: 'Ravi Mehra',
+      phone: '9810001001',
+      email: 'orders@okhlapack.example',
+      city: 'New Delhi',
+      state: 'DL',
+      gstin: '07AABCU9603R1ZM',
+      notes: 'Okhla Phase II — boxes & kraft wraps',
+    },
+    {
+      code: 'CHANDNI-CRAFT',
+      name: 'Chandni Chowk Crafts',
+      contactName: 'Farida Khan',
+      phone: '9810001002',
+      email: 'wholesale@chandnicrafts.example',
+      city: 'Old Delhi',
+      state: 'DL',
+      gstin: '07AABCU9603R1ZN',
+      notes: 'Kinari Bazaar — soft toys & textiles',
+    },
+    {
+      code: 'MAYAPURI-HAMP',
+      name: 'Mayapuri Hamper Wholesale',
+      contactName: 'Suresh Gupta',
+      phone: '9810001003',
+      email: 'sales@mayapurihamper.example',
+      city: 'New Delhi',
+      state: 'DL',
+      gstin: '07AABCU9603R1ZO',
+      notes: 'Mayapuri Industrial Area — ready hampers',
+    },
+  ] as const;
+
+  for (const s of delhiSuppliers) {
+    await prisma.supplier.upsert({
+      where: { code: s.code },
+      update: {
+        name: s.name,
+        contactName: s.contactName,
+        phone: s.phone,
+        email: s.email,
+        city: s.city,
+        state: s.state,
+        gstin: s.gstin,
+        notes: s.notes,
+        isActive: true,
+      },
+      create: { ...s, isActive: true },
+    });
+  }
+
+  const okhla = await prisma.supplier.findUniqueOrThrow({ where: { code: 'OKHLA-PKG' } });
+  const bath = await prisma.productVariant.findUnique({ where: { sku: 'BATH-001' } });
+  const blank = await prisma.productVariant.findUnique({ where: { sku: 'BLNK-001' } });
+  if (bath && blank) {
+    await prisma.productVariant.update({
+      where: { id: bath.id },
+      data: { preferredSupplierId: okhla.id },
+    });
+    const existingPo = await prisma.purchaseOrder.findFirst({
+      where: { poNumber: 'PO-SEED-OKHLA-001' },
+    });
+    if (!existingPo) {
+      await prisma.purchaseOrder.create({
+        data: {
+          poNumber: 'PO-SEED-OKHLA-001',
+          supplierId: okhla.id,
+          status: 'ORDERED',
+          orderedAt: new Date(),
+          notes: 'Seed PO — Okhla restock (demo)',
+          lines: {
+            create: [
+              {
+                variantId: bath.id,
+                sku: bath.sku,
+                title: 'Lavender Bath Essentials',
+                quantityOrdered: 20,
+                unitCostPaise: 27500,
+              },
+              {
+                variantId: blank.id,
+                sku: blank.sku,
+                title: 'Personalised Name Blanket',
+                quantityOrdered: 15,
+                unitCostPaise: 18000,
+              },
+            ],
+          },
+        },
+      });
+    }
+  }
+  console.log('Seeded Delhi suppliers + sample ORDERED PO');
+
   const FLAGS: Array<{ key: string; enabled: boolean; description: string }> = [
     {
       key: 'support.impersonation',

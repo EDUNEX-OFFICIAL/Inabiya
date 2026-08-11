@@ -53,6 +53,11 @@ export class InventoryAdminController {
     return this.inventory.movements(variantId);
   }
 
+  @Get(':variantId/reservations')
+  reservations(@Param('variantId') variantId: string) {
+    return this.inventory.listReservations(variantId);
+  }
+
   @Post(':variantId/adjust')
   adjust(
     @Param('variantId') variantId: string,

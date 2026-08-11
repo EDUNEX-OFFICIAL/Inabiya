@@ -10,6 +10,7 @@ import {
   couponPreviewBodySchema,
   commercePolicyBodySchema,
   customerStatusBodySchema,
+  customerCommunicationBodySchema,
   giftChromeBodySchema,
   storefrontConfigBodySchema,
   type AdminAuditQuery,
@@ -20,6 +21,7 @@ import {
   type CouponActiveBody,
   type CouponPreviewBody,
   type CreateCouponBody,
+  type CustomerCommunicationBody,
   type GiftChromeBody,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
@@ -205,6 +207,17 @@ export class OpsAdminController {
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT')
   getCustomer(@Param('id') id: string) {
     return this.customers.get(id);
+  }
+
+  @Post('customers/:id/communications')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT')
+  addCustomerCommunication(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(customerCommunicationBodySchema)) body: CustomerCommunicationBody,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.customers.addCommunication(id, body, user.id, String(req.id ?? ''));
   }
 
   @Patch('customers/:id/status')

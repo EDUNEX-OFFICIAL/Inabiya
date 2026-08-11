@@ -314,7 +314,7 @@
   --page-max: 80rem;
 }
 
-/* Density — admin/CMS compact (no new colors) */
+/* Density — admin/CMS compact (padding/type; gift remaps surfaces below) */
 [data-density='compact'] {
   --btn-pad-y: 0.45rem;
   --btn-pad-x: 1rem;
@@ -324,6 +324,51 @@
   --text-h1-lg: 1.75rem;
   --text-h2: 1.25rem;
   --text-h2-lg: 1.5rem;
+}
+
+/*
+ * Soft Gift ops desk — A-family semantic remap under compact.
+ * Storefront [data-theme=gift] without compact stays blush/pastel.
+ * Primary pink kept for accents only; no fourth theme.
+ * Canvas = warm paper (ivory), not cool gray void and not storefront wash.
+ */
+[data-theme='gift'][data-density='compact'] {
+  --background: color-mix(
+    in srgb,
+    var(--inabiya-heading) 3.5%,
+    color-mix(in srgb, var(--inabiya-blush) 16%, color-mix(in srgb, var(--inabiya-yellow) 5%, white))
+  );
+  --surface: var(--inabiya-white);
+  --surface-soft: color-mix(in srgb, var(--inabiya-blush) 8%, white);
+  --surface-nav: color-mix(in srgb, var(--inabiya-white) 92%, transparent);
+  --clay-surface: var(--surface);
+  --clay-surface-soft: var(--surface-soft);
+
+  --border-subtle: color-mix(in srgb, var(--inabiya-heading) 14%, transparent);
+  --border-strong: color-mix(in srgb, var(--inabiya-heading) 22%, transparent);
+  --border-focus: color-mix(in srgb, var(--inabiya-pink) 45%, transparent);
+  --border: var(--border-subtle);
+
+  --muted: color-mix(in srgb, var(--inabiya-blush) 6%, color-mix(in srgb, var(--inabiya-heading) 3%, white));
+  --muted-foreground: color-mix(in srgb, var(--inabiya-body) 88%, #2d2640);
+
+  --input-bg: var(--inabiya-white);
+  --input-border: color-mix(in srgb, var(--inabiya-heading) 18%, transparent);
+  --input-shadow: 0 1px 2px color-mix(in srgb, var(--inabiya-heading) 4%, transparent);
+
+  --radius-card: 0.75rem;
+  --radius-panel: 0.75rem;
+  --radius-control: 0.625rem;
+  --radius: 0.75rem;
+  --clay-radius: var(--radius-card);
+  --clay-radius-sm: var(--radius-control);
+
+  --clay-shadow-sm: 0 1px 2px color-mix(in srgb, var(--inabiya-heading) 5%, transparent);
+  --clay-shadow: 0 1px 2px color-mix(in srgb, var(--inabiya-heading) 6%, transparent);
+  --clay-shadow-hover: 0 1px 3px color-mix(in srgb, var(--inabiya-heading) 8%, transparent);
+  --shadow-card: var(--clay-shadow);
+  --shadow-chip: 0 1px 1px color-mix(in srgb, var(--inabiya-heading) 4%, transparent);
+  --shadow-nav: 0 1px 2px color-mix(in srgb, var(--inabiya-heading) 5%, transparent);
 }
 
 html {
@@ -361,6 +406,18 @@ html.ops-shell-lock body {
 }
 .ops-main-scroll::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Ops secondary text — color token, not opacity wash */
+.ops-muted {
+  color: var(--muted-foreground);
+}
+.ops-th {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 /* Commerce ops sidebar: thin scrollbar only while hovered / focused */
@@ -412,7 +469,7 @@ html.ops-shell-lock body {
   border: 1px solid var(--border-subtle);
   background: transparent;
   color: var(--foreground);
-  opacity: 0.7;
+  opacity: 0.85;
   transition:
     background var(--duration-fast) var(--ease-standard),
     opacity var(--duration-fast) var(--ease-standard),
@@ -438,7 +495,7 @@ html.ops-shell-lock body {
   padding: 0.5rem 0.625rem;
   font-size: 0.875rem;
   line-height: 1.25;
-  color: color-mix(in srgb, var(--foreground) 80%, transparent);
+  color: color-mix(in srgb, var(--foreground) 88%, transparent);
   transition:
     background var(--duration-fast) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard),
@@ -461,9 +518,11 @@ html.ops-shell-lock body {
 .ops-nav-link--muted {
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  opacity: 0.65;
+  color: var(--muted-foreground);
+  opacity: 1;
 }
 .ops-nav-link--muted:hover {
+  color: var(--foreground);
   opacity: 1;
 }
 .ops-nav-link--rail {
@@ -473,7 +532,7 @@ html.ops-shell-lock body {
 }
 .ops-nav-link--active {
   background: color-mix(in srgb, var(--primary) 14%, transparent);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--primary);
 }
 .ops-nav-link--active:hover {
@@ -507,7 +566,8 @@ html.ops-shell-lock body {
   height: 1rem;
   width: 1rem;
   flex-shrink: 0;
-  opacity: 0.85;
+  opacity: 0.9;
+  stroke-width: 1.75;
   transition:
     transform var(--duration-fast) var(--ease-standard),
     opacity var(--duration-fast) var(--ease-standard);
@@ -749,6 +809,31 @@ h3 {
     border: 1px solid var(--border-subtle);
     padding: var(--space-1) var(--space-3);
     font-size: 0.8125rem;
+  }
+
+  /* Gift ops desk — flat panels, no marketing lift */
+  [data-theme='gift'][data-density='compact'] .clay-panel {
+    background: var(--surface);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--clay-shadow-sm);
+    border: 1px solid var(--border-subtle);
+  }
+
+  [data-theme='gift'][data-density='compact'] .clay-card {
+    border-radius: var(--radius-card);
+    box-shadow: var(--clay-shadow-sm);
+  }
+
+  [data-theme='gift'][data-density='compact'] .clay-card:hover {
+    transform: none;
+    box-shadow: var(--clay-shadow-sm);
+  }
+
+  [data-theme='gift'][data-density='compact'] .clay-chip {
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--foreground);
+    box-shadow: none;
   }
 
   /* Buttons — no translateY lift on the control itself; icon motion only (see gift icon micro-motion). */

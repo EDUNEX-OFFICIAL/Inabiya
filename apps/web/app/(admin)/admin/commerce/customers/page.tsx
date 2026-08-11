@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LifeBuoy, RefreshCw, Search, Users, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LifeBuoy, RefreshCw, Search, Users, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import { opsChipClass } from '@/lib/ops-desk-ui';
@@ -22,7 +22,15 @@ type CustomerRow = {
   createdAt: string;
 };
 
+type CustomersListResponse = {
+  items: CustomerRow[];
+  nextCursor: string | null;
+  limit: number;
+};
+
 type StatusFilter = '' | 'active' | 'suspended';
+
+const PAGE_LIMIT = 25;
 
 const STATUS_CHIPS: Array<{ value: StatusFilter; label: string }> = [
   { value: '', label: 'All' },
@@ -47,8 +55,11 @@ function CustomersDeskInner() {
   const searchParams = useSearchParams();
   const qParam = searchParams.get('q') ?? '';
   const status = parseStatus(searchParams.get('status'));
+  const cursorParam = searchParams.get('cursor') ?? '';
 
   const [rows, setRows] = useState<CustomerRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [qInput, setQInput] = useState(qParam);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -56,8 +67,10 @@ function CustomersDeskInner() {
 
   const loadSeq = useRef(0);
   const hasLoadedOnce = useRef(false);
-
+  const filterKey = `${qParam}\0${status}`;
   const filterActive = Boolean(qParam || status);
+  const pageIndex = cursorStack.length + 1;
+  const canPrev = cursorStack.length > 0 || Boolean(cursorParam);
 
   const patchQuery = useCallback(
     (patch: Record<string, string | null>) => {
@@ -66,11 +79,18 @@ function CustomersDeskInner() {
         if (v == null || v === '') params.delete(k);
         else params.set(k, v);
       }
+      if (Object.keys(patch).some((k) => k === 'q' || k === 'status')) {
+        params.delete('cursor');
+      }
       const s = params.toString();
       router.replace(s ? `/admin/commerce/customers?${s}` : '/admin/commerce/customers');
     },
     [router, searchParams],
   );
+
+  useEffect(() => {
+    setCursorStack([]);
+  }, [filterKey]);
 
   const load = useCallback(async () => {
     const seq = ++loadSeq.current;
@@ -81,12 +101,14 @@ function CustomersDeskInner() {
       const params = new URLSearchParams();
       if (qParam) params.set('q', qParam);
       if (status) params.set('status', status);
-      const qs = params.toString();
-      const data = await apiAuth<CustomerRow[]>(
-        `/admin/commerce/customers${qs ? `?${qs}` : ''}`,
+      if (cursorParam) params.set('cursor', cursorParam);
+      params.set('limit', String(PAGE_LIMIT));
+      const data = await apiAuth<CustomersListResponse>(
+        `/admin/commerce/customers?${params.toString()}`,
       );
       if (seq !== loadSeq.current) return;
-      setRows(data);
+      setRows(data.items ?? []);
+      setNextCursor(data.nextCursor);
       hasLoadedOnce.current = true;
     } catch (e) {
       if (seq !== loadSeq.current) return;
@@ -97,7 +119,7 @@ function CustomersDeskInner() {
         setRefreshing(false);
       }
     }
-  }, [qParam, status]);
+  }, [qParam, status, cursorParam]);
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
@@ -122,10 +144,30 @@ function CustomersDeskInner() {
 
   function clearFilters() {
     setQInput('');
+    setCursorStack([]);
     router.replace('/admin/commerce/customers');
   }
 
-  const countLabel = loading ? 'Loading…' : `${rows.length} customers`;
+  function goNext() {
+    if (!nextCursor) return;
+    setCursorStack((s) => [...s, cursorParam]);
+    patchQuery({ cursor: nextCursor });
+  }
+
+  function goPrev() {
+    if (cursorStack.length === 0) {
+      if (!cursorParam) return;
+      patchQuery({ cursor: null });
+      return;
+    }
+    const prev = cursorStack[cursorStack.length - 1] ?? '';
+    setCursorStack((s) => s.slice(0, -1));
+    patchQuery({ cursor: prev || null });
+  }
+
+  const countLabel = loading
+    ? 'Loading…'
+    : `${rows.length} on this page${nextCursor ? ' · more' : ''}`;
 
   return (
     <div>
@@ -338,7 +380,7 @@ function CustomersDeskInner() {
               <div className="clay-panel overflow-hidden">
                 <table className="w-full min-w-[40rem] border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)] text-left text-[11px] uppercase tracking-wide opacity-55">
+                    <tr className="ops-th border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3.5%,transparent)] text-left">
                       <th className="px-3 py-2.5 font-medium">Customer</th>
                       <th className="px-2 py-2.5 pr-4 font-medium">Status</th>
                       <th className="px-2 py-2.5 pr-4 font-medium">Orders</th>
@@ -397,6 +439,32 @@ function CustomersDeskInner() {
                 </table>
               </div>
             </OpsTableScroll>
+          </div>
+        </div>
+      ) : null}
+
+      {!loading && rows.length > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs tabular-nums text-[var(--muted-foreground)]">Page {pageIndex}</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="clay-btn-secondary inline-flex min-h-9 items-center gap-1 px-3 text-sm disabled:opacity-40"
+              disabled={!canPrev || loading || refreshing}
+              onClick={goPrev}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+              Prev
+            </button>
+            <button
+              type="button"
+              className="clay-btn-secondary inline-flex min-h-9 items-center gap-1 px-3 text-sm disabled:opacity-40"
+              disabled={!nextCursor || loading || refreshing}
+              onClick={goNext}
+            >
+              Next
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+            </button>
           </div>
         </div>
       ) : null}

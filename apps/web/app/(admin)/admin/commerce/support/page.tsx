@@ -466,7 +466,7 @@ function SupportLookupInner() {
               ))}
             </div>
           ) : recentInquiries.length === 0 ? (
-            <p className="px-3 py-6 text-sm opacity-55 sm:px-4">No recent inquiries.</p>
+            <p className="ops-muted px-3 py-6 text-sm sm:px-4">No recent inquiries.</p>
           ) : (
             <ul className="divide-y divide-[var(--border-subtle)]">
               {recentInquiries.map((inq) => (

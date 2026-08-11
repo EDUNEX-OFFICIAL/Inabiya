@@ -410,7 +410,7 @@ export function CommerceOpsShell({ children }: Props) {
                   <span className="font-display text-lg leading-tight text-[var(--foreground)]">
                     Inabiya Ops
                   </span>
-                  <p className="mt-0.5 text-[11px] uppercase tracking-wide opacity-55">
+                  <p className="ops-muted mt-0.5 text-[11px] uppercase tracking-wide">
                     Soft Gift commerce
                   </p>
                 </>
@@ -443,7 +443,7 @@ export function CommerceOpsShell({ children }: Props) {
           {grouped.map((g) => (
             <div key={g.section} className="mb-4">
               {!collapsed ? (
-                <p className="mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider opacity-45">
+                <p className="ops-muted mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider">
                   {g.label}
                 </p>
               ) : (
@@ -496,7 +496,7 @@ export function CommerceOpsShell({ children }: Props) {
           ) : (
             <div className="rounded-lg border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3%,var(--surface))] p-3">
               <p className="truncate text-sm font-medium leading-tight">{displayNameOf(user!)}</p>
-              <p className="mt-1 text-[11px] opacity-55">{roleLabel(user!.roles)}</p>
+              <p className="ops-muted mt-1 text-[11px]">{roleLabel(user!.roles)}</p>
               <button
                 type="button"
                 className="clay-btn-secondary mt-3 flex w-full min-h-10 items-center justify-center gap-1.5 text-sm"
@@ -573,11 +573,11 @@ export function CommerceOpsShell({ children }: Props) {
                 <ol className="flex items-center gap-1 whitespace-nowrap text-sm">
                   {crumbs.map((c, i) => (
                     <li key={`${c.label}-${i}`} className="flex items-center gap-1">
-                      {i > 0 ? <span className="opacity-40">/</span> : null}
+                      {i > 0 ? <span className="ops-muted">/</span> : null}
                       {c.href ? (
                         <Link
                           href={c.href}
-                          className={`${i === 0 && crumbs.length > 1 ? 'opacity-50' : 'opacity-70'} hover:opacity-100 hover:underline`}
+                          className={`${i === 0 && crumbs.length > 1 ? 'ops-muted' : 'text-[var(--foreground)]'} hover:underline`}
                         >
                           {c.label}
                         </Link>
@@ -600,9 +600,9 @@ export function CommerceOpsShell({ children }: Props) {
               }}
               aria-label="Jump to page"
             >
-              <Search className="h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden />
-              <span className="min-w-0 flex-1 truncate text-left opacity-70">Jump to…</span>
-              <kbd className="hidden shrink-0 rounded border border-[var(--border-subtle)] px-1.5 py-0.5 text-[10px] font-medium opacity-55 sm:inline">
+              <Search className="ops-muted h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="ops-muted min-w-0 flex-1 truncate text-left">Jump to…</span>
+              <kbd className="ops-muted hidden shrink-0 rounded border border-[var(--border-subtle)] px-1.5 py-0.5 text-[10px] font-medium sm:inline">
                 ⌘K
               </kbd>
             </button>
@@ -626,8 +626,8 @@ export function CommerceOpsShell({ children }: Props) {
                   >
                     <div className="border-b border-[var(--border-subtle)] px-3 py-2.5">
                       <p className="truncate text-sm font-medium">{displayNameOf(user)}</p>
-                      <p className="mt-0.5 truncate text-[11px] opacity-55">{user.email}</p>
-                      <p className="mt-1 text-[11px] opacity-55">{roleLabel(user.roles)}</p>
+                      <p className="ops-muted mt-0.5 truncate text-[11px]">{user.email}</p>
+                      <p className="ops-muted mt-1 text-[11px]">{roleLabel(user.roles)}</p>
                     </div>
                     <button
                       type="button"
@@ -696,7 +696,7 @@ export function CommerceOpsShell({ children }: Props) {
             />
             <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
               {paletteHits.length === 0 ? (
-                <li className="px-3 py-2 text-sm opacity-60">No matches</li>
+                <li className="ops-muted px-3 py-2 text-sm">No matches</li>
               ) : (
                 paletteHits.map((item) => {
                   const Icon = NAV_ICONS[item.id] ?? Package;
@@ -710,9 +710,9 @@ export function CommerceOpsShell({ children }: Props) {
                         router.push(item.href);
                       }}
                     >
-                      <Icon className="h-4 w-4 shrink-0 opacity-55" aria-hidden />
+                      <Icon className="ops-muted h-4 w-4 shrink-0" aria-hidden />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                      <span className="shrink-0 text-[11px] opacity-45">
+                      <span className="ops-muted shrink-0 text-[11px]">
                         {item.href.replace('/admin/commerce', '') || '/'}
                       </span>
                     </button>
@@ -721,7 +721,7 @@ export function CommerceOpsShell({ children }: Props) {
                 })
               )}
             </ul>
-            <p className="shrink-0 border-t border-[var(--border-subtle)] px-3 py-2 text-[11px] opacity-50 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <p className="ops-muted shrink-0 border-t border-[var(--border-subtle)] px-3 py-2 text-[11px] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
               Esc closes · Enter opens first · / jump · g then o/p/i… · ? help
               {chord === 'g' ? ' · waiting for chord…' : ''}
             </p>

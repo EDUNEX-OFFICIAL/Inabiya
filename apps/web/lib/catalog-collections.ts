@@ -11,6 +11,7 @@ export type CatalogCollection = {
   heroImageAlt?: string | null;
   accent?: string;
   sortOrder?: number;
+  createdAt?: string;
   membershipMode?: 'MANUAL' | 'SMART';
   smartRules?: {
     match: 'all' | 'any';
