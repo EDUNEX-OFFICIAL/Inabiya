@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Printer, RefreshCw } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
@@ -122,6 +122,15 @@ function statusTone(status: string): string {
   return 'bg-amber-50 text-amber-900 ring-1 ring-amber-200/80';
 }
 
+function statusDot(status: string): string {
+  if (status === 'PAID' || status === 'DELIVERED') return 'bg-emerald-500';
+  if (status === 'PROCESSING' || status === 'PENDING_PAYMENT') return 'bg-amber-500';
+  if (status === 'SHIPPED') return 'bg-[var(--primary)]';
+  if (status === 'PAYMENT_FAILED' || status === 'CANCELLED') return 'bg-red-500';
+  if (status === 'RETURNED') return 'bg-neutral-400';
+  return 'bg-amber-500';
+}
+
 function paymentLabel(status: string): string {
   if (status === 'CAPTURED') return 'Captured';
   if (status === 'FAILED') return 'Failed';
@@ -141,6 +150,14 @@ function shippingMethodLabel(method: string): string {
   if (method === 'STANDARD') return 'Standard';
   if (method === 'EXPRESS') return 'Express';
   return method;
+}
+
+function SectionTitle({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted-foreground)]">
+      {children}
+    </h2>
+  );
 }
 
 export default function AdminOrderDetailPage({ params }: { params: { id: string } }) {
@@ -255,13 +272,13 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
 
   if (loading && !order) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-5xl">
         <div className="clay-panel space-y-3 p-4" aria-busy="true" aria-label="Loading case file">
           <div className="h-7 w-48 animate-pulse rounded bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" />
           <div className="h-4 w-64 animate-pulse rounded bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" />
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="h-28 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]" />
-            <div className="h-28 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]" />
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
+            <div className="h-40 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]" />
+            <div className="h-40 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]" />
           </div>
         </div>
       </div>
@@ -270,7 +287,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
 
   if (!order) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-5xl">
         <OpsPageHeader
           title="Order"
           actions={
@@ -291,9 +308,11 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
 
   const next = order.allowedNextStatuses ?? [];
   const primaryPayment = order.paymentVerification[0];
+  const showShipFields =
+    Boolean(order.carrier || order.trackingNumber || next.includes('SHIPPED'));
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <div className="print:hidden">
         <OpsPageHeader
           title={order.orderNumber}
@@ -330,25 +349,27 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
           }
         />
 
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span
-            className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusTone(order.status)}`}
-          >
-            {statusLabel(order.status)}
-          </span>
-          {primaryPayment ? (
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${paymentTone(primaryPayment.status)}`}
+              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusTone(order.status)}`}
             >
-              {paymentLabel(primaryPayment.status)}
+              {statusLabel(order.status)}
             </span>
-          ) : null}
-          <span className="text-xs tabular-nums text-[var(--muted-foreground)]">
-            {order.ageHours}h · {formatInr(order.totalPaise)}
-          </span>
+            {primaryPayment ? (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${paymentTone(primaryPayment.status)}`}
+              >
+                {paymentLabel(primaryPayment.status)}
+              </span>
+            ) : null}
+          </div>
+          <span className="hidden h-3 w-px bg-[var(--border-subtle)] sm:block" aria-hidden />
+          <span className="text-sm font-semibold tabular-nums">{formatInr(order.totalPaise)}</span>
+          <span className="text-xs tabular-nums text-[var(--muted-foreground)]">{order.ageHours}h</span>
           <Link
             href={`/admin/commerce/customers/${order.customer.id}`}
-            className="truncate text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+            className="max-w-full truncate text-xs text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
           >
             {order.customer.email}
           </Link>
@@ -393,7 +414,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
       ) : null}
 
       {order.exceptions?.length ? (
-        <div className="mb-4 flex flex-wrap gap-1.5 print:hidden">
+        <div className="mb-3 flex flex-wrap gap-1.5 print:hidden">
           {order.exceptions.map((e) => (
             <span
               key={e}
@@ -410,293 +431,353 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
       ) : null}
 
       <div
-        className={`grid gap-4 lg:grid-cols-2 print:hidden ${refreshing ? 'opacity-70 transition-opacity' : ''}`}
+        className={`grid gap-3 print:hidden lg:grid-cols-[minmax(0,1fr)_18.5rem] lg:items-start lg:gap-4 ${
+          refreshing ? 'opacity-70 transition-opacity' : ''
+        }`}
         aria-busy={refreshing}
       >
-        <section className="clay-panel space-y-2 p-3 text-sm sm:p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-            Customer
-          </h2>
-          <p>
-            <Link
-              className="font-medium underline-offset-2 hover:underline"
-              href={`/admin/commerce/customers/${order.customer.id}`}
-            >
-              {order.customer.email}
-            </Link>
-          </p>
-          {order.customer.displayName ? (
-            <p className="text-[var(--muted-foreground)]">{order.customer.displayName}</p>
-          ) : null}
-          <p className="text-xs text-[var(--muted-foreground)]">
-            {order.customer.isActive ? 'Active' : 'Suspended'}
-          </p>
-          <h3 className="pt-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-            Ship to
-          </h3>
-          {formatAddress(order.shippingAddress).map((l) => (
-            <p key={l} className="break-words">
-              {l}
-            </p>
-          ))}
-          <p className="text-xs text-[var(--muted-foreground)]">
-            {shippingMethodLabel(order.shippingMethod)}
-          </p>
-        </section>
-
-        <section className="clay-panel space-y-2 p-3 text-sm sm:p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-            Payment
-          </h2>
-          <p className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-900 ring-1 ring-amber-200/80">
-            Provider · MOCK
-          </p>
-          {order.paymentVerification.map((p) => (
-            <div key={p.provider + p.status} className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-[var(--muted-foreground)]">{p.provider}</span>
-              <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${paymentTone(p.status)}`}
-              >
-                {paymentLabel(p.status)}
+        {/* Main column */}
+        <div className="min-w-0 space-y-3">
+          <section className="clay-panel p-3 text-sm sm:p-4">
+            <div className="flex items-baseline justify-between gap-2">
+              <SectionTitle>Lines</SectionTitle>
+              <span className="text-[11px] tabular-nums text-[var(--muted-foreground)]">
+                {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
               </span>
-              {p.verified ? (
-                <span className="text-[10px] font-medium uppercase text-emerald-700">Verified</span>
-              ) : null}
-              <span className="tabular-nums">{formatInr(p.amountPaise)}</span>
             </div>
-          ))}
-          <div className="space-y-0.5 border-t border-[var(--border-subtle)] pt-2 text-xs text-[var(--muted-foreground)]">
-            <p>Subtotal {formatInr(order.subtotalPaise)}</p>
-            {order.discountPaise > 0 ? <p>Discount −{formatInr(order.discountPaise)}</p> : null}
-            <p>Shipping {formatInr(order.shippingPaise)}</p>
-            {order.taxPaise > 0 ? <p>Tax {formatInr(order.taxPaise)}</p> : null}
-            <p className="pt-1 text-sm font-semibold tabular-nums text-[var(--foreground)]">
-              Total {formatInr(order.totalPaise)}
-            </p>
-            {order.couponCode ? <p>Coupon · {order.couponCode}</p> : null}
-          </div>
-        </section>
-      </div>
-
-      <section className="clay-panel mt-4 p-3 text-sm sm:p-4 print:hidden">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-          Lines
-        </h2>
-        <ul className="mt-2 space-y-3">
-          {order.items.map((i) => (
-            <li
-              key={i.id}
-              className="border-b border-[var(--border-subtle)] pb-2.5 last:border-0 last:pb-0"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 font-medium break-words">
-                  {i.title}{' '}
-                  <span className="font-normal text-[var(--muted-foreground)]">({i.label})</span>
+            <ul className="mt-2 divide-y divide-[var(--border-subtle)]">
+              {order.items.map((i) => (
+                <li key={i.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 py-2.5">
+                  <div className="min-w-0">
+                    <p className="font-medium leading-snug">
+                      {i.title}{' '}
+                      <span className="font-normal text-[var(--muted-foreground)]">({i.label})</span>
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
+                      <span className="font-mono">{i.sku}</span>
+                      <span className="mx-1.5 text-[var(--border-strong)]">·</span>×{i.quantity}
+                      <span className="mx-1.5 text-[var(--border-strong)]">·</span>
+                      {formatInr(i.unitPricePaise)} ea
+                    </p>
+                  </div>
+                  <p className="self-start text-right text-sm font-semibold tabular-nums">
+                    {formatInr(i.lineTotalPaise)}
+                  </p>
+                  {i.personalization ? (
+                    <pre className="col-span-2 mt-1.5 overflow-x-auto rounded-md bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)] p-2 text-[11px]">
+                      {JSON.stringify(i.personalization, null, 2)}
+                    </pre>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+            {order.giftMessage ? (
+              <div className="mt-2 rounded-md border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_2.5%,transparent)] px-2.5 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted-foreground)]">
+                  Gift message
                 </p>
-                <span className="shrink-0 tabular-nums font-medium">{formatInr(i.lineTotalPaise)}</span>
+                <p className="mt-0.5 break-words leading-snug">{order.giftMessage}</p>
               </div>
-              <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-                <span className="font-mono">{i.sku}</span> · ×{i.quantity} ·{' '}
-                {formatInr(i.unitPricePaise)} ea
-              </p>
-              {i.personalization ? (
-                <pre className="mt-1.5 overflow-x-auto rounded-lg bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)] p-2 text-[11px]">
-                  {JSON.stringify(i.personalization, null, 2)}
-                </pre>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-        {order.giftMessage ? (
-          <div className="mt-3 rounded-lg border border-[var(--border-subtle)] p-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-              Gift message
-            </p>
-            <p className="mt-1 break-words">{order.giftMessage}</p>
-          </div>
-        ) : null}
-        {order.giftWrap ? (
-          <p className="mt-2 text-xs text-[var(--muted-foreground)]">Gift wrap</p>
-        ) : null}
-      </section>
+            ) : null}
+            {order.giftWrap ? (
+              <p className="mt-2 text-[11px] text-[var(--muted-foreground)]">Gift wrap</p>
+            ) : null}
+          </section>
 
-      <section className="clay-panel mt-4 space-y-3 p-3 text-sm sm:p-4 print:hidden">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-          Fulfillment
-        </h2>
-        {(order.carrier || order.trackingNumber || next.includes('SHIPPED')) && (
-          <div className="grid gap-2 sm:grid-cols-2">
-            <label className="block text-xs text-[var(--muted-foreground)]">
-              Carrier
-              <input
-                className="clay-input mt-1 w-full text-sm text-[var(--foreground)]"
-                value={carrier}
-                onChange={(e) => setCarrier(e.target.value)}
-                disabled={!canMutateStatus || busy}
-                placeholder="e.g. Delhivery"
-              />
-            </label>
-            <label className="block text-xs text-[var(--muted-foreground)]">
-              Tracking / AWB
-              <input
-                className="clay-input mt-1 w-full text-sm text-[var(--foreground)]"
-                value={tracking}
-                onChange={(e) => setTracking(e.target.value)}
-                disabled={!canMutateStatus || busy}
-                placeholder="AWB / tracking #"
-              />
-            </label>
-          </div>
-        )}
-        {order.shippedAt ? (
-          <p className="text-xs text-[var(--muted-foreground)]">
-            Shipped {new Date(order.shippedAt).toLocaleString()}
-            {order.carrier ? ` · ${order.carrier}` : ''}
-            {order.trackingNumber ? ` · ${order.trackingNumber}` : ''}
-          </p>
-        ) : null}
+          {order.returns?.length ? (
+            <section className="clay-panel p-3 text-sm sm:p-4">
+              <SectionTitle>Returns</SectionTitle>
+              <ul className="mt-2 space-y-2">
+                {order.returns.map((r) => (
+                  <li key={r.id} className="flex flex-wrap items-baseline gap-2">
+                    <Link
+                      className="font-medium underline-offset-2 hover:underline"
+                      href="/admin/commerce/returns?status=REQUESTED"
+                    >
+                      {r.status}
+                    </Link>
+                    <span className="text-[var(--muted-foreground)]">{r.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
-        <div className="flex flex-wrap gap-2">
-          {canMutateStatus && next.includes('PROCESSING') && order.canFulfill !== false ? (
-            <button
-              type="button"
-              className="clay-btn min-h-10 text-sm"
-              disabled={busy}
-              onClick={() => void setStatus('PROCESSING')}
-            >
-              Mark processing
-            </button>
-          ) : null}
-          {canMutateStatus && next.includes('SHIPPED') && order.canFulfill !== false ? (
-            <button
-              type="button"
-              className="clay-btn min-h-10 text-sm"
-              disabled={busy}
-              onClick={() => void setStatus('SHIPPED')}
-            >
-              Mark shipped
-            </button>
-          ) : null}
-          {canMutateStatus && next.includes('DELIVERED') ? (
-            <button
-              type="button"
-              className="clay-btn min-h-10 text-sm"
-              disabled={busy}
-              onClick={() => void setStatus('DELIVERED')}
-            >
-              Mark delivered
-            </button>
-          ) : null}
-          {canCancel && order.canCancel ? (
-            <button
-              type="button"
-              className="clay-btn-secondary min-h-10 border-red-300 text-sm text-red-700"
-              disabled={busy}
-              onClick={() => void cancelOrder()}
-            >
-              Cancel + refund
-            </button>
-          ) : null}
-        </div>
-        {!order.canFulfill && next.includes('SHIPPED') ? (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800" role="status">
-            Ship blocked until payment is resolved.
-          </p>
-        ) : null}
-      </section>
-
-      {order.returns?.length ? (
-        <section className="clay-panel mt-4 p-3 text-sm sm:p-4 print:hidden">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-            Returns
-          </h2>
-          <ul className="mt-2 space-y-2">
-            {order.returns.map((r) => (
-              <li key={r.id} className="flex flex-wrap items-baseline gap-2">
-                <Link
-                  className="font-medium underline-offset-2 hover:underline"
-                  href="/admin/commerce/returns?status=REQUESTED"
+          <section className="clay-panel p-3 text-sm sm:p-4">
+            <SectionTitle>Internal notes</SectionTitle>
+            <ul className="mt-2 space-y-2">
+              {order.notes.map((n) => (
+                <li
+                  key={n.id}
+                  className="rounded-md border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_92%,white)] px-2.5 py-2"
                 >
-                  {r.status}
-                </Link>
-                <span className="text-[var(--muted-foreground)]">{r.reason}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <section className="clay-panel mt-4 p-3 text-sm sm:p-4 print:hidden">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-          Internal notes
-        </h2>
-        <ul className="mt-2 space-y-2">
-          {order.notes.map((n) => (
-            <li
-              key={n.id}
-              className="rounded-lg border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_92%,white)] p-2.5"
-            >
-              <p className="break-words">{n.body}</p>
-              <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
-                {n.authorEmail ?? 'system'} · {new Date(n.createdAt).toLocaleString()}
-              </p>
-            </li>
-          ))}
-          {order.notes.length === 0 ? (
-            <li className="text-xs text-[var(--muted-foreground)]">No notes yet.</li>
-          ) : null}
-        </ul>
-        {canNote ? (
-          <form
-            className="mt-3 flex flex-col gap-2 sm:flex-row"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void addNote();
-            }}
-          >
-            <input
-              className="clay-input min-h-10 flex-1 text-sm"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Add internal note"
-              disabled={busy}
-              aria-label="Internal note"
-            />
-            <button
-              type="submit"
-              className="clay-btn min-h-10 text-sm"
-              disabled={busy || !note.trim()}
-            >
-              Add note
-            </button>
-          </form>
-        ) : null}
-      </section>
-
-      <section className="clay-panel mt-4 p-3 text-sm sm:p-4 print:hidden">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-          Timeline
-        </h2>
-        <ol className="mt-3 space-y-3 border-l-2 border-[var(--border-subtle)] pl-3">
-          {order.statusHistory.map((h, i) => (
-            <li key={`${h.status}-${h.createdAt}-${i}`} className="relative">
-              <span
-                className="absolute -left-[calc(0.375rem+1px)] top-1.5 h-2 w-2 rounded-full bg-[var(--primary)]"
-                aria-hidden
-              />
-              <span
-                className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${statusTone(h.status)}`}
+                  <p className="break-words leading-snug">{n.body}</p>
+                  <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                    {n.authorEmail ?? 'system'} · {new Date(n.createdAt).toLocaleString()}
+                  </p>
+                </li>
+              ))}
+              {order.notes.length === 0 ? (
+                <li className="text-xs text-[var(--muted-foreground)]">No notes yet.</li>
+              ) : null}
+            </ul>
+            {canNote ? (
+              <form
+                className="mt-3 flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void addNote();
+                }}
               >
-                {statusLabel(h.status)}
-              </span>
-              {h.note ? <p className="mt-1 text-xs text-[var(--muted-foreground)]">{h.note}</p> : null}
-              <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
-                {new Date(h.createdAt).toLocaleString()}
+                <input
+                  className="clay-input min-h-10 min-w-0 flex-1 text-sm"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Add internal note"
+                  disabled={busy}
+                  aria-label="Internal note"
+                />
+                <button
+                  type="submit"
+                  className="clay-btn min-h-10 shrink-0 text-sm"
+                  disabled={busy || !note.trim()}
+                >
+                  Add note
+                </button>
+              </form>
+            ) : null}
+          </section>
+
+          <section className="clay-panel p-3 text-sm sm:p-4">
+            <SectionTitle>Timeline</SectionTitle>
+            <ol className="mt-3 space-y-0">
+              {order.statusHistory.map((h, i) => (
+                <li
+                  key={`${h.status}-${h.createdAt}-${i}`}
+                  className="relative grid grid-cols-[0.75rem_minmax(0,1fr)] gap-x-3 pb-4 last:pb-0"
+                >
+                  <span className="relative flex justify-center" aria-hidden>
+                    {i < order.statusHistory.length - 1 ? (
+                      <span className="absolute top-2 bottom-[-0.25rem] w-px bg-[var(--border-subtle)]" />
+                    ) : null}
+                    <span
+                      className={`relative z-[1] mt-1 h-2 w-2 rounded-full ${statusDot(h.status)}`}
+                    />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${statusTone(h.status)}`}
+                      >
+                        {statusLabel(h.status)}
+                      </span>
+                      <time
+                        className="text-[11px] tabular-nums text-[var(--muted-foreground)]"
+                        dateTime={h.createdAt}
+                      >
+                        {new Date(h.createdAt).toLocaleString()}
+                      </time>
+                    </div>
+                    {h.note ? (
+                      <p className="mt-1 text-xs leading-snug text-[var(--muted-foreground)]">
+                        {h.note}
+                      </p>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </div>
+
+        {/* Sticky rail — actions + context first */}
+        <aside className="space-y-3 lg:sticky lg:top-3">
+          <section className="clay-panel space-y-3 p-3 text-sm sm:p-4">
+            <SectionTitle>Fulfillment</SectionTitle>
+            {showShipFields ? (
+              <div className="grid gap-2">
+                <label className="block text-[11px] text-[var(--muted-foreground)]">
+                  Carrier
+                  <input
+                    className="clay-input mt-1 w-full text-sm text-[var(--foreground)]"
+                    value={carrier}
+                    onChange={(e) => setCarrier(e.target.value)}
+                    disabled={!canMutateStatus || busy}
+                    placeholder="e.g. Delhivery"
+                  />
+                </label>
+                <label className="block text-[11px] text-[var(--muted-foreground)]">
+                  Tracking / AWB
+                  <input
+                    className="clay-input mt-1 w-full text-sm text-[var(--foreground)]"
+                    value={tracking}
+                    onChange={(e) => setTracking(e.target.value)}
+                    disabled={!canMutateStatus || busy}
+                    placeholder="AWB / tracking #"
+                  />
+                </label>
+              </div>
+            ) : null}
+            {order.shippedAt ? (
+              <p className="text-[11px] leading-snug text-[var(--muted-foreground)]">
+                Shipped {new Date(order.shippedAt).toLocaleString()}
+                {order.carrier ? ` · ${order.carrier}` : ''}
+                {order.trackingNumber ? ` · ${order.trackingNumber}` : ''}
               </p>
-            </li>
-          ))}
-        </ol>
-      </section>
+            ) : null}
+
+            <div className="flex flex-col gap-2">
+              {canMutateStatus && next.includes('PROCESSING') && order.canFulfill !== false ? (
+                <button
+                  type="button"
+                  className="clay-btn min-h-10 w-full text-sm"
+                  disabled={busy}
+                  onClick={() => void setStatus('PROCESSING')}
+                >
+                  Mark processing
+                </button>
+              ) : null}
+              {canMutateStatus && next.includes('SHIPPED') && order.canFulfill !== false ? (
+                <button
+                  type="button"
+                  className="clay-btn min-h-10 w-full text-sm"
+                  disabled={busy}
+                  onClick={() => void setStatus('SHIPPED')}
+                >
+                  Mark shipped
+                </button>
+              ) : null}
+              {canMutateStatus && next.includes('DELIVERED') ? (
+                <button
+                  type="button"
+                  className="clay-btn min-h-10 w-full text-sm"
+                  disabled={busy}
+                  onClick={() => void setStatus('DELIVERED')}
+                >
+                  Mark delivered
+                </button>
+              ) : null}
+              {canCancel && order.canCancel ? (
+                <button
+                  type="button"
+                  className="clay-btn-secondary min-h-10 w-full border-red-300 text-sm text-red-700"
+                  disabled={busy}
+                  onClick={() => void cancelOrder()}
+                >
+                  Cancel + refund
+                </button>
+              ) : null}
+            </div>
+            {!order.canFulfill && next.includes('SHIPPED') ? (
+              <p className="rounded-md bg-red-50 px-2.5 py-2 text-xs text-red-800" role="status">
+                Ship blocked until payment is resolved.
+              </p>
+            ) : null}
+          </section>
+
+          <section className="clay-panel space-y-2.5 p-3 text-sm sm:p-4">
+            <SectionTitle>Customer</SectionTitle>
+            <div>
+              <Link
+                className="break-words font-medium underline-offset-2 hover:underline"
+                href={`/admin/commerce/customers/${order.customer.id}`}
+              >
+                {order.customer.email}
+              </Link>
+              {order.customer.displayName ? (
+                <p className="mt-0.5 text-[var(--muted-foreground)]">{order.customer.displayName}</p>
+              ) : null}
+              <p className="mt-1">
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+                    order.customer.isActive
+                      ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80'
+                      : 'bg-red-50 text-red-800 ring-1 ring-red-200/80'
+                  }`}
+                >
+                  {order.customer.isActive ? 'Active' : 'Suspended'}
+                </span>
+              </p>
+            </div>
+
+            <div className="border-t border-[var(--border-subtle)] pt-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted-foreground)]">
+                Ship to
+              </p>
+              <div className="mt-1 space-y-0.5">
+                {formatAddress(order.shippingAddress).map((l) => (
+                  <p key={l} className="break-words leading-snug">
+                    {l}
+                  </p>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[11px] text-[var(--muted-foreground)]">
+                {shippingMethodLabel(order.shippingMethod)}
+              </p>
+            </div>
+          </section>
+
+          <section className="clay-panel space-y-2.5 p-3 text-sm sm:p-4">
+            <SectionTitle>Payment</SectionTitle>
+            <p className="rounded-md bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-900 ring-1 ring-amber-200/80">
+              Provider · MOCK
+            </p>
+            {order.paymentVerification.map((p) => (
+              <div
+                key={p.provider + p.status}
+                className="flex flex-wrap items-center gap-x-2 gap-y-1"
+              >
+                <span className="text-[11px] uppercase tracking-wide text-[var(--muted-foreground)]">
+                  {p.provider}
+                </span>
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${paymentTone(p.status)}`}
+                >
+                  {paymentLabel(p.status)}
+                </span>
+                {p.verified ? (
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                    Verified
+                  </span>
+                ) : null}
+                <span className="ml-auto tabular-nums font-medium">{formatInr(p.amountPaise)}</span>
+              </div>
+            ))}
+            <dl className="space-y-1 border-t border-[var(--border-subtle)] pt-2.5 text-[12px]">
+              <div className="flex justify-between gap-3 text-[var(--muted-foreground)]">
+                <dt>Subtotal</dt>
+                <dd className="tabular-nums">{formatInr(order.subtotalPaise)}</dd>
+              </div>
+              {order.discountPaise > 0 ? (
+                <div className="flex justify-between gap-3 text-[var(--muted-foreground)]">
+                  <dt>Discount</dt>
+                  <dd className="tabular-nums">−{formatInr(order.discountPaise)}</dd>
+                </div>
+              ) : null}
+              <div className="flex justify-between gap-3 text-[var(--muted-foreground)]">
+                <dt>Shipping</dt>
+                <dd className="tabular-nums">{formatInr(order.shippingPaise)}</dd>
+              </div>
+              {order.taxPaise > 0 ? (
+                <div className="flex justify-between gap-3 text-[var(--muted-foreground)]">
+                  <dt>Tax</dt>
+                  <dd className="tabular-nums">{formatInr(order.taxPaise)}</dd>
+                </div>
+              ) : null}
+              <div className="flex justify-between gap-3 pt-1 text-sm font-semibold text-[var(--foreground)]">
+                <dt>Total</dt>
+                <dd className="tabular-nums">{formatInr(order.totalPaise)}</dd>
+              </div>
+              {order.couponCode ? (
+                <div className="flex justify-between gap-3 pt-0.5 text-[11px] text-[var(--muted-foreground)]">
+                  <dt>Coupon</dt>
+                  <dd>{order.couponCode}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -55,7 +55,7 @@ function LegacyGiftHomeFallback() {
         ctaLabel2="Browse Hampers"
         ctaHref2="/gift/collections/ready-hampers"
       />
-      <div className="mx-auto max-w-5xl px-gs-4 py-gs-7 sm:px-gs-6">
+      <div className="mx-auto w-full px-gs-4 py-gs-7 sm:px-gs-6 lg:px-gs-8">
         <p className="gift-muted mb-gs-7">
           Homepage CMS is not published yet — showing a minimal fallback. Publish the{' '}
           <code className="text-caption">home</code> marketing page in admin.

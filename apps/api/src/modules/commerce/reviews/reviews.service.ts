@@ -4,10 +4,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, ReviewStatus } from '@prisma/client';
-import type { CreateReviewBody, ModerateReviewBody } from '@inabiya/validation';
+import { OrderStatus, Prisma, ReviewStatus } from '@prisma/client';
+import type {
+  AdminReviewsQuery,
+  CreateReviewBody,
+  ModerateReviewBody,
+} from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
+import {
+  adminReviewKeysetAfter,
+  decodeAdminReviewCursor,
+  encodeAdminReviewCursor,
+} from './admin-reviews-cursor';
 
 const VERIFIED_STATUSES: OrderStatus[] = [
   OrderStatus.PAID,
@@ -151,17 +160,58 @@ export class ReviewsService {
     };
   }
 
-  async listAdmin(status?: ReviewStatus) {
+  async listAdmin(query: AdminReviewsQuery = { limit: 25 }) {
+    const limit = query.limit ?? 25;
+    const andParts: Prisma.ProductReviewWhereInput[] = [];
+
+    if (query.status) andParts.push({ status: query.status });
+
+    if (query.q?.trim()) {
+      const term = query.q.trim();
+      andParts.push({
+        OR: [
+          { body: { contains: term, mode: 'insensitive' } },
+          { headline: { contains: term, mode: 'insensitive' } },
+          { product: { title: { contains: term, mode: 'insensitive' } } },
+          { product: { slug: { contains: term, mode: 'insensitive' } } },
+          { user: { email: { contains: term, mode: 'insensitive' } } },
+          { user: { displayName: { contains: term, mode: 'insensitive' } } },
+        ],
+      });
+    }
+
+    if (query.cursor) {
+      try {
+        andParts.push(
+          adminReviewKeysetAfter(decodeAdminReviewCursor(query.cursor)) as Prisma.ProductReviewWhereInput,
+        );
+      } catch {
+        throw new BadRequestException({
+          code: 'INVALID_CURSOR',
+          message: 'Invalid pagination cursor.',
+        });
+      }
+    }
+
     const rows = await this.prisma.productReview.findMany({
-      where: status ? { status } : undefined,
-      orderBy: { createdAt: 'desc' },
-      take: 100,
+      where: andParts.length ? { AND: andParts } : undefined,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
       include: {
         product: { select: { slug: true, title: true } },
         user: { select: { email: true, displayName: true } },
       },
     });
-    return rows.map((r) => ({
+
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const last = page[page.length - 1];
+    const nextCursor =
+      hasMore && last
+        ? encodeAdminReviewCursor({ createdAt: last.createdAt, id: last.id })
+        : null;
+
+    const items = page.map((r) => ({
       id: r.id,
       rating: r.rating,
       headline: r.headline,
@@ -173,6 +223,8 @@ export class ReviewsService {
       customerEmail: r.user.email,
       customerName: r.user.displayName,
     }));
+
+    return { items, nextCursor, limit };
   }
 
   async moderate(reviewId: string, body: ModerateReviewBody, actorId: string, requestId?: string) {

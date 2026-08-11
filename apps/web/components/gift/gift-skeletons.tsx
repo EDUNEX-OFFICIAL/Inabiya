@@ -47,7 +47,7 @@ export function PdpSkeleton() {
 /** Compact list pages (cart, wishlist, gift box). */
 export function GiftListSkeleton({ label = 'Loading' }: { label?: string }) {
   return (
-    <main className="gift-page max-w-3xl space-y-gs-4" aria-busy="true" aria-label={label}>
+    <main className="gift-page space-y-gs-4" aria-busy="true" aria-label={label}>
       <Pulse className="h-8 w-48 max-w-full rounded" />
       <Pulse className="h-4 w-72 max-w-full rounded" />
       <ul className="space-y-gs-3 pt-gs-2">

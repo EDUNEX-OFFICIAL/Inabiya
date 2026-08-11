@@ -106,7 +106,7 @@ module.exports = {
         modal: 'var(--z-modal, 50)',
       },
       maxWidth: {
-        page: 'var(--page-max, 64rem)',
+        page: 'var(--page-max, none)',
       },
       minHeight: {
         tap: 'var(--tap-min, 48px)',

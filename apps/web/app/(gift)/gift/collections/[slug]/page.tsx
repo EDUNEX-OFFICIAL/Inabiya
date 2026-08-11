@@ -179,7 +179,7 @@ export default async function GiftCollectionPage({
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/40 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-page px-gs-4 py-gs-5 sm:px-gs-6 sm:py-gs-6 lg:py-gs-7">
+        <div className="relative mx-auto w-full px-gs-4 py-gs-5 sm:px-gs-6 sm:py-gs-6 lg:px-gs-8 lg:py-gs-7">
           <nav className="text-body text-foreground/55" aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <li>
@@ -234,7 +234,7 @@ export default async function GiftCollectionPage({
         </div>
       </section>
 
-      <div className="mx-auto max-w-page px-gs-4 py-gs-5 sm:px-gs-6 sm:py-gs-6">
+      <div className="mx-auto w-full px-gs-4 py-gs-5 sm:px-gs-6 sm:py-gs-6 lg:px-gs-8">
         <div className="flex flex-col gap-gs-5 md:flex-row md:items-start md:gap-gs-7">
           <CollectionFilters collection={collection} refine={refine} />
 

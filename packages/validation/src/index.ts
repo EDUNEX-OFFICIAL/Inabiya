@@ -1031,8 +1031,17 @@ export const moderateReviewBodySchema = z.object({
   moderationNote: z.string().trim().max(500).optional(),
 });
 
+/** Admin reviews desk — keyset cursor (createdAt DESC). */
+export const adminReviewsQuerySchema = z.object({
+  q: z.string().trim().min(1).max(120).optional(),
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED']).optional(),
+  cursor: z.string().trim().min(1).max(500).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(25),
+});
+
 export type CreateReviewBody = z.infer<typeof createReviewBodySchema>;
 export type ModerateReviewBody = z.infer<typeof moderateReviewBodySchema>;
+export type AdminReviewsQuery = z.infer<typeof adminReviewsQuerySchema>;
 
 /** Phase 5 — returns */
 export const createReturnBodySchema = z.object({

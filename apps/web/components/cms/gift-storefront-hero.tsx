@@ -135,7 +135,7 @@ export function GiftStorefrontHero({
       <style dangerouslySetInnerHTML={{ __html: GIFT_HERO_FOUC_CSS }} />
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
 
-      <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full max-w-page gap-gs-3 lg:grid-cols-2 lg:items-stretch lg:gap-gs-8">
+      <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full gap-gs-3 lg:grid-cols-2 lg:items-stretch lg:gap-gs-8">
         <div className="gift-hero-split__copy flex flex-col items-center justify-center text-center lg:items-start lg:text-left">
           <p data-hero-anim="eyebrow" className="gift-hero-split__eyebrow gift-overline">
             {eyebrowText}

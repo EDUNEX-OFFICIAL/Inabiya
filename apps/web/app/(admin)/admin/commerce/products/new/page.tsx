@@ -104,7 +104,7 @@ export default function NewProductPage() {
   }
 
   return (
-    <div className="w-full max-w-2xl">
+    <div className="w-full">
       <Link href="/admin/commerce/products" className="clay-btn-ghost text-sm">
         ← Products
       </Link>

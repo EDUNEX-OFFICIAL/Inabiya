@@ -32,7 +32,7 @@ export function GiftLayoutChrome({ children }: { children: ReactNode }) {
         </header>
       ) : isInvoicePage ? null : (
         <header className="clay-nav relative sticky top-0 z-30 px-gs-4 py-gs-3 sm:px-gs-6 sm:py-gs-4 print:hidden">
-          <div className="relative mx-auto flex w-full max-w-page items-center justify-between gap-gs-3">
+          <div className="relative mx-auto flex w-full items-center justify-between gap-gs-3">
             <Link href="/gift" className="gift-h2 shrink-0 text-primary">
               Inabiya
             </Link>

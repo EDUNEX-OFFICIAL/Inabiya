@@ -282,7 +282,7 @@ function GiftBoxWizard() {
     (box.remainingBudgetPaise != null && box.remainingBudgetPaise < 0);
 
   return (
-    <main className="gift-page max-w-3xl">
+    <main className="gift-page">
       <Link href="/gift" className="gift-link text-body">
         ← Gift home
       </Link>

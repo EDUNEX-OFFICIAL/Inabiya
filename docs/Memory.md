@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 11, 2026 (Commerce Ops readability)
+Last Updated: August 11, 2026 (web+api deploy)
 
 ---
 
@@ -141,10 +141,10 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **QA:** hard-refresh `/admin/commerce` — neutral canvas vs white panels
+1. **QA:** hard-refresh Soft Gift + admin (reviews, order detail, products/new)
 2. **QA:** `/admin/commerce/suppliers` + New PO → Receive all → inventory
-3. **Commit/push** when ready
-4. Resume OPS-10 after readability QA
+3. **Commit/push** when ready (working tree still dirty after deploy)
+4. Resume OPS-10 after storefront / order desk QA
 5. —
 
 
@@ -1087,6 +1087,62 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-11 (Deploy web+api)
+
+- **Live:** `bash scripts/deploy-vps.sh web api` @ image tag `14c6229` (working tree included) — migrate no pending; smoke health/ready 200; api+web healthy; worker recreated.
+- Includes uncommitted: reviews cursor pagination, Soft Gift full-width, order case-file, ops chips, product new form, etc.
+- Next: hard-refresh QA; commit/push when ready.
+
+### Session — 2026-08-11 (Reviews desk pagination)
+
+- Admin reviews: keyset cursor pagination (`limit` 25, Prev/Next) — same pattern as customers.
+- API `GET /admin/commerce/reviews` now returns `{ items, nextCursor, limit }`; Zod query (`status`, `q`, `cursor`, `limit`). Search moved server-side.
+- Cursor encode/decode check: `admin-reviews-cursor.check.ts`.
+
+### Session — 2026-08-11 (Reviews desk default All)
+
+- Fix: `/admin/commerce/reviews` defaulted to Pending — empty after moderation even when approved/rejected rows exist.
+- Default chip/URL now **All** (no `status` param); Pending/Approved/Rejected remain explicit filters. Matches customers desk pattern.
+
+### Session — 2026-08-11 (Discovery chip active CSS)
+
+- **Override:** Phase 14 active; human: Discovery pills “not selecting”
+- Root cause: `[data-theme=gift][data-density=compact] .clay-chip` overrode Tailwind active utilities (state worked, visuals did not)
+- Fix: `.clay-chip--active` / `[aria-pressed=true]` compact rules; `opsChipClass` uses modifier class
+- Changed: `globals.css`, `ops-desk-ui.ts`, Memory
+- Next: hard-refresh product edit Discovery QA
+
+### Session — 2026-08-11 (New product form full-width)
+
+- Phase: 14 (OPS-10) — UI polish override (narrow form)
+- Done: Removed `max-w-2xl` from `/admin/commerce/products/new` so form uses main pane width
+- Changed: `apps/web/app/(admin)/admin/commerce/products/new/page.tsx`
+- Next: QA hard-refresh; product edit page still `max-w-4xl` if same ask
+
+### Session — 2026-08-11 (Admin order case-file redesign)
+
+- **Override:** Phase 14 active; human asked order detail UI redesign — no deploy.
+- Done: denser `max-w-5xl` layout; sticky right rail (Fulfillment → Customer → Payment); lines/notes/timeline in main column; status-colored timeline dots; clearer totals / meta row.
+- Changed: `apps/web/app/(admin)/admin/commerce/orders/[id]/page.tsx`, Memory
+- Risk: none functional — logic/AuthZ unchanged
+- Next: hard-refresh QA; commit when ready; no deploy this session
+
+### Session — 2026-08-11 (Soft Gift storefront full-width sweep)
+
+- Phase: 14 (UI polish override — remaining shop pages)
+- Done: widened corporate hero, wishlist, BYB, cart, home fallback, list skeletons (drop page-level max-w)
+- Left narrow on purpose: checkout, account, orders, invoice, about/contact/CMS prose, FAQ/reviews copy
+- Already fluid via `--page-max: none`: products PLP, PDP, collections, homepage CMS bands
+- Next: hard-refresh shop routes QA
+
+### Session — 2026-08-11 (Soft Gift storefront full-width)
+
+- Phase: 14 (UI polish override — collection PLP side gutters)
+- Done: gift `--page-max` → `none` (was 64rem); collection PLP + nav + hero drop `max-w-page`; reading pages keep their own `max-w-*`
+- Changed: `globals.css`, `tailwind.config.js`, collection page/loading, `gift-layout-chrome`, `gift-storefront-hero`, Memory
+- Risk: ultrawide homepage bands now fluid — intentional
+- Next: hard-refresh collection PLP QA
 
 ### Session — 2026-08-11 (Commerce Ops readability)
 

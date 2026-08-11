@@ -61,7 +61,7 @@ export default function WishlistPage() {
   }
 
   return (
-    <main className="gift-page max-w-2xl">
+    <main className="gift-page">
       <Link href="/gift/products" className="gift-link text-body">
         ← Continue shopping
       </Link>

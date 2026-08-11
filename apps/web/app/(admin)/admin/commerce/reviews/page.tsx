@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MessageSquareQuote, RefreshCw, Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageSquareQuote, RefreshCw, Search, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
@@ -21,23 +21,28 @@ type ReviewRow = {
   createdAt: string;
 };
 
+type ReviewsListResponse = {
+  items: ReviewRow[];
+  nextCursor: string | null;
+  limit: number;
+};
+
 type StatusFilter = '' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
+const PAGE_LIMIT = 25;
+
 const STATUS_CHIPS: Array<{ value: StatusFilter; label: string }> = [
+  { value: '', label: 'All' },
   { value: 'PENDING', label: 'Pending' },
   { value: 'APPROVED', label: 'Approved' },
   { value: 'REJECTED', label: 'Rejected' },
-  { value: '', label: 'All' },
 ];
 
 function parseStatus(raw: string | null): StatusFilter {
   if (raw === 'APPROVED' || raw === 'REJECTED' || raw === 'PENDING') return raw;
-  if (raw === 'ALL' || raw === 'all') return '';
-  // Default queue: pending moderation
-  if (raw == null) return 'PENDING';
-  return 'PENDING';
+  // Default: all statuses (approved/rejected stay visible after moderation)
+  return '';
 }
-
 
 function statusLabel(status: string): string {
   if (status === 'PENDING') return 'Pending';
@@ -76,10 +81,13 @@ function ReviewsDeskInner() {
   const searchParams = useSearchParams();
   const status = parseStatus(searchParams.get('status'));
   const qParam = searchParams.get('q') ?? '';
+  const cursorParam = searchParams.get('cursor') ?? '';
   const canModerate =
     getStoredUser()?.roles.some((r) => r === 'COMMERCE_ADMIN' || r === 'SUPER_ADMIN') ?? false;
 
   const [rows, setRows] = useState<ReviewRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [qInput, setQInput] = useState(qParam);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,28 +97,30 @@ function ReviewsDeskInner() {
 
   const loadSeq = useRef(0);
   const hasLoadedOnce = useRef(false);
-
-  const filterActive = Boolean(qParam || status !== 'PENDING');
+  const filterKey = `${qParam}\0${status}`;
+  const filterActive = Boolean(qParam || status);
+  const pageIndex = cursorStack.length + 1;
+  const canPrev = cursorStack.length > 0 || Boolean(cursorParam);
 
   const patchQuery = useCallback(
     (patch: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString());
       for (const [k, v] of Object.entries(patch)) {
-        if (k === 'status') continue;
         if (v == null || v === '') params.delete(k);
         else params.set(k, v);
       }
-      if (Object.prototype.hasOwnProperty.call(patch, 'status')) {
-        const s = patch.status;
-        if (s === '') params.set('status', 'ALL');
-        else if (s === 'PENDING' || s == null) params.delete('status');
-        else params.set('status', s);
+      if (Object.keys(patch).some((k) => k === 'q' || k === 'status')) {
+        params.delete('cursor');
       }
       const qs = params.toString();
       router.replace(qs ? `/admin/commerce/reviews?${qs}` : '/admin/commerce/reviews');
     },
     [router, searchParams],
   );
+
+  useEffect(() => {
+    setCursorStack([]);
+  }, [filterKey]);
 
   const load = useCallback(async () => {
     const seq = ++loadSeq.current;
@@ -119,10 +129,17 @@ function ReviewsDeskInner() {
     if (!hasLoadedOnce.current) setLoading(true);
     else setRefreshing(true);
     try {
-      const q = status ? `?status=${status}` : '';
-      const data = await apiAuth<ReviewRow[]>(`/admin/commerce/reviews${q}`);
+      const params = new URLSearchParams();
+      if (qParam) params.set('q', qParam);
+      if (status) params.set('status', status);
+      if (cursorParam) params.set('cursor', cursorParam);
+      params.set('limit', String(PAGE_LIMIT));
+      const data = await apiAuth<ReviewsListResponse>(
+        `/admin/commerce/reviews?${params.toString()}`,
+      );
       if (seq !== loadSeq.current) return;
-      setRows(data);
+      setRows(data.items ?? []);
+      setNextCursor(data.nextCursor);
       hasLoadedOnce.current = true;
     } catch (e) {
       if (seq !== loadSeq.current) return;
@@ -133,7 +150,7 @@ function ReviewsDeskInner() {
         setRefreshing(false);
       }
     }
-  }, [status]);
+  }, [qParam, status, cursorParam]);
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
@@ -156,28 +173,27 @@ function ReviewsDeskInner() {
     return () => window.clearTimeout(t);
   }, [qInput, qParam, patchQuery]);
 
-  const displayed = useMemo(() => {
-    const needle = qParam.trim().toLowerCase();
-    if (!needle) return rows;
-    return rows.filter((r) => {
-      const hay = [
-        r.product.title,
-        r.product.slug,
-        r.customerEmail,
-        r.customerName ?? '',
-        r.headline ?? '',
-        r.body,
-        r.status,
-      ]
-        .join(' ')
-        .toLowerCase();
-      return hay.includes(needle);
-    });
-  }, [rows, qParam]);
-
   function clearFilters() {
     setQInput('');
+    setCursorStack([]);
     router.replace('/admin/commerce/reviews');
+  }
+
+  function goNext() {
+    if (!nextCursor) return;
+    setCursorStack((s) => [...s, cursorParam]);
+    patchQuery({ cursor: nextCursor });
+  }
+
+  function goPrev() {
+    if (cursorStack.length === 0) {
+      if (!cursorParam) return;
+      patchQuery({ cursor: null });
+      return;
+    }
+    const prev = cursorStack[cursorStack.length - 1] ?? '';
+    setCursorStack((s) => s.slice(0, -1));
+    patchQuery({ cursor: prev || null });
   }
 
   async function moderate(id: string, next: 'APPROVED' | 'REJECTED') {
@@ -199,7 +215,9 @@ function ReviewsDeskInner() {
     }
   }
 
-  const countLabel = loading ? 'Loading…' : `${displayed.length} reviews`;
+  const countLabel = loading
+    ? 'Loading…'
+    : `${rows.length} on this page${nextCursor ? ' · more' : ''}`;
 
   function rowActions(r: ReviewRow) {
     if (!canModerate || r.status !== 'PENDING') return null;
@@ -350,15 +368,11 @@ function ReviewsDeskInner() {
         </div>
       ) : null}
 
-      {!loading && displayed.length === 0 ? (
+      {!loading && rows.length === 0 ? (
         <div className="clay-panel flex flex-col items-center gap-3 px-6 py-12 text-center">
           <MessageSquareQuote className="h-8 w-8 opacity-30" aria-hidden />
           <p className="text-sm opacity-70">
-            {filterActive
-              ? 'No reviews match this filter.'
-              : status === 'PENDING'
-                ? 'No pending reviews.'
-                : 'No reviews yet.'}
+            {filterActive ? 'No reviews match this filter.' : 'No reviews yet.'}
           </p>
           {filterActive ? (
             <button type="button" className="clay-btn-secondary text-sm" onClick={clearFilters}>
@@ -368,11 +382,11 @@ function ReviewsDeskInner() {
         </div>
       ) : null}
 
-      {!loading && displayed.length > 0 ? (
+      {!loading && rows.length > 0 ? (
         <div className={refreshing ? 'opacity-70 transition-opacity' : undefined} aria-busy={refreshing}>
           <div className="md:hidden">
             <ul className="space-y-2">
-              {displayed.map((r) => (
+              {rows.map((r) => (
                 <li key={r.id} className="clay-panel p-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -424,7 +438,7 @@ function ReviewsDeskInner() {
                     </tr>
                   </thead>
                   <tbody>
-                    {displayed.map((r) => (
+                    {rows.map((r) => (
                       <tr
                         key={r.id}
                         className="border-b border-[var(--border-subtle)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)]"
@@ -464,15 +478,43 @@ function ReviewsDeskInner() {
                             {statusLabel(r.status)}
                           </span>
                         </td>
-                        <td className="px-2 py-2.5 pr-3 align-top">{rowActions(r) ?? (
-                          <span className="text-xs text-[var(--muted-foreground)]">—</span>
-                        )}</td>
+                        <td className="px-2 py-2.5 pr-3 align-top">
+                          {rowActions(r) ?? (
+                            <span className="text-xs text-[var(--muted-foreground)]">—</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </OpsTableScroll>
+          </div>
+        </div>
+      ) : null}
+
+      {!loading && rows.length > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs tabular-nums text-[var(--muted-foreground)]">Page {pageIndex}</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="clay-btn-secondary inline-flex min-h-9 items-center gap-1 px-3 text-sm disabled:opacity-40"
+              disabled={!canPrev || loading || refreshing}
+              onClick={goPrev}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+              Prev
+            </button>
+            <button
+              type="button"
+              className="clay-btn-secondary inline-flex min-h-9 items-center gap-1 px-3 text-sm disabled:opacity-40"
+              disabled={!nextCursor || loading || refreshing}
+              onClick={goNext}
+            >
+              Next
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+            </button>
           </div>
         </div>
       ) : null}

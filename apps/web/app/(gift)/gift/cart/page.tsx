@@ -88,7 +88,7 @@ export default function CartPage() {
   }
 
   return (
-    <main className="gift-page max-w-3xl">
+    <main className="gift-page">
       <Link href="/gift" className="gift-link text-body">
         ← Continue shopping
       </Link>

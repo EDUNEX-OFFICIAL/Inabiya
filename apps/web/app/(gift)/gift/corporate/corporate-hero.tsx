@@ -48,7 +48,7 @@ export function CorporateHero() {
       <style dangerouslySetInnerHTML={{ __html: GIFT_HERO_FOUC_CSS }} />
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
 
-      <div className="gift-hero-split__grid relative z-10 mx-auto grid max-w-6xl items-center gap-gs-6 lg:grid-cols-2 lg:gap-gs-8">
+      <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full items-center gap-gs-6 lg:grid-cols-2 lg:gap-gs-8">
         <div className="gift-hero-split__copy flex flex-col text-left">
           <p data-hero-anim="brand" className="gift-display text-primary sm:text-5xl">
             Inabiya
