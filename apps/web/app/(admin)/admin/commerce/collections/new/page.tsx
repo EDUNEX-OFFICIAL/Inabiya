@@ -8,22 +8,19 @@ import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { CollectionSmartBuilder } from '@/components/commerce-ops/collection-smart-builder';
+import { CollectionManualPicker } from '@/components/commerce-ops/collection-manual-picker';
 import {
   EMPTY_COLLECTION_FORM,
   EMPTY_SMART,
   formToCollectionBody,
   slugifyCollection,
-  toggleProductSlug,
   type CollectionDetail,
   type CollectionFormState,
 } from '@/lib/collection-admin';
 
-type ProductOpt = { slug: string; title: string };
-
 export default function NewCollectionPage() {
   const router = useRouter();
   const [form, setForm] = useState<CollectionFormState>(EMPTY_COLLECTION_FORM);
-  const [productOptions, setProductOptions] = useState<ProductOpt[]>([]);
   const [slugDirty, setSlugDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,15 +28,7 @@ export default function NewCollectionPage() {
   useEffect(() => {
     if (!getStoredAccessToken()) {
       router.replace(loginUrl('/admin/commerce/collections/new'));
-      return;
     }
-    void apiAuth<{ items: Array<{ slug: string; title: string }> }>(
-      '/admin/catalog/products?limit=50&sort=title_asc',
-    )
-      .then((page) =>
-        setProductOptions((page.items ?? []).map((p) => ({ slug: p.slug, title: p.title }))),
-      )
-      .catch(() => setProductOptions([]));
   }, [router]);
 
   async function onCreate(e: FormEvent) {
@@ -165,26 +154,10 @@ export default function NewCollectionPage() {
               onChange={(smartRules) => setForm((f) => ({ ...f, smartRules }))}
             />
           ) : (
-            <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-[var(--border-subtle)] p-2">
-              {productOptions.map((p) => {
-                const on = form.productSlugs.includes(p.slug);
-                return (
-                  <button
-                    key={p.slug}
-                    type="button"
-                    className={opsChipClass(on)}
-                    onClick={() =>
-                      setForm((f) => ({
-                        ...f,
-                        productSlugs: toggleProductSlug(f.productSlugs, p.slug),
-                      }))
-                    }
-                  >
-                    {p.title}
-                  </button>
-                );
-              })}
-            </div>
+            <CollectionManualPicker
+              selectedSlugs={form.productSlugs}
+              onChange={(productSlugs) => setForm((f) => ({ ...f, productSlugs }))}
+            />
           )}
         </div>
 

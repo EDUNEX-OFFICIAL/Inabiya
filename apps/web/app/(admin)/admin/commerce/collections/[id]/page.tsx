@@ -3,25 +3,22 @@
 import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Package } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { CollectionSmartBuilder } from '@/components/commerce-ops/collection-smart-builder';
+import { CollectionManualPicker } from '@/components/commerce-ops/collection-manual-picker';
 import {
   EMPTY_COLLECTION_FORM,
   EMPTY_SMART,
-  conditionPlainLabel,
   detailToForm,
   formToCollectionBody,
   slugifyCollection,
-  toggleProductSlug,
   type CollectionDetail,
   type CollectionFormState,
   type CollectionProduct,
 } from '@/lib/collection-admin';
-
-type ProductOpt = { slug: string; title: string };
 
 export default function CollectionEditPage() {
   const params = useParams();
@@ -30,7 +27,6 @@ export default function CollectionEditPage() {
   const [form, setForm] = useState<CollectionFormState>(EMPTY_COLLECTION_FORM);
   const [products, setProducts] = useState<CollectionProduct[]>([]);
   const [productsSource, setProductsSource] = useState<'manual' | 'smart'>('manual');
-  const [productOptions, setProductOptions] = useState<ProductOpt[]>([]);
   const [slugDirty, setSlugDirty] = useState(true);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -42,17 +38,11 @@ export default function CollectionEditPage() {
     setLoading(true);
     setError(null);
     try {
-      const [detail, productsPage] = await Promise.all([
-        apiAuth<CollectionDetail>(`/admin/catalog/collections/${id}`),
-        apiAuth<{ items: Array<{ slug: string; title: string }> }>(
-          '/admin/catalog/products?limit=50&sort=title_asc',
-        ),
-      ]);
+      const detail = await apiAuth<CollectionDetail>(`/admin/catalog/collections/${id}`);
       const assigned = (detail.products ?? []).map((p) => p.slug);
       setForm(detailToForm(detail, assigned));
       setProducts(detail.products ?? []);
       setProductsSource(detail.productsSource ?? (detail.membershipMode === 'SMART' ? 'smart' : 'manual'));
-      setProductOptions((productsPage.items ?? []).map((p) => ({ slug: p.slug, title: p.title })));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load collection');
     } finally {
@@ -96,7 +86,7 @@ export default function CollectionEditPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="relative mx-auto max-w-5xl pb-28">
       <OpsPageHeader
         title={form.title || 'Collection'}
         description={
@@ -132,14 +122,8 @@ export default function CollectionEditPage() {
           {error}
         </p>
       ) : null}
-      {notice ? (
-        <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
-          {notice}
-        </p>
-      ) : null}
 
-      <form onSubmit={(e) => void onSave(e)} className="grid gap-4 lg:grid-cols-[1fr_20rem]">
-        <div className="space-y-4">
+      <form onSubmit={(e) => void onSave(e)} className="space-y-4">
           <section className="clay-panel space-y-4 p-4 sm:p-5">
             <h2 className="font-display text-base">Details</h2>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -272,49 +256,16 @@ export default function CollectionEditPage() {
             </div>
 
             {form.membershipMode === 'SMART' ? (
-              <>
-                <CollectionSmartBuilder
-                  rules={form.smartRules}
-                  onChange={(smartRules) => setForm((f) => ({ ...f, smartRules }))}
-                />
-                {form.smartRules.conditions.length > 0 ? (
-                  <ul className="space-y-1 text-xs text-[var(--muted-foreground)]">
-                    {form.smartRules.conditions.map((c, i) => (
-                      <li key={i}>• {conditionPlainLabel(c)}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </>
+              <CollectionSmartBuilder
+                rules={form.smartRules}
+                onChange={(smartRules) => setForm((f) => ({ ...f, smartRules }))}
+              />
             ) : (
-              <div>
-                <p className="mb-2 text-xs font-medium text-[var(--muted-foreground)]">
-                  Select products
-                </p>
-                <div className="flex max-h-48 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-[var(--border-subtle)] p-2">
-                  {productOptions.length === 0 ? (
-                    <span className="text-xs opacity-50">No products</span>
-                  ) : (
-                    productOptions.map((p) => {
-                      const on = form.productSlugs.includes(p.slug);
-                      return (
-                        <button
-                          key={p.slug}
-                          type="button"
-                          className={opsChipClass(on)}
-                          onClick={() =>
-                            setForm((f) => ({
-                              ...f,
-                              productSlugs: toggleProductSlug(f.productSlugs, p.slug),
-                            }))
-                          }
-                        >
-                          {p.title}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
+              <CollectionManualPicker
+                selectedSlugs={form.productSlugs}
+                knownProducts={products.map((p) => ({ slug: p.slug, title: p.title }))}
+                onChange={(productSlugs) => setForm((f) => ({ ...f, productSlugs }))}
+              />
             )}
           </section>
 
@@ -342,9 +293,26 @@ export default function CollectionEditPage() {
                 {products.map((p) => (
                   <li
                     key={p.id}
-                    className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm"
+                    className="flex flex-wrap items-center gap-3 px-3 py-2.5 text-sm"
                   >
-                    <div className="min-w-0">
+                    {p.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- admin media URLs are arbitrary CDNs
+                      <img
+                        src={p.imageUrl}
+                        alt={p.imageAlt?.trim() || p.title}
+                        width={44}
+                        height={44}
+                        className="h-11 w-11 shrink-0 rounded-lg object-cover ring-1 ring-[var(--border-subtle)]"
+                      />
+                    ) : (
+                      <span
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] text-[color:var(--muted-foreground)]"
+                        aria-hidden
+                      >
+                        <Package className="h-4 w-4 opacity-50" />
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{p.title}</p>
                       <p className="font-mono text-[11px] opacity-55">{p.slug}</p>
                     </div>
@@ -403,21 +371,20 @@ export default function CollectionEditPage() {
               <span className="font-medium text-[var(--muted-foreground)]">Allow search index</span>
             </label>
           </section>
-        </div>
 
-        <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
-          <div className="clay-panel space-y-3 p-4">
-            <button type="submit" className="clay-btn w-full min-h-10 text-sm" disabled={busy}>
+        {/* Sticky save — same pattern as product edit */}
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 md:left-56 lg:left-60">
+          <div className="clay-panel pointer-events-auto flex w-full max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
+            <button type="submit" className="clay-btn min-h-10 text-sm" disabled={busy}>
               {busy ? 'Saving…' : 'Save collection'}
             </button>
-            <Link
-              href="/admin/commerce/collections"
-              className="clay-btn-secondary flex min-h-10 w-full items-center justify-center text-sm"
-            >
-              Back to list
-            </Link>
+            {notice ? (
+              <div className="gift-banner gift-banner--success py-1.5 text-sm" role="status">
+                {notice}
+              </div>
+            ) : null}
           </div>
-        </aside>
+        </div>
       </form>
     </div>
   );

@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 11, 2026 (web+api deploy)
+Last Updated: August 12, 2026 (admin UI English only)
 
 ---
 
@@ -1087,6 +1087,98 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-12 (Product edit more icon actions)
+
+- Analysed remaining text buttons; converted secondary chrome to OpsIcon*
+- Media upload/library/paste, video thumb, back, view, draft, add FAQ/item
+- Kept text: Publish, Save changes, Save stock/MRP, section nav, chips, FAQ mode radios
+- Next: hard-refresh product edit mobile QA
+
+### Session — 2026-08-12 (Ops icon actions pattern)
+
+- Opinion: not global icon-only — secondary toolbar only; primary CTAs keep text
+- Added `OpsIconButton` / `OpsIconLink` (icon mobile, icon+label from `sm`)
+- Applied on product edit: inventory, ledger, URLs, clear video, Google test, removes
+- Next: reuse on other ops desks when crowding shows up
+
+### Session — 2026-08-12 (Product edit collapsible sections)
+
+- **Override:** Phase 14; human: make product edit sections collapsible
+- `Section` → controlled `<details>`; chevron; actions don’t toggle; nav hash opens target
+- About this gift also uses same Section
+- Next: hard-refresh product edit collapse QA
+
+### Session — 2026-08-12 (Collection product thumbs)
+
+- Admin collection detail products list: 44px primary IMAGE thumb (Package placeholder if none)
+- API `getAdminCollection` / `listSmartMatchProducts` now return `imageUrl` + `imageAlt`
+- Next: hard-refresh collection edit “Products in this collection”
+
+### Session — 2026-08-12 (Section heading actions align)
+
+- Product edit `Section` supports `actions` on same row as `h2`; Inventory desk moved there
+- Stock ledger / photos / video / schema headers: `items-start` with title
+- Next: hard-refresh Pricing section QA
+
+### Session — 2026-08-12 (Pricing & stock layout)
+
+- **Override:** Phase 14; human: pricing section still messy
+- Variant card: header + 3 columns (Sale read-only | Stock | MRP); stacks on mobile
+- Next: hard-refresh product edit Pricing QA
+
+### Session — 2026-08-12 (Collection hand-pick search + op labels)
+
+- Smart ops: `is`/`is_not` UI labels → **include** / **exclude** (payload unchanged)
+- Hand-picked: replaced first-50 chip wall with search-to-add picker (name/slug typeahead) + removable chips — edit + new collection
+- New: `collection-manual-picker.tsx`; dropped unused `limit=50` product preload
+- Next: hard-refresh Hand-picked search QA on large catalogs
+
+### Session — 2026-08-12 (Gift for admin labels)
+
+- Relabel admin jargon: Smart field `Recipient` → **Gift for**, `Age` → **Age band**, `Storefront label` → **Storefront badge**, `Published` → **New in last**
+- Same wording on product edit Discovery + products list filter (aria/label)
+- Payload keys unchanged (`recipient` / `recipientTags`)
+- Next: hard-refresh collection Smart + product Discovery QA
+
+### Session — 2026-08-12 (Smart collection builder simplify)
+
+- **Override:** Phase 14 active; human: Smart rules UI too tall / redundant
+- Done: condition row = stable `sm` grid (Field | Op | Value | X); single-op fields show muted label; Match All/Any on one line; removed duplicate `conditionPlainLabel` bullets on edit page
+- Changed: `collection-smart-builder.tsx`, `collections/[id]/page.tsx`, Memory
+- Next: hard-refresh collection edit Smart mode QA
+
+### Session — 2026-08-12 (Product edit admin labels)
+
+- Relabel/clarify: schema Auto/Manual, FAQ Built-in/Write my own, share image, Main/Extra photos, video thumbnail
+- Short Hinglish helper lines only where admin otherwise misuses SEO/FAQ
+- Next: hard-refresh product edit QA
+
+### Session — 2026-08-12 (Product edit schema/FAQ/media UX)
+
+- **Override:** Phase 14 active; human: product edit polish (schema/FAQ toggles, media, pricing, video)
+- Schema: Auto vs Manual (`replace` entry); removed product “Add extra” surface (`ProductSeoSchemaField`)
+- FAQ: Default (built-in) vs Manual editor
+- Media: Primary / Gallery N labels; one “Show URLs” control; video hides poster URL (cover upload/library)
+- Pricing: flatter card + stacking inputs/buttons on small screens
+- Validation: `seoSchemaEntry.mode: 'replace'`; smoke updated; `@inabiya/validation` rebuilt
+- Next: hard-refresh product edit QA; deploy web when ready
+
+### Session — 2026-08-12 (Collection edit sticky save)
+
+- **Override:** Phase 14 active; human: right-rail sticky Save/Back on collection edit looked bad
+- Decision: bottom sticky save bar (match product edit) — not top header (Collections + View storefront already there; Back to list was duplicate)
+- Done: removed right aside; single-column form; fixed bottom Save + Saved notice; `pb-28` clearance
+- Changed: `apps/web/app/(admin)/admin/commerce/collections/[id]/page.tsx`, Memory
+- Next: hard-refresh collection edit QA
+
+### Session — 2026-08-12 (Gift nav tablet responsive)
+
+- **Override:** Phase 14 active; human: Soft Gift navbar overflow ~768px (logo clipped, desktop row cramped)
+- Root: desktop search+links+Sign in used `md:` (768); too wide for tablet
+- Fix: desktop/hamburger breakpoint `md` → `lg` (1024); header `min-w-0` + `overflow-x-clip`
+- Changed: `gift-nav.tsx`, `gift-layout-chrome.tsx`, Memory
+- Next: hard-refresh `/gift` at ~768; deploy web when ready
 
 ### Session — 2026-08-11 (Deploy web+api)
 

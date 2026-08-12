@@ -113,26 +113,30 @@ export function compilePresetToJsonLd(entry: Extract<SeoSchemaEntry, { mode: 'pr
   }
 }
 
+function nodesFromCustomJson(json: Record<string, unknown>): JsonLdNode[] {
+  if (Array.isArray(json['@graph'])) {
+    return json['@graph']
+      .filter((g): g is JsonLdNode => Boolean(g && typeof g === 'object' && !Array.isArray(g)))
+      .map(stripContext);
+  }
+  return [stripContext(json as JsonLdNode)];
+}
+
 export function compileExtrasToNodes(extras: SeoSchemaEntry[] | null | undefined): JsonLdNode[] {
   if (!extras?.length) return [];
   const out: JsonLdNode[] = [];
   for (const entry of extras) {
     if (!entry.enabled) continue;
+    if (entry.mode === 'replace') {
+      out.push(...nodesFromCustomJson(entry.json));
+      continue;
+    }
     if (entry.mode === 'preset') {
       const node = compilePresetToJsonLd(entry);
       if (node) out.push(stripContext(node));
       continue;
     }
-    const json = entry.json;
-    if (Array.isArray(json['@graph'])) {
-      for (const g of json['@graph']) {
-        if (g && typeof g === 'object' && !Array.isArray(g)) {
-          out.push(stripContext(g as JsonLdNode));
-        }
-      }
-    } else {
-      out.push(stripContext(json as JsonLdNode));
-    }
+    out.push(...nodesFromCustomJson(entry.json));
   }
   return out;
 }
@@ -140,6 +144,7 @@ export function compileExtrasToNodes(extras: SeoSchemaEntry[] | null | undefined
 /**
  * Merge auto system nodes + admin extras into one @graph document.
  * System nodes win for identity; extras only add.
+ * An enabled `replace` entry replaces auto + extras entirely.
  */
 export function mergeSeoJsonLd(autoNodes: Array<JsonLdNode | null | undefined>): JsonLdNode | null {
   const graph = autoNodes
@@ -156,6 +161,17 @@ export function mergeSeoJsonLdWithExtras(
   autoNodes: Array<JsonLdNode | null | undefined>,
   extras: SeoSchemaEntry[] | null | undefined,
 ): JsonLdNode | null {
+  const replace = extras?.find((e) => e.enabled && e.mode === 'replace');
+  if (replace && replace.mode === 'replace') {
+    const graph = nodesFromCustomJson(replace.json);
+    if (!graph.length) return null;
+    const ctx =
+      typeof replace.json['@context'] === 'string'
+        ? replace.json['@context']
+        : 'https://schema.org';
+    return { '@context': ctx, '@graph': graph };
+  }
+
   const auto = autoNodes
     .filter((n): n is JsonLdNode => Boolean(n && typeof n === 'object'))
     .map(stripContext);

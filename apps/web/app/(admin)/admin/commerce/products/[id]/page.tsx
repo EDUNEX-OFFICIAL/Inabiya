@@ -8,6 +8,7 @@ import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { formatInr, type CatalogProduct, type ManualStorefrontLabel } from '@/lib/catalog';
 import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
+import { OpsIconButton, OpsIconLink } from '@/components/commerce-ops/ops-icon-action';
 import {
   ProductGalleryEditor,
   type GalleryItem,
@@ -18,13 +19,14 @@ import {
 } from '@/components/commerce-ops/product-video-field';
 import { ArticleEditor } from '@/components/editorial/article-editor';
 import { isValidProductVideoUrl } from '@/lib/product-video';
-import { SeoSchemaPanel } from '@/components/admin/seo-schema-panel';
+import { ProductSeoSchemaField } from '@/components/admin/product-seo-schema-field';
 import { htmlToSeoSections, seoSectionsToHtml } from '@/lib/product-page-content';
 import { buildProductFaqItems } from '@/lib/product-faq';
 import { getSiteOrigin } from '@/lib/cms-seo';
 import { productJsonLd } from '@/lib/seo-json-ld';
 import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
 import type { SeoSchemaEntry } from '@inabiya/validation';
+import { History, Package, Trash2, ArrowLeft, ExternalLink, FilePenLine, Plus } from 'lucide-react';
 
 const RECIPIENTS = ['girl', 'boy', 'mom', 'unisex'] as const;
 const AGES = ['newborn', 'infant', 'toddler', 'any'] as const;
@@ -77,17 +79,67 @@ function Chip({
 function Section({
   id,
   title,
+  actions,
+  defaultOpen = true,
   children,
 }: {
   id: string;
   title: string;
+  actions?: ReactNode;
+  defaultOpen?: boolean;
   children: ReactNode;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  useEffect(() => {
+    function openThis() {
+      setOpen(true);
+    }
+    function syncFromHash() {
+      if (typeof window === 'undefined') return;
+      if (window.location.hash === `#${id}`) openThis();
+    }
+    function onOpenSection(e: Event) {
+      if ((e as CustomEvent<string>).detail === id) openThis();
+    }
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    window.addEventListener('product-edit-open-section', onOpenSection);
+    return () => {
+      window.removeEventListener('hashchange', syncFromHash);
+      window.removeEventListener('product-edit-open-section', onOpenSection);
+    };
+  }, [id]);
+
   return (
-    <section id={id} className="clay-panel scroll-mt-24 space-y-4 p-4 sm:p-5">
-      <h2 className="font-display text-base">{title}</h2>
-      {children}
-    </section>
+    <details
+      id={id}
+      className="group/section clay-panel scroll-mt-24"
+      open={open}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-x-3 gap-y-2 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+        <h2 className="font-display text-base">{title}</h2>
+        <div className="flex shrink-0 items-center gap-2">
+          {actions ? (
+            <div
+              className="flex flex-wrap items-center gap-2"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              {actions}
+            </div>
+          ) : null}
+          <span
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs opacity-45 transition-transform group-open/section:rotate-180"
+            aria-hidden
+          >
+            ▾
+          </span>
+        </div>
+      </summary>
+      <div className="space-y-4 px-4 pb-4 sm:px-5 sm:pb-5">{children}</div>
+    </details>
   );
 }
 
@@ -126,6 +178,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     posterUrl: '',
     altText: '',
   });
+  const [faqMode, setFaqMode] = useState<'default' | 'manual'>('default');
   const [faqs, setFaqs] = useState<FaqRow[]>([{ question: '', answerText: '' }]);
   const [pageContentHtml, setPageContentHtml] = useState('');
   const [hamperRows, setHamperRows] = useState<HamperRow[]>([]);
@@ -135,11 +188,21 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const defaultFaqPreview = useMemo(() => {
+    if (!product) return [];
+    return buildProductFaqItems({
+      faqItems: null,
+      personalization: product.personalization ?? [],
+      isReadyMadeHamper,
+      description: description || product.description,
+    });
+  }, [product, isReadyMadeHamper, description]);
+
   const schemaAutoNodes = useMemo(() => {
     if (!product) return [];
     const filledFaqs = faqs.filter((f) => f.question.trim() && f.answerText.trim());
     const faqSource = buildProductFaqItems({
-      faqItems: filledFaqs.length ? filledFaqs : null,
+      faqItems: faqMode === 'manual' && filledFaqs.length ? filledFaqs : null,
       personalization: product.personalization ?? [],
       isReadyMadeHamper,
       description: description || product.description,
@@ -165,6 +228,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   }, [
     product,
     faqs,
+    faqMode,
     isReadyMadeHamper,
     description,
     stock,
@@ -192,7 +256,9 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     setCanonicalPath(p.canonicalPath ?? '');
     setOgImageUrl(p.ogImageUrl ?? '');
     setRobotsIndex(p.robotsIndex !== false);
-    setSeoSchemaExtras(p.seoSchemaExtras ?? []);
+    setSeoSchemaExtras(
+      (p.seoSchemaExtras ?? []).filter((e) => e.mode === 'replace').slice(0, 1),
+    );
     const media = p.media ?? [];
     const video = media.find((m) => m.kind === 'VIDEO');
     setGallery(
@@ -213,11 +279,13 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           }
         : { url: '', posterUrl: '', altText: '' },
     );
-    setFaqs(
-      p.faqItems?.length
-        ? p.faqItems.map((f) => ({ question: f.question, answerText: f.answerText }))
-        : [{ question: '', answerText: '' }],
-    );
+    if (p.faqItems?.length) {
+      setFaqMode('manual');
+      setFaqs(p.faqItems.map((f) => ({ question: f.question, answerText: f.answerText })));
+    } else {
+      setFaqMode('default');
+      setFaqs([{ question: '', answerText: '' }]);
+    }
     setPageContentHtml(seoSectionsToHtml(p.seoSections ?? null));
     setHamperRows(
       p.hamperItems?.length
@@ -271,12 +339,15 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     setError(null);
     setSaving(true);
 
-    const faqItems = faqs
-      .map((row) => ({
-        question: row.question.trim(),
-        answerText: row.answerText.trim(),
-      }))
-      .filter((row) => row.question && row.answerText);
+    const faqItems =
+      faqMode === 'manual'
+        ? faqs
+            .map((row) => ({
+              question: row.question.trim(),
+              answerText: row.answerText.trim(),
+            }))
+            .filter((row) => row.question && row.answerText)
+        : [];
 
     const seoSections = htmlToSeoSections(pageContentHtml);
 
@@ -443,9 +514,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
         <div className="gift-banner gift-banner--danger" role="alert">
           {error}
         </div>
-        <Link href="/admin/commerce/products" className="clay-btn-ghost mt-4 inline-flex text-sm">
-          ← Products
-        </Link>
+        <OpsIconLink href="/admin/commerce/products" label="Products" icon={ArrowLeft} />
       </div>
     );
   }
@@ -469,9 +538,12 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
 
   return (
     <div className="relative mx-auto max-w-4xl pb-28">
-      <Link href="/admin/commerce/products" className="clay-btn-ghost text-sm">
-        ← Products
-      </Link>
+      <OpsIconLink
+        href="/admin/commerce/products"
+        label="Products"
+        icon={ArrowLeft}
+        labelFrom="sm"
+      />
 
       {/* Hero summary */}
       <div className="clay-panel mt-4 overflow-hidden">
@@ -507,21 +579,19 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   </span>
                   {published ? (
                     <>
-                      <Link
+                      <OpsIconLink
                         href={`/gift/products/${product.slug}`}
-                        className="clay-btn-secondary text-sm"
+                        label="View product"
+                        icon={ExternalLink}
+                        variant="secondary"
                         target="_blank"
-                        rel="noreferrer"
-                      >
-                        View product
-                      </Link>
-                      <button
-                        type="button"
-                        className="clay-btn-secondary text-sm"
+                      />
+                      <OpsIconButton
+                        label="Move to draft"
+                        icon={FilePenLine}
+                        variant="secondary"
                         onClick={() => void setPublish('unpublish')}
-                      >
-                        Move to draft
-                      </button>
+                      />
                     </>
                   ) : (
                     <button
@@ -548,6 +618,11 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
               key={item.id}
               href={`#${item.id}`}
               className="clay-chip shrink-0 px-3 py-1.5 text-xs opacity-80 hover:opacity-100"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent('product-edit-open-section', { detail: item.id }),
+                );
+              }}
             >
               {item.label}
             </a>
@@ -615,83 +690,108 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           id="media"
           title="Media"
         >
-          <ProductGalleryEditor items={gallery} onChange={setGallery} titleHint={title} />
-          <ProductVideoField
-            value={productVideo}
-            onChange={setProductVideo}
-            titleHint={title}
-          />
+          <div className="space-y-5">
+            <ProductGalleryEditor items={gallery} onChange={setGallery} titleHint={title} />
+            <ProductVideoField
+              value={productVideo}
+              onChange={setProductVideo}
+              titleHint={title}
+            />
+          </div>
         </Section>
 
         <Section
           id="pricing"
           title="Pricing & stock"
-        >
-          <div className="mb-2 flex justify-end">
-            <Link
+          actions={
+            <OpsIconLink
               href={`/admin/commerce/inventory?q=${encodeURIComponent(product.variants[0]?.sku ?? product.slug)}`}
-              className="clay-btn-ghost text-xs"
-            >
-              Open inventory desk
-            </Link>
-          </div>
-          <ul className="space-y-3">
+              label="Inventory desk"
+              icon={Package}
+            />
+          }
+        >
+          <ul className="space-y-4">
             {product.variants.map((v) => (
-              <li key={v.id} className="clay-panel p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium">
-                      {v.label}{' '}
-                      <span className="font-mono text-xs opacity-60">{v.sku}</span>
-                    </p>
-                    <p className="mt-0.5 text-xs opacity-70">
-                      Sale {formatInr(v.pricePaise)} · available {v.available}
-                      {v.onHand != null ? ` · on hand ${v.onHand}` : ''}
+              <li
+                key={v.id}
+                className="overflow-hidden rounded-[var(--radius-control)] border border-[var(--border-subtle)]"
+              >
+                <div className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface-soft)_55%,white)] px-3 py-2.5 sm:px-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium leading-none">
+                      {v.label}
+                      <span className="ml-2 font-mono text-[11px] font-normal opacity-55">
+                        {v.sku}
+                      </span>
                     </p>
                   </div>
-                  <Link
+                  <OpsIconLink
                     href={`/admin/commerce/inventory?q=${encodeURIComponent(v.sku)}`}
-                    className="clay-btn-ghost text-xs"
-                  >
-                    Ledger
-                  </Link>
+                    label="Stock ledger"
+                    icon={History}
+                  />
                 </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="flex flex-wrap items-end gap-2">
-                    <label className="block w-28 text-xs">
-                      On hand
+
+                <div className="grid divide-y divide-[var(--border-subtle)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                  <div className="space-y-1 px-3 py-3 sm:px-4">
+                    <p className="text-[11px] font-medium uppercase tracking-wide opacity-50">
+                      Sale price
+                    </p>
+                    <p className="text-base font-medium tabular-nums">
+                      {formatInr(v.pricePaise)}
+                    </p>
+                    <p className="text-[11px] opacity-55">
+                      Available {v.available}
+                      {v.onHand != null ? ` · on hand ${v.onHand}` : ''}
+                    </p>
+                    <p className="text-[11px] opacity-45">Change in Inventory desk</p>
+                  </div>
+
+                  <div className="space-y-2 px-3 py-3 sm:px-4">
+                    <p className="text-[11px] font-medium uppercase tracking-wide opacity-50">
+                      Stock
+                    </p>
+                    <label className="block text-xs">
+                      On hand qty
                       <input
-                        className="clay-input"
+                        className="clay-input mt-1"
                         value={stock[v.id] ?? '0'}
                         onChange={(e) => setStock((s) => ({ ...s, [v.id]: e.target.value }))}
+                        inputMode="numeric"
                       />
                     </label>
                     <button
                       type="button"
-                      className="clay-btn-secondary text-sm"
+                      className="clay-btn-secondary w-full text-sm"
                       onClick={() => void saveStock(v.id)}
                     >
-                      Update stock
+                      Save stock
                     </button>
                   </div>
-                  <div className="flex flex-wrap items-end gap-2">
-                    <label className="block w-28 text-xs">
-                      MRP (₹)
+
+                  <div className="space-y-2 px-3 py-3 sm:px-4">
+                    <p className="text-[11px] font-medium uppercase tracking-wide opacity-50">
+                      MRP
+                    </p>
+                    <label className="block text-xs">
+                      Strike price (₹)
                       <input
-                        className="clay-input"
+                        className="clay-input mt-1"
                         value={mrpRupees[v.id] ?? ''}
-                        placeholder="optional"
+                        placeholder="Blank = no MRP"
                         onChange={(e) =>
                           setMrpRupees((s) => ({ ...s, [v.id]: e.target.value }))
                         }
+                        inputMode="decimal"
                       />
                     </label>
                     <button
                       type="button"
-                      className="clay-btn-secondary text-sm"
+                      className="clay-btn-secondary w-full text-sm"
                       onClick={() => void saveMrp(v.id)}
                     >
-                      Update MRP
+                      Save MRP
                     </button>
                   </div>
                 </div>
@@ -737,7 +837,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             </div>
           </div>
           <div>
-            <p className="text-xs opacity-70">Recipient</p>
+            <p className="text-xs opacity-70">Gift for</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {RECIPIENTS.map((r) => (
                 <Chip
@@ -751,7 +851,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             </div>
           </div>
           <div>
-            <p className="text-xs opacity-70">Age</p>
+            <p className="text-xs opacity-70">Age band</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {AGES.map((a) => (
                 <Chip
@@ -822,22 +922,18 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             />
             Allow search indexing
           </label>
-          <details className="clay-panel p-3">
-            <summary className="cursor-pointer text-xs opacity-70">
-              Custom share image
-            </summary>
+          <label className="block">
+            WhatsApp / social share image
             <input
               className="clay-input text-sm"
               value={ogImageUrl}
               onChange={(e) => setOgImageUrl(e.target.value)}
-              placeholder="Share image URL"
+              placeholder="Blank = use main product photo"
             />
-          </details>
-          <SeoSchemaPanel
+          </label>
+          <ProductSeoSchemaField
             value={seoSchemaExtras}
             onChange={setSeoSchemaExtras}
-            hasSystemFaq
-            autoTypes={['Product', 'FAQ']}
             autoPreviewNodes={schemaAutoNodes}
             publicUrl={
               product ? `${getSiteOrigin()}/gift/products/${product.slug}` : null
@@ -846,58 +942,111 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
         </Section>
 
         <Section id="faqs" title="FAQs">
-          <ul className="space-y-3">
-            {faqs.map((row, i) => (
-              <li key={i} className="clay-panel space-y-2 p-3">
-                <label className="block text-xs">
-                  Question
-                  <input
-                    className="clay-input text-sm"
-                    value={row.question}
-                    onChange={(e) =>
-                      setFaqs((rows) =>
-                        rows.map((r, j) => (j === i ? { ...r, question: e.target.value } : r)),
-                      )
-                    }
-                  />
-                </label>
-                <label className="block text-xs">
-                  Answer
-                  <textarea
-                    className="clay-input text-sm"
-                    rows={2}
-                    value={row.answerText}
-                    onChange={(e) =>
-                      setFaqs((rows) =>
-                        rows.map((r, j) => (j === i ? { ...r, answerText: e.target.value } : r)),
-                      )
-                    }
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="clay-btn-ghost text-xs text-[var(--danger)]"
-                  onClick={() => setFaqs((rows) => rows.filter((_, j) => j !== i))}
+          <p className="text-[11px] opacity-55">
+            Questions shown on the product page
+          </p>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="radio"
+                name="product-faq-mode"
+                checked={faqMode === 'default'}
+                onChange={() => {
+                  setFaqMode('default');
+                  setFaqs([{ question: '', answerText: '' }]);
+                }}
+              />
+              Use defaults
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="radio"
+                name="product-faq-mode"
+                checked={faqMode === 'manual'}
+                onChange={() => {
+                  setFaqMode('manual');
+                  if (!faqs.some((f) => f.question.trim() || f.answerText.trim())) {
+                    setFaqs(
+                      defaultFaqPreview.length
+                        ? defaultFaqPreview.map((f) => ({
+                            question: f.question,
+                            answerText: f.answerText,
+                          }))
+                        : [{ question: '', answerText: '' }],
+                    );
+                  }
+                }}
+              />
+              Custom FAQs
+            </label>
+          </div>
+
+          {faqMode === 'default' ? (
+            <ul className="space-y-2">
+              {defaultFaqPreview.map((row, i) => (
+                <li
+                  key={i}
+                  className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] px-3 py-2"
                 >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-          <button
-            type="button"
-            className="clay-btn-secondary text-sm"
-            onClick={() => setFaqs((rows) => [...rows, { question: '', answerText: '' }])}
-          >
-            Add FAQ
-          </button>
+                  <p className="text-sm font-medium">{row.question}</p>
+                  <p className="mt-1 text-xs opacity-70">{row.answerText}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <>
+              <ul className="space-y-3">
+                {faqs.map((row, i) => (
+                  <li key={i} className="space-y-2 rounded-[var(--radius-control)] border border-[var(--border-subtle)] p-3">
+                    <label className="block text-xs">
+                      Question
+                      <input
+                        className="clay-input text-sm"
+                        value={row.question}
+                        onChange={(e) =>
+                          setFaqs((rows) =>
+                            rows.map((r, j) => (j === i ? { ...r, question: e.target.value } : r)),
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="block text-xs">
+                      Answer
+                      <textarea
+                        className="clay-input text-sm"
+                        rows={2}
+                        value={row.answerText}
+                        onChange={(e) =>
+                          setFaqs((rows) =>
+                            rows.map((r, j) =>
+                              j === i ? { ...r, answerText: e.target.value } : r,
+                            ),
+                          )
+                        }
+                      />
+                    </label>
+                    <OpsIconButton
+                      label="Remove FAQ"
+                      icon={Trash2}
+                      labelFrom="sm"
+                      className="text-[var(--danger)]"
+                      onClick={() => setFaqs((rows) => rows.filter((_, j) => j !== i))}
+                    />
+                  </li>
+                ))}
+              </ul>
+              <OpsIconButton
+                label="Add FAQ"
+                icon={Plus}
+                variant="secondary"
+                onClick={() => setFaqs((rows) => [...rows, { question: '', answerText: '' }])}
+              />
+            </>
+          )}
         </Section>
 
-        <details className="clay-panel p-4" open>
-          <summary className="cursor-pointer font-display text-base">
-            About this gift
-          </summary>
-          <div className="mt-3 overflow-hidden rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_92%,white)]">
+        <Section id="about" title="About this gift">
+          <div className="overflow-hidden rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_92%,white)]">
             <ArticleEditor
               key={product.id}
               initialContent={pageContentHtml}
@@ -908,7 +1057,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
               showTable={false}
             />
           </div>
-        </details>
+        </Section>
 
         {isReadyMadeHamper ? (
           <Section
@@ -996,35 +1145,35 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                       }
                     />
                   </label>
-                  <button
-                    type="button"
-                    className="clay-btn-ghost text-xs text-[var(--danger)] sm:col-span-2"
-                    onClick={() => setHamperRows((rows) => rows.filter((_, j) => j !== i))}
-                  >
-                    Remove item
-                  </button>
+                  <div className="sm:col-span-2">
+                    <OpsIconButton
+                      label="Remove item"
+                      icon={Trash2}
+                      className="text-[var(--danger)]"
+                      onClick={() => setHamperRows((rows) => rows.filter((_, j) => j !== i))}
+                    />
+                  </div>
                 </li>
               ))}
             </ul>
-            <button
-              type="button"
-              className="clay-btn-secondary text-sm"
-              onClick={() =>
-                setHamperRows((rows) => [
-                  ...rows,
-                  {
-                    title: '',
-                    blurb: '',
-                    brandName: '',
-                    imageUrl: '',
-                    qty: '1',
-                    unitPriceInr: '0',
-                  },
-                ])
-              }
-            >
-              Add item
-            </button>
+              <OpsIconButton
+                label="Add item"
+                icon={Plus}
+                variant="secondary"
+                onClick={() =>
+                  setHamperRows((rows) => [
+                    ...rows,
+                    {
+                      title: '',
+                      blurb: '',
+                      brandName: '',
+                      imageUrl: '',
+                      qty: '1',
+                      unitPriceInr: '0',
+                    },
+                  ])
+                }
+              />
           </Section>
         ) : null}
 

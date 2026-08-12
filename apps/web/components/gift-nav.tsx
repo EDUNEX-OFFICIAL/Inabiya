@@ -288,9 +288,9 @@ export function GiftNav() {
       className="flex min-w-0 flex-1 items-center justify-end gap-gs-2 text-body"
       aria-label="Gift shop"
     >
-      {/* Desktop primary — search leftmost of links */}
+      {/* Desktop primary — lg+ only; md/tablet uses hamburger (search+links overflow at 768) */}
       <div
-        className="relative hidden min-w-0 flex-1 items-center justify-end gap-gs-2 md:flex"
+        className="relative hidden min-w-0 flex-1 items-center justify-end gap-gs-2 lg:flex"
         ref={megaRef}
       >
         <GiftSearch onExpand={closeOverlays} />
@@ -360,7 +360,7 @@ export function GiftNav() {
       </div>
 
       {/* Utilities */}
-      <div className="flex shrink-0 items-center gap-gs-1 border-l border-border-subtle pl-gs-2 md:pl-gs-3">
+      <div className="flex shrink-0 items-center gap-gs-1 border-l border-border-subtle pl-gs-2 lg:pl-gs-3">
         {signedIn ? (
           <IconLink href="/gift/wishlist" label="Wishlist" onClick={() => setMenuOpen(false)}>
             <Heart className="h-5 w-5" strokeWidth={1.75} />
@@ -376,7 +376,7 @@ export function GiftNav() {
           ) : null}
         </IconLink>
 
-        <div className="relative hidden md:block" ref={profileRef}>
+        <div className="relative hidden lg:block" ref={profileRef}>
           {signedIn ? (
             <>
               <button
@@ -444,7 +444,7 @@ export function GiftNav() {
 
         <button
           type="button"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-pill hover:bg-white/70 hover:text-primary md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-pill hover:bg-white/70 hover:text-primary lg:hidden"
           aria-expanded={menuOpen}
           aria-controls="gift-mobile-menu"
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
@@ -457,9 +457,9 @@ export function GiftNav() {
       {menuOpen ? (
         <div
           id="gift-mobile-menu"
-          className="absolute left-gs-3 right-gs-3 top-full z-40 mt-gs-2 max-h-[80vh] overflow-y-auto clay-panel p-gs-4 md:hidden"
+          className="absolute left-gs-3 right-gs-3 top-full z-40 mt-gs-2 max-h-[80vh] overflow-y-auto clay-panel p-gs-4 lg:hidden"
         >
-          <div className="mb-gs-4 md:hidden">
+          <div className="mb-gs-4">
             <GiftSearch defaultExpanded onNavigate={() => setMenuOpen(false)} />
           </div>
 

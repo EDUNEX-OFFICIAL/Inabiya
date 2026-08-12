@@ -123,7 +123,22 @@ export class CatalogService {
       include: {
         _count: { select: { products: true } },
         products: {
-          include: { product: { select: { id: true, slug: true, title: true, status: true } } },
+          include: {
+            product: {
+              select: {
+                id: true,
+                slug: true,
+                title: true,
+                status: true,
+                media: {
+                  where: { kind: 'IMAGE' },
+                  select: { url: true, altText: true },
+                  orderBy: { sortOrder: 'asc' },
+                  take: 1,
+                },
+              },
+            },
+          },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -144,13 +159,18 @@ export class CatalogService {
 
     return {
       ...this.mapCollectionAdmin(row),
-      products: row.products.map((pc) => ({
-        id: pc.product.id,
-        slug: pc.product.slug,
-        title: pc.product.title,
-        status: pc.product.status,
-        sortOrder: pc.sortOrder,
-      })),
+      products: row.products.map((pc) => {
+        const thumb = pc.product.media[0];
+        return {
+          id: pc.product.id,
+          slug: pc.product.slug,
+          title: pc.product.title,
+          status: pc.product.status,
+          sortOrder: pc.sortOrder,
+          imageUrl: thumb?.url ?? null,
+          imageAlt: thumb?.altText ?? null,
+        };
+      }),
       productsSource: 'manual' as const,
     };
   }
@@ -165,6 +185,12 @@ export class CatalogService {
         title: true,
         status: true,
         variants: { select: { pricePaise: true, compareAtPricePaise: true } },
+        media: {
+          where: { kind: 'IMAGE' },
+          select: { url: true, altText: true },
+          orderBy: { sortOrder: 'asc' },
+          take: 1,
+        },
       },
       orderBy: { title: 'asc' },
       take: 200,
@@ -177,13 +203,18 @@ export class CatalogService {
         ),
       );
     }
-    return filtered.map((p, i) => ({
-      id: p.id,
-      slug: p.slug,
-      title: p.title,
-      status: p.status,
-      sortOrder: i,
-    }));
+    return filtered.map((p, i) => {
+      const thumb = p.media[0];
+      return {
+        id: p.id,
+        slug: p.slug,
+        title: p.title,
+        status: p.status,
+        sortOrder: i,
+        imageUrl: thumb?.url ?? null,
+        imageAlt: thumb?.altText ?? null,
+      };
+    });
   }
 
   private async countSmartMatches(rules: ReturnType<typeof parseSmartRules>) {

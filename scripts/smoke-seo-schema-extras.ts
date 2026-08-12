@@ -94,4 +94,50 @@ const faqAllowed = parseSeoSchemaExtras(
 );
 assert(faqAllowed?.length === 1, 'FAQ should be allowed without system FAQ');
 
+const replaceId = '55555555-5555-4555-8555-555555555555';
+const replaceOk = seoSchemaExtrasSchema.safeParse([
+  {
+    id: replaceId,
+    enabled: true,
+    mode: 'replace',
+    json: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'Product', name: 'Manual product' },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            {
+              '@type': 'Question',
+              name: 'Q?',
+              acceptedAnswer: { '@type': 'Answer', text: 'A' },
+            },
+          ],
+        },
+      ],
+    },
+  },
+]);
+assert(
+  replaceOk.success,
+  `replace Product+FAQ should pass: ${JSON.stringify(replaceOk.error?.issues)}`,
+);
+
+const replaceMixed = seoSchemaExtrasSchema.safeParse([
+  {
+    id: replaceId,
+    enabled: true,
+    mode: 'replace',
+    json: { '@type': 'Product', name: 'X' },
+  },
+  {
+    id: orgId,
+    enabled: true,
+    mode: 'preset',
+    preset: 'Organization',
+    fields: { name: 'Inabiya Soft Gift', url: 'https://example.com' },
+  },
+]);
+assert(!replaceMixed.success, 'replace must not mix with extras');
+
 console.log('PASS seoSchemaExtras smoke');

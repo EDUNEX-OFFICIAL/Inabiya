@@ -90,7 +90,7 @@ const LABEL_OPTIONS: Array<{ value: LabelFilter; label: string }> = [
 ];
 
 const RECIPIENT_OPTIONS: Array<{ value: RecipientFilter; label: string }> = [
-  { value: '', label: 'Any recipient' },
+  { value: '', label: 'Anyone' },
   { value: 'girl', label: 'Girl' },
   { value: 'boy', label: 'Boy' },
   { value: 'mom', label: 'Mom' },
@@ -662,12 +662,12 @@ function ProductsDeskInner() {
                   </label>
                   <label className="block min-w-0">
                     <span className="mb-1 block text-[11px] font-medium text-[var(--muted-foreground)]">
-                      Recipient
+                      Gift for
                     </span>
                     <select
                       className={filterSelectClass()}
                       value={filters.recipient}
-                      aria-label="Recipient"
+                      aria-label="Gift for"
                       onChange={(e) =>
                         applyFilters({
                           recipient: e.target.value as RecipientFilter,

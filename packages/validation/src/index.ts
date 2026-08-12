@@ -359,7 +359,27 @@ const seoSchemaCustomEntrySchema = z.object({
   json: seoSchemaCustomJsonSchema,
 });
 
-export const seoSchemaEntrySchema = z.union([seoSchemaPresetEntrySchema, seoSchemaCustomEntrySchema]);
+/** Full JSON-LD document that replaces system auto schema (Product PDP manual mode). */
+const seoSchemaReplaceJsonSchema = z.record(z.unknown()).refine(
+  (obj) => {
+    if (Array.isArray(obj['@graph']) && obj['@graph'].length > 0) return true;
+    return collectSeoJsonTypes(obj).length > 0;
+  },
+  { message: 'Manual schema needs @graph or @type' },
+);
+
+const seoSchemaReplaceEntrySchema = z.object({
+  id: z.string().uuid(),
+  enabled: z.boolean(),
+  mode: z.literal('replace'),
+  json: seoSchemaReplaceJsonSchema,
+});
+
+export const seoSchemaEntrySchema = z.union([
+  seoSchemaPresetEntrySchema,
+  seoSchemaCustomEntrySchema,
+  seoSchemaReplaceEntrySchema,
+]);
 
 export type SeoSchemaEntry = z.infer<typeof seoSchemaEntrySchema>;
 
@@ -403,9 +423,24 @@ function refineSeoSchemaExtras(
       message: `Schema extras exceed ${SEO_SCHEMA_EXTRAS_MAX_BYTES} bytes`,
     });
   }
+  const replaceCount = entries.filter((e) => e.mode === 'replace').length;
+  if (replaceCount > 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Only one manual schema replace entry is allowed',
+    });
+  }
+  if (replaceCount === 1 && entries.length > 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Manual replace schema cannot be mixed with extras',
+    });
+  }
   const forbidden = new Set<string>(SEO_SCHEMA_FORBIDDEN_OVERRIDE_TYPES);
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i]!;
+    // Replace mode intentionally owns Product/FAQPage (and other) types.
+    if (entry.mode === 'replace') continue;
     const types = collectSeoSchemaEntryTypes(entry);
     for (const t of types) {
       if (forbidden.has(t)) {

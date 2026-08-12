@@ -18,10 +18,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Link2, Trash2, Upload, Images, ClipboardPaste, Plus } from 'lucide-react';
 import {
   MediaLibraryModal,
   uploadCmsMediaFile,
 } from '@/components/cms/cms-media-field';
+import { OpsIconButton, OpsIconFileLabel } from '@/components/commerce-ops/ops-icon-action';
 
 const IMAGE_ACCEPT =
   'image/jpeg,image/png,image/webp,image/gif,image/avif,image/svg+xml,.svg,.jpg,.jpeg,.png,.webp,.gif,.avif';
@@ -39,22 +41,12 @@ type Props = {
   titleHint?: string;
 };
 
-function isInternalMediaUrl(url: string): boolean {
-  const u = url.trim();
-  return (
-    u.startsWith('/api/v1/media/') ||
-    u.startsWith('/gift/media/') ||
-    /^https?:\/\/[^/]+\/api\/v1\/media\//i.test(u)
-  );
-}
-
 function SortableGalleryRow({
   id,
   item,
   index,
   titleHint,
-  sourceOpen,
-  onToggleSource,
+  showUrl,
   onUpdate,
   onRemove,
 }: {
@@ -62,8 +54,7 @@ function SortableGalleryRow({
   item: GalleryItem;
   index: number;
   titleHint?: string;
-  sourceOpen: boolean;
-  onToggleSource: () => void;
+  showUrl: boolean;
   onUpdate: (patch: Partial<GalleryItem>) => void;
   onRemove: () => void;
 }) {
@@ -75,13 +66,10 @@ function SortableGalleryRow({
     transition,
     opacity: isDragging ? 0.75 : 1,
   };
+  const roleLabel = index === 0 ? 'Main photo' : `Extra photo ${index}`;
 
   return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className="clay-panel flex gap-2 p-2"
-    >
+    <li ref={setNodeRef} style={style} className="flex gap-2 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_96%,white)] p-2">
       <button
         type="button"
         className="mt-6 cursor-grab touch-none self-start px-0.5 text-xs opacity-50 active:cursor-grabbing"
@@ -95,32 +83,29 @@ function SortableGalleryRow({
       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-control)] bg-[color-mix(in_srgb,var(--surface-soft)_80%,white)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={item.url} alt="" className="h-full w-full object-cover" />
-        {index === 0 ? (
-          <span className="absolute left-0.5 top-0.5 rounded bg-white/90 px-1 py-px text-[9px] font-medium shadow-sm">
-            Primary
-          </span>
-        ) : null}
       </div>
 
       <div className="min-w-0 flex-1 space-y-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="clay-btn-ghost text-[11px]"
-            onClick={onToggleSource}
+          <span
+            className={
+              index === 0
+                ? 'rounded bg-[color-mix(in_srgb,var(--primary)_18%,white)] px-1.5 py-0.5 text-[10px] font-medium'
+                : 'rounded bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] px-1.5 py-0.5 text-[10px] font-medium opacity-70'
+            }
           >
-            {sourceOpen ? 'Hide source' : 'Show source'}
-          </button>
-          <button
-            type="button"
-            className="clay-btn-ghost ml-auto text-[11px] text-[var(--danger)]"
+            {roleLabel}
+          </span>
+          <OpsIconButton
+            label="Remove image"
+            icon={Trash2}
+            labelFrom="sm"
+            className="ml-auto text-[var(--danger)]"
             onClick={onRemove}
-          >
-            Remove
-          </button>
+          />
         </div>
 
-        {sourceOpen ? (
+        {showUrl ? (
           <label className="block text-[11px] opacity-70">
             Image URL
             <input
@@ -138,7 +123,7 @@ function SortableGalleryRow({
             className="clay-input text-sm"
             value={item.altText}
             onChange={(e) => onUpdate({ altText: e.target.value })}
-            placeholder={titleHint || 'Describe this media'}
+            placeholder={titleHint || 'Describe this image'}
             maxLength={200}
           />
         </label>
@@ -154,7 +139,7 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
   const [err, setErr] = useState<string | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteUrl, setPasteUrl] = useState('');
-  const [showSource, setShowSource] = useState<Record<string, boolean>>({});
+  const [showUrls, setShowUrls] = useState(false);
 
   const imageItems = useMemo(
     () => items.filter((item) => item.kind !== 'VIDEO'),
@@ -216,15 +201,7 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
   }
 
   function removeAt(index: number) {
-    const id = ids[index];
     setImages(imageItems.filter((_, i) => i !== index));
-    if (id) {
-      setShowSource((prev) => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-    }
   }
 
   function onDragEnd(event: DragEndEvent) {
@@ -238,35 +215,45 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium">Product photos</p>
+          <p className="text-[11px] opacity-55">First = main photo · drag to reorder</p>
+        </div>
+        {imageItems.length > 0 ? (
+          <OpsIconButton
+            label={showUrls ? 'Hide URLs' : 'Show URLs'}
+            icon={Link2}
+            onClick={() => setShowUrls((v) => !v)}
+          />
+        ) : null}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
-        <label className="clay-btn-secondary cursor-pointer text-sm">
-          {busy ? 'Uploading…' : 'Upload image'}
-          <input
-            type="file"
-            className="hidden"
-            accept={IMAGE_ACCEPT}
-            disabled={busy}
-            onChange={(e) => {
+        <OpsIconFileLabel
+          label="Upload image"
+          icon={Upload}
+          busy={busy}
+          inputProps={{
+            accept: IMAGE_ACCEPT,
+            onChange: (e) => {
               void onUpload(e.target.files?.[0] ?? null);
               e.target.value = '';
-            }}
-          />
-        </label>
-        <button
-          type="button"
-          className="clay-btn-secondary text-sm"
+            },
+          }}
+        />
+        <OpsIconButton
+          label="Library"
+          icon={Images}
+          variant="secondary"
           disabled={busy}
           onClick={() => setLibraryOpen(true)}
-        >
-          Library
-        </button>
-        <button
-          type="button"
-          className="clay-btn-ghost text-sm"
+        />
+        <OpsIconButton
+          label={pasteOpen ? 'Hide URL' : 'Paste URL'}
+          icon={ClipboardPaste}
           onClick={() => setPasteOpen((v) => !v)}
-        >
-          {pasteOpen ? 'Hide URL' : 'Paste URL'}
-        </button>
+        />
       </div>
 
       {pasteOpen ? (
@@ -277,17 +264,16 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
             onChange={(e) => setPasteUrl(e.target.value)}
             placeholder="https://… or /gift/media/…"
           />
-          <button
-            type="button"
-            className="clay-btn-secondary text-sm"
+          <OpsIconButton
+            label="Add"
+            icon={Plus}
+            variant="secondary"
             onClick={() => {
               addItem(pasteUrl);
               setPasteUrl('');
               setPasteOpen(false);
             }}
-          >
-            Add
-          </button>
+          />
         </div>
       ) : null}
 
@@ -307,8 +293,6 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
             <ul className="space-y-2">
               {imageItems.map((item, index) => {
                 const id = ids[index]!;
-                const sourceOpen =
-                  showSource[id] ?? (!isInternalMediaUrl(item.url) && Boolean(item.url));
                 return (
                   <SortableGalleryRow
                     key={id}
@@ -316,10 +300,7 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
                     item={item}
                     index={index}
                     titleHint={titleHint}
-                    sourceOpen={sourceOpen}
-                    onToggleSource={() =>
-                      setShowSource((s) => ({ ...s, [id]: !sourceOpen }))
-                    }
+                    showUrl={showUrls}
                     onUpdate={(patch) => updateAt(index, patch)}
                     onRemove={() => removeAt(index)}
                   />

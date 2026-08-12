@@ -21,12 +21,12 @@ export function CollectionSmartBuilder({
 }) {
   return (
     <div className="space-y-3 rounded-xl border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_96%,white)] p-4">
-      <p className="text-xs font-medium text-[var(--muted-foreground)]">Products must match</p>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-[var(--muted-foreground)]">Match</span>
         {(
           [
-            { v: 'all' as const, label: 'All conditions' },
-            { v: 'any' as const, label: 'Any condition' },
+            { v: 'all' as const, label: 'All' },
+            { v: 'any' as const, label: 'Any' },
           ] as const
         ).map((o) => (
           <button
@@ -43,10 +43,14 @@ export function CollectionSmartBuilder({
         {rules.conditions.map((c, i) => {
           const vals = smartValueOptions(c.field);
           const ops = smartOpOptions(c.field);
+          const singleOp = ops.length === 1;
           return (
-            <li key={i} className="flex flex-wrap items-center gap-2">
+            <li
+              key={i}
+              className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_7.5rem_minmax(0,1.2fr)_2rem]"
+            >
               <select
-                className="clay-input min-h-9 min-w-[9rem] text-sm"
+                className="clay-input min-h-9 w-full text-sm"
                 value={c.field}
                 onChange={(e) => {
                   const field = e.target.value as SmartCondition['field'];
@@ -61,24 +65,28 @@ export function CollectionSmartBuilder({
                   </option>
                 ))}
               </select>
-              <select
-                className="clay-input min-h-9 min-w-[7rem] text-sm"
-                value={c.op}
-                onChange={(e) => {
-                  const next = [...rules.conditions];
-                  next[i] = { ...c, op: e.target.value as SmartCondition['op'] };
-                  onChange({ ...rules, conditions: next });
-                }}
-              >
-                {ops.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+              {singleOp ? (
+                <span className="px-1 text-xs text-[var(--muted-foreground)]">{ops[0].label}</span>
+              ) : (
+                <select
+                  className="clay-input min-h-9 w-full text-sm"
+                  value={c.op}
+                  onChange={(e) => {
+                    const next = [...rules.conditions];
+                    next[i] = { ...c, op: e.target.value as SmartCondition['op'] };
+                    onChange({ ...rules, conditions: next });
+                  }}
+                >
+                  {ops.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              )}
               {vals ? (
                 <select
-                  className="clay-input min-h-9 min-w-[9rem] flex-1 text-sm"
+                  className="clay-input min-h-9 w-full text-sm"
                   value={c.value}
                   onChange={(e) => {
                     const next = [...rules.conditions];
@@ -94,7 +102,7 @@ export function CollectionSmartBuilder({
                 </select>
               ) : (
                 <input
-                  className="clay-input min-h-9 min-w-[9rem] flex-1 text-sm"
+                  className="clay-input min-h-9 w-full text-sm"
                   value={c.value}
                   onChange={(e) => {
                     const next = [...rules.conditions];
@@ -106,7 +114,7 @@ export function CollectionSmartBuilder({
               )}
               <button
                 type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full opacity-60 hover:opacity-100 disabled:opacity-30"
+                className="inline-flex h-8 w-8 items-center justify-center justify-self-end rounded-full opacity-60 hover:opacity-100 disabled:opacity-30 sm:justify-self-center"
                 aria-label="Remove condition"
                 disabled={rules.conditions.length <= 1}
                 onClick={() =>

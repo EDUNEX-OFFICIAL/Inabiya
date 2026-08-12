@@ -22,6 +22,8 @@ export type CollectionProduct = {
   title: string;
   status?: string;
   sortOrder?: number;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
 };
 
 export type CollectionDetail = {
@@ -97,14 +99,14 @@ export const EMPTY_COLLECTION_FORM: CollectionFormState = {
 };
 
 export const SMART_FIELD_OPTS: Array<{ value: SmartCondition['field']; label: string }> = [
-  { value: 'recipient', label: 'Recipient' },
-  { value: 'age', label: 'Age' },
+  { value: 'recipient', label: 'Gift for' },
+  { value: 'age', label: 'Age band' },
   { value: 'occasion', label: 'Occasion' },
   { value: 'hamper', label: 'Ready-made hamper' },
-  { value: 'label', label: 'Storefront label' },
+  { value: 'label', label: 'Storefront badge' },
   { value: 'onSale', label: 'On sale' },
   { value: 'titleContains', label: 'Title' },
-  { value: 'publishedWithinDays', label: 'Published' },
+  { value: 'publishedWithinDays', label: 'New in last' },
 ];
 
 export function defaultSmartOp(field: SmartCondition['field']): SmartCondition['op'] {
@@ -179,10 +181,10 @@ export function smartOpOptions(
   field: SmartCondition['field'],
 ): Array<{ value: SmartCondition['op']; label: string }> {
   if (field === 'titleContains') return [{ value: 'contains', label: 'contains' }];
-  if (field === 'publishedWithinDays') return [{ value: 'within', label: 'within last (days)' }];
+  if (field === 'publishedWithinDays') return [{ value: 'within', label: 'days' }];
   return [
-    { value: 'is', label: 'is' },
-    { value: 'is_not', label: 'is not' },
+    { value: 'is', label: 'include' },
+    { value: 'is_not', label: 'exclude' },
   ];
 }
 

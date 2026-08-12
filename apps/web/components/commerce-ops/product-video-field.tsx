@@ -1,10 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { Upload, Images, Trash2, X } from 'lucide-react';
 import {
   MediaLibraryModal,
   uploadCmsMediaFile,
 } from '@/components/cms/cms-media-field';
+import { OpsIconButton, OpsIconFileLabel } from '@/components/commerce-ops/ops-icon-action';
 import { isValidProductVideoUrl, parseProductVideoUrl } from '@/lib/product-video';
 
 const IMAGE_ACCEPT =
@@ -22,7 +24,7 @@ type Props = {
   titleHint?: string;
 };
 
-/** Dedicated product video: YouTube or direct .mp4/.webm URL + optional poster. */
+/** Dedicated product video: YouTube or direct .mp4/.webm URL + optional cover (poster). */
 export function ProductVideoField({ value, onChange, titleHint }: Props) {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -34,7 +36,11 @@ export function ProductVideoField({ value, onChange, titleHint }: Props) {
       ? 'Use a YouTube link or a direct video file (.mp4, .webm, …)'
       : null;
 
-  async function onPosterUpload(file: File | null) {
+  const coverSrc =
+    value.posterUrl.trim() ||
+    (parsed?.kind === 'youtube' ? `https://i.ytimg.com/vi/${parsed.id}/hqdefault.jpg` : '');
+
+  async function onCoverUpload(file: File | null) {
     if (!file) return;
     setBusy(true);
     setErr(null);
@@ -61,98 +67,101 @@ export function ProductVideoField({ value, onChange, titleHint }: Props) {
     setErr(null);
   }
 
+  function clearCover() {
+    onChange({ ...value, posterUrl: '' });
+  }
+
   return (
-    <div className="clay-panel space-y-3 p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium">Product video</p>
+    <div className="space-y-3 rounded-[var(--radius-control)] border border-[var(--border-subtle)] p-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium">Product video</p>
+          <p className="text-[11px] opacity-55">YouTube or .mp4 — optional</p>
+        </div>
         {value.url.trim() || value.posterUrl.trim() ? (
-          <button type="button" className="clay-btn-ghost text-[11px]" onClick={clear}>
-            Clear
-          </button>
+          <OpsIconButton label="Clear video" icon={X} onClick={clear} />
         ) : null}
       </div>
 
-      <label className="block text-xs">
-        Video URL
-        <input
-          className="clay-input font-mono text-sm"
-          value={value.url}
-          onChange={(e) => onChange({ ...value, url: e.target.value })}
-          placeholder="YouTube link or https://…/video.mp4"
-          maxLength={500}
-          aria-invalid={Boolean(urlError)}
-        />
-      </label>
-      {urlError ? (
-        <div className="gift-banner gift-banner--danger text-xs" role="alert">
-          {urlError}
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="space-y-3">
+          <label className="block text-xs">
+            Video link
+            <input
+              className="clay-input font-mono text-sm"
+              value={value.url}
+              onChange={(e) => onChange({ ...value, url: e.target.value })}
+              placeholder="YouTube link or https://…/video.mp4"
+              maxLength={500}
+              aria-invalid={Boolean(urlError)}
+            />
+          </label>
+          {urlError ? (
+            <div className="gift-banner gift-banner--danger text-xs" role="alert">
+              {urlError}
+            </div>
+          ) : null}
+
+          <label className="block text-xs">
+            Alt text
+            <input
+              className="clay-input text-sm"
+              value={value.altText}
+              onChange={(e) => onChange({ ...value, altText: e.target.value })}
+              placeholder={titleHint || 'Describe this video'}
+              maxLength={200}
+            />
+          </label>
+
+          <div>
+            <p className="mb-1.5 text-xs">Thumbnail before play</p>
+            <div className="flex flex-wrap gap-2">
+              <OpsIconFileLabel
+                label="Upload thumbnail"
+                icon={Upload}
+                busy={busy}
+                inputProps={{
+                  accept: IMAGE_ACCEPT,
+                  onChange: (e) => {
+                    void onCoverUpload(e.target.files?.[0] ?? null);
+                    e.target.value = '';
+                  },
+                }}
+              />
+              <OpsIconButton
+                label="Library"
+                icon={Images}
+                variant="secondary"
+                disabled={busy}
+                onClick={() => setLibraryOpen(true)}
+              />
+              {value.posterUrl.trim() ? (
+                <OpsIconButton
+                  label="Remove thumbnail"
+                  icon={Trash2}
+                  className="text-[var(--danger)]"
+                  onClick={clearCover}
+                />
+              ) : null}
+            </div>
+          </div>
         </div>
-      ) : null}
 
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="min-w-0 flex-1 text-xs">
-          Poster URL
-          <input
-            className="clay-input text-sm"
-            value={value.posterUrl}
-            onChange={(e) => onChange({ ...value, posterUrl: e.target.value })}
-            placeholder="Optional cover image"
-            maxLength={500}
-          />
-        </label>
-        <label className="clay-btn-secondary cursor-pointer text-sm">
-          {busy ? '…' : 'Upload'}
-          <input
-            type="file"
-            className="hidden"
-            accept={IMAGE_ACCEPT}
-            disabled={busy}
-            onChange={(e) => {
-              void onPosterUpload(e.target.files?.[0] ?? null);
-              e.target.value = '';
-            }}
-          />
-        </label>
-        <button
-          type="button"
-          className="clay-btn-secondary text-sm"
-          disabled={busy}
-          onClick={() => setLibraryOpen(true)}
-        >
-          Library
-        </button>
+        {coverSrc ? (
+          <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-md bg-white sm:justify-self-end">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={coverSrc} alt="" className="h-full w-full object-cover" />
+          </div>
+        ) : (
+          <div className="flex h-24 w-40 shrink-0 items-center justify-center rounded-md border border-dashed border-[var(--border-subtle)] text-[11px] opacity-50 sm:justify-self-end">
+            No thumbnail
+          </div>
+        )}
       </div>
-
-      <label className="block text-xs">
-        Alt text
-        <input
-          className="clay-input text-sm"
-          value={value.altText}
-          onChange={(e) => onChange({ ...value, altText: e.target.value })}
-          placeholder={titleHint || 'Describe this video'}
-          maxLength={200}
-        />
-      </label>
 
       {err ? (
         <div className="gift-banner gift-banner--danger text-xs" role="alert">
           {err}
-        </div>
-      ) : null}
-
-      {value.posterUrl.trim() || (parsed?.kind === 'youtube' && isValidProductVideoUrl(value.url)) ? (
-        <div className="relative h-20 w-36 overflow-hidden rounded-md bg-white">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={
-              value.posterUrl.trim() ||
-              (parsed?.kind === 'youtube'
-                ? `https://i.ytimg.com/vi/${parsed.id}/hqdefault.jpg`
-                : '')
-            }
-            alt=""
-            className="h-full w-full object-cover"
-          />
         </div>
       ) : null}
 
