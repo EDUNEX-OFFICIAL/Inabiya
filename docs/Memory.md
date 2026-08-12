@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 12, 2026 (admin UI English only)
+Last Updated: August 12, 2026 (deploy web+api @ 0fdabf6)
 
 ---
 
@@ -1087,6 +1087,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-12 (Deploy web+api)
+
+- **Live:** `bash scripts/deploy-vps.sh web api` @ `0fdabf6` — migrate none pending; smoke health/ready 200; api+web healthy; worker recreated
+- Pushed `main`: `af310a7` (collection/product/gift UX) + `0fdabf6` (smart builder TS guard)
+- Next: hard-refresh collection edit + product edit QA
 
 ### Session — 2026-08-12 (Product edit more icon actions)
 
