@@ -66,7 +66,9 @@ export function CollectionSmartBuilder({
                 ))}
               </select>
               {singleOp ? (
-                <span className="px-1 text-xs text-[var(--muted-foreground)]">{ops[0].label}</span>
+                <span className="px-1 text-xs text-[var(--muted-foreground)]">
+                  {ops[0]?.label ?? ''}
+                </span>
               ) : (
                 <select
                   className="clay-input min-h-9 w-full text-sm"
