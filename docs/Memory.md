@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 14, 2026 (build verified + push)
+Last Updated: August 14, 2026 (CI lint prefer-const)
 
 ---
 
@@ -1113,6 +1113,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-14 (CI lint prefer-const)
+
+- **Override:** Phase 14; human: GitHub Actions `pnpm lint` failed.
+- `catalog.service.ts`: unused `let sort` → `const` (`prefer-const`).
+- Next: CI green; deploy still pending.
 
 ### Session — 2026-08-14 (build verified + push)
 

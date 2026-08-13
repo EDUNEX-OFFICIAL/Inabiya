@@ -548,7 +548,7 @@ export class CatalogService {
         : {}),
     };
 
-    let sort = query.sort;
+    const sort = query.sort;
     if (query.collection) {
       const col = await this.prisma.collection.findFirst({
         where: { slug: query.collection, status: 'PUBLISHED' },
