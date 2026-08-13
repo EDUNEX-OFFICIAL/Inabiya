@@ -37,6 +37,7 @@ bash scripts/deploy-vps.sh
 ```bash
 cp .env.development.example .env
 docker compose up -d postgres redis   # 5433 / 6381 only
+# Browser API = same-origin `/api/v1` (do not set NEXT_PUBLIC_API_URL to :4101)
 pnpm dev
 # → 3101 / 4101 (prod containers can stay on 3001/4001)
 ```

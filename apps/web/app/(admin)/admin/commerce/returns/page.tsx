@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Package, RefreshCw, Search, Settings2, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
-import { opsChipClass } from '@/lib/ops-desk-ui';
+import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -229,19 +229,21 @@ function AdminReturnsInner() {
   function rowActions(r: ReturnRow) {
     if (!canMutate || r.status !== 'REQUESTED') return null;
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap justify-end gap-0.5">
         <button
           type="button"
-          className="clay-btn-secondary min-h-9 px-3 text-sm text-emerald-800"
+          className={`${opsRowActionClass} text-emerald-800`}
           disabled={actingId === r.id}
+          aria-label={`Approve return ${r.id}`}
           onClick={() => void moderate(r.id, 'APPROVED')}
         >
           Approve + refund
         </button>
         <button
           type="button"
-          className="clay-btn-secondary min-h-9 px-3 text-sm text-red-800"
+          className={`${opsRowActionClass} text-red-800`}
           disabled={actingId === r.id}
+          aria-label={`Reject return ${r.id}`}
           onClick={() => void moderate(r.id, 'REJECTED')}
         >
           Reject
@@ -349,7 +351,7 @@ function AdminReturnsInner() {
         </div>
       </form>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <div
           className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2"
           role="group"
@@ -371,22 +373,24 @@ function AdminReturnsInner() {
           })}
         </div>
 
-        <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
-          {refreshing && !loading ? (
-            <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
-          ) : null}
-          {countLabel}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
+            {refreshing && !loading ? (
+              <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
+            ) : null}
+            {countLabel}
+          </span>
 
-        {filterActive ? (
-          <button
-            type="button"
-            className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-            onClick={clearFilters}
-          >
-            Clear
-          </button>
-        ) : null}
+          {filterActive ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="mb-2 flex items-center justify-between gap-2 sm:hidden">

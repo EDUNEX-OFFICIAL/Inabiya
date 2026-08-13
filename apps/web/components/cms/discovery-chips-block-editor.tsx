@@ -164,6 +164,17 @@ export function DiscoveryChipsBlockEditor({ props, onChange }: Props) {
           onChange={(e) => onChange('seeAllLabel', e.target.value)}
         />
       </label>
+      <label className="block">
+        Preview limit (cards on page)
+        <input
+          type="number"
+          min={1}
+          max={12}
+          className="mt-1 block w-full rounded border px-2 py-1"
+          value={props.limit ?? '4'}
+          onChange={(e) => onChange('limit', e.target.value)}
+        />
+      </label>
 
       <label className="block">
         Items source

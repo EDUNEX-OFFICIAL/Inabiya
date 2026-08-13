@@ -34,7 +34,8 @@ export type CollectionOption = { value: string; label: string };
 /** Public published collections (sorted by sortOrder). */
 export async function fetchCatalogCollections(): Promise<CatalogCollection[]> {
   try {
-    return await fetchCatalog<CatalogCollection[]>('/catalog/collections');
+    const rows = await fetchCatalog<CatalogCollection[]>('/catalog/collections');
+    return [...rows].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   } catch {
     return [];
   }
@@ -113,10 +114,35 @@ export function mergeShopLinksWithCollections(
   return [...nonAuto, ...collectionLinks];
 }
 
+export type CollectionChip = {
+  label: string;
+  href: string;
+  imageUrl: string;
+  imageAlt: string;
+  description: string;
+  overline: string;
+};
+
+/** Homepage “Shop by collection” preview — one desktop row; rest via See all. */
+export const HOME_COLLECTION_GRID_LIMIT = 4;
+
+export function parseHomeCollectionLimit(raw: unknown): number {
+  const n = typeof raw === 'number' ? raw : Number.parseInt(String(raw ?? ''), 10);
+  if (!Number.isFinite(n) || n < 1) return HOME_COLLECTION_GRID_LIMIT;
+  return Math.min(12, Math.floor(n));
+}
+
 export function resolveCatalogCollectionChips(
-  collections: Array<{ slug: string; title: string; heroImageUrl?: string | null }>,
+  collections: Array<{
+    slug: string;
+    title: string;
+    heroImageUrl?: string | null;
+    description?: string | null;
+    overline?: string | null;
+    sortOrder?: number;
+  }>,
   mediaHints: Array<{ href?: string; imageUrl?: string; imageAlt?: string }> = [],
-): Array<{ label: string; href: string; imageUrl: string; imageAlt: string }> {
+): CollectionChip[] {
   const bySlug = new Map<string, { imageUrl: string; imageAlt: string }>();
   for (const h of mediaHints) {
     const slug = h.href ? collectionSlugFromHref(h.href) : null;
@@ -126,13 +152,17 @@ export function resolveCatalogCollectionChips(
       imageAlt: h.imageAlt ?? '',
     });
   }
-  return collections.map((c) => {
-    const hint = bySlug.get(c.slug);
-    return {
-      label: c.title,
-      href: collectionPlpHref(c.slug),
-      imageUrl: hint?.imageUrl || c.heroImageUrl || '/gift/media/baby-soft-gift.jpg',
-      imageAlt: hint?.imageAlt || c.title,
-    };
-  });
+  return [...collections]
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    .map((c) => {
+      const hint = bySlug.get(c.slug);
+      return {
+        label: c.title,
+        href: collectionPlpHref(c.slug),
+        imageUrl: hint?.imageUrl || c.heroImageUrl || '/gift/media/baby-soft-gift.jpg',
+        imageAlt: hint?.imageAlt || c.title,
+        description: String(c.description ?? '').trim(),
+        overline: String(c.overline ?? '').trim(),
+      };
+    });
 }

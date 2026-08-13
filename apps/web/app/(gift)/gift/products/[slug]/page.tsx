@@ -3,9 +3,18 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { Heart } from 'lucide-react';
+import {
+  CartIcon,
+  HeartIcon,
+  SparklesIcon,
+  type CartIconHandle,
+  type HeartIconHandle,
+  type SparklesIconHandle,
+} from 'lucide-animated';
+import { useOnceIcon } from '@/components/gift/use-once-icon';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { cartApi } from '@/lib/cart-client';
+import { giftBoxApi } from '@/lib/gift-box-client';
 import { formatInr, type CatalogProduct } from '@/lib/catalog';
 import { trackEvent } from '@/lib/analytics';
 import { apiUrl } from '@/lib/api-base';
@@ -106,6 +115,9 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     'averageRating' | 'count'
   > | null>(null);
   const [reviewsPayload, setReviewsPayload] = useState<ReviewList | null>(null);
+  const cartIcon = useOnceIcon<CartIconHandle>();
+  const heartIcon = useOnceIcon<HeartIconHandle>();
+  const boxIcon = useOnceIcon<SparklesIconHandle>();
 
   useEffect(() => {
     let cancelled = false;
@@ -236,10 +248,6 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
   async function addToBox() {
     if (!product || !variant || variant.available <= 0) return;
-    if (!getStoredAccessToken()) {
-      router.push(`/login?next=/gift/products/${params.slug}`);
-      return;
-    }
     const payload = personalizationPayload();
     const missing = missingRequiredPersonalization(product, {
       ...personalization,
@@ -254,12 +262,12 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     setBusyBox(true);
     setError(null);
     try {
-      const box = await apiAuth<{ id: string }>('/catalog/gift-boxes/active');
-      await apiAuth(`/catalog/gift-boxes/${box.id}/items`, {
+      const box = await giftBoxApi<{ id: string }>('/catalog/gift-boxes/active');
+      await giftBoxApi(`/catalog/gift-boxes/${box.id}/items`, {
         method: 'POST',
         json: { variantId: variant.id, quantity, personalization: payload },
       });
-      await apiAuth('/catalog/gift-boxes', {
+      await giftBoxApi('/catalog/gift-boxes', {
         method: 'POST',
         json: { wizardStep: 6 },
       });
@@ -552,29 +560,61 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
               <button
                 type="button"
                 disabled={busyCart || !inStock}
-                onClick={() => void addToCart()}
-                className="clay-btn min-w-0 flex-1 justify-center disabled:opacity-50"
+                onMouseEnter={cartIcon.play}
+                onClick={() => {
+                  cartIcon.play();
+                  void addToCart();
+                }}
+                className="clay-btn gift-icon-motion min-w-0 flex-1 justify-center gap-gs-2 disabled:opacity-50"
               >
+                <CartIcon
+                  ref={cartIcon.ref}
+                  size={18}
+                  animateOnHover={false}
+                  aria-hidden
+                  className="shrink-0"
+                />
                 {busyCart ? 'Adding…' : 'Add to cart'}
               </button>
               <button
                 type="button"
                 disabled={busyWish || !variant}
-                onClick={() => void addToWishlist()}
+                onMouseEnter={heartIcon.play}
+                onClick={() => {
+                  heartIcon.play();
+                  void addToWishlist();
+                }}
                 className="inline-flex size-12 shrink-0 items-center justify-center rounded-pill border border-border-strong bg-white p-0 text-foreground shadow-sm transition hover:bg-[var(--surface-soft)] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Save to wishlist"
                 title="Save to wishlist"
               >
-                <Heart className="size-5 shrink-0" strokeWidth={2} aria-hidden />
+                <HeartIcon
+                  ref={heartIcon.ref}
+                  size={20}
+                  animateOnHover={false}
+                  aria-hidden
+                  className="shrink-0"
+                />
               </button>
             </div>
             {variant?.giftBoxEligible ? (
               <button
                 type="button"
                 disabled={busyBox || !inStock}
-                onClick={() => void addToBox()}
-                className="clay-btn-secondary w-full justify-center disabled:opacity-50"
+                onMouseEnter={boxIcon.play}
+                onClick={() => {
+                  boxIcon.play();
+                  void addToBox();
+                }}
+                className="clay-btn-secondary gift-icon-motion w-full justify-center gap-gs-2 disabled:opacity-50"
               >
+                <SparklesIcon
+                  ref={boxIcon.ref}
+                  size={18}
+                  animateOnHover={false}
+                  aria-hidden
+                  className="shrink-0"
+                />
                 {busyBox ? 'Adding…' : 'Add to gift box'}
               </button>
             ) : null}

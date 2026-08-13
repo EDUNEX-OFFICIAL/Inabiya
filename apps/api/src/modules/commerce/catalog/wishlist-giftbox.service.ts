@@ -1,8 +1,52 @@
+import { randomUUID } from 'crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ProductStatus } from '@prisma/client';
+import { Prisma, ProductStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
+import { giftBoxAccessWhere, giftBoxOwnerWhere, type GiftBoxActor } from './gift-box-owner';
 import { buildGiftBoxProductWhere, REC_FILTER_TIERS } from './gift-box-recommendations';
+
+const giftBoxInclude = {
+  items: {
+    include: {
+      variant: {
+        include: {
+          product: { include: { media: { orderBy: { sortOrder: 'asc' as const }, take: 1 } } },
+          inventory: true,
+        },
+      },
+    },
+  },
+};
+
+type GiftBoxLoaded = {
+  id: string;
+  name: string;
+  budgetPaise: number | null;
+  recipient: string | null;
+  ageBand: string | null;
+  occasion: string | null;
+  collectionSlugs: string[];
+  wizardStep: number;
+  guestToken: string | null;
+  items: Array<{
+    id: string;
+    quantity: number;
+    personalization: unknown;
+    variant: {
+      id: string;
+      sku: string;
+      label: string;
+      pricePaise: number;
+      product: {
+        title: string;
+        slug: string;
+        brandName: string | null;
+        media: Array<{ url: string }>;
+      };
+    };
+  }>;
+};
 
 @Injectable()
 export class WishlistService {
@@ -67,42 +111,47 @@ export class GiftBoxService {
     private readonly cart: CartService,
   ) {}
 
-  async getOrCreateActive(userId: string) {
-    let box = await this.prisma.giftBox.findFirst({
-      where: { userId },
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        items: {
-          include: {
-            variant: {
-              include: {
-                product: true,
-                inventory: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    if (!box) {
-      box = await this.prisma.giftBox.create({
-        data: { userId },
-        include: {
-          items: {
-            include: {
-              variant: {
-                include: { product: true, inventory: true },
-              },
-            },
-          },
-        },
+  async getOrCreateActive(actor: GiftBoxActor) {
+    const owner = giftBoxOwnerWhere(actor);
+    if (owner) {
+      const existing = await this.prisma.giftBox.findFirst({
+        where: owner,
+        orderBy: { updatedAt: 'desc' },
+        include: giftBoxInclude,
       });
+      if (existing) return this.mapBox(existing as GiftBoxLoaded);
     }
-    return this.mapBox(box);
+
+    const validGuest = actor.userId ? null : giftBoxOwnerWhere({ guestToken: actor.guestToken });
+    const guestToken = actor.userId
+      ? undefined
+      : validGuest && 'guestToken' in validGuest
+        ? validGuest.guestToken
+        : randomUUID();
+    try {
+      const box = await this.prisma.giftBox.create({
+        data: actor.userId ? { userId: actor.userId } : { guestToken },
+        include: giftBoxInclude,
+      });
+      return this.mapBox(box as GiftBoxLoaded);
+    } catch (e) {
+      if (
+        guestToken &&
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        const raced = await this.prisma.giftBox.findFirst({
+          where: { guestToken },
+          include: giftBoxInclude,
+        });
+        if (raced) return this.mapBox(raced as GiftBoxLoaded);
+      }
+      throw e;
+    }
   }
 
   async create(
-    userId: string,
+    actor: GiftBoxActor,
     input: {
       name?: string;
       budgetPaise?: number;
@@ -113,14 +162,8 @@ export class GiftBoxService {
       wizardStep?: number;
     },
   ) {
-    const active = await this.prisma.giftBox.findFirst({
-      where: { userId },
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        items: { include: { variant: true } },
-      },
-    });
-    if (active && input.budgetPaise != null) {
+    const active = await this.requireActive(actor);
+    if (input.budgetPaise != null) {
       const subtotal = active.items.reduce((s, i) => s + i.variant.pricePaise * i.quantity, 0);
       if (input.budgetPaise < subtotal) {
         throw new BadRequestException({
@@ -138,45 +181,17 @@ export class GiftBoxService {
       ...(input.collectionSlugs !== undefined ? { collectionSlugs: input.collectionSlugs } : {}),
       ...(input.wizardStep != null ? { wizardStep: input.wizardStep } : {}),
     };
-    if (active) {
-      const box = await this.prisma.giftBox.update({
-        where: { id: active.id },
-        data: prefs,
-        include: {
-          items: {
-            include: {
-              variant: { include: { product: true, inventory: true } },
-            },
-          },
-        },
-      });
-      return this.mapBox(box);
-    }
-    const box = await this.prisma.giftBox.create({
-      data: {
-        userId,
-        name: input.name ?? 'My gift box',
-        budgetPaise: input.budgetPaise,
-        recipient: input.recipient ?? undefined,
-        ageBand: input.ageBand ?? undefined,
-        occasion: input.occasion ?? undefined,
-        collectionSlugs: input.collectionSlugs ?? [],
-        wizardStep: input.wizardStep ?? 1,
-      },
-      include: {
-        items: {
-          include: {
-            variant: { include: { product: true, inventory: true } },
-          },
-        },
-      },
+    const box = await this.prisma.giftBox.update({
+      where: { id: active.id },
+      data: prefs,
+      include: giftBoxInclude,
     });
-    return this.mapBox(box);
+    return this.mapBox(box as GiftBoxLoaded);
   }
 
   /** Recommend gift-box-eligible variants matching prefs and remaining budget. */
-  async recommendations(boxId: string, userId: string) {
-    const mapped = await this.getBox(boxId, userId);
+  async recommendations(boxId: string, actor: GiftBoxActor) {
+    const mapped = await this.getBox(boxId, actor);
     const remaining = Math.max(
       0,
       mapped.remainingBudgetPaise ?? mapped.budgetPaise ?? Number.MAX_SAFE_INTEGER,
@@ -257,13 +272,17 @@ export class GiftBoxService {
   }
 
   /** Clear items + prefs and return wizard to step 1. */
-  async reset(userId: string) {
+  async reset(actor: GiftBoxActor) {
+    const owner = giftBoxOwnerWhere(actor);
+    if (!owner) {
+      return this.getOrCreateActive(actor);
+    }
     const active = await this.prisma.giftBox.findFirst({
-      where: { userId },
+      where: owner,
       orderBy: { updatedAt: 'desc' },
     });
     if (!active) {
-      return this.getOrCreateActive(userId);
+      return this.getOrCreateActive(actor);
     }
     await this.prisma.$transaction([
       this.prisma.giftBoxItem.deleteMany({ where: { giftBoxId: active.id } }),
@@ -280,19 +299,21 @@ export class GiftBoxService {
         },
       }),
     ]);
-    return this.getBox(active.id, userId);
+    return this.getBox(active.id, actor);
   }
 
   async addItem(
     boxId: string,
-    userId: string,
+    actor: GiftBoxActor,
     input: { variantId: string; quantity: number; personalization?: Record<string, string> },
   ) {
+    const access = giftBoxAccessWhere(boxId, actor);
+    if (!access) {
+      throw new BadRequestException({ code: 'NO_OWNER', message: 'Gift box session missing.' });
+    }
     const box = await this.prisma.giftBox.findFirst({
-      where: { id: boxId, userId },
-      include: {
-        items: { include: { variant: true } },
-      },
+      where: access,
+      include: { items: { include: { variant: true } } },
     });
     if (!box) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Gift box not found.' });
@@ -340,38 +361,40 @@ export class GiftBoxService {
       },
     });
 
-    return this.getBox(boxId, userId);
+    return this.getBox(boxId, actor);
   }
 
-  async getBox(boxId: string, userId: string) {
+  async getBox(boxId: string, actor: GiftBoxActor) {
+    const access = giftBoxAccessWhere(boxId, actor);
+    if (!access) {
+      throw new BadRequestException({ code: 'NO_OWNER', message: 'Gift box session missing.' });
+    }
     const box = await this.prisma.giftBox.findFirst({
-      where: { id: boxId, userId },
-      include: {
-        items: {
-          include: {
-            variant: { include: { product: true, inventory: true } },
-          },
-        },
-      },
+      where: access,
+      include: giftBoxInclude,
     });
     if (!box) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Gift box not found.' });
     }
-    return this.mapBox(box);
+    return this.mapBox(box as GiftBoxLoaded);
   }
 
-  async removeItem(boxId: string, userId: string, itemId: string) {
-    const box = await this.prisma.giftBox.findFirst({ where: { id: boxId, userId } });
+  async removeItem(boxId: string, actor: GiftBoxActor, itemId: string) {
+    const access = giftBoxAccessWhere(boxId, actor);
+    if (!access) {
+      throw new BadRequestException({ code: 'NO_OWNER', message: 'Gift box session missing.' });
+    }
+    const box = await this.prisma.giftBox.findFirst({ where: access });
     if (!box) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Gift box not found.' });
     }
     await this.prisma.giftBoxItem.deleteMany({ where: { id: itemId, giftBoxId: boxId } });
-    return this.getBox(boxId, userId);
+    return this.getBox(boxId, actor);
   }
 
-  /** Copy all gift-box lines into the user cart, then clear the box. */
-  async moveToCart(boxId: string, userId: string) {
-    const mapped = await this.getBox(boxId, userId);
+  /** Copy all gift-box lines into the actor cart, then clear the box. */
+  async moveToCart(boxId: string, actor: GiftBoxActor, cartGuestToken?: string) {
+    const mapped = await this.getBox(boxId, actor);
     if (mapped.items.length === 0) {
       throw new BadRequestException({
         code: 'EMPTY_BOX',
@@ -391,7 +414,7 @@ export class GiftBoxService {
         !Array.isArray(item.personalization)
           ? (item.personalization as Record<string, string>)
           : undefined;
-      await this.cart.addItem(userId, undefined, {
+      await this.cart.addItem(actor.userId, cartGuestToken, {
         variantId: item.variantId,
         quantity: item.quantity,
         personalization,
@@ -411,28 +434,124 @@ export class GiftBoxService {
         },
       }),
     ]);
-    const cart = await this.cart.getOrCreate(userId);
-    const box = await this.getBox(boxId, userId);
+    const cart = await this.cart.getOrCreate(actor.userId, cartGuestToken);
+    const box = await this.getBox(boxId, actor);
     return { cart, box };
   }
 
-  private mapBox(
-    box: NonNullable<
-      Awaited<
-        ReturnType<
-          typeof this.prisma.giftBox.findFirst<{
-            include: {
-              items: {
-                include: {
-                  variant: { include: { product: true; inventory: true } };
-                };
-              };
-            };
-          }>
-        >
-      >
-    >,
-  ) {
+  /** Attach guest box to the signed-in user (login/register). */
+  async mergeGuestIntoUser(userId: string, guestToken: string) {
+    const token = guestToken.trim();
+    const guestBox = token
+      ? await this.prisma.giftBox.findFirst({
+          where: { guestToken: token },
+          include: giftBoxInclude,
+        })
+      : null;
+    if (!guestBox) {
+      return this.getOrCreateActive({ userId });
+    }
+
+    const userBox = await this.prisma.giftBox.findFirst({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+      include: giftBoxInclude,
+    });
+
+    if (!userBox) {
+      await this.prisma.giftBox.update({
+        where: { id: guestBox.id },
+        data: { userId, guestToken: null },
+      });
+      return this.getBox(guestBox.id, { userId });
+    }
+
+    const guestLoaded = guestBox as GiftBoxLoaded;
+    const userHasProgress =
+      userBox.wizardStep > 1 ||
+      userBox.items.length > 0 ||
+      Boolean(userBox.recipient || userBox.ageBand || userBox.occasion || userBox.budgetPaise != null);
+    const guestHasProgress =
+      guestLoaded.wizardStep > 1 ||
+      guestLoaded.items.length > 0 ||
+      Boolean(
+        guestLoaded.recipient ||
+          guestLoaded.ageBand ||
+          guestLoaded.occasion ||
+          guestLoaded.budgetPaise != null,
+      );
+
+    if (!userHasProgress && guestHasProgress) {
+      await this.prisma.$transaction([
+        this.prisma.giftBoxItem.deleteMany({ where: { giftBoxId: userBox.id } }),
+        this.prisma.giftBox.delete({ where: { id: userBox.id } }),
+        this.prisma.giftBox.update({
+          where: { id: guestBox.id },
+          data: { userId, guestToken: null },
+        }),
+      ]);
+      return this.getBox(guestBox.id, { userId });
+    }
+
+    const inUser = new Set(userBox.items.map((i) => i.variant.id));
+    for (const item of guestLoaded.items) {
+      if (inUser.has(item.variant.id)) continue;
+      await this.prisma.giftBoxItem.create({
+        data: {
+          giftBoxId: userBox.id,
+          variantId: item.variant.id,
+          quantity: item.quantity,
+          personalization:
+            item.personalization && typeof item.personalization === 'object'
+              ? (item.personalization as object)
+              : undefined,
+        },
+      });
+    }
+
+    await this.prisma.giftBox.update({
+      where: { id: userBox.id },
+      data: {
+        recipient: userBox.recipient ?? guestLoaded.recipient,
+        ageBand: userBox.ageBand ?? guestLoaded.ageBand,
+        occasion: userBox.occasion ?? guestLoaded.occasion,
+        budgetPaise:
+          userBox.budgetPaise != null || guestLoaded.budgetPaise != null
+            ? Math.max(userBox.budgetPaise ?? 0, guestLoaded.budgetPaise ?? 0)
+            : null,
+        collectionSlugs: userBox.collectionSlugs.length
+          ? userBox.collectionSlugs
+          : guestLoaded.collectionSlugs,
+        wizardStep: Math.max(userBox.wizardStep, guestLoaded.wizardStep),
+      },
+    });
+
+    await this.prisma.giftBox.delete({ where: { id: guestBox.id } });
+    return this.getBox(userBox.id, { userId });
+  }
+
+  private async requireActive(actor: GiftBoxActor) {
+    const owner = giftBoxOwnerWhere(actor);
+    if (owner) {
+      const existing = await this.prisma.giftBox.findFirst({
+        where: owner,
+        orderBy: { updatedAt: 'desc' },
+        include: { items: { include: { variant: true } } },
+      });
+      if (existing) return existing;
+    }
+    const created = await this.getOrCreateActive(actor);
+    const reloaded = await this.prisma.giftBox.findFirst({
+      where: { id: created.id },
+      include: { items: { include: { variant: true } } },
+    });
+    if (!reloaded) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Gift box not found.' });
+    }
+    return reloaded;
+  }
+
+  private mapBox(box: GiftBoxLoaded) {
     const items = box.items.map((i) => ({
       id: i.id,
       variantId: i.variant.id,
@@ -441,6 +560,7 @@ export class GiftBoxService {
       productTitle: i.variant.product.title,
       productSlug: i.variant.product.slug,
       brandName: i.variant.product.brandName,
+      imageUrl: i.variant.product.media[0]?.url ?? null,
       pricePaise: i.variant.pricePaise,
       quantity: i.quantity,
       lineTotalPaise: i.variant.pricePaise * i.quantity,
@@ -467,6 +587,7 @@ export class GiftBoxService {
     return {
       id: box.id,
       name: box.name,
+      guestToken: box.guestToken,
       budgetPaise,
       recipient: box.recipient,
       ageBand: box.ageBand,

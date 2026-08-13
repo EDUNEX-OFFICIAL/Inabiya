@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { apiAuth, storeSession, type AuthSession } from '@/lib/auth-client';
-import { cartApi } from '@/lib/cart-client';
+import { mergeGuestCommerce } from '@/lib/merge-guest-commerce';
 
 /** Seeded demo accounts — shown when NEXT_PUBLIC_SHOW_DEMO_LOGINS=1 or in development. */
 const DEMO_PASSWORD = 'Password123!';
@@ -96,14 +96,7 @@ function LoginForm() {
         json: { email: email.trim().toLowerCase(), password },
       });
       storeSession(session);
-      try {
-        await cartApi('/cart/merge', {
-          method: 'POST',
-          authToken: session.tokens.accessToken,
-        });
-      } catch {
-        /* guest cart may be empty */
-      }
+      await mergeGuestCommerce(session.tokens.accessToken);
       redirectAfterLogin(session);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -116,11 +109,11 @@ function LoginForm() {
     <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
       <div>
         <h1 className="gift-h1">Sign in</h1>
-        <p className="mt-gs-2 text-body opacity-75">
-          {nextPath
-            ? `Continue to ${nextPath}`
-            : 'Sign in to save wishlists, track orders, and checkout faster.'}
-        </p>
+        {nextPath ? null : (
+          <p className="mt-gs-2 text-body opacity-75">
+            Sign in to save wishlists, track orders, and checkout faster.
+          </p>
+        )}
         {resetOk ? (
           <p className="gift-banner gift-banner--success mt-gs-3" role="status">
             Password updated — sign in with your new password.

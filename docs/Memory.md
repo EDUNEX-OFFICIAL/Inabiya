@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 12, 2026 (deploy web+api @ 0fdabf6)
+Last Updated: August 14, 2026 (build verified + push)
 
 ---
 
@@ -141,11 +141,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **QA:** hard-refresh Soft Gift + admin (reviews, order detail, products/new)
-2. **QA:** `/admin/commerce/suppliers` + New PO → Receive all → inventory
-3. **Commit/push** when ready (working tree still dirty after deploy)
-4. Resume OPS-10 after storefront / order desk QA
-5. —
+1. Hard-refresh `/gift/build-your-box` step 6 on phone: Add to cart one line, Remaining stacked
+2. After pay: `/orders/:id?placed=1` thank-you; invoice + All orders
+3. Cart thumbs + qty −/+; coupon Enter must not place the order
+4. **QA:** `/admin/commerce/suppliers` + New PO → Receive all → inventory
+5. Resume OPS-10 after storefront QA
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -178,6 +178,32 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-14 — Local pnpm browser API = same-origin
+
+- `NEXT_PUBLIC_API_URL=http://127.0.0.1:4101` makes the **browser** call 4101. Cursor port-forward of only 3101 → `Failed to fetch` on BYB/cart/checkout.
+- Dev browser always `same-origin` `/api/v1`; Next rewrite → `API_URL` (`127.0.0.1:4101`). CORS also allows `:3101`.
+
+### 2026-08-14 — Checkout = focused Shopify-style (human override)
+
+- **Override:** Phase 14 Procurement in progress; human: design checkout to big-company standards.
+- `/checkout` strips shop nav / footer / WhatsApp; logo + “Secure checkout” only.
+- Single page (not a wizard): Delivery, Shipping, Gift, Payment. Desktop sticky order summary; mobile collapsible summary + fixed Pay bar.
+- Totals from dual `POST /checkout/preview` (STANDARD + EXPRESS). Cart DTO includes `imageUrl` for thumbs.
+- Recipes: `.checkout-option` / `.checkout-section` / `.checkout-sticky-pay`. No GSAP. Mock payment copy stays honest.
+
+### 2026-08-13 — Soft Gift menu = hamper overlay (not a drawer)
+
+- **Override:** Phase 14 Procurement in progress; human: redesign `/gift` menu drawer — creative, on-brand, responsive.
+- Mobile/tablet menu is a **full-viewport hamper** (tissue wash + ribbon bow), not a side sheet or accordion list.
+- Nav lid stays tappable (logo/cart/close). Overlay portals to `body` (escapes `overflow-x: clip`). Photo tiles for Shop + For whom; no extra how-to copy.
+- Tokens/recipes only (`gift-menu*`); Lenis stop + `inert` on page; Escape / route / `lg+` close.
+
+### 2026-08-12 — Ops desk row actions density
+
+- Desk **table/card row actions** must use shared `opsRowActionClass` (`ops-desk-ui.ts`) — borderless hover pills.
+- Do **not** use `clay-btn` / `clay-btn-ghost` / `clay-btn-secondary` inside row Actions columns (those stay for headers/forms/filters).
+- Applied: products, collections, orders, inventory, reviews, returns, coupons.
 
 ### 2026-08-11 — Commerce Ops readability (human override)
 
@@ -1087,6 +1113,323 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-14 (build verified + push)
+
+- **Override:** Phase 14; human: check build and push all pending storefront/ops work.
+- Verified: `pnpm typecheck`, API checks (incl. `gift-box-owner`), catalog check, `pnpm build` (web+api+worker) — compile OK. Next lint warnings only (pre-existing hooks/font).
+- Pushed uncommitted Soft Gift + ops desk + guest BYB + brand assets to `origin/main`.
+- Next: deploy web+api if prod should pick this up; hard-refresh storefront.
+
+### Session — 2026-08-14 (BYB dock Add to cart)
+
+- **Override:** Phase 14; human: BYB sticky bar — Add to cart wrapping, remaining misaligned.
+- Dock: stacked Remaining + amount; CTA grows, `whitespace-nowrap`, icon+label gap. <360px: full-width button under remaining.
+- Next: hard-refresh box step 6 on a phone width.
+
+### Session — 2026-08-14 (BYB Failed to fetch)
+
+- **Override:** Phase 14; human screenshot: `/gift/build-your-box` “Failed to fetch”.
+- Cause: pnpm Next inlined `NEXT_PUBLIC_API_URL=http://127.0.0.1:4101`; browser (port-forward) cannot reach 4101.
+- Fix: restart `pnpm dev` with `NEXT_PUBLIC_API_URL=same-origin` + rewrite to 4101; CORS includes 3101; `.env.development.example` + PORTS note.
+- Next: hard-refresh `:3101/gift/build-your-box`.
+
+### Session — 2026-08-14 (Checkout flow cross-check)
+
+- **Override:** Phase 14; human: cross-check checkout and further pages.
+- Bug: coupon Enter no longer submits place-order. Eligibility fail no longer kicks user off the order page.
+- Cart aligned (thumbs, −/+, two-column summary). Thank-you on `?placed=1`. Orders list + login `?next=`. Order items `imageUrl` from variant media.
+- Invoice already solid — left. Env/migration: none.
+- Next: cart → checkout → Pay → thank-you → invoice.
+
+### Session — 2026-08-14 (White letter-b favicon)
+
+- **Override:** Phase 14; human: use a relevant white icon from brand-assets as favicon.
+- Tab/PWA/apple icons now use the white letter-b mark (`mark-on-dark` / white-B) on plum `#462947`, not the full lockup wordmark.
+- Files: `apps/web/app/{favicon.ico,icon.png,icon.svg,apple-icon.png}` + `apps/web/public/brand/favicon.*` / `icon-*.png`.
+- Env: none. Migration: none.
+- Next: hard-refresh the site (favicon is cached hard) to see the white `b`.
+
+### Session — 2026-08-14 (Checkout focused UX)
+
+- **Override:** Phase 14; human: properly design checkout to big-company standards.
+- Focused chrome on `/checkout`; two-column layout; saved-address cards; shipping radio cards with server prices; gift wrap + message; sticky Pay on mobile.
+- Cart `imageUrl` from first product IMAGE; coupon apply/remove on summary; form kept on error; skeleton instead of “Preparing…”.
+- Env: none. Migration: none.
+- Next: hard-refresh `/checkout` with items; phone sticky Pay; desktop summary.
+
+### Session — 2026-08-14 (BYB animated choice icons)
+
+- **Override:** Phase 14; human: more relevant BYB icons, animated OK.
+- Choice tiles + cart/box CTAs use `lucide-animated` + `useOnceIcon` (hover/tap once, reduced-motion skip). Mapping: smile/hand-heart/users, rocking-chair/rabbit/blocks, welcome+/party/stamp/sparkles, ₹, box/cart.
+- Next: hard-refresh `/gift/build-your-box` — hover a tile, icon should play once.
+
+### Session — 2026-08-14 (BYB guest cross-check polish)
+
+- **Override:** Phase 14; human: cross-check + polish guest BYB.
+- Expired JWT no longer silently opens a guest box (`OptionalJwtRefreshGuard` + client refresh-then-guest retry). Guest token length capped; UUID params; create P2002 retry.
+- UI: quieter progress, mobile pref chips, compact budget/age tiles, empty-budget blocked, recs copy, item links, focus + dock padding.
+- Next: hard-refresh `/gift/build-your-box` logged out; expired-session user should still land on their box after refresh.
+
+### Session — 2026-08-14 (Build Your Box guest + quieter wizard)
+
+- **Override:** Phase 14; human: redesign BYB (modern, not fancy) and let guests build — sign-in only before checkout.
+- Guest gift box via `guestToken` (`x-gift-box-token`), same pattern as cart. Merge on login/register. Checkout already JWT-gated.
+- Wizard: progress bar + choice tiles + sticky remaining-budget summary; no login wall on `/gift/build-your-box` or PDP Add to box.
+- Migration: `20260814010000_gift_box_guest_token`. Env: none. Check: `gift-box-owner.check.ts`.
+- Next: hard-refresh `/gift/build-your-box` logged out; add items; cart OK; `/checkout` still asks to sign in.
+
+### Session — 2026-08-14 (carousel infinite wrap)
+
+- **Override:** Phase 14; human: carousel not continuous — first card should appear when the ring ends.
+- Cause: intro GSAP left `visibility:hidden` on the wrapped card (abs>2 at first paint). That node never came back, so one side stayed empty.
+- Fix: `clearProps: all` on every card when the intro finishes; on each swipe, clear leftover GSAP opacity/visibility on wrappers. Loop was already modulo.
+- Next: hard-refresh `/gift` All — swipe past the last card, first should peek on the far side.
+
+### Session — 2026-08-14 (carousel more card gap)
+
+- **Override:** Phase 14; human: still too tight (~8–12px) — more gap.
+- Step `0.76*w` (min 210, max 400). Cards `54vw` / max 300 so air between tiles is obvious and side peeks remain.
+- Next: hard-refresh `/gift` Explore.
+
+### Session — 2026-08-14 (carousel card gap)
+
+- **Override:** Phase 14; human: increase gap between carousel cards.
+- Step `0.4*w`/max 248 → `0.54*w`/max 340 (min 148). Smile y*28. Wrap still parks behind so the loop hole doesn’t come back.
+- Next: hard-refresh `/gift` Explore.
+
+### Session — 2026-08-14 (carousel hidden pile, surprise spread)
+
+- **Override:** Phase 14; human: pile ke peeche dusri cards dikhni nahi chahiye, phir surprise slide-out.
+- Drop: only centre visible. Sides sit at t=0 with opacity 0. Short hold. Then L/R travel; opacity stays 0 until ~20% out so they clear the main card first.
+- Next: hard-refresh `/gift` Explore — one card, then cards appear from behind it.
+
+### Session — 2026-08-14 (carousel continuous + pile spread)
+
+- **Override:** Phase 14; human: gap at the end / empty centre; animation = drop then cards behind slide L/R.
+- Tighter step (`0.4*w`, max 248). Wrap seam parks behind the pile (`abs>2`, snap, no fly-across hole).
+- Motion: whole pile drops from above (sides visible behind centre), then all sides open together along the smile.
+- Next: hard-refresh `/gift` Explore — centre filled; swipe through last card.
+
+### Session — 2026-08-14 (menu lid close + polaroid cards)
+
+- **Override:** Phase 14; human: no X, search-from-beneath leak, redesign cards.
+- Overlay is a full opaque takeover again (header was covering the X). Lid row: bow + visible close. Search stays in the menu.
+- Cards: polaroid — photo on top, caption underneath (no pill covering the image). Per-slug photos so girl/boy/mom/unisex/shower don’t share one shot.
+- Next: hard-refresh `/gift` phone — X top-right of pink lid; tap closes.
+
+### Session — 2026-08-14 (menu photos + close X)
+
+- **Override:** Phase 14; human: mixed photo/icon tiles look ajeeb; header X does not close.
+- Close: overlay `pointer-events: none` except ribbon/body so header X is tappable (portal was eating clicks). Tissue starts below nav.
+- Tiles: always photos — collection `heroImageUrl` via `getGiftCollection`; builder uses hamper photo (not shop.svg). Unknown CMS slugs cycle a photo pool. Labels wrap 2 lines.
+- Next: hard-refresh `/gift` phone — open/close X; Unisex etc. should show photos.
+
+### Session — 2026-08-14 (gift menu overlay layout)
+
+- **Override:** Phase 14; human: menu open ke baad ajeeb — sticky account cut tiles, cards+pills mix, missing labels, pink right edge.
+- Account no longer sticky (scrolls with content). Sign out full-width under Profile/Orders grid.
+- Shop: only builder/hampers as featured; rest as photo tiles (no chip dump). Dedupe For whom vs Shop hrefs.
+- Labels as pills on photos. Shorter 4/3 tiles. Overlay scrollbar hidden; overflow clip. Close X stays heading color (no sticky-hover pink).
+- Next: hard-refresh `/gift` below 1024px, open menu, scroll to bottom.
+
+### Session — 2026-08-14 (carousel drop+spread polish)
+
+- **Override:** Phase 14; human: cross-check and polish drop+spread / no FOUC.
+- Filter Create/Develop/Explore (2 cards): leftover now slides out, no end pop. Hidden |offset|>2.5 stay hidden.
+- Filter FOUC: `useLayoutEffect` clears `data-cards-live` before paint; active resets on click. Step read at play time.
+- Shell swipe transition only after `data-cards-live` (no entrance jitter).
+- Next: hard-refresh `/gift` Explore + tap Create.
+
+### Session — 2026-08-14 (carousel drop+spread, no FOUC)
+
+- **Override:** Phase 14; human: one card drops from top, then equal cards from left and right; no load→disappear→animate.
+- CSS hides `[data-carousel-card]` until `data-cards-live`. GSAP sets start poses only when the timeline plays (not on construct).
+- Motion: centre drops in; then paired ±1, then ±2 slide out along the smile at the same time.
+- Next: hard-refresh `/gift`, scroll into Explore — empty stage, then drop, then L/R.
+
+### Session — 2026-08-13 (Soft Gift hamper menu)
+
+- **Override:** Phase 14; human: redesign `/gift` menu drawer — responsive, UX, not traditional.
+- Replaced accordion dropdown with full-viewport hamper overlay: ribbon hamburger (pink middle bar → X), tissue + bow, 2-col shop cards + whom photo tiles, Journal strip, sticky account.
+- Portal to `body`; `--z-nav` bump so header lid stays; Lenis `stop`; `inert` on main/footer/FAB; `lg+` auto-close.
+- Files: `gift-menu-overlay.tsx`, `gift-nav.tsx`, `gift-layout-chrome.tsx`, `globals.css`.
+- Next: hard-refresh `/gift` below 1024px.
+
+### Session — 2026-08-13 (carousel casino fan + gaps)
+
+- **Override:** Phase 14; human: more gap between cards; reveal from behind along the curve (casino floor open).
+- Step `max(168, min(w*0.58, 420))`; cards `62vw` / max 320 so seats don’t overlap as much. Deeper smile (`y*32`).
+- Entrance: cards start in a center pile, then fan to their arc seats (`offset * t` through `arcTransform`). Center pops; ±1 then ±2 slide out from behind. Filter re-deals.
+- Next: hard-refresh `/gift`, scroll into Explore — should look like a dealer opening a hand on the table.
+
+### Session — 2026-08-13 (carousel cards shorter, Labs-like)
+
+- **Override:** Phase 14; human: cards still too tall vs Google Labs mobile/desktop refs.
+- Height: media `4/5` → `4/3` (phone) / `1/1` (sm+). Dropped duplicate CREATE kicker on phone. Tighter pad, `line-clamp-2`, Learn More closer.
+- Width: `clamp(200px, 68vw, 340px)` so side slivers + tilt read like Labs. Stage pad 96.
+- Next: hard-refresh `/gift` at ~375px — card should sit ~half viewport tall, neighbours tilted.
+
+### Session — 2026-08-13 (collection sticker polish)
+
+- **Override:** Phase 14; human: sticker cards good — polish if needed.
+- Wave cut solid white (was translucent). Equal-height stickers so Shop tags line up. Focus ring on sticker. Title clamp 2. Hanging-tag padding + pill z-index. Chip `aria-hidden`. Reduced-motion skips photo zoom.
+- Next: hard-refresh `/gift` Shop by collection.
+
+### Session — 2026-08-13 (carousel cards smaller on phone)
+
+- **Override:** Phase 14; human: small screen pe cards chhote so more cards + curve dikhe.
+- Was: `clamp(268px, 82vw, 360px)` + step min 140 — centre ate ~80% width, neighbours + smile hidden.
+- Now: `clamp(152px, 48vw, 360px)`; step `max(88, min(w*0.36, 280))`; tighter phone padding/type. Desktop max 360px unchanged.
+- Next: hard-refresh `/gift` at ~375px; swipe should show ±1 cards on the arc.
+
+### Session — 2026-08-13 (collection sticker cards)
+
+- **Override:** Phase 14; human: be creative — childish Soft Gift, not generic split cards.
+- Polaroid sticker tiles: construction-paper peek, slight scatter tilt, wavy photo edge, star/heart/bow doodle, occasion chip, hanging **Shop** gift-tag (`gift-pill-overlap`). Caption in italic Fraunces.
+- Section toy doodles on. 2-col phone / 4-col desktop.
+- Next: hard-refresh `/gift` Shop by collection + Shop by age.
+
+### Session — 2026-08-13 (product-card CTA wrap)
+
+- **Override:** Phase 14; human: same card width but some CTA pairs stacked vs one row.
+- Cause: featured used longer “Explore gift” + `flex-wrap` + `shrink-0`; pair overflowed while “View gift” still fit.
+- Fix: same “View gift” label; `flex-nowrap` + `flex-1 min-w-0` so both cards keep one row.
+
+### Session — 2026-08-13 (PDP animated icons)
+
+- **Override:** Phase 14; human: animated icons in a few places, not everywhere, no infinite loop; mainly product page.
+- Deps: `lucide-animated` + `motion` (tiny UI; hover/tap once). Hook `useOnceIcon` skips `prefers-reduced-motion`.
+- Wired: PDP Add to cart (`CartIcon`), wishlist heart, Add to gift box (`SparklesIcon`), gallery play. Thumbs/nav/homepage left static.
+- Next: open a product with video; hover cart/heart — should play once, not loop.
+
+### Session — 2026-08-13 (collection split cards)
+
+- **Override:** Phase 14; human rejected overlay collection tiles — redesign, don’t tweak.
+- Layout: split card (photo | kicker + title + blurb + compact Shop bag CTA). Phone = 1 col; md+ = 2×2. Pink/sky wash on copy pane.
+- Not recipient overlay, not 4-col stacked image+bar.
+- Next: hard-refresh `/gift` Shop by collection + Shop by age.
+
+### Session — 2026-08-13 (collection card overlay)
+
+- **Override:** Phase 14; human: collection/age cards still felt stacked (photo + title + full-width pink Shop).
+- Done: photo-as-card like recipient tiles — 4:5 crop, pink/sky gradient overlay, title on image, compact white **Shop** pill (bag + text). Hover fills pill primary. See all stays on the header rail (phone too).
+- Dropped nested clay-card + full-width CTA (double radius / too loud).
+- Next: hard-refresh `/gift` Shop by collection + Shop by age.
+
+### Session — 2026-08-13 (shop-by-collection preview)
+
+- **Override:** Phase 14; human: homepage collection grid dumping all 16; want preview + See all; stronger card CTA (icon+text).
+- Cause: `discoveryChips` `catalogCollections` rendered every published collection.
+- Done: default preview **4** (CMS `limit` 1–12); See all stays for the rest. Cards = clay-card + 4/3 media + blurb + full-width **Shop** (`ShoppingBag` + label) like home product CTAs. Collection ≠ SKU so no fake Add to cart.
+- Sort chips by `sortOrder` (girl / boy / mom / unisex first). Check: `catalog-collections.check.ts`.
+- Next: hard-refresh `/gift` Shop by collection.
+
+### Session — 2026-08-13 (gift CTA container density)
+
+- **Override:** Phase 14; human: show labels when the card actually has room (full-width phone cards were icon-only).
+- Viewport `sm` → `@container` on `.gift-cta-host`. Default hide below ~16.5rem; hero long labels below ~24rem.
+- Hosts: product-card copy column, hero copy, collection header. Labels default visible; icon-only only when the host is tight.
+
+### Session — 2026-08-13 (gift CTA icon density)
+
+- **Override:** Phase 14; human: `/gift` desktop = icon+text, mobile = icons only, with caution.
+- Done: `GiftResponsiveLink` / `GiftResponsiveButton`; wired on hero pair, home product cards (View/Explore + Add to cart), collection header pair.
+- Skipped (caution): PDP buy / gift-box, checkout, forms, single full-width CTAs, corporate stacked CTAs, nav.
+- Mobile icon-only only when two CTAs sit in one row; lone CTA keeps label. `aria-label` + `title` on icon-only.
+- Next: hard-refresh `/gift` at ~375 and desktop.
+
+### Session — 2026-08-13 (brand logos uncropped)
+
+- **Override:** Phase 14; human: use `LOGO.svg` on nav/footer, `Untitled-1.png` on mobile; no crop.
+- Copied masters as-is into `apps/web/public/brand/` (no trim/resize/crop).
+- Nav `lg+`: full SVG lockup. Mobile: full letter-b mark. Footer: full white lockup. Scale = `object-contain` only.
+- Next: hard-refresh `/gift` desktop + phone; say if tagline in the lockup feels too small in the nav.
+
+### Session — 2026-08-13 (deploy web carousel)
+
+- **Live:** `bash scripts/deploy-vps.sh web` @ `51380bc` (working tree) — smoke health/ready 200; web recreated healthy.
+- Includes Soft Gift category carousel (Labs arc + GSAP enter + hover media).
+- Next: hard-refresh public `/gift`
+
+### Session — 2026-08-12 (Soft Gift carousel Labs arc)
+
+- **Override:** Phase 14; human: [labs.google](https://labs.google/) curve + hover/click media swap; tabs stay above stage.
+- Done: smile-arc (`y` drop + `rotateY`/`rotateZ`), denser stage, Soft Gift pastel blobs; `hoverMedia` image|video with crossfade; desktop hover / mobile tap on active card media.
+- Tabs remain above carousel (not Labs-below-arrows).
+- Scale-up: cards `clamp(268px…360px)` taller 4:5 media; deeper arc (`y*28`, rotateZ 7.5°, wider step); stage pad +140.
+- GSAP ScrollTrigger timeline: intro → center-out card stagger (y/scale/rotate) → controls; filter soft restagger; `prefers-reduced-motion` skip; removed `data-gift-reveal` double-fade.
+- Next: hard-refresh `/gift` scroll into section; swap in real product videos when assets ready
+
+### Session — 2026-08-12 (Soft Gift category carousel)
+
+- **Override:** Phase 14 procurement active; human: client ref + `CategoryCarousel.jsx` → curved cards + tabs after hero on `/gift`.
+- Done: `components/gift/category-carousel.tsx` (tabs All/Create/Develop/Explore, fanned 3D stage, drag/arrows/dots, Soft Gift tokens + Next `Link`/`Image`; no framer-motion — CSS spring transitions).
+- Wired: after hero in `MarketingPageBlocks` home layout + legacy home fallback.
+- Routes mapped to Soft Gift paths (BYB, collections, corporate).
+- Next: hard-refresh `/gift` mobile+desktop; tweak card copy/images if client wants CMS later
+
+### Session — 2026-08-12 (Brand assets wired)
+- Exported web-ready logos from `public/brand-assets/` → `apps/web/public/brand/` (wordmark/mark/lockup + favicon/icons).
+- Added `lib/brand-assets.ts` + `BrandLogo`; wired Soft Gift nav/auth, dark footer, blog header, ops sidebar, invoice, CMS hero eyebrow, root metadata/OG/icons.
+- Masters stay in `public/brand-assets/` (archive); runtime paths under `/brand/*` only.
+- Next: deploy web so `/brand/*` + favicon live; optional SEO Organization `logoUrl` default in CMS presets.
+
+### Session — 2026-08-12 (Soft Gift ref gutters max-w-7xl)
+
+- **Override:** Phase 14; human: match client reference padding (inspect: `max-w-7xl mx-auto px-4 sm:px-6`).
+- Done: `--page-max: 80rem`; `--gift-pad-x: 1rem` → `1.5rem` @sm; horizontal pad moved onto `.gift-band-inner` / `.gift-shell-width` / hero grid (same box as max-width); nav uses `gift-shell-width`.
+- Responsive: mobile 16px, ≥640px 24px; ultrawide auto side margins from centered 1280px shell.
+- Changed: `globals.css`, `gift-layout-chrome.tsx`, Memory
+- Next: deploy `web`; hard-refresh `/gift` at 375 / 768 / 1280 / 1536
+
+### Session — 2026-08-12 (Soft Gift side gutters)
+
+- **Override:** Phase 14 active; human: `/gift` sections stuck to page edges — no side padding.
+- Done: `--gift-pad-x` → fluid clamp (mobile ~1.25–1.75rem, sm+ ~1.75–3rem); `--page-max` soft cap `90rem` (was `none`); nav/collection/home fallback use same pad token.
+- Changed: `globals.css`, `gift-layout-chrome.tsx`, collection page/loading, gift home fallback, Memory
+- Risk: slightly less ultrawide stretch than Aug 11 full-bleed sweep — intentional for breathing room
+- Next: deploy `web`; hard-refresh `/gift` QA
+
+### Session — 2026-08-12 (Inventory sort labels)
+
+- Inventory Filters → Sort labels: Lowest/Highest stock first, SKU A–Z, Product name A–Z (no ↑↓ jargon)
+- Next: hard-refresh inventory Filters panel
+
+### Session — 2026-08-12 (Ops desk filters unified)
+
+- Pattern: primary status/stock chips + Filters popover for secondary dims (when needed) + count + Clear
+- Inventory: Sort → Filters; Orders: Age + Payment → Filters (status + Pay issues stay chips); Gifting: Type → Filters, status chips
+- Purchase orders: count + Clear + empty-state; Coupons/returns/reviews/customers: row layout align
+- Left alone: reports/import/settings tabs (not list filters); products/collections already done
+- Next: hard-refresh inventory/orders/gifting filter rows
+
+### Session — 2026-08-12 (Ops sortable table headers)
+
+- Industry pattern: `OpsSortTh` — uppercase dense headers; clickable cols cycle asc → desc → default
+- Products: Product (title) + From (price) server sort; Sort dropdown mobile-only in Filters
+- Collections: Title + Products client sort; same header chrome
+- Status/Stock/Tags/Slug/Type/Actions not sortable
+- Next: hard-refresh products + collections desktop tables
+
+### Session — 2026-08-12 (Collections filters like products)
+
+- Collections desk: status chips (All/Published/Draft) + Filters popover (Type + Sort) matching products pattern
+- Added Clear, filter empty-state, default sort newest-first
+- Next: hard-refresh `/admin/commerce/collections` filter row
+
+### Session — 2026-08-12 (Ops row actions consistent)
+
+- Decision: all commerce desk row Actions → `opsRowActionClass` (not clay-btn*)
+- Aligned: products (mobile+desktop), collections (mobile+desktop), orders, inventory, reviews, returns, coupons
+- Documented in `ops-desk-ui.ts` + Memory decisions
+- Next: hard-refresh products/collections/orders Actions columns
+
+### Session — 2026-08-12 (Products row actions denser)
+
+- Root: products desk used `clay-btn-ghost` (bordered pills); collections used borderless row actions
+- Shared `opsRowActionClass` in `ops-desk-ui.ts`; products + collections desktop rows aligned
+- Next: hard-refresh products list Actions column
 
 ### Session — 2026-08-12 (Deploy web+api)
 

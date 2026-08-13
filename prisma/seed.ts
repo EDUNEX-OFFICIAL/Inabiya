@@ -1270,6 +1270,7 @@ async function main() {
         title: 'Shop by collection',
         seeAllHref: '/gift/products',
         seeAllLabel: 'See all',
+        limit: 4,
         itemsSource: 'catalogCollections',
         items: [
           {

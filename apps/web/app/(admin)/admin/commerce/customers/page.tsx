@@ -236,7 +236,7 @@ function CustomersDeskInner() {
         </div>
       </form>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <div
           className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2"
           role="group"
@@ -258,22 +258,24 @@ function CustomersDeskInner() {
           })}
         </div>
 
-        <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
-          {refreshing && !loading ? (
-            <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
-          ) : null}
-          {countLabel}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
+            {refreshing && !loading ? (
+              <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
+            ) : null}
+            {countLabel}
+          </span>
 
-        {filterActive ? (
-          <button
-            type="button"
-            className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-            onClick={clearFilters}
-          >
-            Clear
-          </button>
-        ) : null}
+          {filterActive ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="mb-2 flex items-center justify-between gap-2 sm:hidden">

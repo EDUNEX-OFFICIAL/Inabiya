@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { History, Link2, Package, Pencil, RefreshCw, Search, Upload, X } from 'lucide-react';
+import { History, Link2, ListFilter, Package, Pencil, RefreshCw, Search, Upload, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
-import { opsChipClass } from '@/lib/ops-desk-ui';
+import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -65,10 +65,10 @@ const STOCK_CHIPS: Array<{ value: StockFilter; label: string }> = [
 ];
 
 const SORT_OPTIONS: Array<{ value: SortFilter; label: string }> = [
-  { value: 'available_asc', label: 'Available ↑' },
-  { value: 'available_desc', label: 'Available ↓' },
-  { value: 'sku', label: 'SKU' },
-  { value: 'product', label: 'Product A–Z' },
+  { value: 'available_asc', label: 'Lowest stock first' },
+  { value: 'available_desc', label: 'Highest stock first' },
+  { value: 'sku', label: 'SKU A–Z' },
+  { value: 'product', label: 'Product name A–Z' },
 ];
 
 const SORT_VALUES = new Set<SortFilter>(SORT_OPTIONS.map((o) => o.value));
@@ -84,6 +84,9 @@ function parseStock(raw: string | null, legacyLow: string | null): StockFilter {
   return '';
 }
 
+function filterSelectClass(): string {
+  return 'clay-input min-h-9 w-full min-w-0 text-sm';
+}
 
 function statusLabel(status: string): string {
   if (status === 'PUBLISHED') return 'Published';
@@ -136,6 +139,8 @@ function InventoryDeskInner() {
   const [reservations, setReservations] = useState<ReservationsPayload | null>(null);
   const [reservesLoading, setReservesLoading] = useState(false);
   const [reservesError, setReservesError] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersPanelRef = useRef<HTMLDivElement>(null);
 
   const loadSeq = useRef(0);
   const historySeq = useRef(0);
@@ -256,9 +261,27 @@ function InventoryDeskInner() {
     return next;
   }, [rows, stock, sort]);
 
-  const filterActive = Boolean(qParam || stock || sort !== 'available_asc');
+  const advancedFilterCount = sort !== 'available_asc' ? 1 : 0;
+  const filterActive = Boolean(qParam || stock || advancedFilterCount > 0);
   // "N of M" only meaningful when client filters a larger fetched set (Out)
   const showSubsetCount = stock === 'out' && displayed.length !== rows.length;
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    function onPointerDown(e: MouseEvent) {
+      const el = filtersPanelRef.current;
+      if (el && !el.contains(e.target as Node)) setFiltersOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setFiltersOpen(false);
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [filtersOpen]);
 
   function clearFilters() {
     setQInput('');
@@ -414,32 +437,35 @@ function InventoryDeskInner() {
 
   function rowActions(r: InventoryRow) {
     return (
-      <div className="flex flex-wrap items-center gap-3 text-sm">
+      <div className="flex flex-wrap items-center justify-end gap-0.5">
         <button
           type="button"
-          className="inline-flex min-h-10 items-center gap-1 font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+          className={opsRowActionClass}
+          aria-label={`Adjust ${r.sku}`}
           onClick={() => openAdjust(r)}
         >
-          <Pencil className="h-3.5 w-3.5 opacity-60" aria-hidden />
-          Adjust
+          <Pencil className="h-4 w-4 opacity-70" aria-hidden />
+          <span className="hidden sm:inline">Adjust</span>
         </button>
         {r.reserved > 0 ? (
           <button
             type="button"
-            className="inline-flex min-h-10 items-center gap-1 font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+            className={opsRowActionClass}
+            aria-label={`Holds for ${r.sku}`}
             onClick={() => void openReserves(r)}
           >
-            <Link2 className="h-3.5 w-3.5 opacity-60" aria-hidden />
-            Holds
+            <Link2 className="h-4 w-4 opacity-70" aria-hidden />
+            <span className="hidden sm:inline">Holds</span>
           </button>
         ) : null}
         <button
           type="button"
-          className="inline-flex min-h-10 items-center gap-1 font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+          className={opsRowActionClass}
+          aria-label={`History for ${r.sku}`}
           onClick={() => void openHistory(r)}
         >
-          <History className="h-3.5 w-3.5 opacity-60" aria-hidden />
-          History
+          <History className="h-4 w-4 opacity-70" aria-hidden />
+          <span className="hidden sm:inline">History</span>
         </button>
       </div>
     );
@@ -556,7 +582,7 @@ function InventoryDeskInner() {
         </div>
       </form>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <div
           className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2"
           role="group"
@@ -578,41 +604,88 @@ function InventoryDeskInner() {
           })}
         </div>
 
-        <label className="flex shrink-0 items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
-          <span className="hidden sm:inline">Sort</span>
-          <select
-            className="clay-input min-h-8 max-w-[11rem] py-1 text-xs sm:min-h-9 sm:text-sm"
-            aria-label="Sort inventory"
-            value={sort}
-            onChange={(e) =>
-              patchQuery({
-                sort: e.target.value === 'available_asc' ? null : e.target.value,
-              })
-            }
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="relative" ref={filtersPanelRef}>
+            <button
+              type="button"
+              className={`clay-btn-secondary inline-flex min-h-8 items-center gap-1.5 px-2.5 text-xs sm:min-h-9 sm:px-3 sm:text-sm ${
+                advancedFilterCount > 0 || filtersOpen
+                  ? 'border-[var(--primary)] text-[var(--primary)]'
+                  : ''
+              }`}
+              aria-expanded={filtersOpen}
+              aria-controls="inventory-filters-panel"
+              onClick={() => setFiltersOpen((o) => !o)}
+            >
+              <ListFilter className="h-3.5 w-3.5 opacity-80" aria-hidden />
+              Filters
+              {advancedFilterCount > 0 ? (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold leading-5 text-[var(--primary-foreground)]">
+                  {advancedFilterCount}
+                </span>
+              ) : null}
+            </button>
 
-        <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
-          {refreshing && !loading ? (
-            <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
+            {filtersOpen ? (
+              <div
+                id="inventory-filters-panel"
+                role="dialog"
+                aria-label="Inventory filters"
+                className="absolute right-0 z-30 mt-2 w-[min(100vw-2rem,22rem)] rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-3 shadow-lg"
+              >
+                <label className="block min-w-0">
+                  <span className="mb-1 block text-[11px] font-medium text-[var(--muted-foreground)]">
+                    Sort
+                  </span>
+                  <select
+                    className={filterSelectClass()}
+                    aria-label="Sort inventory"
+                    value={sort}
+                    onChange={(e) =>
+                      patchQuery({
+                        sort: e.target.value === 'available_asc' ? null : e.target.value,
+                      })
+                    }
+                  >
+                    {SORT_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {advancedFilterCount > 0 ? (
+                  <button
+                    type="button"
+                    className="clay-btn-ghost mt-3 min-h-8 w-full px-2 text-xs"
+                    onClick={() => {
+                      clearFilters();
+                      setFiltersOpen(false);
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
+            {refreshing && !loading ? (
+              <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
+            ) : null}
+            {countLabel}
+          </span>
+          {filterActive && !filtersOpen ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
           ) : null}
-          {countLabel}
-        </span>
-        {filterActive ? (
-          <button
-            type="button"
-            className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-            onClick={clearFilters}
-          >
-            Clear
-          </button>
-        ) : null}
+        </div>
       </div>
 
       {error ? (

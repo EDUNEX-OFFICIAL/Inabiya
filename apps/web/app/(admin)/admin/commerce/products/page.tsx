@@ -22,9 +22,10 @@ import {
   loginUrl,
 } from '@/lib/auth-client';
 import { formatInr, type CatalogProduct } from '@/lib/catalog';
-import { opsChipClass } from '@/lib/ops-desk-ui';
+import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
+import { OpsSortTh } from '@/components/commerce-ops/ops-sort-th';
 
 type StatusFilter = '' | 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 type StockFilter = '' | 'low' | 'out' | 'in';
@@ -119,6 +120,19 @@ const SORT_VALUES = new Set<SortFilter>(SORT_OPTIONS.map((o) => o.value));
 function parseSort(raw: string | null): SortFilter {
   if (raw && SORT_VALUES.has(raw as SortFilter)) return raw as SortFilter;
   return 'updated';
+}
+
+/** Industry-style cycle: asc → desc → default (updated). */
+function nextTitleSort(current: SortFilter): SortFilter {
+  if (current === 'title_asc') return 'title_desc';
+  if (current === 'title_desc') return 'updated';
+  return 'title_asc';
+}
+
+function nextPriceSort(current: SortFilter): SortFilter {
+  if (current === 'price_asc') return 'price_desc';
+  if (current === 'price_desc') return 'updated';
+  return 'price_asc';
 }
 
 
@@ -464,7 +478,6 @@ function ProductsDeskInner() {
     filters.recipient,
     filters.occasion,
     filters.collection,
-    filters.sort !== 'updated' ? filters.sort : '',
   ].filter(Boolean).length;
 
   const filterActive = Boolean(filters.q || filters.status || advancedFilterCount > 0);
@@ -722,7 +735,7 @@ function ProductsDeskInner() {
                       ))}
                     </select>
                   </label>
-                  <label className="block min-w-0">
+                  <label className="block min-w-0 md:hidden">
                     <span className="mb-1 block text-[11px] font-medium text-[var(--muted-foreground)]">
                       Sort
                     </span>
@@ -912,19 +925,21 @@ function ProductsDeskInner() {
                             {chips.map(formatTagLabel).join(' · ')}
                           </p>
                         ) : null}
-                        <div className="mt-2 flex items-center gap-x-2.5 border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] pt-2 text-xs">
+                        <div className="mt-2 flex flex-wrap items-center gap-0.5 border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] pt-2">
                           <Link
                             href={`/admin/commerce/products/${p.id}`}
-                            className="inline-flex items-center gap-1 font-semibold text-[var(--primary)]"
+                            className={`${opsRowActionClass} text-[var(--primary)]`}
+                            aria-label={`Edit ${p.title}`}
                           >
-                            <Pencil className="h-3 w-3" aria-hidden />
-                            Edit
+                            <Pencil className="h-4 w-4 opacity-70" aria-hidden />
+                            <span>Edit</span>
                           </Link>
                           {p.status === 'PUBLISHED' ? (
                             <button
                               type="button"
-                              className="text-[var(--muted-foreground)] disabled:opacity-50"
+                              className={opsRowActionClass}
                               disabled={rowBusy === p.id}
+                              aria-label={`Unpublish ${p.title}`}
                               onClick={() => void unpublish(p.id)}
                             >
                               Unpublish
@@ -932,8 +947,9 @@ function ProductsDeskInner() {
                           ) : (
                             <button
                               type="button"
-                              className="font-medium text-[var(--foreground)] disabled:opacity-50"
+                              className={opsRowActionClass}
                               disabled={rowBusy === p.id}
+                              aria-label={`Publish ${p.title}`}
                               onClick={() => void publish(p.id)}
                             >
                               Publish
@@ -942,12 +958,13 @@ function ProductsDeskInner() {
                           {p.status === 'PUBLISHED' ? (
                             <Link
                               href={`/gift/products/${p.slug}`}
-                              className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-full text-[var(--muted-foreground)] hover:bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] hover:text-[var(--foreground)]"
+                              className={`${opsRowActionClass} ml-auto`}
                               target="_blank"
                               rel="noreferrer"
                               aria-label={`View ${p.title} on storefront`}
                             >
-                              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                              <ExternalLink className="h-4 w-4 opacity-70" aria-hidden />
+                              <span className="hidden sm:inline">View</span>
                             </Link>
                           ) : null}
                         </div>
@@ -965,8 +982,8 @@ function ProductsDeskInner() {
               <div className="clay-panel overflow-hidden">
                 <table className="w-full min-w-[48rem] border-collapse text-sm">
                   <thead>
-                    <tr className="ops-th border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3.5%,transparent)] text-left">
-                      <th className="px-3 py-2.5 w-10">
+                    <tr className="ops-th border-b border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--foreground)_3.5%,transparent)]">
+                      <th className="w-10 px-3 py-2.5" scope="col">
                         <input
                           type="checkbox"
                           aria-label="Select all"
@@ -978,12 +995,26 @@ function ProductsDeskInner() {
                           }}
                         />
                       </th>
-                      <th className="px-2 py-2.5 pr-4 font-medium">Product</th>
-                      <th className="px-2 py-2.5 pr-4 font-medium">Status</th>
-                      <th className="px-2 py-2.5 pr-4 font-medium">Stock</th>
-                      <th className="px-2 py-2.5 pr-4 font-medium">Tags</th>
-                      <th className="px-2 py-2.5 pr-4 font-medium">From</th>
-                      <th className="px-2 py-2.5 pr-3 font-medium text-right">Actions</th>
+                      <OpsSortTh
+                        label="Product"
+                        active={filters.sort === 'title_asc' || filters.sort === 'title_desc'}
+                        direction={filters.sort === 'title_desc' ? 'desc' : 'asc'}
+                        onSort={() =>
+                          applyFilters({ sort: nextTitleSort(filters.sort), cursor: null })
+                        }
+                      />
+                      <OpsSortTh label="Status" />
+                      <OpsSortTh label="Stock" />
+                      <OpsSortTh label="Tags" />
+                      <OpsSortTh
+                        label="From"
+                        active={filters.sort === 'price_asc' || filters.sort === 'price_desc'}
+                        direction={filters.sort === 'price_desc' ? 'desc' : 'asc'}
+                        onSort={() =>
+                          applyFilters({ sort: nextPriceSort(filters.sort), cursor: null })
+                        }
+                      />
+                      <OpsSortTh label="Actions" align="right" className="pr-3" />
                     </tr>
                   </thead>
                   <tbody>
@@ -1074,19 +1105,21 @@ function ProductsDeskInner() {
                             {formatInr(p.fromPricePaise)}
                           </td>
                           <td className="px-2 py-2.5 pr-3 align-middle">
-                            <div className="flex flex-wrap items-center justify-end gap-1">
+                            <div className="flex flex-wrap items-center justify-end gap-0.5">
                               <Link
                                 href={`/admin/commerce/products/${p.id}`}
-                                className="clay-btn-ghost inline-flex min-h-8 items-center gap-1 px-2 text-xs"
+                                className={opsRowActionClass}
+                                aria-label={`Edit ${p.title}`}
                               >
-                                <Pencil className="h-3 w-3 opacity-70" aria-hidden />
-                                Edit
+                                <Pencil className="h-4 w-4 opacity-70" aria-hidden />
+                                <span className="hidden sm:inline">Edit</span>
                               </Link>
                               {p.status === 'PUBLISHED' ? (
                                 <button
                                   type="button"
-                                  className="clay-btn-ghost min-h-8 px-2 text-xs disabled:opacity-50"
+                                  className={opsRowActionClass}
                                   disabled={rowBusy === p.id}
+                                  aria-label={`Unpublish ${p.title}`}
                                   onClick={() => void unpublish(p.id)}
                                 >
                                   Unpublish
@@ -1094,8 +1127,9 @@ function ProductsDeskInner() {
                               ) : (
                                 <button
                                   type="button"
-                                  className="clay-btn-ghost min-h-8 px-2 text-xs disabled:opacity-50"
+                                  className={opsRowActionClass}
                                   disabled={rowBusy === p.id}
+                                  aria-label={`Publish ${p.title}`}
                                   onClick={() => void publish(p.id)}
                                 >
                                   Publish
@@ -1104,13 +1138,13 @@ function ProductsDeskInner() {
                               {p.status === 'PUBLISHED' ? (
                                 <Link
                                   href={`/gift/products/${p.slug}`}
-                                  className="clay-btn-ghost inline-flex min-h-8 items-center gap-1 px-2 text-xs"
+                                  className={opsRowActionClass}
                                   target="_blank"
                                   rel="noreferrer"
                                   aria-label={`View ${p.title} on storefront`}
                                 >
-                                  <ExternalLink className="h-3 w-3 opacity-70" aria-hidden />
-                                  View
+                                  <ExternalLink className="h-4 w-4 opacity-70" aria-hidden />
+                                  <span className="hidden sm:inline">View</span>
                                 </Link>
                               ) : null}
                             </div>

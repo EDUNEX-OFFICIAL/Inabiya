@@ -1,12 +1,11 @@
 import Link from 'next/link';
+import { BrandLogo } from '@/components/brand-logo';
 
 export default function NotFound() {
   return (
     <div data-theme="gift" className="clay-shell min-h-screen text-foreground">
       <header className="clay-nav px-gs-4 py-gs-4 sm:px-gs-6">
-        <Link href="/gift" className="font-display text-lg text-primary">
-          Inabiya
-        </Link>
+        <BrandLogo kind="chrome" href="/gift" size="md" />
       </header>
       <main className="relative mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center overflow-hidden px-gs-4 py-gs-8 text-center sm:px-gs-6">
         <div className="gift-doodle pointer-events-none absolute inset-0 opacity-50" aria-hidden />

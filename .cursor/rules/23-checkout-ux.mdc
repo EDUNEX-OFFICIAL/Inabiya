@@ -17,6 +17,8 @@ Correctness > animation. No heavy GSAP on this path.
 </button>
 ```
 
+Layout: focused chrome (logo + Secure — no shop nav/footer). Desktop two-column (form + sticky summary). Mobile collapsible summary + `.checkout-sticky-pay`. Sections: Delivery → Shipping → Gift → Payment. Totals from preview API only.
+
 | Do | Don't |
 |---|---|
 | Instant line-edit feedback | GSAP timelines on qty/pay |

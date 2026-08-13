@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { Play } from 'lucide-react';
+import { PlayIcon, type PlayIconHandle } from 'lucide-animated';
+import { useOnceIcon } from '@/components/gift/use-once-icon';
 
 type Media = {
   url: string;
@@ -14,6 +16,7 @@ type Media = {
 export function PdpGallery({ media, title }: { media: Media[]; title: string }) {
   const [active, setActive] = useState(0);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const playIcon = useOnceIcon<PlayIconHandle>();
   const mediaKey = useMemo(() => media.map((m) => m.url).join('\0'), [media]);
 
   useEffect(() => {
@@ -48,6 +51,7 @@ export function PdpGallery({ media, title }: { media: Media[]; title: string }) 
                 <button
                   type="button"
                   className="group relative block aspect-square w-full"
+                  onMouseEnter={playIcon.play}
                   onClick={() => setVideoPlaying(true)}
                   aria-label={`Play video for ${title}`}
                 >
@@ -61,7 +65,13 @@ export function PdpGallery({ media, title }: { media: Media[]; title: string }) 
                   />
                   <span className="absolute inset-0 flex items-center justify-center bg-foreground/25 transition group-hover:bg-foreground/35">
                     <span className="flex size-16 items-center justify-center rounded-pill bg-white/95 text-primary shadow-clay">
-                      <Play className="size-7 fill-current pl-0.5" aria-hidden />
+                      <PlayIcon
+                        ref={playIcon.ref}
+                        size={28}
+                        animateOnHover={false}
+                        aria-hidden
+                        className="pl-0.5 text-primary"
+                      />
                     </span>
                   </span>
                   <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/50 to-transparent px-gs-4 py-gs-4 text-left text-body font-medium text-white">

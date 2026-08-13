@@ -155,6 +155,7 @@ const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     subtitle: '',
     seeAllHref: '/gift/products',
     seeAllLabel: 'See all',
+    limit: '4',
     itemsSource: 'catalogCollections',
     items:
       'Baby girl | /gift/collections/for-baby-girl | /gift/media/baby-clothes.jpg | Baby girl\nReady hampers | /gift/collections/ready-hampers | /gift/media/baby-cues.jpg | Hampers\nBirthday | /gift/collections/first-birthday | /gift/media/train-toy.jpg | Birthday\nMom | /gift/collections/for-expecting-mom | /gift/media/baby-mom.jpg | Mom',
@@ -639,6 +640,7 @@ function toPayload(blocks: Block[]) {
           };
         })
         .filter((i) => i.href);
+      const limitNum = Number.parseInt(b.props.limit || '', 10);
       return {
         type: 'discoveryChips' as const,
         props: {
@@ -651,6 +653,7 @@ function toPayload(blocks: Block[]) {
           b.props.itemsSource === 'catalogCategories'
             ? { itemsSource: 'catalogCollections' }
             : {}),
+          ...(Number.isFinite(limitNum) && limitNum > 0 ? { limit: limitNum } : { limit: 4 }),
           items,
         },
       };

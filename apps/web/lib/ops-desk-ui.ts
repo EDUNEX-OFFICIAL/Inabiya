@@ -7,3 +7,11 @@ export function opsChipClass(active: boolean): string {
       : 'hover:border-[color-mix(in_srgb,var(--primary)_32%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_6%,white)]'
   }`;
 }
+
+/** Dense table/card row actions — borderless (not clay-btn).
+ * Use this for Edit / View / Publish / Adjust / Approve / etc. inside desk rows.
+ * Do NOT use `clay-btn` / `clay-btn-ghost` / `clay-btn-secondary` for row actions —
+ * those are for page headers, filters, and form footers only.
+ */
+export const opsRowActionClass =
+  'inline-flex min-h-9 min-w-9 items-center justify-center gap-1 rounded-full px-2.5 text-xs font-medium text-[var(--foreground)] underline-offset-2 hover:bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] disabled:opacity-40 sm:min-h-10 sm:min-w-10 sm:gap-1.5 sm:px-3 sm:text-sm';

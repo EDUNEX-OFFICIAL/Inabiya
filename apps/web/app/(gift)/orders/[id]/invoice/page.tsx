@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { BrandLogo } from '@/components/brand-logo';
 import { apiAuth, apiAuthDownload, getStoredAccessToken } from '@/lib/auth-client';
 import { formatInr } from '@/lib/cart-client';
 
@@ -172,7 +173,7 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
         {/* Header */}
         <header className="flex flex-wrap items-start justify-between gap-gs-4 border-b border-border-subtle pb-gs-5">
           <div>
-            <p className="gift-h1 text-primary">Inabiya</p>
+            <BrandLogo href={null} size="lg" />
             <p className="mt-gs-1 text-caption opacity-60">Thoughtfully personalised baby gifts</p>
           </div>
           <div className="text-right">

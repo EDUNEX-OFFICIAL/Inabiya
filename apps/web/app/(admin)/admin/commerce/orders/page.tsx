@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Package, Pin, RefreshCw, Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ListFilter, Package, Pin, RefreshCw, Search, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/cart-client';
-import { opsChipClass } from '@/lib/ops-desk-ui';
+import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 import {
@@ -53,6 +53,21 @@ const STATUS_CHIPS = [
 ] as const;
 
 const BOARD_COLS = ['PAID', 'PROCESSING', 'SHIPPED'] as const;
+
+const AGE_OPTIONS = [
+  { value: '', label: 'Any time' },
+  { value: '1', label: 'Last 1 day' },
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+] as const;
+
+const PAYMENT_OPTIONS = [
+  { value: '', label: 'Any payment' },
+  { value: 'CAPTURED', label: 'Captured' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'FAILED', label: 'Failed' },
+  { value: 'REFUNDED', label: 'Refunded' },
+] as const;
 
 const EXCEPTION_LABEL: Record<string, string> = {
   payment_issue: 'Pay',
@@ -108,6 +123,10 @@ function paymentTone(status: string): string {
   return 'bg-amber-50 text-amber-900 ring-1 ring-amber-200/80';
 }
 
+function filterSelectClass(): string {
+  return 'clay-input min-h-9 w-full min-w-0 text-sm';
+}
+
 function ExceptionBadges({ exceptions }: { exceptions: string[] }) {
   if (!exceptions.length) return null;
   return (
@@ -148,6 +167,8 @@ function OrdersQueueInner() {
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
   const [bulkOk, setBulkOk] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersPanelRef = useRef<HTMLDivElement>(null);
 
   const loadSeq = useRef(0);
   const hasLoadedOnce = useRef(false);
@@ -164,8 +185,9 @@ function OrdersQueueInner() {
   const canFulfill =
     getStoredUser()?.roles.some((r) => r === 'COMMERCE_ADMIN' || r === 'SUPER_ADMIN') ?? false;
 
-  const filterActive = Boolean(status || focus || q || days || payment);
   const payIssuesActive = focus === 'failed-payments';
+  const advancedFilterCount = [days, payIssuesActive ? '' : payment].filter(Boolean).length;
+  const filterActive = Boolean(status || focus || q || advancedFilterCount > 0);
   const pageIndex = cursorStack.length + 1;
   const canPrev = cursorStack.length > 0 || Boolean(cursorParam);
 
@@ -275,6 +297,23 @@ function OrdersQueueInner() {
     router.replace('/admin/commerce/orders');
   }
 
+  useEffect(() => {
+    if (!filtersOpen) return;
+    function onPointerDown(e: MouseEvent) {
+      const el = filtersPanelRef.current;
+      if (el && !el.contains(e.target as Node)) setFiltersOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setFiltersOpen(false);
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [filtersOpen]);
+
   function goNext() {
     if (!nextCursor) return;
     setCursorStack((s) => [...s, cursorParam]);
@@ -376,17 +415,19 @@ function OrdersQueueInner() {
 
   function rowActions(o: AdminOrder) {
     return (
-      <div className="flex flex-wrap items-center gap-3 text-sm">
+      <div className="flex flex-wrap items-center justify-end gap-0.5">
         <Link
           href={`/admin/commerce/orders/${o.id}`}
-          className="font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+          className={opsRowActionClass}
+          aria-label={`Open order ${o.orderNumber}`}
         >
           Open
         </Link>
         {canProcess(o) ? (
           <button
             type="button"
-            className="font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+            className={opsRowActionClass}
+            aria-label={`Process order ${o.orderNumber}`}
             onClick={() => void markProcessing(o.id)}
           >
             Process
@@ -486,7 +527,7 @@ function OrdersQueueInner() {
         </div>
       </form>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <div
           className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2"
           role="group"
@@ -525,47 +566,120 @@ function OrdersQueueInner() {
           </button>
         </div>
 
-        <label className="flex shrink-0 items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
-          <span className="hidden sm:inline">Age</span>
-          <select
-            id="days-filter"
-            className="clay-input min-h-8 max-w-[11rem] py-1 text-xs sm:min-h-9 sm:text-sm"
-            aria-label="Age window"
-            value={days}
-            onChange={(e) => patchParams({ days: e.target.value || null })}
-          >
-            <option value="">Any time</option>
-            <option value="1">Last 1 day</option>
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-          </select>
-        </label>
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="relative" ref={filtersPanelRef}>
+            <button
+              type="button"
+              className={`clay-btn-secondary inline-flex min-h-8 items-center gap-1.5 px-2.5 text-xs sm:min-h-9 sm:px-3 sm:text-sm ${
+                advancedFilterCount > 0 || filtersOpen
+                  ? 'border-[var(--primary)] text-[var(--primary)]'
+                  : ''
+              }`}
+              aria-expanded={filtersOpen}
+              aria-controls="orders-filters-panel"
+              onClick={() => setFiltersOpen((o) => !o)}
+            >
+              <ListFilter className="h-3.5 w-3.5 opacity-80" aria-hidden />
+              Filters
+              {advancedFilterCount > 0 ? (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold leading-5 text-[var(--primary-foreground)]">
+                  {advancedFilterCount}
+                </span>
+              ) : null}
+            </button>
 
-        <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
-          {refreshing && !loading ? (
-            <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
+            {filtersOpen ? (
+              <div
+                id="orders-filters-panel"
+                role="dialog"
+                aria-label="Order filters"
+                className="absolute right-0 z-30 mt-2 w-[min(100vw-2rem,22rem)] rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-3 shadow-lg"
+              >
+                <div className="grid grid-cols-1 gap-2.5">
+                  <label className="block min-w-0">
+                    <span className="mb-1 block text-[11px] font-medium text-[var(--muted-foreground)]">
+                      Age
+                    </span>
+                    <select
+                      id="days-filter"
+                      className={filterSelectClass()}
+                      aria-label="Age window"
+                      value={days}
+                      onChange={(e) => patchParams({ days: e.target.value || null })}
+                    >
+                      {AGE_OPTIONS.map((o) => (
+                        <option key={o.value || 'any-time'} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block min-w-0">
+                    <span className="mb-1 block text-[11px] font-medium text-[var(--muted-foreground)]">
+                      Payment
+                    </span>
+                    <select
+                      className={filterSelectClass()}
+                      aria-label="Payment status"
+                      value={payIssuesActive ? '' : payment}
+                      disabled={payIssuesActive}
+                      onChange={(e) =>
+                        patchParams({
+                          payment: e.target.value || null,
+                          focus: null,
+                        })
+                      }
+                    >
+                      {PAYMENT_OPTIONS.map((o) => (
+                        <option key={o.value || 'any-payment'} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                {advancedFilterCount > 0 ? (
+                  <button
+                    type="button"
+                    className="clay-btn-ghost mt-3 min-h-8 w-full px-2 text-xs"
+                    onClick={() => {
+                      clearFilters();
+                      setFiltersOpen(false);
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
+            {refreshing && !loading ? (
+              <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
+            ) : null}
+            {countLabel}
+          </span>
+
+          {filterActive && !filtersOpen ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
           ) : null}
-          {countLabel}
-        </span>
 
-        {filterActive ? (
           <button
             type="button"
-            className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-            onClick={clearFilters}
+            className="inline-flex items-center gap-1 text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+            onClick={pinView}
           >
-            Clear
+            <Pin className="h-3 w-3 opacity-70" aria-hidden />
+            Pin view
           </button>
-        ) : null}
-
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-          onClick={pinView}
-        >
-          <Pin className="h-3 w-3 opacity-70" aria-hidden />
-          Pin view
-        </button>
+        </div>
       </div>
 
       <p className="mb-2 text-xs tabular-nums text-[var(--muted-foreground)] sm:hidden">

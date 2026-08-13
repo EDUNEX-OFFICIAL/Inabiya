@@ -44,6 +44,33 @@ export function PdpSkeleton() {
   );
 }
 
+/** Checkout — two-column form + summary silhouette. */
+export function CheckoutSkeleton() {
+  return (
+    <main className="gift-page" aria-busy="true" aria-label="Loading checkout">
+      <Pulse className="h-3 w-40 max-w-full rounded" />
+      <Pulse className="mt-gs-4 h-9 w-48 max-w-full rounded" />
+      <div className="mt-gs-6 grid gap-gs-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+        <div className="space-y-gs-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-gs-3 rounded-clay border border-foreground/6 p-gs-4">
+              <Pulse className="h-5 w-32 rounded" />
+              <Pulse className="h-11 w-full rounded-control" />
+              <Pulse className="h-11 w-full rounded-control" />
+            </div>
+          ))}
+        </div>
+        <div className="hidden space-y-gs-3 rounded-clay border border-foreground/6 p-gs-4 lg:block">
+          <Pulse className="h-5 w-36 rounded" />
+          <Pulse className="h-16 w-full rounded-control" />
+          <Pulse className="h-16 w-full rounded-control" />
+          <Pulse className="h-8 w-full rounded" />
+        </div>
+      </div>
+    </main>
+  );
+}
+
 /** Compact list pages (cart, wishlist, gift box). */
 export function GiftListSkeleton({ label = 'Loading' }: { label?: string }) {
   return (

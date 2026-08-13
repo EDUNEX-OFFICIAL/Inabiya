@@ -79,7 +79,23 @@ export class OrdersService {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, userId },
       include: {
-        items: true,
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: {
+                  include: {
+                    media: {
+                      where: { kind: 'IMAGE' },
+                      orderBy: { sortOrder: 'asc' },
+                      take: 1,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         payments: true,
         statusHistory: { orderBy: { createdAt: 'asc' } },
       },
@@ -87,8 +103,20 @@ export class OrdersService {
     if (!order) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Order not found.' });
     }
+    const detail = this.mapDetail(order);
     return {
-      ...this.mapDetail(order),
+      ...detail,
+      items: order.items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        label: item.label,
+        sku: item.sku,
+        quantity: item.quantity,
+        unitPricePaise: item.unitPricePaise,
+        lineTotalPaise: item.lineTotalPaise,
+        personalization: item.personalization,
+        imageUrl: item.variant.product.media[0]?.url ?? null,
+      })),
     };
   }
 

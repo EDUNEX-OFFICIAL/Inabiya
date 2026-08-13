@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Facebook, Gift, Instagram, Mail } from 'lucide-react';
+import { BrandLogo } from '@/components/brand-logo';
 import { WhatsAppIcon } from '@/components/gift/whatsapp-icon';
 
 export type GiftFooterColumn = {
@@ -155,10 +156,13 @@ export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
         <div className="gift-footer__grid">
           <div className="gift-footer__brand">
             <Link href="/gift" className="gift-footer__brand-lockup">
-              <span className="gift-footer__mark" aria-hidden>
-                <Gift className="h-4 w-4" strokeWidth={2.25} />
-              </span>
-              <span className="font-display text-xl text-white sm:text-2xl">{brandName}</span>
+              <BrandLogo
+                href={null}
+                variant="onDark"
+                size="lg"
+                label={brandName}
+                className="gift-footer__wordmark"
+              />
             </Link>
             <p className="gift-footer__tagline">{tagline}</p>
             {socialLinks.length > 0 ? (

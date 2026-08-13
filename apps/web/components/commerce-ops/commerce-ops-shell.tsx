@@ -38,6 +38,7 @@ import {
   Upload,
   Users,
 } from 'lucide-react';
+import { BrandLogo } from '@/components/brand-logo';
 import {
   apiAuth,
   clearSession,
@@ -402,14 +403,10 @@ export function CommerceOpsShell({ children }: Props) {
               title={collapsed ? 'Inabiya Ops' : undefined}
             >
               {collapsed ? (
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] font-display text-sm font-semibold text-[var(--primary)]">
-                  IO
-                </span>
+                <BrandLogo kind="mark" href={null} size="sm" label="Inabiya Ops" />
               ) : (
                 <>
-                  <span className="font-display text-lg leading-tight text-[var(--foreground)]">
-                    Inabiya Ops
-                  </span>
+                  <BrandLogo href={null} size="sm" label="Inabiya Ops" />
                   <p className="ops-muted mt-0.5 text-[11px] uppercase tracking-wide">
                     Soft Gift commerce
                   </p>

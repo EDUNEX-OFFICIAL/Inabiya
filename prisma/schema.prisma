@@ -464,19 +464,20 @@ model WishlistItem {
 }
 
 model GiftBox {
-  id            String        @id @default(uuid()) @db.Uuid
-  userId        String        @map("user_id") @db.Uuid
-  name          String        @default("My gift box")
-  budgetPaise   Int?          @map("budget_paise")
-  recipient     String?
-  ageBand       String?       @map("age_band")
-  occasion      String?
-  collectionSlugs String[]    @default([]) @map("collection_slugs")
-  wizardStep    Int           @default(1) @map("wizard_step")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items         GiftBoxItem[]
+  id              String        @id @default(uuid()) @db.Uuid
+  userId          String?       @map("user_id") @db.Uuid
+  guestToken      String?       @unique @map("guest_token")
+  name            String        @default("My gift box")
+  budgetPaise     Int?          @map("budget_paise")
+  recipient       String?
+  ageBand         String?       @map("age_band")
+  occasion        String?
+  collectionSlugs String[]      @default([]) @map("collection_slugs")
+  wizardStep      Int           @default(1) @map("wizard_step")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  user            User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items           GiftBoxItem[]
 
   @@index([userId])
   @@map("gift_boxes")

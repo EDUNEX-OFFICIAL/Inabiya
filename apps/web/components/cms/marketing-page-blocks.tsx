@@ -11,16 +11,19 @@ import {
   LayoutGrid,
   Package,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Star,
   Truck,
   UserRound,
   Wallet,
 } from 'lucide-react';
+import { BrandLogo } from '@/components/brand-logo';
 import { formatInr } from '@/lib/catalog';
 import {
   fetchCatalogCollections,
   isCollectionHref,
+  parseHomeCollectionLimit,
   resolveCatalogCollectionChips,
 } from '@/lib/catalog-collections';
 import { sanitizeArticleHtml } from '@/lib/article-html';
@@ -29,6 +32,7 @@ import { FaqAccordion } from '@/components/gift/faq-accordion';
 import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
 import { GiftHomeMotion } from '@/components/cms/gift-home-motion';
 import { HomeProductCard } from '@/components/cms/home-product-card';
+import { CategoryCarousel } from '@/components/gift/category-carousel';
 import type { CmsBlockProduct, CmsPageBlock } from '@/components/cms/marketing-page-types';
 
 export type { CmsBlockProduct, CmsPageBlock } from '@/components/cms/marketing-page-types';
@@ -127,8 +131,8 @@ function GiftSectionHeader({
   const showRail = Boolean((aside && aside.trim()) || (actionHref && actionLabel));
   return (
     <div
-      className={`mb-gs-5 flex flex-col gap-gs-3 sm:mb-gs-6 ${
-        showRail ? 'sm:flex-row sm:items-end sm:justify-between sm:gap-gs-6' : ''
+      className={`mb-gs-5 flex gap-gs-3 sm:mb-gs-6 ${
+        showRail ? 'flex-row items-end justify-between sm:gap-gs-6' : 'flex-col'
       }`}
     >
       <div className="min-w-0 max-w-2xl">
@@ -145,16 +149,51 @@ function GiftSectionHeader({
       {actionHref && actionLabel ? (
         <Link
           href={actionHref}
-          className="clay-btn-secondary shrink-0 self-start text-body sm:self-auto"
+          className="clay-btn-secondary shrink-0 self-end text-body"
         >
           {actionLabel}
         </Link>
       ) : aside && aside.trim() ? (
-        <p className="gift-muted shrink-0 self-start sm:max-w-[14rem] sm:self-end sm:text-right">
+        <p className="gift-muted shrink-0 self-end sm:max-w-[14rem] sm:text-right">
           {aside.trim()}
         </p>
       ) : null}
     </div>
+  );
+}
+
+function collectionKicker(overline: string) {
+  return overline.replace(/^shop by\s+/i, '').trim() || overline;
+}
+
+function CategoryCardDoodle({ n }: { n: number }) {
+  const i = n % 4;
+  if (i === 0) {
+    return (
+      <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden>
+        <path d="M16 3.5 19 12h9l-7.2 5.4 2.8 8.6L16 21.2 8.4 26l2.8-8.6L4 12h9z" />
+      </svg>
+    );
+  }
+  if (i === 1) {
+    return (
+      <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden>
+        <path d="M16 27s-9-6.2-9-12.2A5.4 5.4 0 0 1 16 11a5.4 5.4 0 0 1 9 3.8C25 20.8 16 27 16 27z" />
+      </svg>
+    );
+  }
+  if (i === 2) {
+    return (
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden>
+        <path d="M8 14c0-3 2.4-5 5-5 3.4 0 3 4 3 7 0-3-.4-7 3-7 2.6 0 5 2 5 5 0 4-8 9-8 9s-8-5-8-9z" />
+        <path d="M16 16v10" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden>
+      <path d="M16 4v6M16 22v6M4 16h6M22 16h6M7.8 7.8l4.2 4.2M20 20l4.2 4.2M7.8 24.2 12 20M20 12l4.2-4.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+    </svg>
   );
 }
 
@@ -304,7 +343,7 @@ function HeroBlock({ props, layout }: { props: Record<string, unknown>; layout: 
             />
           </div>
         ) : null}
-        <p className="gift-h2 text-primary">Inabiya</p>
+        <BrandLogo href={null} size="lg" className="mb-gs-1" />
         <h1 className="gift-h1 mt-gs-2 leading-tight">{String(props.headline ?? '')}</h1>
         {props.subcopy ? (
           <p className="gift-muted mt-gs-4 max-w-prose">{String(props.subcopy)}</p>
@@ -1159,6 +1198,8 @@ async function DiscoveryChipsBlock({
           href: String(i.href ?? '').trim(),
           imageUrl: i.imageUrl ? String(i.imageUrl).trim() : '',
           imageAlt: i.imageAlt ? String(i.imageAlt).trim() : '',
+          description: '',
+          overline: '',
         }))
         .filter((i) => i.label && i.href)
     : [];
@@ -1177,8 +1218,11 @@ async function DiscoveryChipsBlock({
   if (!items.length) return null;
 
   const asCards = items.some((i) => i.imageUrl);
+  const limit = parseHomeCollectionLimit(props.limit);
+  const visible = asCards ? items.slice(0, limit) : items;
   const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : '/gift/products';
   const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'See all';
+  const showSeeAll = asCards && (items.length > visible.length || Boolean(props.seeAllHref));
 
   const body = (
     <>
@@ -1194,40 +1238,55 @@ async function DiscoveryChipsBlock({
                 ? 'Jump into age bands and occasions — filters open on the gift shop.'
                 : null
         }
-        actionHref={asCards ? seeAllHref : null}
-        actionLabel={asCards ? seeAllLabel : null}
+        actionHref={showSeeAll ? seeAllHref : null}
+        actionLabel={showSeeAll ? seeAllLabel : null}
       />
       {asCards ? (
         <ul className="gift-category-grid list-none">
-          {items.map((item) => (
-            <li key={`${item.label}-${item.href}`}>
-              <Link
-                href={item.href}
-                className="gift-category-card group"
-                data-testid={`category-${item.label}`}
-              >
-                <div className="gift-category-card__media">
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.imageAlt || item.label}
-                      fill
-                      sizes="(max-width: 640px) 50vw, 25vw"
-                      className="object-cover object-center transition duration-500 group-hover:scale-[1.04]"
-                    />
-                  ) : (
-                    <div className="gift-media-fallback h-full w-full" />
-                  )}
-                </div>
-                <div className="gift-category-card__foot">
-                  <p className="gift-category-card__label">{item.label}</p>
-                  <span className="gift-category-card__go" aria-hidden>
-                    Shop →
-                  </span>
-                </div>
-              </Link>
-            </li>
-          ))}
+          {visible.map((item, idx) => {
+            const tones = ['pink', 'sky', 'mint', 'lavender'] as const;
+            const tone = tones[idx % tones.length] ?? 'pink';
+            const kicker = item.overline ? collectionKicker(item.overline) : '';
+            return (
+              <li key={`${item.label}-${item.href}`}>
+                <Link
+                  href={item.href}
+                  className={`gift-category-card gift-category-card--${tone} group`}
+                  data-testid={`category-${item.label}`}
+                >
+                  <div className="gift-category-card__sticker">
+                    <div className="gift-category-card__media">
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.imageAlt || item.label}
+                          fill
+                          sizes="(max-width: 767px) 50vw, 25vw"
+                          className="object-cover object-center transition duration-500 group-hover:scale-[1.05] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                        />
+                      ) : (
+                        <div className="gift-media-fallback h-full w-full" />
+                      )}
+                      {kicker ? (
+                        <span className="gift-category-card__chip" aria-hidden>
+                          {kicker}
+                        </span>
+                      ) : null}
+                      <span className="gift-category-card__doodle" aria-hidden>
+                        <CategoryCardDoodle n={idx} />
+                      </span>
+                      <WaveAccent accent={tone} />
+                    </div>
+                    <p className="gift-category-card__label">{item.label}</p>
+                    <span className="gift-pill-overlap gift-category-card__cta">
+                      <ShoppingBag className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+                      Shop
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <ul className="flex flex-wrap gap-gs-2">
@@ -1245,7 +1304,7 @@ async function DiscoveryChipsBlock({
 
   if (home) {
     return (
-      <GiftBand tone="soft" toys={false}>
+      <GiftBand tone="soft" toys>
         {body}
       </GiftBand>
     );
@@ -1587,6 +1646,7 @@ export function MarketingPageBlocks({
         ))}
         <GiftHomeMotion>
           <div className="space-y-0">
+            <CategoryCarousel />
             {rest.map((b) => renderRestBlock(b, 'home', productBandIndex))}
           </div>
         </GiftHomeMotion>

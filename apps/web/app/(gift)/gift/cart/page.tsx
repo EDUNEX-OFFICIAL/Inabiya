@@ -6,12 +6,14 @@ import { useRouter } from 'next/navigation';
 import { getStoredAccessToken } from '@/lib/auth-client';
 import { cartApi, fetchCart, formatInr, type CartDto } from '@/lib/cart-client';
 import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
+import { LineThumb } from '@/components/gift/line-thumb';
 
 export default function CartPage() {
   const router = useRouter();
   const [cart, setCart] = useState<CartDto | null>(null);
   const [coupon, setCoupon] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCart(getStoredAccessToken())
@@ -23,6 +25,8 @@ export default function CartPage() {
   }, []);
 
   async function updateQty(itemId: string, quantity: number) {
+    if (quantity < 1 || quantity > 99) return;
+    setBusyId(itemId);
     try {
       const updated = await cartApi<CartDto>(`/cart/items/${itemId}`, {
         method: 'PATCH',
@@ -33,10 +37,13 @@ export default function CartPage() {
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not update quantity');
+    } finally {
+      setBusyId(null);
     }
   }
 
   async function remove(itemId: string) {
+    setBusyId(itemId);
     try {
       const updated = await cartApi<CartDto>(`/cart/items/${itemId}`, {
         method: 'DELETE',
@@ -46,6 +53,8 @@ export default function CartPage() {
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not remove item');
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -87,6 +96,8 @@ export default function CartPage() {
     return <GiftListSkeleton label="Loading cart" />;
   }
 
+  const signedIn = Boolean(getStoredAccessToken());
+
   return (
     <main className="gift-page">
       <Link href="/gift" className="gift-link text-body">
@@ -95,63 +106,90 @@ export default function CartPage() {
       <h1 className="gift-h1 mt-gs-4">Your cart</h1>
 
       {cart.items.length === 0 ? (
-        <div className="clay-panel mt-gs-6 p-gs-6 text-center">
-          <p className="text-body opacity-80">Cart is empty.</p>
+        <div className="checkout-section mt-gs-6 text-center">
+          <p className="text-body opacity-80">Cart is empty</p>
           <Link href="/gift/products" className="clay-btn mt-gs-5 inline-flex">
             Browse gifts
           </Link>
         </div>
       ) : (
-        <>
-          <ul className="mt-gs-6 space-y-gs-4">
-            {cart.items.map((item) => (
-              <li
-                key={item.id}
-                className="clay-card flex flex-wrap items-center justify-between gap-gs-4 p-gs-5"
-              >
-                <div>
-                  <Link
-                    href={`/gift/products/${item.productSlug}`}
-                    className="font-medium hover:text-primary"
-                  >
-                    {item.productTitle}
-                  </Link>
-                  <p className="text-body opacity-70">
-                    {item.label} · {formatInr(item.unitPricePaise)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-gs-3">
-                  <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={item.quantity}
-                    onChange={(e) => void updateQty(item.id, Number(e.target.value) || 1)}
-                    className="clay-input !mt-0 w-16"
-                  />
-                  <span className="font-medium text-primary">{formatInr(item.lineTotalPaise)}</span>
-                  <button
-                    type="button"
-                    onClick={() => void remove(item.id)}
-                    className="text-body text-danger underline"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </li>
-            ))}
+        <div className="mt-gs-6 grid items-start gap-gs-6 lg:grid-cols-[minmax(0,1fr)_min(24rem,38%)]">
+          <ul className="space-y-gs-3">
+            {cart.items.map((item) => {
+              const busy = busyId === item.id;
+              return (
+                <li key={item.id} className="checkout-section flex gap-gs-4 p-gs-4">
+                  <LineThumb imageUrl={item.imageUrl} quantity={item.quantity} />
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/gift/products/${item.productSlug}`}
+                      className="font-medium hover:text-primary"
+                    >
+                      {item.productTitle}
+                    </Link>
+                    <p className="mt-gs-1 text-body opacity-70">
+                      {item.label} · {formatInr(item.unitPricePaise)}
+                    </p>
+                    <div className="mt-gs-3 flex flex-wrap items-center gap-gs-3">
+                      <div className="flex h-10 items-center rounded-control border border-border-subtle">
+                        <button
+                          type="button"
+                          className="px-gs-3 text-body disabled:opacity-40"
+                          aria-label="Decrease quantity"
+                          disabled={busy || item.quantity <= 1}
+                          onClick={() => void updateQty(item.id, item.quantity - 1)}
+                        >
+                          −
+                        </button>
+                        <span className="min-w-8 text-center text-body tabular-nums">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          className="px-gs-3 text-body disabled:opacity-40"
+                          aria-label="Increase quantity"
+                          disabled={busy || item.quantity >= 99}
+                          onClick={() => void updateQty(item.id, item.quantity + 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void remove(item.id)}
+                        disabled={busy}
+                        className="text-body text-danger underline disabled:opacity-40"
+                      >
+                        Remove
+                      </button>
+                      <span className="ml-auto font-medium text-primary">
+                        {formatInr(item.lineTotalPaise)}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
 
-          <div className="clay-panel mt-gs-6 p-gs-4 sm:p-gs-5">
-            <div className="flex flex-col gap-gs-2 sm:flex-row sm:flex-wrap sm:items-end">
-              <label className="block flex-1 text-body">
+          <aside className="checkout-section checkout-section--soft lg:sticky lg:top-[calc(var(--gift-sticky-offset)+var(--space-4))]">
+            <h2 className="gift-h2">Summary</h2>
+            <div className="mt-gs-4 flex flex-col gap-gs-2 sm:flex-row sm:items-end">
+              <label className="block min-w-0 flex-1 text-body">
                 Coupon
                 <input
                   className="clay-input"
                   value={coupon}
                   onChange={(e) => setCoupon(e.target.value)}
-                  placeholder="WELCOME10"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (!cart.couponCode) void applyCoupon();
+                    }
+                  }}
+                  placeholder="Code"
                   disabled={Boolean(cart.couponCode)}
+                  autoCapitalize="characters"
                 />
               </label>
               {cart.couponCode ? (
@@ -160,7 +198,7 @@ export default function CartPage() {
                   onClick={() => void removeCoupon()}
                   className="clay-btn-ghost text-danger"
                 >
-                  Remove coupon
+                  Remove
                 </button>
               ) : (
                 <button
@@ -173,44 +211,46 @@ export default function CartPage() {
               )}
             </div>
 
-            <div className="mt-gs-5 space-y-gs-1 text-body">
-              <p>Subtotal: {formatInr(cart.subtotalPaise)}</p>
+            <dl className="mt-gs-5 space-y-gs-2 text-body">
+              <div className="flex justify-between gap-gs-3">
+                <dt className="opacity-70">Subtotal</dt>
+                <dd>{formatInr(cart.subtotalPaise)}</dd>
+              </div>
               {(cart.discountPaise ?? 0) > 0 ? (
-                <p className="text-success">
-                  Discount ({cart.couponCode}): −{formatInr(cart.discountPaise!)}
-                </p>
+                <div className="flex justify-between gap-gs-3 text-success">
+                  <dt>Discount ({cart.couponCode})</dt>
+                  <dd>−{formatInr(cart.discountPaise!)}</dd>
+                </div>
               ) : null}
               {cart.couponRemoved ? (
-                <p className="text-warning">
-                  {cart.couponRemovedReason ?? 'Coupon removed — no longer valid for this cart.'}
+                <p className="text-caption text-warning">
+                  {cart.couponRemovedReason ?? 'Coupon removed'}
                 </p>
               ) : null}
-              <p className="pt-gs-2 text-lg font-semibold text-foreground">
-                Total: {formatInr(cart.totalPaise ?? cart.subtotalPaise)}
-              </p>
-            </div>
-            {error ? <p className="text-body text-danger mt-gs-2">{error}</p> : null}
+              <div className="flex justify-between gap-gs-3 border-t border-border-subtle pt-gs-3 text-lg font-semibold text-foreground">
+                <dt>Total</dt>
+                <dd className="text-primary">
+                  {formatInr(cart.totalPaise ?? cart.subtotalPaise)}
+                </dd>
+              </div>
+            </dl>
+            {error ? <p className="mt-gs-2 text-body text-danger">{error}</p> : null}
 
             <button
               type="button"
               onClick={() => {
-                if (!getStoredAccessToken()) {
+                if (!signedIn) {
                   router.push('/login?next=/checkout');
                   return;
                 }
                 router.push('/checkout');
               }}
-              className="clay-btn mt-gs-6 w-full justify-center sm:w-auto"
+              className="clay-btn mt-gs-5 w-full justify-center"
             >
-              {getStoredAccessToken() ? 'Proceed to checkout' : 'Sign in to checkout'}
+              {signedIn ? 'Proceed to checkout' : 'Sign in to checkout'}
             </button>
-            {!getStoredAccessToken() ? (
-              <p className="mt-gs-2 text-caption opacity-70">
-                Checkout needs a customer account. Cart is kept until you sign in.
-              </p>
-            ) : null}
-          </div>
-        </>
+          </aside>
+        </div>
       )}
     </main>
   );

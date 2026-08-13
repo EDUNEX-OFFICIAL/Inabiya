@@ -1,13 +1,12 @@
 import Link from 'next/link';
+import { BrandLogo } from '@/components/brand-logo';
 
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
   return (
     <div data-theme="blog" className="blog-shell flex min-h-screen flex-col text-foreground">
       <header className="blog-nav sticky top-0 z-[var(--z-nav)] px-gs-4 py-gs-3 sm:px-gs-6">
         <div className="mx-auto flex w-full max-w-page items-center justify-between gap-gs-3">
-          <Link href="/articles" className="font-display text-lg tracking-tight text-foreground">
-            Inabiya Journal
-          </Link>
+          <BrandLogo kind="chrome" href="/articles" size="sm" label="Inabiya Journal" />
           <nav className="flex flex-wrap items-center gap-gs-4 text-sm font-body" aria-label="Journal">
             <Link href="/articles" className="opacity-80 hover:text-primary hover:opacity-100">
               Articles

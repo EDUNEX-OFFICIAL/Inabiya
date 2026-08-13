@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ChevronDown, Heart, LogOut, Menu, Package, ShoppingBag, UserRound, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { ChevronDown, Heart, LogOut, Package, ShoppingBag, UserRound } from 'lucide-react';
+import { GiftMenuOverlay } from '@/components/gift/gift-menu-overlay';
 import {
   clearSession,
   getStoredAccessToken,
@@ -161,8 +162,6 @@ export function GiftNav() {
   const [mega, setMega] = useState<MegaKey>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mobileShopOpen, setMobileShopOpen] = useState(true);
-  const [mobileWhomOpen, setMobileWhomOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [shopLinks, setShopLinks] = useState<MegaLink[]>(DEFAULT_SHOP_LINKS);
   const [forWhomLinks, setForWhomLinks] = useState<MegaLink[]>(DEFAULT_FOR_WHOM_LINKS);
@@ -282,6 +281,8 @@ export function GiftNav() {
     setMega(null);
     setProfileOpen(false);
   }
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   return (
     <nav
@@ -444,129 +445,32 @@ export function GiftNav() {
 
         <button
           type="button"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-pill hover:bg-white/70 hover:text-primary lg:hidden"
+          className={`inline-flex h-10 w-10 items-center justify-center rounded-pill lg:hidden ${
+            menuOpen ? '' : 'hover:bg-white/70 hover:text-primary'
+          }`}
           aria-expanded={menuOpen}
           aria-controls="gift-mobile-menu"
+          aria-haspopup="dialog"
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           onClick={() => setMenuOpen((o) => !o)}
         >
-          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <span className={`gift-menu-toggle${menuOpen ? ' is-open' : ''}`} aria-hidden>
+            <span />
+            <span />
+            <span />
+          </span>
         </button>
       </div>
 
-      {menuOpen ? (
-        <div
-          id="gift-mobile-menu"
-          className="absolute left-gs-3 right-gs-3 top-full z-40 mt-gs-2 max-h-[80vh] overflow-y-auto clay-panel p-gs-4 lg:hidden"
-        >
-          <div className="mb-gs-4">
-            <GiftSearch defaultExpanded onNavigate={() => setMenuOpen(false)} />
-          </div>
-
-          <button
-            type="button"
-            className="flex w-full items-center justify-between rounded-control px-gs-3 py-gs-3 font-medium"
-            aria-expanded={mobileShopOpen}
-            onClick={() => setMobileShopOpen((o) => !o)}
-          >
-            Shop
-            <ChevronDown className={`h-4 w-4 ${mobileShopOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {mobileShopOpen ? (
-            <ul className="mb-gs-2 flex flex-col gap-gs-1 border-b border-border-subtle pb-gs-3">
-              {shopLinks.map((l) => (
-                <li key={l.href}>
-                  <Link
-                    className="block rounded-control px-gs-3 py-gs-2 hover:bg-white/80"
-                    href={l.href}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          <button
-            type="button"
-            className="flex w-full items-center justify-between rounded-control px-gs-3 py-gs-3 font-medium"
-            aria-expanded={mobileWhomOpen}
-            onClick={() => setMobileWhomOpen((o) => !o)}
-          >
-            For Whom
-            <ChevronDown className={`h-4 w-4 ${mobileWhomOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {mobileWhomOpen ? (
-            <ul className="mb-gs-2 flex flex-col gap-gs-1 border-b border-border-subtle pb-gs-3">
-              {forWhomLinks.map((l) => (
-                <li key={l.href}>
-                  <Link
-                    className="block rounded-control px-gs-3 py-gs-2 hover:bg-white/80"
-                    href={l.href}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          <Link
-            href="/articles"
-            className="block rounded-control px-gs-3 py-gs-3 font-medium hover:bg-white/80"
-            onClick={() => setMenuOpen(false)}
-          >
-            Journal
-          </Link>
-
-          <div className="mt-gs-2 border-t border-border-subtle pt-gs-3">
-            {signedIn ? (
-              <ul className="flex flex-col gap-gs-1">
-                <li>
-                  <Link
-                    className="flex items-center gap-gs-2 rounded-control px-gs-3 py-gs-3 hover:bg-white/80"
-                    href="/account"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <UserRound className="h-4 w-4" />
-                    Profile ({label})
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="flex items-center gap-gs-2 rounded-control px-gs-3 py-gs-3 hover:bg-white/80"
-                    href="/orders"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Package className="h-4 w-4" />
-                    Orders
-                  </Link>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-gs-2 rounded-control px-gs-3 py-gs-3 text-left text-danger hover:bg-danger-bg"
-                    onClick={signOut}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sign out
-                  </button>
-                </li>
-              </ul>
-            ) : (
-              <Link
-                href="/login?next=/gift"
-                className="clay-btn mt-gs-1 w-full justify-center"
-                onClick={() => setMenuOpen(false)}
-              >
-                Sign in
-              </Link>
-            )}
-          </div>
-        </div>
-      ) : null}
+      <GiftMenuOverlay
+        open={menuOpen}
+        onClose={closeMenu}
+        shopLinks={shopLinks}
+        forWhomLinks={forWhomLinks}
+        signedIn={signedIn}
+        accountLabel={label}
+        onSignOut={signOut}
+      />
     </nav>
   );
 }

@@ -75,6 +75,8 @@ function PurchaseOrdersInner() {
     router.replace(s ? `/admin/commerce/purchase-orders?${s}` : '/admin/commerce/purchase-orders');
   }
 
+  const filterActive = Boolean(status);
+
   return (
     <div>
       <OpsPageHeader
@@ -104,22 +106,38 @@ function PurchaseOrdersInner() {
         }
       />
 
-      <div
-        className="mb-3 flex gap-1.5 overflow-x-auto pb-0.5"
-        role="group"
-        aria-label="Filter by status"
-      >
-        {STATUS_CHIPS.map((c) => (
-          <button
-            key={c.value || 'all'}
-            type="button"
-            aria-pressed={status === c.value}
-            className={opsChipClass(status === c.value)}
-            onClick={() => setStatusFilter(c.value)}
-          >
-            {c.label}
-          </button>
-        ))}
+      <div className="mb-3 flex items-center gap-2">
+        <div
+          className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2"
+          role="group"
+          aria-label="Filter by status"
+        >
+          {STATUS_CHIPS.map((c) => (
+            <button
+              key={c.value || 'all'}
+              type="button"
+              aria-pressed={status === c.value}
+              className={opsChipClass(status === c.value)}
+              onClick={() => setStatusFilter(c.value)}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden text-xs text-[var(--muted-foreground)] sm:inline">
+            {loading ? 'Loading…' : `${rows.length}`}
+          </span>
+          {filterActive ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+              onClick={() => setStatusFilter('')}
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {error ? (
@@ -142,10 +160,18 @@ function PurchaseOrdersInner() {
       {!loading && rows.length === 0 ? (
         <div className="clay-panel flex flex-col items-center gap-3 px-6 py-12 text-center">
           <ClipboardList className="h-8 w-8 opacity-30" aria-hidden />
-          <p className="text-sm opacity-70">No purchase orders.</p>
-          <Link href="/admin/commerce/purchase-orders/new" className="clay-btn text-sm">
-            New PO
-          </Link>
+          <p className="text-sm opacity-70">
+            {filterActive ? 'No purchase orders match this filter.' : 'No purchase orders.'}
+          </p>
+          {filterActive ? (
+            <button type="button" className="clay-btn-secondary text-sm" onClick={() => setStatusFilter('')}>
+              Clear filters
+            </button>
+          ) : (
+            <Link href="/admin/commerce/purchase-orders/new" className="clay-btn text-sm">
+              New PO
+            </Link>
+          )}
         </div>
       ) : null}
 

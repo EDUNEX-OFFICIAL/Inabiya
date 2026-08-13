@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
+import { CategoryCarousel } from '@/components/gift/category-carousel';
 import { JsonLdScript } from '@/components/seo/json-ld-script';
 import { apiUrl } from '@/lib/api-base';
 import { GIFT_HOMEPAGE_SLUG, type SeoSchemaEntry } from '@inabiya/validation';
@@ -55,7 +56,8 @@ function LegacyGiftHomeFallback() {
         ctaLabel2="Browse Hampers"
         ctaHref2="/gift/collections/ready-hampers"
       />
-      <div className="mx-auto w-full px-gs-4 py-gs-7 sm:px-gs-6 lg:px-gs-8">
+      <CategoryCarousel />
+      <div className="mx-auto w-full max-w-page px-[var(--gift-pad-x)] py-gs-7">
         <p className="gift-muted mb-gs-7">
           Homepage CMS is not published yet — showing a minimal fallback. Publish the{' '}
           <code className="text-caption">home</code> marketing page in admin.

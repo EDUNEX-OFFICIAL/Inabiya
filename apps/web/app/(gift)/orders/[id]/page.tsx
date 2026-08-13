@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
-import { formatInr } from '@/lib/cart-client';
+import {
+  formatInr,
+  orderStatusLabel,
+  shippingMethodLabel,
+} from '@/lib/cart-client';
+import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
+import { LineThumb } from '@/components/gift/line-thumb';
 
 type Address = {
   fullName?: string;
@@ -16,6 +22,14 @@ type Address = {
   phone?: string | null;
 };
 
+type OrderItem = {
+  title: string;
+  label: string;
+  quantity: number;
+  lineTotalPaise: number;
+  imageUrl?: string | null;
+};
+
 type OrderDetail = {
   id: string;
   orderNumber: string;
@@ -25,13 +39,15 @@ type OrderDetail = {
   discountPaise: number;
   shippingPaise: number;
   taxPaise?: number;
+  couponCode?: string | null;
   shippingMethod?: string;
   giftMessage: string | null;
+  giftWrap?: boolean;
   invoiceAvailable?: boolean;
   shippingAddress?: Address | null;
   billingAddress?: Address | null;
   payments?: Array<{ status: string; provider: string; amountPaise: number }>;
-  items: Array<{ title: string; label: string; quantity: number; lineTotalPaise: number }>;
+  items: OrderItem[];
   statusHistory: Array<{ status: string; createdAt: string; note: string | null }>;
   paidAt?: string | null;
 };
@@ -44,6 +60,8 @@ type Eligibility = {
   existing: Array<{ id: string; status: string; reason: string; createdAt: string }>;
 };
 
+const TRACK_STEPS = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as const;
+
 function formatAddress(a: Address | null | undefined): string | null {
   if (!a) return null;
   const lines = [
@@ -51,14 +69,14 @@ function formatAddress(a: Address | null | undefined): string | null {
     a.line1,
     a.line2,
     [a.city, a.state, a.postalCode].filter(Boolean).join(', '),
-    a.phone ? `Phone: ${a.phone}` : null,
+    a.phone,
   ].filter(Boolean);
   return lines.length ? lines.join('\n') : null;
 }
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   return (
-    <Suspense fallback={<main className="gift-page text-body opacity-70">Loading order…</main>}>
+    <Suspense fallback={<GiftListSkeleton label="Loading order" />}>
       <OrderDetailView params={params} />
     </Suspense>
   );
@@ -72,41 +90,52 @@ function OrderDetailView({ params }: { params: { id: string } }) {
   const [eligibility, setEligibility] = useState<Eligibility | null>(null);
   const [returnReason, setReturnReason] = useState('');
   const [returnMsg, setReturnMsg] = useState<string | null>(null);
+  const [returnBusy, setReturnBusy] = useState(false);
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(`/login?next=/orders/${params.id}${placed ? '?placed=1' : ''}`);
       return;
     }
     apiAuth<OrderDetail>(`/orders/me/${params.id}`)
-      .then((o) => {
+      .then(async (o) => {
         setOrder(o);
-        return apiAuth<Eligibility>(`/returns/eligibility/${params.id}`);
+        try {
+          setEligibility(await apiAuth<Eligibility>(`/returns/eligibility/${params.id}`));
+        } catch {
+          setEligibility(null);
+        }
       })
-      .then(setEligibility)
-      .catch(() => router.replace('/orders'));
-  }, [params.id, router]);
+      .catch(() => {
+        if (!getStoredAccessToken()) {
+          router.replace(`/login?next=/orders/${params.id}`);
+          return;
+        }
+        router.replace('/orders');
+      });
+  }, [params.id, placed, router]);
 
   async function submitReturn() {
+    setReturnBusy(true);
     try {
       await apiAuth(`/returns/orders/${params.id}`, {
         method: 'POST',
         json: { reason: returnReason },
       });
-      setReturnMsg('Return requested — waiting for review.');
+      setReturnMsg('Return requested');
       const e = await apiAuth<Eligibility>(`/returns/eligibility/${params.id}`);
       setEligibility(e);
     } catch (err) {
       setReturnMsg(err instanceof Error ? err.message : 'Return failed');
+    } finally {
+      setReturnBusy(false);
     }
   }
 
   if (!order) {
-    return <main className="gift-page text-body opacity-70">Loading order…</main>;
+    return <GiftListSkeleton label="Loading order" />;
   }
 
-  const steps = ['PENDING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as const;
-  const statusIndex = steps.indexOf(order.status as (typeof steps)[number]);
   const special =
     order.status === 'CANCELLED' ||
     order.status === 'PAYMENT_FAILED' ||
@@ -116,192 +145,216 @@ function OrderDetailView({ params }: { params: { id: string } }) {
     (Boolean(order.paidAt) ||
       (order.payments?.some((p) => p.status === 'CAPTURED' || p.status === 'REFUNDED') ?? false));
   const shipText = formatAddress(order.shippingAddress);
-  const billText = formatAddress(order.billingAddress ?? order.shippingAddress);
   const payment = order.payments?.[0];
+  const trackIndex = TRACK_STEPS.indexOf(order.status as (typeof TRACK_STEPS)[number]);
+  const showPending = order.status === 'PENDING_PAYMENT';
 
   return (
-    <main className="gift-page max-w-lg">
+    <main className="gift-page max-w-3xl">
       {placed ? (
-        <p className="gift-banner gift-banner--success mb-gs-4" role="status">
-          Thank you! Your order was placed successfully.
-        </p>
-      ) : null}
-      <div className="flex flex-wrap gap-gs-3 text-body">
-        <Link href="/orders" className="gift-link">
-          ← All orders
-        </Link>
-        <Link href="/account" className="gift-link">
-          Account
-        </Link>
-      </div>
+        <header className="checkout-section checkout-section--soft">
+          <p className="text-caption font-semibold uppercase tracking-wide text-success">
+            Order confirmed
+          </p>
+          <h1 className="gift-h1 mt-gs-3">Thank you</h1>
+          <p className="mt-gs-2 font-medium text-foreground">{order.orderNumber}</p>
+          <p className="mt-gs-1 text-body opacity-70">{orderStatusLabel(order.status)}</p>
+        </header>
+      ) : (
+        <>
+          <Link href="/orders" className="gift-link text-body">
+            ← All orders
+          </Link>
+          <div className="mt-gs-4 flex flex-wrap items-start justify-between gap-gs-4">
+            <div>
+              <h1 className="gift-h1">{order.orderNumber}</h1>
+              <p className="mt-gs-1 text-body opacity-70">{orderStatusLabel(order.status)}</p>
+            </div>
+            {invoiceAvailable ? (
+              <Link href={`/orders/${order.id}/invoice`} className="clay-btn shrink-0">
+                View invoice
+              </Link>
+            ) : null}
+          </div>
+        </>
+      )}
 
-      <div className="mt-gs-4 flex flex-wrap items-start justify-between gap-gs-4">
-        <div>
-          <h1 className="gift-h1">{order.orderNumber}</h1>
-          <p className="mt-gs-1 text-body opacity-70">Status: {order.status.replaceAll('_', ' ')}</p>
-          {payment ? (
-            <p className="mt-gs-1 text-body opacity-70">
-              Payment: {payment.status} · {payment.provider}
-            </p>
-          ) : null}
-        </div>
-        {invoiceAvailable ? (
-          <Link href={`/orders/${order.id}/invoice`} className="clay-btn shrink-0">
+      <div className="mt-gs-5 flex flex-wrap gap-gs-3">
+        <Link href="/gift/products" className="clay-btn">
+          Continue shopping
+        </Link>
+        {placed && invoiceAvailable ? (
+          <Link href={`/orders/${order.id}/invoice`} className="clay-btn-secondary">
             View invoice
           </Link>
         ) : null}
-      </div>
-      {invoiceAvailable ? (
-        <p className="mt-gs-2 text-caption opacity-60">
-          Preview the receipt, then download as PDF or print.
-        </p>
-      ) : order.status === 'PENDING_PAYMENT' ? (
-        <p className="mt-gs-2 text-body opacity-70">
-          Invoice will be available after payment is captured.
-        </p>
-      ) : null}
-
-      <div className="mt-gs-4 flex flex-wrap gap-gs-3">
-        <Link href="/gift/products" className="clay-btn-secondary text-body">
-          Continue shopping
-        </Link>
-        <Link href="/gift/build-your-box" className="clay-btn-ghost text-body">
-          Build another box
-        </Link>
-      </div>
-
-      <section className="clay-panel mt-gs-6 p-gs-5" aria-label="Order tracking">
-        <h2 className="gift-h2">Tracking</h2>
-        {special ? (
-          <p className="gift-banner gift-banner--warning mt-gs-3">{order.status}</p>
+        {placed ? (
+          <Link href="/orders" className="clay-btn-ghost">
+            All orders
+          </Link>
         ) : (
-          <ol className="mt-gs-4 space-y-gs-3">
-            {steps.map((step, i) => {
-              const done = statusIndex >= i;
-              const current = statusIndex === i;
-              return (
-                <li
-                  key={step}
-                  className={`flex items-center gap-gs-3 text-body ${done ? '' : 'opacity-40'}`}
-                >
-                  <span
-                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-pill border text-caption ${
-                      done
-                        ? 'border-primary bg-primary text-white shadow-clay'
-                        : 'border-border-strong'
-                    }`}
-                    aria-hidden
-                  >
-                    {done ? '✓' : i + 1}
-                  </span>
-                  <span className={current ? 'font-medium' : ''}>{step.replaceAll('_', ' ')}</span>
-                </li>
-              );
-            })}
-          </ol>
+          <Link href="/account" className="clay-btn-ghost">
+            Account
+          </Link>
         )}
-      </section>
-
-      <ul className="mt-gs-6 space-y-gs-3 text-body">
-        {order.items.map((item, i) => (
-          <li key={i} className="clay-card flex justify-between gap-gs-4 p-gs-4">
-            <span>
-              {item.title} ({item.label}) × {item.quantity}
-            </span>
-            <span className="shrink-0 font-medium text-primary">
-              {formatInr(item.lineTotalPaise)}
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="clay-panel mt-gs-4 space-y-gs-1 p-gs-5 text-body">
-        <p>Subtotal: {formatInr(order.subtotalPaise)}</p>
-        {order.discountPaise > 0 ? <p>Discount: −{formatInr(order.discountPaise)}</p> : null}
-        <p>Shipping: {formatInr(order.shippingPaise)}</p>
-        {(order.taxPaise ?? 0) > 0 ? <p>Tax: {formatInr(order.taxPaise ?? 0)}</p> : null}
-        <p className="pt-gs-2 text-lg font-semibold">Total: {formatInr(order.totalPaise)}</p>
       </div>
 
-      {(shipText || billText) && (
-        <section className="mt-gs-6 grid gap-gs-4 sm:grid-cols-2 text-body">
-          {shipText ? (
-            <div className="clay-panel p-gs-5">
-              <h2 className="gift-h2">Ship to</h2>
-              <p className="mt-gs-2 whitespace-pre-line opacity-80">{shipText}</p>
-              {order.shippingMethod ? (
-                <p className="mt-gs-2 text-caption opacity-60">Method: {order.shippingMethod}</p>
-              ) : null}
-            </div>
-          ) : null}
-          {billText ? (
-            <div className="clay-panel p-gs-5">
-              <h2 className="gift-h2">Billing</h2>
-              <p className="mt-gs-2 whitespace-pre-line opacity-80">{billText}</p>
-            </div>
-          ) : null}
-        </section>
-      )}
-
-      {order.giftMessage ? (
-        <p className="clay-card mt-gs-4 p-gs-4 text-body">
-          <strong>Gift message:</strong> {order.giftMessage}
-        </p>
-      ) : null}
-
-      <h2 className="font-display mt-gs-6 mb-gs-3 text-xl">Timeline</h2>
-      <ol className="space-y-gs-2 text-body opacity-80">
-        {order.statusHistory.map((h, i) => (
-          <li key={i} className="clay-chip !block w-full !rounded-control py-gs-2">
-            {h.status} — {new Date(h.createdAt).toLocaleString()}
-            {h.note ? ` (${h.note})` : ''}
-          </li>
-        ))}
-      </ol>
-
-      <section className="clay-panel mt-gs-6 p-gs-5 text-body">
-        <h2 className="gift-h2">Return</h2>
-        {eligibility ? (
-          <>
-            <p className="mt-gs-2 opacity-70">
-              Window: {eligibility.windowDays} days after delivery
-              {eligibility.daysLeft != null ? ` · ${eligibility.daysLeft} days left` : ''}
-            </p>
-            {eligibility.existing.length > 0 ? (
-              <ul className="mt-gs-2 space-y-gs-1">
-                {eligibility.existing.map((r) => (
-                  <li key={r.id}>
-                    {r.status}: {r.reason}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {eligibility.eligible ? (
-              <div className="mt-gs-4">
-                <textarea
-                  className="clay-input min-h-[72px]"
-                  placeholder="Why are you returning?"
-                  value={returnReason}
-                  onChange={(e) => setReturnReason(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="clay-btn mt-gs-3"
-                  onClick={() => void submitReturn()}
-                >
-                  Request return
-                </button>
-              </div>
+      <div className="mt-gs-6 grid items-start gap-gs-6 lg:grid-cols-[minmax(0,1fr)_min(22rem,40%)]">
+        <div className="space-y-gs-4">
+          <section className="checkout-section" aria-label="Order tracking">
+            <h2 className="gift-h2">Tracking</h2>
+            {special ? (
+              <p className="gift-banner gift-banner--warning mt-gs-3">
+                {orderStatusLabel(order.status)}
+              </p>
+            ) : showPending ? (
+              <p className="mt-gs-3 text-body opacity-70">Payment pending</p>
             ) : (
-              <p className="mt-gs-2 opacity-70">{eligibility.reason}</p>
+              <ol className="mt-gs-4 space-y-gs-3">
+                {TRACK_STEPS.map((step, i) => {
+                  const done = trackIndex >= i;
+                  const current = trackIndex === i;
+                  return (
+                    <li
+                      key={step}
+                      className={`flex items-center gap-gs-3 text-body ${done ? '' : 'opacity-40'}`}
+                    >
+                      <span
+                        className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-pill border text-caption ${
+                          done
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border-strong'
+                        }`}
+                        aria-hidden
+                      >
+                        {done ? '✓' : i + 1}
+                      </span>
+                      <span className={current ? 'font-medium' : ''}>
+                        {orderStatusLabel(step)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
             )}
-          </>
-        ) : null}
-        {returnMsg ? <p className="mt-gs-2 opacity-80">{returnMsg}</p> : null}
-      </section>
+          </section>
+
+          {shipText ? (
+            <section className="checkout-section">
+              <h2 className="gift-h2">Ship to</h2>
+              <p className="mt-gs-2 whitespace-pre-line text-body opacity-80">{shipText}</p>
+              {order.shippingMethod ? (
+                <p className="mt-gs-2 text-caption opacity-60">
+                  {shippingMethodLabel(order.shippingMethod)}
+                </p>
+              ) : null}
+            </section>
+          ) : null}
+
+          {order.giftMessage || order.giftWrap ? (
+            <section className="checkout-section">
+              <h2 className="gift-h2">Gift</h2>
+              {order.giftWrap ? <p className="mt-gs-2 text-body">Gift wrap</p> : null}
+              {order.giftMessage ? (
+                <p className="mt-gs-2 text-body opacity-80">{order.giftMessage}</p>
+              ) : null}
+            </section>
+          ) : null}
+
+          {!placed ? (
+            <section className="checkout-section text-body">
+              <h2 className="gift-h2">Return</h2>
+              {eligibility ? (
+                <>
+                  {eligibility.existing.length > 0 ? (
+                    <ul className="mt-gs-3 space-y-gs-1">
+                      {eligibility.existing.map((r) => (
+                        <li key={r.id}>
+                          {orderStatusLabel(r.status)}: {r.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {eligibility.eligible ? (
+                    <div className="mt-gs-4">
+                      <label className="block text-body">
+                        Reason
+                        <textarea
+                          className="clay-input min-h-[72px]"
+                          placeholder="Reason"
+                          value={returnReason}
+                          onChange={(e) => setReturnReason(e.target.value)}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="clay-btn mt-gs-3 disabled:opacity-60"
+                        disabled={returnBusy || !returnReason.trim()}
+                        onClick={() => void submitReturn()}
+                      >
+                        {returnBusy ? 'Sending…' : 'Request return'}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="mt-gs-2 opacity-70">{eligibility.reason}</p>
+                  )}
+                </>
+              ) : null}
+              {returnMsg ? <p className="mt-gs-2 opacity-80">{returnMsg}</p> : null}
+            </section>
+          ) : null}
+        </div>
+
+        <aside className="checkout-section checkout-section--soft lg:sticky lg:top-[calc(var(--gift-sticky-offset)+var(--space-4))]">
+          <h2 className="gift-h2">Order summary</h2>
+          <ul className="mt-gs-4 space-y-gs-3">
+            {order.items.map((item, i) => (
+              <li key={i} className="flex gap-gs-3 text-body">
+                <LineThumb imageUrl={item.imageUrl} quantity={item.quantity} />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium leading-snug">{item.title}</p>
+                  <p className="mt-gs-1 opacity-70">{item.label}</p>
+                </div>
+                <p className="shrink-0 font-medium">{formatInr(item.lineTotalPaise)}</p>
+              </li>
+            ))}
+          </ul>
+          <dl className="mt-gs-5 space-y-gs-2 text-body">
+            <div className="flex justify-between gap-gs-3">
+              <dt className="opacity-70">Subtotal</dt>
+              <dd>{formatInr(order.subtotalPaise)}</dd>
+            </div>
+            {order.discountPaise > 0 ? (
+              <div className="flex justify-between gap-gs-3 text-success">
+                <dt>Discount{order.couponCode ? ` (${order.couponCode})` : ''}</dt>
+                <dd>−{formatInr(order.discountPaise)}</dd>
+              </div>
+            ) : null}
+            <div className="flex justify-between gap-gs-3">
+              <dt className="opacity-70">Shipping</dt>
+              <dd>{order.shippingPaise === 0 ? 'Free' : formatInr(order.shippingPaise)}</dd>
+            </div>
+            {(order.taxPaise ?? 0) > 0 ? (
+              <div className="flex justify-between gap-gs-3">
+                <dt className="opacity-70">Tax</dt>
+                <dd>{formatInr(order.taxPaise ?? 0)}</dd>
+              </div>
+            ) : null}
+            <div className="flex justify-between gap-gs-3 border-t border-border-subtle pt-gs-3 text-lg font-semibold">
+              <dt>Total</dt>
+              <dd className="text-primary">{formatInr(order.totalPaise)}</dd>
+            </div>
+          </dl>
+          {payment ? (
+            <p className="mt-gs-3 text-caption opacity-60">
+              {payment.provider === 'mock' ? 'Mock payment' : payment.provider} ·{' '}
+              {orderStatusLabel(payment.status)}
+            </p>
+          ) : null}
+        </aside>
+      </div>
 
       <p className="mt-gs-6 text-body opacity-70">
-        Need help?{' '}
         <a href="mailto:hello@inabiya.in" className="gift-link">
           hello@inabiya.in
         </a>

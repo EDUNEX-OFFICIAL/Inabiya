@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Gift, LifeBuoy, RefreshCw, Search, X } from 'lucide-react';
+import { Gift, LifeBuoy, ListFilter, RefreshCw, Search, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
@@ -25,14 +25,14 @@ type Inquiry = {
 type TypeFilter = '' | 'corporate' | 'bulk';
 type StatusFilter = '' | 'NEW';
 
-const TYPE_CHIPS: Array<{ value: TypeFilter; label: string }> = [
-  { value: '', label: 'All types' },
+const TYPE_OPTIONS: Array<{ value: TypeFilter; label: string }> = [
+  { value: '', label: 'Any type' },
   { value: 'corporate', label: 'Corporate' },
   { value: 'bulk', label: 'Bulk' },
 ];
 
 const STATUS_CHIPS: Array<{ value: StatusFilter; label: string }> = [
-  { value: '', label: 'All status' },
+  { value: '', label: 'All' },
   { value: 'NEW', label: 'New' },
 ];
 
@@ -44,6 +44,10 @@ function parseType(raw: string | null): TypeFilter {
 function parseStatus(raw: string | null): StatusFilter {
   if (raw === 'NEW') return raw;
   return '';
+}
+
+function filterSelectClass(): string {
+  return 'clay-input min-h-9 w-full min-w-0 text-sm';
 }
 
 
@@ -85,11 +89,14 @@ function InquiriesDeskInner() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersPanelRef = useRef<HTMLDivElement>(null);
 
   const loadSeq = useRef(0);
   const hasLoadedOnce = useRef(false);
 
-  const filterActive = Boolean(qParam || type || status);
+  const advancedFilterCount = type ? 1 : 0;
+  const filterActive = Boolean(qParam || status || advancedFilterCount > 0);
 
   const patchQuery = useCallback(
     (patch: Record<string, string | null>) => {
@@ -172,6 +179,23 @@ function InquiriesDeskInner() {
     router.replace('/admin/commerce/gifting-inquiries');
   }
 
+  useEffect(() => {
+    if (!filtersOpen) return;
+    function onPointerDown(e: MouseEvent) {
+      const el = filtersPanelRef.current;
+      if (el && !el.contains(e.target as Node)) setFiltersOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setFiltersOpen(false);
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [filtersOpen]);
+
   const countLabel = loading ? 'Loading…' : `${displayed.length} inquiries`;
 
   return (
@@ -241,35 +265,21 @@ function InquiriesDeskInner() {
         </div>
       </form>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <div
           className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2"
           role="group"
-          aria-label="Filter inquiries"
+          aria-label="Filter by status"
         >
-          {TYPE_CHIPS.map((c) => {
-            const active = type === c.value;
-            return (
-              <button
-                key={c.value || 'all-type'}
-                type="button"
-                aria-pressed={active}
-                className={opsChipClass(active)}
-                onClick={() => patchQuery({ type: c.value || null })}
-              >
-                {c.label}
-              </button>
-            );
-          })}
-          {STATUS_CHIPS.filter((c) => c.value).map((c) => {
+          {STATUS_CHIPS.map((c) => {
             const active = status === c.value;
             return (
               <button
-                key={c.value}
+                key={c.value || 'all'}
                 type="button"
                 aria-pressed={active}
                 className={opsChipClass(active)}
-                onClick={() => patchQuery({ status: active ? null : c.value })}
+                onClick={() => patchQuery({ status: c.value || null })}
               >
                 {c.label}
               </button>
@@ -277,22 +287,85 @@ function InquiriesDeskInner() {
           })}
         </div>
 
-        <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
-          {refreshing && !loading ? (
-            <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
-          ) : null}
-          {countLabel}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="relative" ref={filtersPanelRef}>
+            <button
+              type="button"
+              className={`clay-btn-secondary inline-flex min-h-8 items-center gap-1.5 px-2.5 text-xs sm:min-h-9 sm:px-3 sm:text-sm ${
+                advancedFilterCount > 0 || filtersOpen
+                  ? 'border-[var(--primary)] text-[var(--primary)]'
+                  : ''
+              }`}
+              aria-expanded={filtersOpen}
+              aria-controls="inquiries-filters-panel"
+              onClick={() => setFiltersOpen((o) => !o)}
+            >
+              <ListFilter className="h-3.5 w-3.5 opacity-80" aria-hidden />
+              Filters
+              {advancedFilterCount > 0 ? (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold leading-5 text-[var(--primary-foreground)]">
+                  {advancedFilterCount}
+                </span>
+              ) : null}
+            </button>
 
-        {filterActive ? (
-          <button
-            type="button"
-            className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-            onClick={clearFilters}
-          >
-            Clear
-          </button>
-        ) : null}
+            {filtersOpen ? (
+              <div
+                id="inquiries-filters-panel"
+                role="dialog"
+                aria-label="Inquiry filters"
+                className="absolute right-0 z-30 mt-2 w-[min(100vw-2rem,22rem)] rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-3 shadow-lg"
+              >
+                <label className="block min-w-0">
+                  <span className="mb-1 block text-[11px] font-medium text-[var(--muted-foreground)]">
+                    Type
+                  </span>
+                  <select
+                    className={filterSelectClass()}
+                    aria-label="Inquiry type"
+                    value={type}
+                    onChange={(e) => patchQuery({ type: e.target.value || null })}
+                  >
+                    {TYPE_OPTIONS.map((o) => (
+                      <option key={o.value || 'any-type'} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {advancedFilterCount > 0 ? (
+                  <button
+                    type="button"
+                    className="clay-btn-ghost mt-3 min-h-8 w-full px-2 text-xs"
+                    onClick={() => {
+                      clearFilters();
+                      setFiltersOpen(false);
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
+            {refreshing && !loading ? (
+              <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
+            ) : null}
+            {countLabel}
+          </span>
+
+          {filterActive && !filtersOpen ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="mb-2 flex items-center justify-between gap-2 sm:hidden">

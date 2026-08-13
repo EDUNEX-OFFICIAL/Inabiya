@@ -2,7 +2,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { Gift, ShoppingBag } from 'lucide-react';
 import { ClayProductCard } from '@/components/gift/clay-product-card';
+import { GiftResponsiveLink } from '@/components/gift/gift-responsive-cta';
 import { CollectionFilters } from '@/components/gift/collection-filters';
 import { CollectionResultsToolbar } from '@/components/gift/collection-results-toolbar';
 import { JsonLdScript } from '@/components/seo/json-ld-script';
@@ -179,7 +181,7 @@ export default async function GiftCollectionPage({
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/40 to-transparent" />
         </div>
 
-        <div className="relative mx-auto w-full px-gs-4 py-gs-5 sm:px-gs-6 sm:py-gs-6 lg:px-gs-8 lg:py-gs-7">
+        <div className="relative mx-auto w-full max-w-page px-[var(--gift-pad-x)] py-gs-5 sm:py-gs-6 lg:py-gs-7">
           <nav className="text-body text-foreground/55" aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <li>
@@ -204,19 +206,26 @@ export default async function GiftCollectionPage({
             </ol>
           </nav>
 
-          <div className="mt-gs-4 max-w-xl">
+          <div className="gift-cta-host mt-gs-4 max-w-xl min-w-0">
             <p className="gift-overline">{collection.overline}</p>
             <h1 id="collection-title" className="gift-h1 mt-gs-2 text-balance">
               {collection.title}
             </h1>
             <p className="gift-muted mt-gs-2">{collection.blurb}</p>
             <div className="mt-gs-4 flex flex-wrap gap-gs-2">
-              <Link href={bybHref} className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-body">
-                Build a custom box
-              </Link>
-              <Link href="/gift/products" className="clay-btn-secondary !min-h-0 !px-gs-4 !py-gs-2 text-body">
-                Browse all gifts
-              </Link>
+              <GiftResponsiveLink
+                href={bybHref}
+                label="Build a custom box"
+                icon={Gift}
+                className="text-body sm:!min-h-0 sm:!px-gs-4 sm:!py-gs-2"
+              />
+              <GiftResponsiveLink
+                href="/gift/products"
+                label="Browse all gifts"
+                icon={ShoppingBag}
+                variant="secondary"
+                className="text-body sm:!min-h-0 sm:!px-gs-4 sm:!py-gs-2"
+              />
             </div>
           </div>
 
@@ -234,7 +243,7 @@ export default async function GiftCollectionPage({
         </div>
       </section>
 
-      <div className="mx-auto w-full px-gs-4 py-gs-5 sm:px-gs-6 sm:py-gs-6 lg:px-gs-8">
+      <div className="mx-auto w-full max-w-page px-[var(--gift-pad-x)] py-gs-5 sm:py-gs-6">
         <div className="flex flex-col gap-gs-5 md:flex-row md:items-start md:gap-gs-7">
           <CollectionFilters collection={collection} refine={refine} />
 

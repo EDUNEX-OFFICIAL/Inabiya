@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { apiAuth, storeSession, type AuthSession } from '@/lib/auth-client';
-import { cartApi } from '@/lib/cart-client';
+import { mergeGuestCommerce } from '@/lib/merge-guest-commerce';
 
 function safeNextPath(raw: string | null): string | null {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return null;
@@ -37,14 +37,7 @@ function RegisterForm() {
         },
       });
       storeSession(session);
-      try {
-        await cartApi('/cart/merge', {
-          method: 'POST',
-          authToken: session.tokens.accessToken,
-        });
-      } catch {
-        /* optional */
-      }
+      await mergeGuestCommerce(session.tokens.accessToken);
       router.push(nextPath ?? '/gift');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Register failed');
@@ -57,9 +50,11 @@ function RegisterForm() {
     <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
       <div>
         <h1 className="gift-h1">Create account</h1>
-        <p className="mt-gs-2 text-body opacity-75">
-          Create your Inabiya account with email and password — save gifts and checkout faster.
-        </p>
+        {nextPath ? null : (
+          <p className="mt-gs-2 text-body opacity-75">
+            Create your Inabiya account with email and password — save gifts and checkout faster.
+          </p>
+        )}
       </div>
       <form onSubmit={onSubmit} className="clay-panel flex flex-col gap-gs-3 p-gs-5 sm:p-gs-6">
         <label className="flex flex-col gap-gs-1 text-body">

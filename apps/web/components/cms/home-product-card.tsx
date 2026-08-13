@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, type MouseEvent } from 'react';
+import { Check, Gift, Loader2, ShoppingBag } from 'lucide-react';
 import { formatInr } from '@/lib/catalog';
 import { cartApi } from '@/lib/cart-client';
 import { getStoredAccessToken } from '@/lib/auth-client';
 import { trackEvent } from '@/lib/analytics';
 import { ProductLabels } from '@/components/gift/product-labels';
 import { ProductBrandLine } from '@/components/gift/product-brand-line';
+import { GiftResponsiveButton, GiftResponsiveLink } from '@/components/gift/gift-responsive-cta';
 import type { CmsBlockProduct } from '@/components/cms/marketing-page-types';
 
 type Props = {
@@ -99,7 +101,7 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
           />
         </div>
       </div>
-      <div className={`flex flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}>
+      <div className={`gift-cta-host flex min-w-0 flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}>
         {product.isReadyMadeHamper && !hideHamperChip ? (
           <span className="clay-chip w-fit text-caption">Ready-made hamper</span>
         ) : null}
@@ -139,25 +141,34 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
             {product.hamperItemCount} curated items in this set
           </p>
         ) : null}
-        <div className="mt-gs-4 flex flex-wrap items-center gap-gs-2">
-          <Link
+        <div className="mt-gs-4 flex flex-nowrap items-center gap-gs-2">
+          <GiftResponsiveLink
             href={`/gift/products/${product.slug}`}
-            className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-body"
+            label="View gift"
+            icon={Gift}
+            labelFrom={canQuickAdd ? 'container' : 'always'}
+            className="min-w-0 flex-1 shrink text-body sm:!min-h-0 sm:!px-gs-4 sm:!py-gs-2"
             data-testid={`home-product-view-${product.slug}`}
-          >
-            {featured ? 'Explore gift' : 'View gift'}
-          </Link>
+          />
           {canQuickAdd ? (
-            <button
-              type="button"
+            <GiftResponsiveButton
               onClick={(e) => void quickAdd(e)}
               disabled={busy}
-              className="clay-btn-secondary !min-h-0 !px-gs-4 !py-gs-2 text-body disabled:opacity-50"
-              aria-label={`Add ${product.title} to cart`}
+              label={busy ? 'Adding…' : msg === 'Added' ? 'Added' : 'Add to cart'}
+              icon={busy ? Loader2 : msg === 'Added' ? Check : ShoppingBag}
+              variant="secondary"
+              className={`min-w-0 flex-1 shrink text-body sm:!min-h-0 sm:!px-gs-4 sm:!py-gs-2 disabled:opacity-50 ${
+                busy ? '[&_svg]:animate-spin motion-reduce:[&_svg]:animate-none' : ''
+              }`}
+              aria-label={
+                busy
+                  ? `Adding ${product.title} to cart`
+                  : msg === 'Added'
+                    ? `${product.title} added to cart`
+                    : `Add ${product.title} to cart`
+              }
               data-testid={`home-product-add-${product.slug}`}
-            >
-              {busy ? 'Adding…' : msg === 'Added' ? 'Added ✓' : 'Add to cart'}
-            </button>
+            />
           ) : null}
         </div>
         {msg && msg !== 'Added' ? <p className="mt-gs-2 text-caption text-danger">{msg}</p> : null}

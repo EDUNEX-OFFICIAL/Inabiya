@@ -27,6 +27,7 @@ export type CartDto = {
     variantId: string;
     productTitle: string;
     productSlug: string;
+    imageUrl?: string | null;
     sku: string;
     label: string;
     quantity: number;
@@ -84,3 +85,27 @@ export async function cartApi<T>(
 }
 
 export { formatInr } from './catalog';
+
+export function shippingMethodLabel(method?: string | null): string {
+  if (method === 'EXPRESS') return 'Express';
+  if (method === 'STANDARD') return 'Standard';
+  return method ? method.replaceAll('_', ' ') : '';
+}
+
+export function orderStatusLabel(status: string): string {
+  const map: Record<string, string> = {
+    PENDING_PAYMENT: 'Payment pending',
+    PAID: 'Paid',
+    PROCESSING: 'Processing',
+    SHIPPED: 'Shipped',
+    DELIVERED: 'Delivered',
+    CANCELLED: 'Cancelled',
+    PAYMENT_FAILED: 'Payment failed',
+    RETURNED: 'Returned',
+    CAPTURED: 'Paid',
+    PENDING: 'Pending',
+    FAILED: 'Failed',
+    REFUNDED: 'Refunded',
+  };
+  return map[status] ?? status.replaceAll('_', ' ');
+}

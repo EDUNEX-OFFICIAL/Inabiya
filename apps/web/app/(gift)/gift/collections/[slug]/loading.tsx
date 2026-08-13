@@ -2,13 +2,13 @@ export default function CollectionLoading() {
   return (
     <main className="gift-page !max-w-none !px-0" aria-busy="true" aria-label="Loading collection">
       <div className="border-b border-foreground/6 bg-foreground/[0.03]">
-        <div className="mx-auto w-full px-gs-4 py-gs-6 sm:px-gs-6 lg:px-gs-8">
+        <div className="mx-auto w-full max-w-page px-[var(--gift-pad-x)] py-gs-6">
           <div className="h-3 w-48 animate-pulse rounded bg-foreground/10" />
           <div className="mt-gs-4 h-9 w-72 max-w-full animate-pulse rounded bg-foreground/10" />
           <div className="mt-gs-3 h-4 w-96 max-w-full animate-pulse rounded bg-foreground/8" />
         </div>
       </div>
-      <div className="mx-auto flex w-full gap-gs-7 px-gs-4 py-gs-6 sm:px-gs-6 lg:px-gs-8">
+      <div className="mx-auto flex w-full max-w-page gap-gs-7 px-[var(--gift-pad-x)] py-gs-6">
         <div className="hidden w-56 shrink-0 space-y-gs-4 md:block">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-20 animate-pulse rounded-control bg-foreground/[0.06]" />

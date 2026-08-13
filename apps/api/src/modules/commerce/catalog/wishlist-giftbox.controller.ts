@@ -1,13 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, ParseUUIDPipe, Post, Req, UseGuards } from '@nestjs/common';
 import {
   giftBoxAddItemBodySchema,
   giftBoxCreateBodySchema,
   wishlistAddBodySchema,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
-import { JwtAuthGuard } from '../../identity/jwt-auth.guard';
+import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
+import { OptionalJwtRefreshGuard } from '../../identity/optional-jwt-auth.guard';
 import { CurrentUser } from '../../identity/current-user.decorator';
 import { GiftBoxService, WishlistService } from './wishlist-giftbox.service';
+import { giftBoxOwnerWhere, type GiftBoxActor } from './gift-box-owner';
 
 @Controller('catalog/wishlist')
 @UseGuards(JwtAuthGuard)
@@ -33,24 +35,39 @@ export class WishlistController {
   }
 }
 
+function giftBoxActor(req: AuthedRequest, header?: string): GiftBoxActor {
+  return { userId: req.user?.id, guestToken: header?.trim() || undefined };
+}
+
 @Controller('catalog/gift-boxes')
-@UseGuards(JwtAuthGuard)
+@UseGuards(OptionalJwtRefreshGuard)
 export class GiftBoxController {
   constructor(private readonly giftBoxes: GiftBoxService) {}
 
   @Get('active')
-  active(@CurrentUser() user: { id: string }) {
-    return this.giftBoxes.getOrCreateActive(user.id);
+  active(@Req() req: AuthedRequest, @Headers('x-gift-box-token') boxHeader?: string) {
+    return this.giftBoxes.getOrCreateActive(giftBoxActor(req, boxHeader));
   }
 
   @Post('reset')
-  reset(@CurrentUser() user: { id: string }) {
-    return this.giftBoxes.reset(user.id);
+  reset(@Req() req: AuthedRequest, @Headers('x-gift-box-token') boxHeader?: string) {
+    return this.giftBoxes.reset(giftBoxActor(req, boxHeader));
+  }
+
+  @Post('merge')
+  @UseGuards(JwtAuthGuard)
+  merge(@CurrentUser() user: { id: string }, @Headers('x-gift-box-token') boxHeader?: string) {
+    const owner = giftBoxOwnerWhere({ guestToken: boxHeader });
+    if (!owner || !('guestToken' in owner)) {
+      return this.giftBoxes.getOrCreateActive({ userId: user.id });
+    }
+    return this.giftBoxes.mergeGuestIntoUser(user.id, owner.guestToken);
   }
 
   @Post()
   create(
-    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+    @Headers('x-gift-box-token') boxHeader: string | undefined,
     @Body(new ZodValidationPipe(giftBoxCreateBodySchema))
     body: {
       name?: string;
@@ -62,35 +79,50 @@ export class GiftBoxController {
       wizardStep?: number;
     },
   ) {
-    return this.giftBoxes.create(user.id, body);
+    return this.giftBoxes.create(giftBoxActor(req, boxHeader), body);
   }
 
   @Get(':boxId/recommendations')
-  recommendations(@CurrentUser() user: { id: string }, @Param('boxId') boxId: string) {
-    return this.giftBoxes.recommendations(boxId, user.id);
+  recommendations(
+    @Req() req: AuthedRequest,
+    @Headers('x-gift-box-token') boxHeader: string | undefined,
+    @Param('boxId', ParseUUIDPipe) boxId: string,
+  ) {
+    return this.giftBoxes.recommendations(boxId, giftBoxActor(req, boxHeader));
   }
 
   @Post(':boxId/items')
   addItem(
-    @CurrentUser() user: { id: string },
-    @Param('boxId') boxId: string,
+    @Req() req: AuthedRequest,
+    @Headers('x-gift-box-token') boxHeader: string | undefined,
+    @Param('boxId', ParseUUIDPipe) boxId: string,
     @Body(new ZodValidationPipe(giftBoxAddItemBodySchema))
     body: { variantId: string; quantity: number; personalization?: Record<string, string> },
   ) {
-    return this.giftBoxes.addItem(boxId, user.id, body);
+    return this.giftBoxes.addItem(boxId, giftBoxActor(req, boxHeader), body);
   }
 
   @Delete(':boxId/items/:itemId')
   removeItem(
-    @CurrentUser() user: { id: string },
-    @Param('boxId') boxId: string,
-    @Param('itemId') itemId: string,
+    @Req() req: AuthedRequest,
+    @Headers('x-gift-box-token') boxHeader: string | undefined,
+    @Param('boxId', ParseUUIDPipe) boxId: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
   ) {
-    return this.giftBoxes.removeItem(boxId, user.id, itemId);
+    return this.giftBoxes.removeItem(boxId, giftBoxActor(req, boxHeader), itemId);
   }
 
   @Post(':boxId/move-to-cart')
-  moveToCart(@CurrentUser() user: { id: string }, @Param('boxId') boxId: string) {
-    return this.giftBoxes.moveToCart(boxId, user.id);
+  moveToCart(
+    @Req() req: AuthedRequest,
+    @Headers('x-gift-box-token') boxHeader: string | undefined,
+    @Headers('x-cart-token') cartHeader: string | undefined,
+    @Param('boxId', ParseUUIDPipe) boxId: string,
+  ) {
+    return this.giftBoxes.moveToCart(
+      boxId,
+      giftBoxActor(req, boxHeader),
+      cartHeader?.trim() || undefined,
+    );
   }
 }

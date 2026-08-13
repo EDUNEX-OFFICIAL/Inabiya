@@ -11,7 +11,10 @@ const cartInclude = {
       variant: {
         include: {
           product: {
-            include: { collections: true },
+            include: {
+              collections: true,
+              media: { where: { kind: 'IMAGE' as const }, orderBy: { sortOrder: 'asc' as const }, take: 1 },
+            },
           },
           inventory: true,
         },
@@ -301,6 +304,7 @@ export class CartService {
             title: string;
             status: ProductStatus;
             collections: Array<{ collectionId: string }>;
+            media: Array<{ url: string }>;
           };
           inventory: { onHand: number; reserved: number } | null;
         };
@@ -319,6 +323,7 @@ export class CartService {
           collectionIds: i.variant.product.collections.map((c) => c.collectionId),
           productTitle: i.variant.product.title,
           productSlug: i.variant.product.slug,
+          imageUrl: i.variant.product.media[0]?.url ?? null,
           sku: i.variant.sku,
           label: i.variant.label,
           quantity: i.quantity,

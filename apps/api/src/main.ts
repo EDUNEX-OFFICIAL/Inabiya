@@ -17,6 +17,8 @@ async function bootstrap() {
     process.env.APP_URL,
     'http://localhost:3001',
     'http://127.0.0.1:3001',
+    'http://localhost:3101',
+    'http://127.0.0.1:3101',
     ...extra,
   ].filter(Boolean) as string[];
   app.enableCors({

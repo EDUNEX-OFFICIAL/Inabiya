@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, Tag, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
-import { opsChipClass } from '@/lib/ops-desk-ui';
+import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -757,7 +757,7 @@ function CouponsDeskInner() {
         </div>
       </form>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <div
           className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2"
           role="group"
@@ -778,18 +778,24 @@ function CouponsDeskInner() {
             );
           })}
         </div>
-        <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
-          {refreshing && !loading ? (
-            <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden items-center gap-1.5 text-xs text-[var(--muted-foreground)] sm:inline-flex">
+            {refreshing && !loading ? (
+              <RefreshCw className="h-3 w-3 animate-spin opacity-60" aria-hidden />
+            ) : null}
+            {filtered.length}
+            {filterActive ? ` · filtered` : ''}
+          </span>
+          {filterActive ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
           ) : null}
-          {filtered.length}
-          {filterActive ? ` · filtered` : ''}
-        </span>
-        {filterActive ? (
-          <button type="button" className="clay-btn-ghost min-h-8 px-2 text-xs" onClick={clearFilters}>
-            Clear
-          </button>
-        ) : null}
+        </div>
       </div>
 
       {loading ? (
@@ -875,18 +881,20 @@ function CouponsDeskInner() {
                       {c.collections.map((cat) => cat.title).join(' · ')}
                     </p>
                   ) : null}
-                  <div className="mt-2 flex flex-wrap gap-3">
+                  <div className="mt-2 flex flex-wrap gap-0.5">
                     <button
                       type="button"
-                      className="text-xs font-medium text-[var(--primary)] underline-offset-2 hover:underline disabled:opacity-40"
+                      className={`${opsRowActionClass} text-[var(--primary)]`}
                       disabled={busy}
+                      aria-label={c.active ? `Deactivate ${c.code}` : `Activate ${c.code}`}
                       onClick={() => void toggle(c)}
                     >
                       {c.active ? 'Deactivate' : 'Activate'}
                     </button>
                     <button
                       type="button"
-                      className="text-xs font-medium underline-offset-2 hover:underline"
+                      className={opsRowActionClass}
+                      aria-label={`Preview ${c.code}`}
                       onClick={() => void runPreview('code', c.code)}
                     >
                       Preview
@@ -996,18 +1004,20 @@ function CouponsDeskInner() {
                           </div>
                         </td>
                         <td className="px-2 py-2.5 pr-3 align-top">
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap justify-end gap-0.5">
                             <button
                               type="button"
-                              className="text-xs font-medium text-[var(--primary)] underline-offset-2 hover:underline disabled:opacity-40"
+                              className={`${opsRowActionClass} text-[var(--primary)]`}
                               disabled={busy}
+                              aria-label={c.active ? `Deactivate ${c.code}` : `Activate ${c.code}`}
                               onClick={() => void toggle(c)}
                             >
                               {c.active ? 'Deactivate' : 'Activate'}
                             </button>
                             <button
                               type="button"
-                              className="text-xs font-medium underline-offset-2 hover:underline"
+                              className={opsRowActionClass}
+                              aria-label={`Preview ${c.code}`}
                               onClick={() => void runPreview('code', c.code)}
                             >
                               Preview

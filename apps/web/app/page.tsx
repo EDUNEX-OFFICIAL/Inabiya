@@ -1,11 +1,14 @@
 import Link from 'next/link';
+import { BrandLogo } from '@/components/brand-logo';
 
 /** Root index — shells only; product features come in later phases. */
 export default function HomePage() {
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
-      <h1>Inabiya</h1>
-      <p>Phase 1 identity — simple email/password auth (no third-party IdP).</p>
+      <BrandLogo href={null} size="lg" />
+      <p style={{ marginTop: '1rem' }}>
+        Phase 1 identity — simple email/password auth (no third-party IdP).
+      </p>
       <ul>
         <li>
           <Link href="/login">Login</Link>
