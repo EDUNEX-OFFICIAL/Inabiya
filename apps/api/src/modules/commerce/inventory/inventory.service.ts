@@ -336,12 +336,7 @@ export class InventoryService {
   }
 
   /** Absolute set used by catalog admin — also writes CORRECTION movement. */
-  async setOnHandAdmin(
-    variantId: string,
-    onHand: number,
-    actorId: string,
-    requestId?: string,
-  ) {
+  async setOnHandAdmin(variantId: string, onHand: number, actorId: string, requestId?: string) {
     if (!Number.isInteger(onHand) || onHand < 0) {
       throw new BadRequestException({
         code: 'INVALID_ON_HAND',

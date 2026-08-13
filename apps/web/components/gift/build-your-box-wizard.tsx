@@ -1,7 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState, type ForwardRefExoticComponent, type HTMLAttributes, type RefAttributes } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ForwardRefExoticComponent,
+  type HTMLAttributes,
+  type RefAttributes,
+} from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   BlocksIcon,
@@ -124,7 +132,9 @@ export function BuildYourBoxWizard() {
       .then(async (b) => {
         if (cancelled) return;
         if (b.wizardStep >= 6 && b.items.length === 0) {
-          const fresh = await giftBoxApi<GiftBoxDto>('/catalog/gift-boxes/reset', { method: 'POST' });
+          const fresh = await giftBoxApi<GiftBoxDto>('/catalog/gift-boxes/reset', {
+            method: 'POST',
+          });
           if (cancelled) return;
           setBox(fresh);
           setBudget('');
@@ -246,9 +256,12 @@ export function BuildYourBoxWizard() {
     if (!box) return;
     setError(null);
     try {
-      const updated = await giftBoxApi<GiftBoxDto>(`/catalog/gift-boxes/${box.id}/items/${itemId}`, {
-        method: 'DELETE',
-      });
+      const updated = await giftBoxApi<GiftBoxDto>(
+        `/catalog/gift-boxes/${box.id}/items/${itemId}`,
+        {
+          method: 'DELETE',
+        },
+      );
       setBox(updated);
       await loadSuggestions(updated);
     } catch (e) {
@@ -306,8 +319,7 @@ export function BuildYourBoxWizard() {
     box.budgetPaise != null && box.budgetPaise > 0
       ? Math.min(1.2, box.subtotalPaise / box.budgetPaise)
       : 0;
-  const meterClass =
-    over || usedRatio > 1 ? 'is-over' : usedRatio >= 0.85 ? 'is-warn' : '';
+  const meterClass = over || usedRatio > 1 ? 'is-over' : usedRatio >= 0.85 ? 'is-warn' : '';
 
   const who = pickLabel(RECIPIENTS, box.recipient);
   const age = pickLabel(AGES, box.ageBand);
@@ -344,7 +356,10 @@ export function BuildYourBoxWizard() {
             aria-valuenow={step}
             aria-label={`Step ${step} of ${STEPS.length}: ${STEPS[step - 1]}`}
           >
-            <div className="byb-progress-fill" style={{ width: `${(step / STEPS.length) * 100}%` }} />
+            <div
+              className="byb-progress-fill"
+              style={{ width: `${(step / STEPS.length) * 100}%` }}
+            />
           </div>
           <ol className="mt-gs-3 flex flex-wrap gap-gs-1">
             {STEPS.map((label, i) => {
@@ -418,7 +433,9 @@ export function BuildYourBoxWizard() {
           </div>
         </section>
       ) : (
-        <div className={`mt-gs-6 grid items-start gap-gs-6 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-gs-7 ${step === 6 ? 'pb-20 lg:pb-0' : ''}`}>
+        <div
+          className={`mt-gs-6 grid items-start gap-gs-6 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-gs-7 ${step === 6 ? 'pb-20 lg:pb-0' : ''}`}
+        >
           <div className="byb-step min-w-0" key={step}>
             {step === 1 ? (
               <section>

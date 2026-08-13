@@ -12,7 +12,10 @@ export type ChartConfig = Record<
   {
     label?: React.ReactNode;
     icon?: React.ComponentType;
-  } & ({ color?: string; theme?: never } | { color?: never; theme: Record<keyof typeof THEMES, string> })
+  } & (
+    | { color?: string; theme?: never }
+    | { color?: never; theme: Record<keyof typeof THEMES, string> }
+  )
 >;
 
 type ChartContextProps = {
@@ -71,8 +74,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
     return color ? `  --color-${key}: ${color};` : null;
   })
   .join('\n')}
@@ -143,9 +145,7 @@ const ChartTooltipContent = React.forwardRef<
 
       if (labelFormatter) {
         return (
-          <div className={cn('font-medium', labelClassName)}>
-            {labelFormatter(value, payload)}
-          </div>
+          <div className={cn('font-medium', labelClassName)}>{labelFormatter(value, payload)}</div>
         );
       }
 
@@ -305,11 +305,7 @@ function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key:
 
   if (key in payload && typeof (payload as Record<string, unknown>)[key] === 'string') {
     configLabelKey = (payload as Record<string, unknown>)[key] as string;
-  } else if (
-    payloadPayload &&
-    key in payloadPayload &&
-    typeof payloadPayload[key] === 'string'
-  ) {
+  } else if (payloadPayload && key in payloadPayload && typeof payloadPayload[key] === 'string') {
     configLabelKey = payloadPayload[key] as string;
   }
 

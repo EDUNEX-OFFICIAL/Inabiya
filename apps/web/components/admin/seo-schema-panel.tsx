@@ -236,7 +236,9 @@ export function SeoSchemaPanel({
 
       {previewOpen ? (
         <pre className="max-h-72 overflow-auto rounded border bg-black/5 p-2 font-mono text-[10px] leading-relaxed">
-          {previewDoc ? JSON.stringify(previewDoc, null, 2) : 'Save product fields to preview schema'}
+          {previewDoc
+            ? JSON.stringify(previewDoc, null, 2)
+            : 'Save product fields to preview schema'}
         </pre>
       ) : null}
 
@@ -307,7 +309,11 @@ export function SeoSchemaPanel({
                 spellCheck={false}
               />
               {customError ? <p className="text-xs text-red-600">{customError}</p> : null}
-              <button type="button" className="rounded border px-2 py-1 text-xs" onClick={addCustom}>
+              <button
+                type="button"
+                className="rounded border px-2 py-1 text-xs"
+                onClick={addCustom}
+              >
                 Validate & add
               </button>
             </div>
@@ -469,7 +475,11 @@ function PresetFieldsEditor({
     );
   }
 
-  if (entry.preset === 'BreadcrumbList' || entry.preset === 'ItemList' || entry.preset === 'FAQPage') {
+  if (
+    entry.preset === 'BreadcrumbList' ||
+    entry.preset === 'ItemList' ||
+    entry.preset === 'FAQPage'
+  ) {
     const items = Array.isArray(fields.items)
       ? (fields.items as Array<Record<string, string>>)
       : [];
@@ -546,9 +556,7 @@ function PresetFieldsEditor({
           className="text-xs underline"
           onClick={() => {
             const blank =
-              entry.preset === 'FAQPage'
-                ? { question: '', answerText: '' }
-                : { name: '', url: '' };
+              entry.preset === 'FAQPage' ? { question: '', answerText: '' } : { name: '', url: '' };
             onChange({ ...fields, items: [...items, blank] });
           }}
         >

@@ -10,7 +10,11 @@ export default function CreatorHomePage() {
           Brands brief campaigns. Creators reverse-bid. Deliver, approve, get paid.
         </p>
         <div className="mt-gs-6 flex flex-wrap gap-gs-3">
-          <Link href="/creator/marketplace" className="creator-btn" data-testid="browse-campaigns-btn">
+          <Link
+            href="/creator/marketplace"
+            className="creator-btn"
+            data-testid="browse-campaigns-btn"
+          >
             Browse campaigns
           </Link>
           <Link href="/creator/brand" className="creator-btn-ghost">

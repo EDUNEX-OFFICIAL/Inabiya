@@ -82,20 +82,12 @@ export class ProcurementController {
   }
 
   @Post('purchase-orders/:id/receive')
-  receive(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-    @Req() req: AuthedRequest,
-  ) {
+  receive(@Param('id') id: string, @CurrentUser() user: { id: string }, @Req() req: AuthedRequest) {
     return this.procurement.receive(id, user.id, String(req.id ?? ''));
   }
 
   @Post('purchase-orders/:id/cancel')
-  cancel(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-    @Req() req: AuthedRequest,
-  ) {
+  cancel(@Param('id') id: string, @CurrentUser() user: { id: string }, @Req() req: AuthedRequest) {
     return this.procurement.cancel(id, user.id, String(req.id ?? ''));
   }
 }

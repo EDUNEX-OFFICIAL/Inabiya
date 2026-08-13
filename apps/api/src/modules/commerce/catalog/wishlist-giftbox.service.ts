@@ -135,11 +135,7 @@ export class GiftBoxService {
       });
       return this.mapBox(box as GiftBoxLoaded);
     } catch (e) {
-      if (
-        guestToken &&
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === 'P2002'
-      ) {
+      if (guestToken && e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
         const raced = await this.prisma.giftBox.findFirst({
           where: { guestToken },
           include: giftBoxInclude,
@@ -470,15 +466,17 @@ export class GiftBoxService {
     const userHasProgress =
       userBox.wizardStep > 1 ||
       userBox.items.length > 0 ||
-      Boolean(userBox.recipient || userBox.ageBand || userBox.occasion || userBox.budgetPaise != null);
+      Boolean(
+        userBox.recipient || userBox.ageBand || userBox.occasion || userBox.budgetPaise != null,
+      );
     const guestHasProgress =
       guestLoaded.wizardStep > 1 ||
       guestLoaded.items.length > 0 ||
       Boolean(
         guestLoaded.recipient ||
-          guestLoaded.ageBand ||
-          guestLoaded.occasion ||
-          guestLoaded.budgetPaise != null,
+        guestLoaded.ageBand ||
+        guestLoaded.occasion ||
+        guestLoaded.budgetPaise != null,
       );
 
     if (!userHasProgress && guestHasProgress) {

@@ -1,9 +1,5 @@
 import assert from 'node:assert/strict';
-import {
-  isInvoiceEligible,
-  toInvoicePreviewDto,
-  type InvoiceInput,
-} from './order-invoice';
+import { isInvoiceEligible, toInvoicePreviewDto, type InvoiceInput } from './order-invoice';
 
 const sample: InvoiceInput = {
   invoiceNumber: 'INV-TEST-1',
@@ -36,7 +32,10 @@ const sample: InvoiceInput = {
   paymentStatus: 'CAPTURED',
 };
 
-assert.equal(isInvoiceEligible({ paidAt: sample.paidAt, payments: [{ status: 'CAPTURED' }] }), true);
+assert.equal(
+  isInvoiceEligible({ paidAt: sample.paidAt, payments: [{ status: 'CAPTURED' }] }),
+  true,
+);
 assert.equal(isInvoiceEligible({ paidAt: null, payments: [{ status: 'PENDING' }] }), false);
 const dto = toInvoicePreviewDto(sample);
 assert.equal(dto.invoiceNumber, 'INV-TEST-1');

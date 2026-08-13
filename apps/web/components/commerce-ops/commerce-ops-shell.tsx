@@ -579,7 +579,9 @@ export function CommerceOpsShell({ children }: Props) {
                           {c.label}
                         </Link>
                       ) : (
-                        <span className="max-w-[28vw] truncate font-medium sm:max-w-[14rem]">{c.label}</span>
+                        <span className="max-w-[28vw] truncate font-medium sm:max-w-[14rem]">
+                          {c.label}
+                        </span>
                       )}
                     </li>
                   ))}
@@ -698,22 +700,22 @@ export function CommerceOpsShell({ children }: Props) {
                 paletteHits.map((item) => {
                   const Icon = NAV_ICONS[item.id] ?? Package;
                   return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      className="ops-palette-item flex min-h-11 w-full items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-[color-mix(in_srgb,var(--primary)_8%,transparent)]"
-                      onClick={() => {
-                        setPaletteOpen(false);
-                        router.push(item.href);
-                      }}
-                    >
-                      <Icon className="ops-muted h-4 w-4 shrink-0" aria-hidden />
-                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                      <span className="ops-muted shrink-0 text-[11px]">
-                        {item.href.replace('/admin/commerce', '') || '/'}
-                      </span>
-                    </button>
-                  </li>
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        className="ops-palette-item flex min-h-11 w-full items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-[color-mix(in_srgb,var(--primary)_8%,transparent)]"
+                        onClick={() => {
+                          setPaletteOpen(false);
+                          router.push(item.href);
+                        }}
+                      >
+                        <Icon className="ops-muted h-4 w-4 shrink-0" aria-hidden />
+                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                        <span className="ops-muted shrink-0 text-[11px]">
+                          {item.href.replace('/admin/commerce', '') || '/'}
+                        </span>
+                      </button>
+                    </li>
                   );
                 })
               )}

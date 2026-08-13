@@ -5,11 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { OrderStatus, Prisma, ReviewStatus } from '@prisma/client';
-import type {
-  AdminReviewsQuery,
-  CreateReviewBody,
-  ModerateReviewBody,
-} from '@inabiya/validation';
+import type { AdminReviewsQuery, CreateReviewBody, ModerateReviewBody } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import {
@@ -183,7 +179,9 @@ export class ReviewsService {
     if (query.cursor) {
       try {
         andParts.push(
-          adminReviewKeysetAfter(decodeAdminReviewCursor(query.cursor)) as Prisma.ProductReviewWhereInput,
+          adminReviewKeysetAfter(
+            decodeAdminReviewCursor(query.cursor),
+          ) as Prisma.ProductReviewWhereInput,
         );
       } catch {
         throw new BadRequestException({
@@ -207,9 +205,7 @@ export class ReviewsService {
     const page = hasMore ? rows.slice(0, limit) : rows;
     const last = page[page.length - 1];
     const nextCursor =
-      hasMore && last
-        ? encodeAdminReviewCursor({ createdAt: last.createdAt, id: last.id })
-        : null;
+      hasMore && last ? encodeAdminReviewCursor({ createdAt: last.createdAt, id: last.id }) : null;
 
     const items = page.map((r) => ({
       id: r.id,

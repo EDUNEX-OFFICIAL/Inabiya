@@ -315,96 +315,96 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
           </p>
           {isContent ? (
             <>
-          <label className="block">
-            SEO title
-            <input
-              className="mt-1 w-full rounded border px-2 py-1"
-              value={seoTitle}
-              onChange={(e) => setSeoTitle(e.target.value)}
-            />
-          </label>
-          <label className="block">
-            SEO description
-            <textarea
-              className="mt-1 w-full rounded border px-2 py-1 min-h-[60px]"
-              value={seoDescription}
-              onChange={(e) => setSeoDescription(e.target.value)}
-            />
-          </label>
-          <div>
-            <p className="mb-1">Cover / journal image</p>
-            <CmsMediaField value={ogImageUrl} onChange={setOgImageUrl} />
-            <p className="mt-1 text-xs opacity-60">
-              Use a warm photo or clean illustration (~4:3 / square). Skip tiny logos and busy
-              screenshots — JPG fills the card; SVG illustrations show in full.
-            </p>
-            {article.status === 'PUBLISHED' ? (
-              <button
-                type="button"
-                className="mt-2 rounded border px-3 py-1"
-                onClick={() => void saveCoverImage()}
-              >
-                Save cover image
-              </button>
-            ) : null}
-          </div>
-          <label className="block">
-            Category
-            <select
-              className="mt-1 w-full rounded border px-2 py-1"
-              value={categorySlug}
-              onChange={(e) => setCategorySlug(e.target.value)}
-            >
-              <option value="">—</option>
-              {categories.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            Specialist
-            <select
-              className="mt-1 w-full rounded border px-2 py-1"
-              value={specialistSlug}
-              onChange={(e) => setSpecialistSlug(e.target.value)}
-            >
-              <option value="">—</option>
-              {specialists.map((s) => (
-                <option key={s.slug} value={s.slug}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          {article.status !== 'PUBLISHED' ? (
-            <div className="flex flex-wrap gap-2 items-end">
-              <button
-                type="button"
-                className="rounded border px-3 py-1"
-                onClick={() => void publishNow()}
-              >
-                Publish now
-              </button>
-              <label>
-                Schedule
+              <label className="block">
+                SEO title
                 <input
-                  type="datetime-local"
-                  className="mt-1 block rounded border px-2 py-1"
-                  value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
+                  className="mt-1 w-full rounded border px-2 py-1"
+                  value={seoTitle}
+                  onChange={(e) => setSeoTitle(e.target.value)}
                 />
               </label>
-              <button
-                type="button"
-                className="rounded border px-3 py-1"
-                onClick={() => void schedule()}
-              >
-                Schedule
-              </button>
-            </div>
-          ) : null}
+              <label className="block">
+                SEO description
+                <textarea
+                  className="mt-1 w-full rounded border px-2 py-1 min-h-[60px]"
+                  value={seoDescription}
+                  onChange={(e) => setSeoDescription(e.target.value)}
+                />
+              </label>
+              <div>
+                <p className="mb-1">Cover / journal image</p>
+                <CmsMediaField value={ogImageUrl} onChange={setOgImageUrl} />
+                <p className="mt-1 text-xs opacity-60">
+                  Use a warm photo or clean illustration (~4:3 / square). Skip tiny logos and busy
+                  screenshots — JPG fills the card; SVG illustrations show in full.
+                </p>
+                {article.status === 'PUBLISHED' ? (
+                  <button
+                    type="button"
+                    className="mt-2 rounded border px-3 py-1"
+                    onClick={() => void saveCoverImage()}
+                  >
+                    Save cover image
+                  </button>
+                ) : null}
+              </div>
+              <label className="block">
+                Category
+                <select
+                  className="mt-1 w-full rounded border px-2 py-1"
+                  value={categorySlug}
+                  onChange={(e) => setCategorySlug(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {categories.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                Specialist
+                <select
+                  className="mt-1 w-full rounded border px-2 py-1"
+                  value={specialistSlug}
+                  onChange={(e) => setSpecialistSlug(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {specialists.map((s) => (
+                    <option key={s.slug} value={s.slug}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {article.status !== 'PUBLISHED' ? (
+                <div className="flex flex-wrap gap-2 items-end">
+                  <button
+                    type="button"
+                    className="rounded border px-3 py-1"
+                    onClick={() => void publishNow()}
+                  >
+                    Publish now
+                  </button>
+                  <label>
+                    Schedule
+                    <input
+                      type="datetime-local"
+                      className="mt-1 block rounded border px-2 py-1"
+                      value={scheduledAt}
+                      onChange={(e) => setScheduledAt(e.target.value)}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="rounded border px-3 py-1"
+                    onClick={() => void schedule()}
+                  >
+                    Schedule
+                  </button>
+                </div>
+              ) : null}
             </>
           ) : null}
           {canEditSchema ? (

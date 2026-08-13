@@ -164,7 +164,11 @@ function PurchaseOrdersInner() {
             {filterActive ? 'No purchase orders match this filter.' : 'No purchase orders.'}
           </p>
           {filterActive ? (
-            <button type="button" className="clay-btn-secondary text-sm" onClick={() => setStatusFilter('')}>
+            <button
+              type="button"
+              className="clay-btn-secondary text-sm"
+              onClick={() => setStatusFilter('')}
+            >
               Clear filters
             </button>
           ) : (

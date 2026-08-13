@@ -4,11 +4,7 @@ import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
-import {
-  formatInr,
-  orderStatusLabel,
-  shippingMethodLabel,
-} from '@/lib/cart-client';
+import { formatInr, orderStatusLabel, shippingMethodLabel } from '@/lib/cart-client';
 import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
 import { LineThumb } from '@/components/gift/line-thumb';
 
@@ -229,9 +225,7 @@ function OrderDetailView({ params }: { params: { id: string } }) {
                       >
                         {done ? '✓' : i + 1}
                       </span>
-                      <span className={current ? 'font-medium' : ''}>
-                        {orderStatusLabel(step)}
-                      </span>
+                      <span className={current ? 'font-medium' : ''}>{orderStatusLabel(step)}</span>
                     </li>
                   );
                 })}

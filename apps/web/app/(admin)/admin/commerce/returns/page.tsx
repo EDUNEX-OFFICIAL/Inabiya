@@ -41,7 +41,6 @@ function parseStatus(raw: string | null): StatusFilter {
   return 'REQUESTED';
 }
 
-
 function statusLabel(status: string): string {
   if (status === 'REQUESTED') return 'Requested';
   if (status === 'APPROVED') return 'Approved';
@@ -213,8 +212,7 @@ function AdminReturnsInner() {
         method: 'PATCH',
         json: { status: next },
       });
-      const msg =
-        next === 'APPROVED' ? 'Return approved · refund queued.' : 'Return rejected.';
+      const msg = next === 'APPROVED' ? 'Return approved · refund queued.' : 'Return rejected.';
       await load();
       setNotice(msg);
     } catch (e) {
@@ -413,7 +411,10 @@ function AdminReturnsInner() {
         </p>
       ) : null}
       {notice ? (
-        <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
+        <p
+          className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+          role="status"
+        >
           {notice}
         </p>
       ) : null}
@@ -444,7 +445,10 @@ function AdminReturnsInner() {
       ) : null}
 
       {!loading && displayed.length > 0 ? (
-        <div className={refreshing ? 'opacity-70 transition-opacity' : undefined} aria-busy={refreshing}>
+        <div
+          className={refreshing ? 'opacity-70 transition-opacity' : undefined}
+          aria-busy={refreshing}
+        >
           <div className="md:hidden">
             <ul className="space-y-2">
               {displayed.map((r) => (

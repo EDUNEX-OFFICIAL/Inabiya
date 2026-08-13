@@ -10,14 +10,9 @@ export async function generateMetadata({
     const product = await fetchCatalog<CatalogProduct>(`/catalog/products/${params.slug}`);
     const title = product.seoTitle?.trim() || product.title;
     const description =
-      product.seoDescription?.trim() ||
-      product.description?.trim()?.slice(0, 160) ||
-      undefined;
+      product.seoDescription?.trim() || product.description?.trim()?.slice(0, 160) || undefined;
     const canonical = product.canonicalPath?.trim() || `/gift/products/${product.slug}`;
-    const og =
-      product.ogImageUrl?.trim() ||
-      product.media[0]?.url ||
-      undefined;
+    const og = product.ogImageUrl?.trim() || product.media[0]?.url || undefined;
     return {
       title,
       description,

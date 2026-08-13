@@ -3,10 +3,7 @@
 import { useMemo, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { seoSchemaEntrySchema, type SeoSchemaEntry } from '@inabiya/validation';
-import {
-  mergeSeoJsonLd,
-  type JsonLdNode,
-} from '@/lib/seo-json-ld';
+import { mergeSeoJsonLd, type JsonLdNode } from '@/lib/seo-json-ld';
 import { OpsIconLink } from '@/components/commerce-ops/ops-icon-action';
 
 type Mode = 'auto' | 'manual';
@@ -27,7 +24,9 @@ function newId(): string {
   });
 }
 
-function findReplace(entries: SeoSchemaEntry[]): Extract<SeoSchemaEntry, { mode: 'replace' }> | null {
+function findReplace(
+  entries: SeoSchemaEntry[],
+): Extract<SeoSchemaEntry, { mode: 'replace' }> | null {
   const hit = entries.find((e) => e.mode === 'replace');
   return hit && hit.mode === 'replace' ? hit : null;
 }
@@ -49,9 +48,7 @@ export function ProductSeoSchemaField({
   const replace = findReplace(value);
   const initialMode: Mode = replace ? 'manual' : 'auto';
   const [mode, setMode] = useState<Mode>(initialMode);
-  const [draft, setDraft] = useState(() =>
-    replace ? JSON.stringify(replace.json, null, 2) : '',
-  );
+  const [draft, setDraft] = useState(() => (replace ? JSON.stringify(replace.json, null, 2) : ''));
   const [draftError, setDraftError] = useState<string | null>(null);
   const [replaceId] = useState(() => replace?.id ?? newId());
 

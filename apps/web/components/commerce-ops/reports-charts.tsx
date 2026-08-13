@@ -52,26 +52,19 @@ export function SalesTrendChart({
   const dataKey = metric === 'revenue' ? 'revenueInr' : 'orders';
 
   return (
-    <ChartContainer
-      config={config}
-      className="aspect-auto h-[10.5rem] w-full sm:h-[12rem]"
-    >
+    <ChartContainer config={config} className="aspect-auto h-[10.5rem] w-full sm:h-[12rem]">
       <AreaChart data={data} margin={{ left: 4, right: 8, top: 8, bottom: 0 }}>
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
-        <XAxis
-          dataKey="date"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          minTickGap={24}
-        />
+        <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={24} />
         <YAxis
           tickLine={false}
           axisLine={false}
           tickMargin={8}
           width={metric === 'revenue' ? 52 : 36}
           tickFormatter={(v) =>
-            metric === 'revenue' ? `₹${Number(v) >= 1000 ? `${Math.round(Number(v) / 1000)}k` : v}` : String(v)
+            metric === 'revenue'
+              ? `₹${Number(v) >= 1000 ? `${Math.round(Number(v) / 1000)}k` : v}`
+              : String(v)
           }
         />
         <ChartTooltip
@@ -137,11 +130,7 @@ export function ProductsBarChart({
   const height = Math.max(180, data.length * 36);
 
   return (
-    <ChartContainer
-      config={config}
-      className="w-full"
-      style={{ aspectRatio: 'auto', height }}
-    >
+    <ChartContainer config={config} className="w-full" style={{ aspectRatio: 'auto', height }}>
       <BarChart data={data} layout="vertical" margin={{ left: 4, right: 12, top: 4, bottom: 4 }}>
         <CartesianGrid horizontal={false} strokeDasharray="3 3" />
         <XAxis
@@ -162,7 +151,8 @@ export function ProductsBarChart({
           content={
             <ChartTooltipContent
               labelFormatter={(_, payload) => {
-                const row = payload?.[0]?.payload as { fullTitle?: string; sku?: string } | undefined;
+                const row = payload?.[0]?.payload as
+                  { fullTitle?: string; sku?: string } | undefined;
                 return row ? `${row.fullTitle} · ${row.sku}` : '';
               }}
               formatter={(value) => {
@@ -241,7 +231,10 @@ export function ReturnsStatusChart({
   ) satisfies ChartConfig;
 
   return (
-    <ChartContainer config={config} className="mx-auto aspect-square max-h-[16rem] w-full max-w-[16rem]">
+    <ChartContainer
+      config={config}
+      className="mx-auto aspect-square max-h-[16rem] w-full max-w-[16rem]"
+    >
       <PieChart>
         <ChartTooltip content={<ChartTooltipContent nameKey="status" hideLabel />} />
         <Pie data={data} dataKey="count" nameKey="status" innerRadius={48} strokeWidth={2}>
@@ -306,11 +299,7 @@ export function CouponsBarChart({
   );
 }
 
-export function FunnelBarChart({
-  events,
-}: {
-  events: Array<{ name: string; count: number }>;
-}) {
+export function FunnelBarChart({ events }: { events: Array<{ name: string; count: number }> }) {
   const data = events.map((e) => ({
     name: e.name.length > 22 ? `${e.name.slice(0, 20)}…` : e.name,
     fullName: e.name,

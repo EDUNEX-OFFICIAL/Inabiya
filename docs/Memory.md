@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 14, 2026 (CI lint prefer-const)
+Last Updated: August 14, 2026 (CI prettier format)
 
 ---
 
@@ -1113,6 +1113,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-14 (CI prettier format)
+
+- **Override:** Phase 14; human: CI `pnpm format:check` failed (118 files).
+- Ran `pnpm format`; `format:check` + `pnpm lint` green locally. Next.js hook/font warnings remain (not `--max-warnings 0`).
+- Next: CI green; those 5 web warnings optional follow-up.
 
 ### Session — 2026-08-14 (CI lint prefer-const)
 

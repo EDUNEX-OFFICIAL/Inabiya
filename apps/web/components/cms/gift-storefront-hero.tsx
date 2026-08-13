@@ -68,7 +68,11 @@ function TrustChipLabel({ label }: { label: string }) {
   const shipping = /shipping/i.test(label);
   if (shipping) {
     return (
-      <Link href="/gift#faq" className="underline-offset-2 hover:underline" data-testid="hero-trust-shipping">
+      <Link
+        href="/gift#faq"
+        className="underline-offset-2 hover:underline"
+        data-testid="hero-trust-shipping"
+      >
         {label}
       </Link>
     );

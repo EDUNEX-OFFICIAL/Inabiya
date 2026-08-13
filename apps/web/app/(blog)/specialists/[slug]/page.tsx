@@ -38,9 +38,7 @@ export default async function SpecialistPage({ params }: { params: { slug: strin
       <p className="blog-overline mt-gs-4">Specialist</p>
       <h1 className="blog-h1 mt-gs-2">{s.name}</h1>
       {s.title ? <p className="blog-muted mt-gs-2 text-lg">{s.title}</p> : null}
-      {s.credentials ? (
-        <p className="mt-gs-1 text-sm opacity-60">{s.credentials}</p>
-      ) : null}
+      {s.credentials ? <p className="mt-gs-1 text-sm opacity-60">{s.credentials}</p> : null}
       {s.bio ? <p className="blog-body mt-gs-6 leading-relaxed">{s.bio}</p> : null}
 
       <section className="mt-gs-7">

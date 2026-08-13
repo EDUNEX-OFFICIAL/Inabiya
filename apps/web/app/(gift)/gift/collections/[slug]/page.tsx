@@ -25,11 +25,7 @@ import {
   type CollectionRefine,
   type GiftCollection,
 } from '@/lib/gift-collections';
-import {
-  breadcrumbJsonLd,
-  collectionPageJsonLd,
-  mergeSeoJsonLd,
-} from '@/lib/seo-json-ld';
+import { breadcrumbJsonLd, collectionPageJsonLd, mergeSeoJsonLd } from '@/lib/seo-json-ld';
 
 export const dynamic = 'force-dynamic';
 
@@ -256,17 +252,12 @@ export default async function GiftCollectionPage({
 
             {products.length === 0 ? (
               <div className="clay-panel p-gs-6 text-center sm:p-gs-7">
-                <p className="gift-h2">
-                  Nothing in this mix yet
-                </p>
+                <p className="gift-h2">Nothing in this mix yet</p>
                 <p className="gift-muted mt-gs-2">
                   Try clearing filters, or peek at a sibling collection.
                 </p>
                 <div className="mt-gs-5 flex flex-wrap justify-center gap-gs-2">
-                  <Link
-                    href={collectionHref(collection.slug)}
-                    className="clay-btn inline-flex"
-                  >
+                  <Link href={collectionHref(collection.slug)} className="clay-btn inline-flex">
                     Clear filters
                   </Link>
                   {related.slice(0, 3).map((r) => (
@@ -289,7 +280,10 @@ export default async function GiftCollectionPage({
             )}
 
             {related.length > 0 ? (
-              <section className="mt-gs-8 border-t border-foreground/8 pt-gs-6" aria-labelledby="also-shop">
+              <section
+                className="mt-gs-8 border-t border-foreground/8 pt-gs-6"
+                aria-labelledby="also-shop"
+              >
                 <h2 id="also-shop" className="gift-h2">
                   Also shop
                 </h2>

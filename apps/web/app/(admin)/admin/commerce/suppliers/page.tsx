@@ -102,7 +102,10 @@ export default function SuppliersPage() {
         title="Suppliers"
         actions={
           <>
-            <Link href="/admin/commerce/purchase-orders" className="clay-btn-ghost min-h-10 text-sm">
+            <Link
+              href="/admin/commerce/purchase-orders"
+              className="clay-btn-ghost min-h-10 text-sm"
+            >
               Purchase orders
             </Link>
             <button
@@ -127,7 +130,10 @@ export default function SuppliersPage() {
       />
 
       {msg ? (
-        <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
+        <p
+          className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+          role="status"
+        >
           {msg}
         </p>
       ) : null}

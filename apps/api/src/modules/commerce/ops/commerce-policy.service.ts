@@ -69,8 +69,7 @@ export type CommercePolicy = {
 };
 
 function asPositiveInt(raw: unknown, fallback: number, min: number, max: number): number {
-  const n =
-    typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : Number.NaN;
+  const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : Number.NaN;
   if (!Number.isFinite(n)) return fallback;
   const v = Math.floor(n);
   if (v < min || v > max) return fallback;
@@ -165,10 +164,7 @@ export class CommercePolicyService {
         0,
         1000,
       ),
-      shippingDisplayCopy: asString(
-        map.get(SHIPPING_COPY_KEY),
-        DEFAULT_SHIPPING_DISPLAY_COPY,
-      ),
+      shippingDisplayCopy: asString(map.get(SHIPPING_COPY_KEY), DEFAULT_SHIPPING_DISPLAY_COPY),
       dashboardAlertPrefs: asAlertPrefs(map.get(ALERT_PREFS_KEY)),
       trustCues: asTrustCues(map.get(TRUST_CUES_KEY)),
     };

@@ -1,12 +1,6 @@
 import type { ManualStorefrontLabel } from '../catalog/storefront-display-labels';
 
-export type ProductGridSource =
-  | 'auto'
-  | 'manual'
-  | 'bestsellers'
-  | 'editors'
-  | 'new'
-  | 'on_sale';
+export type ProductGridSource = 'auto' | 'manual' | 'bestsellers' | 'editors' | 'new' | 'on_sale';
 
 export type ProductGridListQuery = {
   collection?: string;
@@ -71,7 +65,10 @@ export function parseProductGridResolution(
   const seeAllHref = str(props.seeAllHref);
   const seeAllLabel = str(props.seeAllLabel);
   const slugs = Array.isArray(props.productSlugs)
-    ? props.productSlugs.map(String).map((s) => s.trim()).filter(Boolean)
+    ? props.productSlugs
+        .map(String)
+        .map((s) => s.trim())
+        .filter(Boolean)
     : [];
 
   const rawSource = str(props.source);
@@ -86,16 +83,16 @@ export function parseProductGridResolution(
   }
 
   const newWithinDays =
-    typeof props.newWithinDays === 'number' &&
-    props.newWithinDays >= 1 &&
-    props.newWithinDays <= 90
+    typeof props.newWithinDays === 'number' && props.newWithinDays >= 1 && props.newWithinDays <= 90
       ? Math.floor(props.newWithinDays)
       : source === 'new'
         ? 30
         : undefined;
 
   const limitRaw =
-    typeof props.limit === 'number' && props.limit > 0 ? Math.min(Math.floor(props.limit), 24) : undefined;
+    typeof props.limit === 'number' && props.limit > 0
+      ? Math.min(Math.floor(props.limit), 24)
+      : undefined;
   const limit = limitRaw ?? (hamper ? 3 : 8);
 
   const baseFilters: ProductGridListQuery = {

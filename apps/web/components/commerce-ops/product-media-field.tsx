@@ -1,10 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  MediaLibraryModal,
-  uploadCmsMediaFile,
-} from '@/components/cms/cms-media-field';
+import { MediaLibraryModal, uploadCmsMediaFile } from '@/components/cms/cms-media-field';
 
 const IMAGE_ACCEPT =
   'image/jpeg,image/png,image/webp,image/gif,image/avif,image/svg+xml,.svg,.jpg,.jpeg,.png,.webp,.gif,.avif';

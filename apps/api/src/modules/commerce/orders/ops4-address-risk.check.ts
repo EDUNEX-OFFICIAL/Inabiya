@@ -13,10 +13,7 @@ function addressRisk(addr: unknown): boolean {
 
 assert.equal(addressRisk(null), true);
 assert.equal(addressRisk({}), true);
-assert.equal(
-  addressRisk({ line1: '1 St', city: 'Pune', phone: '999', pincode: '411001' }),
-  false,
-);
+assert.equal(addressRisk({ line1: '1 St', city: 'Pune', phone: '999', pincode: '411001' }), false);
 assert.equal(addressRisk({ line1: '1 St', city: 'Pune', phone: '999' }), true);
 
 console.log('ops4-address-risk.check: ok');

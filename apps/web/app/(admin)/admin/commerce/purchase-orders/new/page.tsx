@@ -62,7 +62,10 @@ export default function NewPurchaseOrderPage() {
     return () => window.clearTimeout(t);
   }, [productQ]);
 
-  function addVariant(p: ProductHit, v: { id: string; sku: string; label: string; pricePaise: number }) {
+  function addVariant(
+    p: ProductHit,
+    v: { id: string; sku: string; label: string; pricePaise: number },
+  ) {
     if (lines.some((l) => l.variantId === v.id)) return;
     setLines((prev) => [
       ...prev,
@@ -154,7 +157,9 @@ export default function NewPurchaseOrderPage() {
 
         <section className="clay-panel space-y-3 p-3 sm:p-4">
           <label className="block text-xs">
-            <span className="mb-1 block font-medium text-[var(--muted-foreground)]">Add product</span>
+            <span className="mb-1 block font-medium text-[var(--muted-foreground)]">
+              Add product
+            </span>
             <input
               className="clay-input min-h-10 w-full text-sm"
               value={productQ}
@@ -214,7 +219,9 @@ export default function NewPurchaseOrderPage() {
                     />
                   </label>
                   <label className="block text-xs">
-                    <span className="mb-0.5 block text-[var(--muted-foreground)]">Cost (paise)</span>
+                    <span className="mb-0.5 block text-[var(--muted-foreground)]">
+                      Cost (paise)
+                    </span>
                     <input
                       className="clay-input min-h-9 w-full text-sm"
                       type="number"
@@ -248,7 +255,11 @@ export default function NewPurchaseOrderPage() {
           </p>
         </section>
 
-        <button type="submit" className="clay-btn min-h-10 text-sm" disabled={busy || !lines.length}>
+        <button
+          type="submit"
+          className="clay-btn min-h-10 text-sm"
+          disabled={busy || !lines.length}
+        >
           Create draft
         </button>
       </form>

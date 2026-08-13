@@ -237,7 +237,10 @@ export class CatalogService {
             sortOrder: body.sortOrder ?? 0,
             status: body.status ?? 'DRAFT',
             membershipMode: mode,
-            smartRules: mode === 'SMART' ? (body.smartRules ?? { match: 'all', conditions: [] }) : Prisma.DbNull,
+            smartRules:
+              mode === 'SMART'
+                ? (body.smartRules ?? { match: 'all', conditions: [] })
+                : Prisma.DbNull,
             relatedSlugs: body.relatedSlugs ?? [],
             lockedLabel: body.lockedLabel,
             seoTitle: body.seoTitle ?? null,
@@ -327,7 +330,10 @@ export class CatalogService {
             ...(body.status !== undefined ? { status: body.status } : {}),
             ...(body.membershipMode !== undefined ? { membershipMode: body.membershipMode } : {}),
             ...(body.smartRules !== undefined
-              ? { smartRules: nextMode === 'SMART' ? (body.smartRules ?? Prisma.DbNull) : Prisma.DbNull }
+              ? {
+                  smartRules:
+                    nextMode === 'SMART' ? (body.smartRules ?? Prisma.DbNull) : Prisma.DbNull,
+                }
               : modeChanged && nextMode === 'MANUAL'
                 ? { smartRules: Prisma.DbNull }
                 : {}),
@@ -418,7 +424,9 @@ export class CatalogService {
     robotsIndex: boolean;
   }) {
     const smartRules =
-      c.membershipMode === 'SMART' ? parseSmartRules(c.smartRules) : { match: 'all' as const, conditions: [] };
+      c.membershipMode === 'SMART'
+        ? parseSmartRules(c.smartRules)
+        : { match: 'all' as const, conditions: [] };
     return {
       id: c.id,
       slug: c.slug,
@@ -443,31 +451,29 @@ export class CatalogService {
     };
   }
 
-  private mapCollectionAdmin(
-    c: {
-      id: string;
-      slug: string;
-      title: string;
-      description: string | null;
-      overline: string | null;
-      heroImageUrl: string | null;
-      heroImageAlt: string | null;
-      accent: string;
-      sortOrder: number;
-      createdAt: Date;
-      status: 'DRAFT' | 'PUBLISHED';
-      membershipMode: 'MANUAL' | 'SMART';
-      smartRules: unknown;
-      relatedSlugs: string[];
-      lockedLabel: string | null;
-      seoTitle: string | null;
-      seoDescription: string | null;
-      canonicalPath: string | null;
-      ogImageUrl: string | null;
-      robotsIndex: boolean;
-      _count: { products: number };
-    },
-  ) {
+  private mapCollectionAdmin(c: {
+    id: string;
+    slug: string;
+    title: string;
+    description: string | null;
+    overline: string | null;
+    heroImageUrl: string | null;
+    heroImageAlt: string | null;
+    accent: string;
+    sortOrder: number;
+    createdAt: Date;
+    status: 'DRAFT' | 'PUBLISHED';
+    membershipMode: 'MANUAL' | 'SMART';
+    smartRules: unknown;
+    relatedSlugs: string[];
+    lockedLabel: string | null;
+    seoTitle: string | null;
+    seoDescription: string | null;
+    canonicalPath: string | null;
+    ogImageUrl: string | null;
+    robotsIndex: boolean;
+    _count: { products: number };
+  }) {
     return {
       ...this.mapCollectionPublic(c),
       status: c.status,
@@ -537,15 +543,9 @@ export class CatalogService {
           : {}),
       ...(query.occasion ? { occasionTags: { has: query.occasion } } : {}),
       ...(query.hamper === '1' ? { isReadyMadeHamper: true } : {}),
-      ...(query.storefrontLabel
-        ? { storefrontLabels: { has: query.storefrontLabel } }
-        : {}),
-      ...(query.publishedSince
-        ? { publishedAt: { gte: query.publishedSince } }
-        : {}),
-      ...(query.onSale
-        ? { variants: { some: { compareAtPricePaise: { not: null } } } }
-        : {}),
+      ...(query.storefrontLabel ? { storefrontLabels: { has: query.storefrontLabel } } : {}),
+      ...(query.publishedSince ? { publishedAt: { gte: query.publishedSince } } : {}),
+      ...(query.onSale ? { variants: { some: { compareAtPricePaise: { not: null } } } } : {}),
     };
 
     const sort = query.sort;
@@ -580,8 +580,7 @@ export class CatalogService {
     if (query.onSale) {
       mapped = mapped.filter((p) =>
         p.variants.some(
-          (v) =>
-            v.compareAtPricePaise != null && v.compareAtPricePaise > v.pricePaise,
+          (v) => v.compareAtPricePaise != null && v.compareAtPricePaise > v.pricePaise,
         ),
       );
     }
@@ -669,11 +668,16 @@ export class CatalogService {
       try {
         if (sort === 'updated') {
           andParts.push(
-            adminProductKeysetAfter(decodeAdminProductCursor(query.cursor)) as Prisma.ProductWhereInput,
+            adminProductKeysetAfter(
+              decodeAdminProductCursor(query.cursor),
+            ) as Prisma.ProductWhereInput,
           );
         } else if (sort === 'title_asc' || sort === 'title_desc') {
           andParts.push(
-            titleKeysetAfter(sort, decodeTitleCursor(sort, query.cursor)) as Prisma.ProductWhereInput,
+            titleKeysetAfter(
+              sort,
+              decodeTitleCursor(sort, query.cursor),
+            ) as Prisma.ProductWhereInput,
           );
         } else if (sort === 'created') {
           andParts.push(
@@ -688,8 +692,7 @@ export class CatalogService {
       }
     }
 
-    const whereWithCursor: Prisma.ProductWhereInput =
-      andParts.length > 0 ? { AND: andParts } : {};
+    const whereWithCursor: Prisma.ProductWhereInput = andParts.length > 0 ? { AND: andParts } : {};
 
     const orderBy: Prisma.ProductOrderByWithRelationInput[] =
       sort === 'title_asc'
@@ -1375,7 +1378,10 @@ export class CatalogService {
       const seen = new Set<string>();
       const push = (raw?: string | null) => {
         if (!raw) return;
-        for (const part of raw.split(',').map((s) => s.trim()).filter(Boolean)) {
+        for (const part of raw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)) {
           const key = part.toLowerCase();
           if (seen.has(key)) continue;
           seen.add(key);

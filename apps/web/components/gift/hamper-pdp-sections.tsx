@@ -27,13 +27,7 @@ export function HamperWhatsInside({ product }: { product: CatalogProduct }) {
           >
             <div className="relative size-16 shrink-0 overflow-hidden rounded-control bg-foreground/5 sm:size-20">
               {item.imageUrl ? (
-                <Image
-                  src={item.imageUrl}
-                  alt=""
-                  fill
-                  sizes="80px"
-                  className="object-cover"
-                />
+                <Image src={item.imageUrl} alt="" fill sizes="80px" className="object-cover" />
               ) : (
                 <div className="gift-media-fallback h-full w-full" aria-hidden />
               )}
@@ -118,8 +112,7 @@ export function ProductSeoSections({
 export function PdpVideoBand({ product }: { product: CatalogProduct }) {
   const video = product.media.find((m) => m.kind === 'VIDEO');
   if (!video || !parseProductVideoUrl(video.url)) return null;
-  const fallbackPoster =
-    product.media.find((m) => m.kind !== 'VIDEO')?.url ?? null;
+  const fallbackPoster = product.media.find((m) => m.kind !== 'VIDEO')?.url ?? null;
   return (
     <section aria-labelledby="unboxing-video">
       <h2 id="unboxing-video" className="sr-only">

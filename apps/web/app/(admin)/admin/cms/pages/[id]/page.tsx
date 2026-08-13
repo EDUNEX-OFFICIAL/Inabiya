@@ -516,9 +516,9 @@ function toPayload(blocks: Block[]) {
       ).includes(sourceRaw as 'auto')
         ? (sourceRaw as 'auto' | 'manual' | 'bestsellers' | 'editors' | 'new' | 'on_sale')
         : 'auto';
-      const occasion = (
-        ['welcome-baby', 'baby-shower', 'naming', 'birthday'] as const
-      ).includes(b.props.occasion as 'naming')
+      const occasion = (['welcome-baby', 'baby-shower', 'naming', 'birthday'] as const).includes(
+        b.props.occasion as 'naming',
+      )
         ? (b.props.occasion as 'welcome-baby' | 'baby-shower' | 'naming' | 'birthday')
         : undefined;
       const age = (['newborn', 'infant', 'toddler', 'any'] as const).includes(
@@ -580,12 +580,7 @@ function toPayload(blocks: Block[]) {
           if (m?.[1] && m[2]) {
             return {
               icon: m[1].toLowerCase() as
-                | 'heart'
-                | 'package'
-                | 'gift'
-                | 'truck'
-                | 'shield'
-                | 'sparkles',
+                'heart' | 'package' | 'gift' | 'truck' | 'shield' | 'sparkles',
               label: m[2].trim(),
               ...(m[3]?.trim() ? { body: m[3].trim() } : {}),
             };
@@ -620,9 +615,7 @@ function toPayload(blocks: Block[]) {
     }
     if (b.type === 'discoveryChips') {
       const rawItems = b.props.items || '';
-      const itemLines = rawItems.includes('\n')
-        ? rawItems.split('\n')
-        : rawItems.split(',');
+      const itemLines = rawItems.includes('\n') ? rawItems.split('\n') : rawItems.split(',');
       const items = itemLines
         .map((s) => s.trim())
         .filter(Boolean)

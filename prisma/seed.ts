@@ -448,7 +448,7 @@ async function main() {
     blanket: '/gift/media/personalised-name-blanket.webp',
     rattle: '/gift/media/wooden-rattle-set.webp',
     girl: '/gift/media/baby-girl-soft.jpg',
-      boy: '/gift/media/train-toy.jpg',
+    boy: '/gift/media/train-toy.jpg',
     cues: '/gift/media/baby-cues.jpg',
     train: '/gift/media/train-toy.jpg',
     hamper: '/gift/media/baby-soft-gift.jpg',
@@ -702,7 +702,7 @@ async function main() {
       ageBands: ['newborn', 'infant'],
       occasionTags: ['welcome-baby', 'baby-shower'],
       isReadyMadeHamper: false,
-      brandName: "Johnson’s Baby",
+      brandName: 'Johnson’s Baby',
       storefrontLabels: ['BESTSELLER'],
       publishedAt: daysAgo(28),
       seoSections: [
@@ -1137,7 +1137,7 @@ async function main() {
         showUsps: false,
         brands: [
           { name: 'Chicco', logoUrl: '/gift/brands/chicco.svg' },
-          { name: "Johnson’s Baby" },
+          { name: 'Johnson’s Baby' },
           { name: 'Mothercare' },
           { name: 'Pigeon' },
           { name: 'Himalaya' },
@@ -1490,7 +1490,8 @@ async function main() {
         subtitle: 'Honest notes from recent gifts — personal, on-budget, and actually useful.',
         items: [
           {
-            quote: 'The box felt personal in a way Amazon never could. My sister cried happy tears.',
+            quote:
+              'The box felt personal in a way Amazon never could. My sister cried happy tears.',
             author: 'Anaya',
             role: 'Bengaluru',
             rating: 5,

@@ -275,7 +275,10 @@ export default function CheckoutPage() {
           <Link href="/login?next=/checkout" className="clay-btn w-full justify-center">
             Sign in
           </Link>
-          <Link href="/register?next=/checkout" className="clay-btn-secondary w-full justify-center">
+          <Link
+            href="/register?next=/checkout"
+            className="clay-btn-secondary w-full justify-center"
+          >
             Create account
           </Link>
         </div>
@@ -320,7 +323,10 @@ export default function CheckoutPage() {
 
   return (
     <main className="gift-page pb-0 lg:pb-[var(--space-7)]">
-      <nav className="flex flex-wrap items-center gap-gs-2 text-caption" aria-label="Checkout progress">
+      <nav
+        className="flex flex-wrap items-center gap-gs-2 text-caption"
+        aria-label="Checkout progress"
+      >
         <Link href="/gift/cart" className="gift-link">
           Cart
         </Link>
@@ -352,7 +358,11 @@ export default function CheckoutPage() {
                 Delivery
               </h2>
               {addresses.length > 0 ? (
-                <div className="mt-gs-4 space-y-gs-3" role="radiogroup" aria-labelledby="checkout-delivery">
+                <div
+                  className="mt-gs-4 space-y-gs-3"
+                  role="radiogroup"
+                  aria-labelledby="checkout-delivery"
+                >
                   {addresses.map((a) => {
                     const selected = addressMode === 'saved' && selectedAddressId === a.id;
                     return (
@@ -372,7 +382,9 @@ export default function CheckoutPage() {
                           <span className="font-medium text-foreground">
                             {a.fullName}
                             {a.isDefault ? (
-                              <span className="ml-gs-2 text-caption font-normal opacity-60">Default</span>
+                              <span className="ml-gs-2 text-caption font-normal opacity-60">
+                                Default
+                              </span>
                             ) : null}
                           </span>
                           <span className="mt-gs-1 block opacity-70">
@@ -507,7 +519,11 @@ export default function CheckoutPage() {
               <h2 id="checkout-shipping" className="gift-h2">
                 Shipping
               </h2>
-              <div className="mt-gs-4 space-y-gs-3" role="radiogroup" aria-labelledby="checkout-shipping">
+              <div
+                className="mt-gs-4 space-y-gs-3"
+                role="radiogroup"
+                aria-labelledby="checkout-shipping"
+              >
                 {SHIPPING_OPTIONS.map((opt) => {
                   const selected = shippingMethod === opt.code;
                   const price = quotes?.[opt.code]?.shippingPaise ?? 0;
@@ -569,14 +585,18 @@ export default function CheckoutPage() {
                 Payment
               </h2>
               <div className="checkout-option mt-gs-4" data-selected="true">
-                <span className="mt-1 size-4 shrink-0 rounded-full border border-primary bg-primary" aria-hidden />
+                <span
+                  className="mt-1 size-4 shrink-0 rounded-full border border-primary bg-primary"
+                  aria-hidden
+                />
                 <span className="min-w-0 text-body">
                   <span className="font-medium text-foreground">Mock payment</span>
                   <span className="mt-gs-1 block opacity-70">No card is charged</span>
                 </span>
               </div>
               <p className="mt-gs-4 text-caption opacity-70">
-                Ship to {form.fullName || '—'} · {SHIPPING_OPTIONS.find((o) => o.code === shippingMethod)?.title}
+                Ship to {form.fullName || '—'} ·{' '}
+                {SHIPPING_OPTIONS.find((o) => o.code === shippingMethod)?.title}
               </p>
               {error ? (
                 <p className="mt-gs-3 text-body text-danger" role="alert">
@@ -675,12 +695,16 @@ function OrderSummaryPanel({
             aria-expanded={open}
           >
             <span className="gift-h2">Order summary</span>
-            <span className="text-body font-semibold text-primary">{formatInr(preview.totalPaise)}</span>
+            <span className="text-body font-semibold text-primary">
+              {formatInr(preview.totalPaise)}
+            </span>
           </button>
         ) : (
           <div className="flex items-baseline justify-between gap-gs-3">
             <h2 className="gift-h2">Order summary</h2>
-            <p className="text-caption opacity-70">{count} item{count === 1 ? '' : 's'}</p>
+            <p className="text-caption opacity-70">
+              {count} item{count === 1 ? '' : 's'}
+            </p>
           </div>
         )}
 

@@ -23,7 +23,9 @@ export function seoSectionsToHtml(
       const heading = s.heading.trim();
       const body = s.bodyText.trim();
       if (!heading && !body) return '';
-      const bodyHtml = isProbablyHtml(body) ? sanitizeArticleHtml(body) : normalizeArticleBody(body);
+      const bodyHtml = isProbablyHtml(body)
+        ? sanitizeArticleHtml(body)
+        : normalizeArticleBody(body);
       return heading ? `<h2>${escapeText(heading)}</h2>${bodyHtml}` : bodyHtml;
     })
     .filter(Boolean)

@@ -122,13 +122,7 @@ function HamperContentsModal({
             >
               <div className="relative size-14 shrink-0 overflow-hidden rounded-control bg-foreground/5 ring-1 ring-border-subtle sm:size-16">
                 {item.imageUrl ? (
-                  <Image
-                    src={item.imageUrl}
-                    alt=""
-                    fill
-                    sizes="64px"
-                    className="object-cover"
-                  />
+                  <Image src={item.imageUrl} alt="" fill sizes="64px" className="object-cover" />
                 ) : (
                   <div className="gift-media-fallback h-full w-full" />
                 )}
@@ -157,7 +151,8 @@ function HamperContentsModal({
         <div className="shrink-0 space-y-gs-3 border-t border-border-subtle bg-foreground/[0.02] px-gs-5 py-gs-4">
           <div className="flex flex-wrap items-end justify-between gap-gs-2">
             <div>
-              {product.contentsValuePaise != null && product.contentsValuePaise > product.fromPricePaise ? (
+              {product.contentsValuePaise != null &&
+              product.contentsValuePaise > product.fromPricePaise ? (
                 <p className="text-caption text-foreground/50 line-through">
                   Worth {formatInr(product.contentsValuePaise)}
                 </p>
@@ -195,7 +190,9 @@ function HamperContentsModal({
 
 function HamperThumbStrip({ items }: { items: HamperItem[] }) {
   const overflow = items.length > THUMB_FULL_MAX;
-  const visible = overflow ? items.slice(0, THUMB_OVERFLOW_VISIBLE) : items.slice(0, THUMB_FULL_MAX);
+  const visible = overflow
+    ? items.slice(0, THUMB_OVERFLOW_VISIBLE)
+    : items.slice(0, THUMB_FULL_MAX);
   const more = overflow ? items.length - THUMB_OVERFLOW_VISIBLE : 0;
 
   return (
@@ -240,14 +237,10 @@ export function ClayProductCard({
   const hamperItems = product.hamperItems ?? [];
   const isHamper = Boolean(product.isReadyMadeHamper);
   const itemCount = product.hamperItemCount ?? hamperItems.reduce((s, i) => s + i.qty, 0);
-  const brands = product.brandNames?.length
-    ? product.brandNames
-    : collectBrandNames(product);
+  const brands = product.brandNames?.length ? product.brandNames : collectBrandNames(product);
   const labels = overlayLabels(product);
   const href = `/gift/products/${product.slug}`;
-  const ctaLabel = isHamper
-    ? `Gift this · ${formatInr(product.fromPricePaise)}`
-    : 'View details';
+  const ctaLabel = isHamper ? `Gift this · ${formatInr(product.fromPricePaise)}` : 'View details';
 
   async function quickAdd(e: MouseEvent) {
     e.preventDefault();
@@ -333,7 +326,9 @@ export function ClayProductCard({
             </p>
           ) : null}
           {out ? <p className="mt-gs-2 text-caption text-danger">Out of stock</p> : null}
-          {msg && msg !== 'Added' ? <p className="mt-gs-1 text-caption text-danger">{msg}</p> : null}
+          {msg && msg !== 'Added' ? (
+            <p className="mt-gs-1 text-caption text-danger">{msg}</p>
+          ) : null}
         </div>
       </Link>
 

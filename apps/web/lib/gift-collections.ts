@@ -1,13 +1,7 @@
 /** Soft / rule-based gift collections — pretty URLs over catalog filters. */
 
 export type CollectionFacet =
-  | 'recipient'
-  | 'age'
-  | 'occasion'
-  | 'category'
-  | 'hamper'
-  | 'onSale'
-  | 'budget';
+  'recipient' | 'age' | 'occasion' | 'category' | 'hamper' | 'onSale' | 'budget';
 
 export type CollectionBaseFilters = {
   recipient?: string;
@@ -323,7 +317,7 @@ export function mergeCollectionCatalogQuery(
   const sort =
     refine.sort && COLLECTION_SORTS.some((s) => s.value === refine.sort)
       ? refine.sort
-      : base.sort ?? 'newest';
+      : (base.sort ?? 'newest');
   out.sort = sort;
 
   const recipient = base.recipient ? undefined : refine.recipient;
@@ -373,10 +367,7 @@ export function collectionHref(
 }
 
 /** Active refine count for badge — excludes sort. */
-export function countActiveRefines(
-  collection: GiftCollection,
-  refine: CollectionRefine,
-): number {
+export function countActiveRefines(collection: GiftCollection, refine: CollectionRefine): number {
   const p = refineParamsForUrl(collection, refine);
   const { sort: _sort, ...rest } = p;
   return Object.values(rest).filter(Boolean).length;
@@ -412,7 +403,11 @@ export function listActiveRefineChips(
     chips.push({ key: 'recipient', label, clearHref: without({ recipient: undefined }) });
   }
   if (refine.hamper === '1' && !collection.baseFilters.hamper) {
-    chips.push({ key: 'hamper', label: 'Ready hampers', clearHref: without({ hamper: undefined }) });
+    chips.push({
+      key: 'hamper',
+      label: 'Ready hampers',
+      clearHref: without({ hamper: undefined }),
+    });
   }
   if (refine.onSale === '1' && !collection.baseFilters.onSale) {
     chips.push({ key: 'onSale', label: 'On sale', clearHref: without({ onSale: undefined }) });

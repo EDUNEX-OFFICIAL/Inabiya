@@ -35,9 +35,7 @@ export function readSeoSchemaExtras(raw: unknown): SeoSchemaEntry[] | null {
 }
 
 /** True when CMS blocks already emit FAQPage JSON-LD. */
-export function cmsBlocksHaveSystemFaq(
-  blocks: Array<{ type: string; props: unknown }>,
-): boolean {
+export function cmsBlocksHaveSystemFaq(blocks: Array<{ type: string; props: unknown }>): boolean {
   for (const b of blocks) {
     if (b.type !== 'faq') continue;
     const props = (b.props ?? {}) as { items?: unknown; itemsJson?: unknown };

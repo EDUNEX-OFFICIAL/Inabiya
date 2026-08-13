@@ -217,9 +217,7 @@ export default function MerchandisingPage() {
           <form onSubmit={(e) => void onSave(e)} className="clay-panel space-y-4 p-4">
             <div>
               <h2 className="font-display text-lg leading-tight">Featured pins</h2>
-              <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-                Legacy carousel slugs
-              </p>
+              <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">Legacy carousel slugs</p>
             </div>
 
             <label className="block text-xs">

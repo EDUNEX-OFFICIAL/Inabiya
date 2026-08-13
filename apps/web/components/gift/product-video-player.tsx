@@ -20,20 +20,17 @@ type Props = {
 /**
  * Below-fold PDP video: poster facade until click — no iframe / video src on load.
  */
-export function ProductVideoPlayer({
-  url,
-  title,
-  posterUrl,
-  fallbackPosterUrl,
-}: Props) {
+export function ProductVideoPlayer({ url, title, posterUrl, fallbackPosterUrl }: Props) {
   const [playing, setPlaying] = useState(false);
   const source = parseProductVideoUrl(url);
   if (!source) return null;
 
   const poster =
-    (posterUrl?.trim() || null) ||
+    posterUrl?.trim() ||
+    null ||
     (source.kind === 'youtube' ? youtubePosterUrl(source.id) : null) ||
-    (fallbackPosterUrl?.trim() || null);
+    fallbackPosterUrl?.trim() ||
+    null;
 
   if (playing) {
     if (source.kind === 'youtube') {

@@ -317,12 +317,7 @@ export class CmsPagesService {
     variants?: Array<{ id: string; available: number }>;
   }) {
     const quick = (p.variants ?? []).find((v) => v.available > 0);
-    const brandNames =
-      p.brandNames?.length
-        ? p.brandNames
-        : p.brandName
-          ? [p.brandName]
-          : [];
+    const brandNames = p.brandNames?.length ? p.brandNames : p.brandName ? [p.brandName] : [];
     return {
       id: p.id,
       slug: p.slug,

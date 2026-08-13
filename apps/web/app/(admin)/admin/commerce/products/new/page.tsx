@@ -232,9 +232,7 @@ export default function NewProductPage() {
               maxLength={500}
               placeholder="SEO description"
             />
-            <span className="mt-1 block text-[11px] opacity-50">
-              {seoDescription.length}/500
-            </span>
+            <span className="mt-1 block text-[11px] opacity-50">{seoDescription.length}/500</span>
           </label>
           <label className="block text-sm">
             Canonical path

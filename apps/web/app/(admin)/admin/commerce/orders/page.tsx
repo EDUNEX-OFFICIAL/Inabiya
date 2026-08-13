@@ -3,7 +3,16 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, ListFilter, Package, Pin, RefreshCw, Search, X } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ListFilter,
+  Package,
+  Pin,
+  RefreshCw,
+  Search,
+  X,
+} from 'lucide-react';
 import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/cart-client';
 import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
@@ -75,7 +84,6 @@ const EXCEPTION_LABEL: Record<string, string> = {
   open_return: 'Return',
   sla_aging: 'SLA',
 };
-
 
 function statusLabel(status: string): string {
   if (status === 'PENDING_PAYMENT') return 'Pending pay';
@@ -287,7 +295,10 @@ function OrdersQueueInner() {
   }, [filterKey]);
 
   const selectedIds = useMemo(
-    () => Object.entries(selected).filter(([, v]) => v).map(([id]) => id),
+    () =>
+      Object.entries(selected)
+        .filter(([, v]) => v)
+        .map(([id]) => id),
     [selected],
   );
 
@@ -367,9 +378,7 @@ function OrdersQueueInner() {
       const fail = res.results.filter((r) => !r.ok).length;
       setBulkOk(fail === 0);
       setBulkMsg(
-        fail
-          ? `Bulk done with ${fail} failure(s)`
-          : `Moved ${res.results.length} → PROCESSING`,
+        fail ? `Bulk done with ${fail} failure(s)` : `Moved ${res.results.length} → PROCESSING`,
       );
     } catch (e) {
       setBulkOk(false);
@@ -535,9 +544,7 @@ function OrdersQueueInner() {
         >
           {STATUS_CHIPS.map((c) => {
             const active =
-              c.value === ''
-                ? !status && !payIssuesActive
-                : status === c.value && !payIssuesActive;
+              c.value === '' ? !status && !payIssuesActive : status === c.value && !payIssuesActive;
             return (
               <button
                 key={c.value || 'all'}
@@ -818,7 +825,10 @@ function OrdersQueueInner() {
       ) : null}
 
       {!loading && orders.length > 0 && view === 'list' ? (
-        <div className={refreshing ? 'opacity-70 transition-opacity' : undefined} aria-busy={refreshing}>
+        <div
+          className={refreshing ? 'opacity-70 transition-opacity' : undefined}
+          aria-busy={refreshing}
+        >
           <div className="md:hidden">
             <ul className="space-y-2">
               {orders.map((o) => (
@@ -887,9 +897,7 @@ function OrdersQueueInner() {
                           <input
                             type="checkbox"
                             aria-label="Select all"
-                            checked={
-                              orders.length > 0 && orders.every((o) => selected[o.id])
-                            }
+                            checked={orders.length > 0 && orders.every((o) => selected[o.id])}
                             onChange={(e) => {
                               const next: Record<string, boolean> = {};
                               for (const o of orders) next[o.id] = e.target.checked;

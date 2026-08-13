@@ -85,7 +85,11 @@ function pickAttrs(rawAttrs: string, tag: string): string {
     if (name === 'target' && value !== '_blank') continue;
     kept.push(`${name}="${value.replace(/"/g, '&quot;')}"`);
   }
-  if (tag === 'a' && kept.some((a) => a.startsWith('target=')) && !kept.some((a) => a.startsWith('rel='))) {
+  if (
+    tag === 'a' &&
+    kept.some((a) => a.startsWith('target=')) &&
+    !kept.some((a) => a.startsWith('rel='))
+  ) {
     kept.push('rel="noopener noreferrer"');
   }
   return kept.length ? ` ${kept.join(' ')}` : '';

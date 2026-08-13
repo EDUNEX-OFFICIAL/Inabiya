@@ -191,12 +191,7 @@ export default function CommerceAdminPage() {
         href: '/admin/commerce/orders?status=PAID',
         tone: dash.alerts.awaitingProcess > 0 ? 'warn' : 'ok',
         icon: Package,
-        priority:
-          dash.aging.awaitingProcess > 0
-            ? 0
-            : dash.alerts.awaitingProcess > 0
-              ? 1
-              : 91,
+        priority: dash.aging.awaitingProcess > 0 ? 0 : dash.alerts.awaitingProcess > 0 ? 1 : 91,
       },
       {
         id: 'pendingShip',
@@ -206,8 +201,7 @@ export default function CommerceAdminPage() {
         href: '/admin/commerce/orders?status=PROCESSING',
         tone: dash.alerts.pendingShip > 0 ? 'warn' : 'ok',
         icon: Truck,
-        priority:
-          dash.aging.pendingShip > 0 ? 0 : dash.alerts.pendingShip > 0 ? 2 : 92,
+        priority: dash.aging.pendingShip > 0 ? 0 : dash.alerts.pendingShip > 0 ? 2 : 92,
       },
       {
         id: 'openReturns',
@@ -231,17 +225,11 @@ export default function CommerceAdminPage() {
     return items
       .filter((a) => prefs[a.id] !== false)
       .sort(
-        (a, b) =>
-          a.priority - b.priority ||
-          (b.aging ?? 0) - (a.aging ?? 0) ||
-          b.count - a.count,
+        (a, b) => a.priority - b.priority || (b.aging ?? 0) - (a.aging ?? 0) || b.count - a.count,
       );
   }, [dash]);
 
-  const openAttention = useMemo(
-    () => attention.filter((a) => a.count > 0),
-    [attention],
-  );
+  const openAttention = useMemo(() => attention.filter((a) => a.count > 0), [attention]);
   const attentionTotal = useMemo(
     () => openAttention.reduce((sum, a) => sum + a.count, 0),
     [openAttention],
@@ -289,7 +277,7 @@ export default function CommerceAdminPage() {
                   <button
                     key={r.days}
                     type="button"
-className={opsChipClass(active)}
+                    className={opsChipClass(active)}
                     aria-pressed={active}
                     onClick={() => setRange(r.days)}
                   >
@@ -497,11 +485,7 @@ className={opsChipClass(active)}
                 primary
               />
               <QuickAction href="/admin/commerce/coupons" label="Create coupon" icon={Tag} />
-              <QuickAction
-                href="/admin/commerce/orders"
-                label="Orders queue"
-                icon={ShoppingBag}
-              />
+              <QuickAction href="/admin/commerce/orders" label="Orders queue" icon={ShoppingBag} />
               <QuickAction
                 href="/admin/commerce/merchandising"
                 label="Merchandising"
@@ -536,10 +520,7 @@ className={opsChipClass(active)}
                         {row.resource ? ` · ${row.resource}` : ''}
                       </p>
                     </div>
-                    <time
-                      className="ops-muted shrink-0 text-[11px]"
-                      dateTime={row.createdAt}
-                    >
+                    <time className="ops-muted shrink-0 text-[11px]" dateTime={row.createdAt}>
                       {relativeAge(row.createdAt)}
                     </time>
                   </li>
@@ -602,11 +583,7 @@ function DeltaBadge({ current, previous }: { current: number; previous: number }
       : tone === 'down'
         ? 'text-[var(--danger)]'
         : 'ops-muted';
-  return (
-    <p className={`mt-2 text-xs font-semibold tabular-nums ${toneClass}`}>
-      {label} vs prior
-    </p>
-  );
+  return <p className={`mt-2 text-xs font-semibold tabular-nums ${toneClass}`}>{label} vs prior</p>;
 }
 
 function Kpi({

@@ -142,7 +142,11 @@ function HamperCard({
     <Link
       href={href}
       onClick={onNavigate}
-      className={cn('gift-menu__tile', `gift-menu__tile--${tone}`, featured && 'gift-menu__tile--hamper')}
+      className={cn(
+        'gift-menu__tile',
+        `gift-menu__tile--${tone}`,
+        featured && 'gift-menu__tile--hamper',
+      )}
     >
       <span className="gift-menu__tile-media">
         <Image
@@ -246,7 +250,12 @@ export function GiftMenuOverlay({
       <div className="gift-menu__lid">
         <span className="gift-menu__lid-spacer" aria-hidden />
         <GiftBow className="gift-menu__bow" />
-        <button type="button" className="gift-menu__close" onClick={onClose} aria-label="Close menu">
+        <button
+          type="button"
+          className="gift-menu__close"
+          onClick={onClose}
+          aria-label="Close menu"
+        >
           <X className="h-5 w-5" strokeWidth={2} />
         </button>
       </div>
@@ -367,7 +376,11 @@ export function GiftMenuOverlay({
               </button>
             </>
           ) : (
-            <Link href="/login?next=/gift" className="clay-btn w-full justify-center" onClick={onClose}>
+            <Link
+              href="/login?next=/gift"
+              className="clay-btn w-full justify-center"
+              onClick={onClose}
+            >
               Sign in
             </Link>
           )}

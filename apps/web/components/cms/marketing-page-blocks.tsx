@@ -140,17 +140,10 @@ function GiftSectionHeader({
         {title ? (
           <h2 className={`gift-h2 ${overline ? 'mt-gs-2' : ''} leading-tight`}>{title}</h2>
         ) : null}
-        {subtitle ? (
-          <p className="gift-muted mt-gs-2 max-w-prose">
-            {subtitle}
-          </p>
-        ) : null}
+        {subtitle ? <p className="gift-muted mt-gs-2 max-w-prose">{subtitle}</p> : null}
       </div>
       {actionHref && actionLabel ? (
-        <Link
-          href={actionHref}
-          className="clay-btn-secondary shrink-0 self-end text-body"
-        >
+        <Link href={actionHref} className="clay-btn-secondary shrink-0 self-end text-body">
           {actionLabel}
         </Link>
       ) : aside && aside.trim() ? (
@@ -192,7 +185,13 @@ function CategoryCardDoodle({ n }: { n: number }) {
   }
   return (
     <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden>
-      <path d="M16 4v6M16 22v6M4 16h6M22 16h6M7.8 7.8l4.2 4.2M20 20l4.2 4.2M7.8 24.2 12 20M20 12l4.2-4.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+      <path
+        d="M16 4v6M16 22v6M4 16h6M22 16h6M7.8 7.8l4.2 4.2M20 20l4.2 4.2M7.8 24.2 12 20M20 12l4.2-4.2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+      />
     </svg>
   );
 }
@@ -370,9 +369,7 @@ function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: bool
   const inner = props.title ? (
     <>
       <h2 className="gift-h2">{String(props.title)}</h2>
-      {props.body ? (
-        <p className="gift-muted mt-gs-3 max-w-prose">{String(props.body)}</p>
-      ) : null}
+      {props.body ? <p className="gift-muted mt-gs-3 max-w-prose">{String(props.body)}</p> : null}
       <Link
         href={String(props.href ?? '/gift')}
         className={`mt-gs-6 ${secondary ? 'clay-btn-secondary' : 'clay-btn'}`}
@@ -422,9 +419,7 @@ function ImageBlock({ props }: { props: Record<string, unknown> }) {
         />
       </div>
       {props.caption ? (
-        <figcaption className="gift-muted mt-gs-3 text-center">
-          {String(props.caption)}
-        </figcaption>
+        <figcaption className="gift-muted mt-gs-3 text-center">{String(props.caption)}</figcaption>
       ) : null}
     </figure>
   );
@@ -531,7 +526,9 @@ function ProductGridBlock({
                   {formatInr(p.fromPricePaise)}
                 </p>
                 {p.isReadyMadeHamper && (p.hamperItemCount ?? 0) > 0 ? (
-                  <p className="mt-gs-1 text-caption opacity-70">{p.hamperItemCount} items in this set</p>
+                  <p className="mt-gs-1 text-caption opacity-70">
+                    {p.hamperItemCount} items in this set
+                  </p>
                 ) : null}
               </div>
             </li>
@@ -556,7 +553,7 @@ const BRAND_ACCENTS = ['pink', 'mint', 'lavender', 'sky'] as const;
 
 const BRAND_INITIALS: Record<string, string> = {
   Chicco: 'Ch',
-  "Johnson’s Baby": 'JB',
+  'Johnson’s Baby': 'JB',
   "Johnson's Baby": 'JB',
   Mothercare: 'Mc',
   Pigeon: 'Pi',
@@ -648,10 +645,7 @@ function BrandCarouselRow({
   if (!brands.length) return null;
 
   const renderGroup = (duplicate: boolean) => (
-    <ul
-      className="gift-brand-panel__group list-none"
-      aria-hidden={duplicate ? true : undefined}
-    >
+    <ul className="gift-brand-panel__group list-none" aria-hidden={duplicate ? true : undefined}>
       {brands.map((brand, i) => {
         const accent = BRAND_ACCENTS[(accentsOffset + i) % BRAND_ACCENTS.length];
         const initials = brandInitials(brand.name);
@@ -663,11 +657,7 @@ function BrandCarouselRow({
             <span className="gift-brand-panel__icon" aria-hidden>
               {brand.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- brand marks often SVG
-                <img
-                  src={brand.logoUrl}
-                  alt=""
-                  className="gift-brand-panel__mark-img"
-                />
+                <img src={brand.logoUrl} alt="" className="gift-brand-panel__mark-img" />
               ) : (
                 initials
               )}
@@ -691,13 +681,7 @@ function BrandCarouselRow({
   );
 }
 
-function BrandPillPanel({
-  brands,
-  title,
-}: {
-  brands: unknown;
-  title: string;
-}) {
+function BrandPillPanel({ brands, title }: { brands: unknown; title: string }) {
   const items = normalizeBrands(brands);
   if (!items.length) return null;
 
@@ -814,7 +798,9 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
                       className="object-cover object-center transition duration-500 group-hover:scale-[1.03]"
                     />
                   ) : (
-                    <div className={`h-full w-full ${sky ? 'gift-panel-sky' : 'gift-media-fallback'}`} />
+                    <div
+                      className={`h-full w-full ${sky ? 'gift-panel-sky' : 'gift-media-fallback'}`}
+                    />
                   )}
                   <div className="gift-recipient-card__overlay" aria-hidden />
                   <div className="gift-recipient-card__copy">
@@ -835,9 +821,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
               className={`${sky ? 'gift-panel-sky ' : ''}clay-panel block overflow-hidden p-gs-6 transition hover:-translate-y-px`}
             >
               <p className="gift-muted">{eyebrow}</p>
-              <p className={`gift-display mt-gs-1 ${sky ? 'text-info' : ''}`}>
-                {label}
-              </p>
+              <p className={`gift-display mt-gs-1 ${sky ? 'text-info' : ''}`}>{label}</p>
               {blurb ? <p className="gift-muted mt-gs-3">{blurb}</p> : null}
               <p className="mt-gs-4 text-body font-medium text-foreground">{cta}</p>
             </Link>
@@ -983,9 +967,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
                   {a.title}
                 </h3>
                 {a.description ? (
-                  <p className="gift-muted mt-gs-2 line-clamp-2">
-                    {a.description}
-                  </p>
+                  <p className="gift-muted mt-gs-2 line-clamp-2">{a.description}</p>
                 ) : null}
                 <ArticleTeaserMeta article={a} />
                 <p className="mt-gs-4 text-body font-medium text-primary">Read article →</p>
@@ -1068,7 +1050,11 @@ function CountdownBlock({ props, home }: { props: Record<string, unknown>; home?
     const hours = Math.floor((ms % 86_400_000) / 3_600_000);
     const mins = Math.floor((ms % 3_600_000) / 60_000);
     remaining =
-      days > 0 ? `${days}d ${hours}h ${mins}m left` : hours > 0 ? `${hours}h ${mins}m left` : `${mins}m left`;
+      days > 0
+        ? `${days}d ${hours}h ${mins}m left`
+        : hours > 0
+          ? `${hours}h ${mins}m left`
+          : `${mins}m left`;
   }
 
   const inner = (
@@ -1187,12 +1173,14 @@ async function DiscoveryChipsBlock({
   home?: boolean;
 }) {
   const manualItems = Array.isArray(props.items)
-    ? (props.items as Array<{
-        label?: string;
-        href?: string;
-        imageUrl?: string;
-        imageAlt?: string;
-      }>)
+    ? (
+        props.items as Array<{
+          label?: string;
+          href?: string;
+          imageUrl?: string;
+          imageAlt?: string;
+        }>
+      )
         .map((i) => ({
           label: String(i.label ?? '').trim(),
           href: String(i.href ?? '').trim(),
@@ -1228,7 +1216,9 @@ async function DiscoveryChipsBlock({
     <>
       <GiftSectionHeader
         overline={props.overline ? String(props.overline) : home ? 'Browse the shop' : null}
-        title={props.title ? String(props.title) : asCards ? 'Shop by collection' : 'Shop by moment'}
+        title={
+          props.title ? String(props.title) : asCards ? 'Shop by collection' : 'Shop by moment'
+        }
         subtitle={
           props.subtitle
             ? String(props.subtitle)
@@ -1292,7 +1282,10 @@ async function DiscoveryChipsBlock({
         <ul className="flex flex-wrap gap-gs-2">
           {items.map((item) => (
             <li key={`${item.label}-${item.href}`}>
-              <Link href={item.href} className="clay-chip inline-flex text-body hover:bg-primary/10">
+              <Link
+                href={item.href}
+                className="clay-chip inline-flex text-body hover:bg-primary/10"
+              >
                 {item.label}
               </Link>
             </li>
@@ -1438,10 +1431,7 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
         {cards.map((card) => {
           const Icon = iconMap[card.icon];
           return (
-            <li
-              key={`${card.tag}-${card.title}`}
-              className={toneClass[card.tone]}
-            >
+            <li key={`${card.tag}-${card.title}`} className={toneClass[card.tone]}>
               <div className="gift-offer-card__top">
                 <span className="gift-offer-card__icon" aria-hidden>
                   <Icon className="h-4 w-4" strokeWidth={1.75} />
@@ -1470,11 +1460,7 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
   );
 
   if (home) {
-    return (
-      <GiftBand tone="soft">
-        {body}
-      </GiftBand>
-    );
+    return <GiftBand tone="soft">{body}</GiftBand>;
   }
   return <section className="py-gs-4">{body}</section>;
 }
@@ -1487,9 +1473,7 @@ function TestimonialsBlock({ props, home }: { props: Record<string, unknown>; ho
           author: String(row.author ?? '').trim(),
           role: row.role ? String(row.role) : '',
           rating:
-            typeof row.rating === 'number' && row.rating >= 1 && row.rating <= 5
-              ? row.rating
-              : 5,
+            typeof row.rating === 'number' && row.rating >= 1 && row.rating <= 5 ? row.rating : 5,
         }))
         .filter((row) => row.quote && row.author)
         .slice(0, 6)
@@ -1502,9 +1486,7 @@ function TestimonialsBlock({ props, home }: { props: Record<string, unknown>; ho
     <>
       <GiftSectionHeader
         overline={props.overline ? String(props.overline) : 'Parent love'}
-        title={
-          props.title ? String(props.title) : 'Loved by new parents across India'
-        }
+        title={props.title ? String(props.title) : 'Loved by new parents across India'}
         subtitle={
           props.subtitle
             ? String(props.subtitle)

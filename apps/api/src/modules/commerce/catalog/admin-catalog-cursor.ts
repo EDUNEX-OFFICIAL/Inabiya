@@ -7,16 +7,10 @@
  * Prefer keyset over OFFSET — deep pages stay O(log n) with compound indexes.
  */
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type AdminListSort =
-  | 'updated'
-  | 'title_asc'
-  | 'title_desc'
-  | 'created'
-  | 'price_asc'
-  | 'price_desc';
+  'updated' | 'title_asc' | 'title_desc' | 'created' | 'price_asc' | 'price_desc';
 
 export type AdminProductCursor = {
   updatedAt: Date;
@@ -125,10 +119,7 @@ export function decodeCreatedCursor(raw: string): CreatedCursor {
   return { createdAt, id: obj.i };
 }
 
-export function decodePriceCursor(
-  sort: 'price_asc' | 'price_desc',
-  raw: string,
-): PriceCursor {
+export function decodePriceCursor(sort: 'price_asc' | 'price_desc', raw: string): PriceCursor {
   const obj = parseB64json(raw);
   if (obj.k !== sort || typeof obj.i !== 'string' || typeof obj.p !== 'number') {
     throw new Error('INVALID_CURSOR');

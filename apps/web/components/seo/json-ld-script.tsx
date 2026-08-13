@@ -2,9 +2,6 @@
 export function JsonLdScript({ data }: { data: Record<string, unknown> | null | undefined }) {
   if (!data) return null;
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
   );
 }

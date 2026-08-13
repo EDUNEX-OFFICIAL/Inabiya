@@ -14,8 +14,5 @@ assert.deepEqual(
   }),
   ['Chicco', 'Soft Nest'],
 );
-assert.deepEqual(
-  collectBrandNames({ brandName: 'A, B', hamperItems: [] }),
-  ['A', 'B'],
-);
+assert.deepEqual(collectBrandNames({ brandName: 'A, B', hamperItems: [] }), ['A', 'B']);
 console.log('collectBrandNames ok');

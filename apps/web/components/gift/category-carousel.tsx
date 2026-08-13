@@ -24,8 +24,7 @@ gsap.registerPlugin(ScrollTrigger);
 export type CarouselCategory = 'Create' | 'Develop' | 'Explore';
 
 export type CarouselHoverMedia =
-  | { type: 'image'; src: string }
-  | { type: 'video'; src: string; poster?: string };
+  { type: 'image'; src: string } | { type: 'video'; src: string; poster?: string };
 
 export type CarouselCardData = {
   id: string;
@@ -251,11 +250,7 @@ function playDropAndSpread(nodes: HTMLElement[], stage: HTMLElement | null, quic
   });
 
   if (center) {
-    tl.to(
-      center.el,
-      { y: 0, duration: dropDur, ease: 'power3.out' },
-      '>',
-    );
+    tl.to(center.el, { y: 0, duration: dropDur, ease: 'power3.out' }, '>');
   }
 
   if (sides.length) {
@@ -596,8 +591,7 @@ export function CategoryCarousel() {
   const enteredRef = useRef(false);
 
   const cards = useMemo(
-    () =>
-      filter === 'All' ? CAROUSEL_CARDS : CAROUSEL_CARDS.filter((c) => c.category === filter),
+    () => (filter === 'All' ? CAROUSEL_CARDS : CAROUSEL_CARDS.filter((c) => c.category === filter)),
     [filter],
   );
   const n = cards.length;
@@ -624,7 +618,9 @@ export function CategoryCarousel() {
 
       const intro = root.querySelectorAll<HTMLElement>('[data-carousel-intro]');
       const controls = root.querySelectorAll<HTMLElement>('[data-carousel-controls]');
-      const cardNodes = gsap.utils.toArray<HTMLElement>(root.querySelectorAll('[data-carousel-card]'));
+      const cardNodes = gsap.utils.toArray<HTMLElement>(
+        root.querySelectorAll('[data-carousel-card]'),
+      );
 
       if (reduceMotion) {
         stageRef.current?.setAttribute('data-cards-live', '');

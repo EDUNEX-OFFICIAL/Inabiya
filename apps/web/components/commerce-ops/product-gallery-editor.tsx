@@ -19,10 +19,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link2, Trash2, Upload, Images, ClipboardPaste, Plus } from 'lucide-react';
-import {
-  MediaLibraryModal,
-  uploadCmsMediaFile,
-} from '@/components/cms/cms-media-field';
+import { MediaLibraryModal, uploadCmsMediaFile } from '@/components/cms/cms-media-field';
 import { OpsIconButton, OpsIconFileLabel } from '@/components/commerce-ops/ops-icon-action';
 
 const IMAGE_ACCEPT =
@@ -69,7 +66,11 @@ function SortableGalleryRow({
   const roleLabel = index === 0 ? 'Main photo' : `Extra photo ${index}`;
 
   return (
-    <li ref={setNodeRef} style={style} className="flex gap-2 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_96%,white)] p-2">
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="flex gap-2 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface)_96%,white)] p-2"
+    >
       <button
         type="button"
         className="mt-6 cursor-grab touch-none self-start px-0.5 text-xs opacity-50 active:cursor-grabbing"
@@ -141,15 +142,9 @@ export function ProductGalleryEditor({ items, onChange, titleHint }: Props) {
   const [pasteUrl, setPasteUrl] = useState('');
   const [showUrls, setShowUrls] = useState(false);
 
-  const imageItems = useMemo(
-    () => items.filter((item) => item.kind !== 'VIDEO'),
-    [items],
-  );
+  const imageItems = useMemo(() => items.filter((item) => item.kind !== 'VIDEO'), [items]);
 
-  const ids = useMemo(
-    () => imageItems.map((item, i) => `${item.url}::${i}`),
-    [imageItems],
-  );
+  const ids = useMemo(() => imageItems.map((item, i) => `${item.url}::${i}`), [imageItems]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),

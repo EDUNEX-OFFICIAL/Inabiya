@@ -57,9 +57,7 @@ export function eligibleSubtotalPaise(input: {
   const lines = input.lines;
   if (input.scope === 'PRODUCT') {
     const set = new Set(input.productIds);
-    return lines
-      .filter((l) => set.has(l.productId))
-      .reduce((s, l) => s + l.lineTotalPaise, 0);
+    return lines.filter((l) => set.has(l.productId)).reduce((s, l) => s + l.lineTotalPaise, 0);
   }
   const cols = new Set(input.collectionIds);
   return lines

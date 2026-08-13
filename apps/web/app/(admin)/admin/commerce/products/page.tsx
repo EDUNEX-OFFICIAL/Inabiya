@@ -33,13 +33,7 @@ type HamperFilter = '' | '0' | '1';
 type LabelFilter = '' | 'BESTSELLER' | 'EDITORS_PICK' | 'GIFT_SET';
 type RecipientFilter = '' | 'girl' | 'boy' | 'mom' | 'unisex';
 type OccasionFilter = '' | 'welcome-baby' | 'baby-shower' | 'naming' | 'birthday';
-type SortFilter =
-  | 'updated'
-  | 'title_asc'
-  | 'title_desc'
-  | 'created'
-  | 'price_asc'
-  | 'price_desc';
+type SortFilter = 'updated' | 'title_asc' | 'title_desc' | 'created' | 'price_asc' | 'price_desc';
 
 type ProductListFilters = {
   q: string;
@@ -134,7 +128,6 @@ function nextPriceSort(current: SortFilter): SortFilter {
   if (current === 'price_desc') return 'updated';
   return 'price_asc';
 }
-
 
 function filterSelectClass(): string {
   return 'clay-input min-h-9 w-full min-w-0 text-sm';
@@ -341,7 +334,10 @@ function ProductsDeskInner() {
   }, [filterKey]);
 
   const selectedIds = useMemo(
-    () => Object.entries(selected).filter(([, v]) => v).map(([id]) => id),
+    () =>
+      Object.entries(selected)
+        .filter(([, v]) => v)
+        .map(([id]) => id),
     [selected],
   );
   const allSelected = products.length > 0 && products.every((p) => selected[p.id]);
@@ -517,7 +513,10 @@ function ProductsDeskInner() {
               <Link href="/admin/commerce/collections" className="clay-btn-ghost min-h-10 text-sm">
                 Collections
               </Link>
-              <Link href="/admin/commerce/merchandising" className="clay-btn-ghost min-h-10 text-sm">
+              <Link
+                href="/admin/commerce/merchandising"
+                className="clay-btn-ghost min-h-10 text-sm"
+              >
                 Merch
               </Link>
             </div>
@@ -772,9 +771,7 @@ function ProductsDeskInner() {
           </div>
 
           <span className="hidden text-xs text-[var(--muted-foreground)] sm:inline">
-            {loading
-              ? 'Loading…'
-              : `${products.length} on this page${nextCursor ? ' · more' : ''}`}
+            {loading ? 'Loading…' : `${products.length} on this page${nextCursor ? ' · more' : ''}`}
           </span>
           {filterActive && !filtersOpen ? (
             <button
@@ -823,7 +820,10 @@ function ProductsDeskInner() {
         </p>
       ) : null}
       {notice ? (
-        <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
+        <p
+          className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+          role="status"
+        >
           {notice}
         </p>
       ) : null}
@@ -868,7 +868,10 @@ function ProductsDeskInner() {
                     setSelected(next);
                   }}
                 />
-                <label htmlFor="catalog-select-all-mobile" className="text-xs text-[var(--muted-foreground)]">
+                <label
+                  htmlFor="catalog-select-all-mobile"
+                  className="text-xs text-[var(--muted-foreground)]"
+                >
                   Select all
                 </label>
               </div>

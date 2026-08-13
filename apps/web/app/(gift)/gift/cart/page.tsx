@@ -229,9 +229,7 @@ export default function CartPage() {
               ) : null}
               <div className="flex justify-between gap-gs-3 border-t border-border-subtle pt-gs-3 text-lg font-semibold text-foreground">
                 <dt>Total</dt>
-                <dd className="text-primary">
-                  {formatInr(cart.totalPaise ?? cart.subtotalPaise)}
-                </dd>
+                <dd className="text-primary">{formatInr(cart.totalPaise ?? cart.subtotalPaise)}</dd>
               </div>
             </dl>
             {error ? <p className="mt-gs-2 text-body text-danger">{error}</p> : null}

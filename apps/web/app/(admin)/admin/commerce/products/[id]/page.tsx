@@ -160,9 +160,9 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [ageBands, setAgeBands] = useState<string[]>([]);
   const [occasionTags, setOccasionTags] = useState<string[]>([]);
   const [collectionSlugs, setCollectionSlugs] = useState<string[]>([]);
-  const [collectionOptions, setCollectionOptions] = useState<Array<{ slug: string; title: string }>>(
-    [],
-  );
+  const [collectionOptions, setCollectionOptions] = useState<
+    Array<{ slug: string; title: string }>
+  >([]);
   const [storefrontLabels, setStorefrontLabels] = useState<ManualStorefrontLabel[]>([]);
   const [isReadyMadeHamper, setIsReadyMadeHamper] = useState(false);
   const [brandName, setBrandName] = useState('');
@@ -208,7 +208,9 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
       description: description || product.description,
     });
     const variant = product.variants[0];
-    const available = product.variants.some((v) => (stock[v.id] ? Number(stock[v.id]) : v.available) > 0);
+    const available = product.variants.some(
+      (v) => (stock[v.id] ? Number(stock[v.id]) : v.available) > 0,
+    );
     const images = gallery.filter((g) => g.url).map((g) => g.url);
     return [
       productJsonLd({
@@ -256,9 +258,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     setCanonicalPath(p.canonicalPath ?? '');
     setOgImageUrl(p.ogImageUrl ?? '');
     setRobotsIndex(p.robotsIndex !== false);
-    setSeoSchemaExtras(
-      (p.seoSchemaExtras ?? []).filter((e) => e.mode === 'replace').slice(0, 1),
-    );
+    setSeoSchemaExtras((p.seoSchemaExtras ?? []).filter((e) => e.mode === 'replace').slice(0, 1));
     const media = p.media ?? [];
     const video = media.find((m) => m.kind === 'VIDEO');
     setGallery(
@@ -382,17 +382,15 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
         : []),
     ];
 
-    let hamperItems:
-      | Array<{
-          title: string;
-          blurb?: string;
-          brandName?: string;
-          imageUrl?: string;
-          qty: number;
-          unitPricePaise: number;
-          sortOrder: number;
-        }>
-      | null = null;
+    let hamperItems: Array<{
+      title: string;
+      blurb?: string;
+      brandName?: string;
+      imageUrl?: string;
+      qty: number;
+      unitPricePaise: number;
+      sortOrder: number;
+    }> | null = null;
 
     if (isReadyMadeHamper) {
       hamperItems = hamperRows
@@ -531,9 +529,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   }
 
   const primary =
-    gallery[0]?.url ??
-    product.media.find((m) => m.kind !== 'VIDEO')?.url ??
-    product.media[0]?.url;
+    gallery[0]?.url ?? product.media.find((m) => m.kind !== 'VIDEO')?.url ?? product.media[0]?.url;
   const published = product.status === 'PUBLISHED';
 
   return (
@@ -562,9 +558,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             <OpsPageHeader
               title={title || product.title}
               description={
-                published
-                  ? `Live · /gift/products/${product.slug}`
-                  : `Draft · ${product.slug}`
+                published ? `Live · /gift/products/${product.slug}` : `Draft · ${product.slug}`
               }
               actions={
                 <>
@@ -686,17 +680,10 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           </div>
         </Section>
 
-        <Section
-          id="media"
-          title="Media"
-        >
+        <Section id="media" title="Media">
           <div className="space-y-5">
             <ProductGalleryEditor items={gallery} onChange={setGallery} titleHint={title} />
-            <ProductVideoField
-              value={productVideo}
-              onChange={setProductVideo}
-              titleHint={title}
-            />
+            <ProductVideoField value={productVideo} onChange={setProductVideo} titleHint={title} />
           </div>
         </Section>
 
@@ -738,9 +725,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                     <p className="text-[11px] font-medium uppercase tracking-wide opacity-50">
                       Sale price
                     </p>
-                    <p className="text-base font-medium tabular-nums">
-                      {formatInr(v.pricePaise)}
-                    </p>
+                    <p className="text-base font-medium tabular-nums">{formatInr(v.pricePaise)}</p>
                     <p className="text-[11px] opacity-55">
                       Available {v.available}
                       {v.onHand != null ? ` · on hand ${v.onHand}` : ''}
@@ -780,9 +765,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                         className="clay-input mt-1"
                         value={mrpRupees[v.id] ?? ''}
                         placeholder="Blank = no MRP"
-                        onChange={(e) =>
-                          setMrpRupees((s) => ({ ...s, [v.id]: e.target.value }))
-                        }
+                        onChange={(e) => setMrpRupees((s) => ({ ...s, [v.id]: e.target.value }))}
                         inputMode="decimal"
                       />
                     </label>
@@ -800,10 +783,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           </ul>
         </Section>
 
-        <Section
-          id="discovery"
-          title="Discovery"
-        >
+        <Section id="discovery" title="Discovery">
           <div>
             <p className="text-xs opacity-70">Storefront labels</p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -935,16 +915,12 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             value={seoSchemaExtras}
             onChange={setSeoSchemaExtras}
             autoPreviewNodes={schemaAutoNodes}
-            publicUrl={
-              product ? `${getSiteOrigin()}/gift/products/${product.slug}` : null
-            }
+            publicUrl={product ? `${getSiteOrigin()}/gift/products/${product.slug}` : null}
           />
         </Section>
 
         <Section id="faqs" title="FAQs">
-          <p className="text-[11px] opacity-55">
-            Questions shown on the product page
-          </p>
+          <p className="text-[11px] opacity-55">Questions shown on the product page</p>
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="inline-flex items-center gap-2">
               <input
@@ -997,7 +973,10 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             <>
               <ul className="space-y-3">
                 {faqs.map((row, i) => (
-                  <li key={i} className="space-y-2 rounded-[var(--radius-control)] border border-[var(--border-subtle)] p-3">
+                  <li
+                    key={i}
+                    className="space-y-2 rounded-[var(--radius-control)] border border-[var(--border-subtle)] p-3"
+                  >
                     <label className="block text-xs">
                       Question
                       <input
@@ -1060,10 +1039,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
         </Section>
 
         {isReadyMadeHamper ? (
-          <Section
-            id="hamper"
-            title="Hamper contents"
-          >
+          <Section id="hamper" title="Hamper contents">
             <ul className="space-y-3">
               {hamperRows.map((row, i) => (
                 <li key={i} className="clay-panel grid gap-2 p-3 sm:grid-cols-2">
@@ -1086,9 +1062,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                       value={row.brandName}
                       onChange={(e) =>
                         setHamperRows((rows) =>
-                          rows.map((r, j) =>
-                            j === i ? { ...r, brandName: e.target.value } : r,
-                          ),
+                          rows.map((r, j) => (j === i ? { ...r, brandName: e.target.value } : r)),
                         )
                       }
                     />
@@ -1126,9 +1100,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                       value={row.imageUrl}
                       onChange={(e) =>
                         setHamperRows((rows) =>
-                          rows.map((r, j) =>
-                            j === i ? { ...r, imageUrl: e.target.value } : r,
-                          ),
+                          rows.map((r, j) => (j === i ? { ...r, imageUrl: e.target.value } : r)),
                         )
                       }
                     />
@@ -1156,31 +1128,35 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                 </li>
               ))}
             </ul>
-              <OpsIconButton
-                label="Add item"
-                icon={Plus}
-                variant="secondary"
-                onClick={() =>
-                  setHamperRows((rows) => [
-                    ...rows,
-                    {
-                      title: '',
-                      blurb: '',
-                      brandName: '',
-                      imageUrl: '',
-                      qty: '1',
-                      unitPriceInr: '0',
-                    },
-                  ])
-                }
-              />
+            <OpsIconButton
+              label="Add item"
+              icon={Plus}
+              variant="secondary"
+              onClick={() =>
+                setHamperRows((rows) => [
+                  ...rows,
+                  {
+                    title: '',
+                    blurb: '',
+                    brandName: '',
+                    imageUrl: '',
+                    qty: '1',
+                    unitPriceInr: '0',
+                  },
+                ])
+              }
+            />
           </Section>
         ) : null}
 
         {/* Sticky save */}
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 md:left-56 lg:left-60">
           <div className="clay-panel pointer-events-auto flex w-full max-w-4xl flex-wrap items-center gap-2 px-4 py-3">
-            <button type="submit" disabled={saving} className="clay-btn text-sm disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={saving}
+              className="clay-btn text-sm disabled:opacity-60"
+            >
               {saving ? 'Saving…' : 'Save changes'}
             </button>
             {msg ? (

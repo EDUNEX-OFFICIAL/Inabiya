@@ -9,7 +9,9 @@ export function stripContext(node: JsonLdNode): JsonLdNode {
   return rest;
 }
 
-export function compilePresetToJsonLd(entry: Extract<SeoSchemaEntry, { mode: 'preset' }>): JsonLdNode | null {
+export function compilePresetToJsonLd(
+  entry: Extract<SeoSchemaEntry, { mode: 'preset' }>,
+): JsonLdNode | null {
   const { preset, fields } = entry;
   switch (preset) {
     case 'HowTo': {
@@ -200,7 +202,9 @@ export type ProductJsonLdInput = {
 
 export function productJsonLd(input: ProductJsonLdInput): JsonLdNode {
   const path = input.canonicalPath?.trim() || `/gift/products/${input.slug}`;
-  const url = path.startsWith('http') ? path : `${input.siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+  const url = path.startsWith('http')
+    ? path
+    : `${input.siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -255,9 +259,7 @@ export function articleJsonLd(input: ArticleJsonLdInput): JsonLdNode {
   };
 }
 
-export function breadcrumbJsonLd(
-  items: Array<{ name: string; url: string }>,
-): JsonLdNode | null {
+export function breadcrumbJsonLd(items: Array<{ name: string; url: string }>): JsonLdNode | null {
   if (!items.length) return null;
   return {
     '@context': 'https://schema.org',
@@ -271,10 +273,7 @@ export function breadcrumbJsonLd(
   };
 }
 
-export {
-  collectionPageJsonLd,
-  type CollectionPageJsonLdInput,
-} from './collection-page';
+export { collectionPageJsonLd, type CollectionPageJsonLdInput } from './collection-page';
 
 export function emptyPresetFields(preset: SeoSchemaPreset): Record<string, unknown> {
   switch (preset) {

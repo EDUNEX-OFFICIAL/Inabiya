@@ -8,7 +8,10 @@ export function collectBrandNames(input: {
 
   const push = (raw?: string | null) => {
     if (!raw) return;
-    for (const part of raw.split(',').map((s) => s.trim()).filter(Boolean)) {
+    for (const part of raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)) {
       const key = part.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);

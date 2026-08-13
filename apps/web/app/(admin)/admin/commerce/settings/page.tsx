@@ -92,7 +92,6 @@ const TRUST_ICON_OPTIONS: Array<{ value: TrustCueRow['icon']; label: string }> =
   { value: 'gift', label: 'Gift' },
 ];
 
-
 function SettingsInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -230,11 +229,7 @@ function SettingsInner() {
         }
       />
 
-      <div
-        className="mb-4 flex flex-wrap gap-1.5"
-        role="tablist"
-        aria-label="Settings sections"
-      >
+      <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Settings sections">
         <button
           type="button"
           role="tab"
@@ -256,7 +251,10 @@ function SettingsInner() {
       </div>
 
       {msg ? (
-        <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status">
+        <p
+          className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+          role="status"
+        >
           {msg}
         </p>
       ) : null}
@@ -322,7 +320,11 @@ function SettingsInner() {
                   required
                 />
               </label>
-              <button type="submit" className="clay-btn text-sm disabled:opacity-50" disabled={busy}>
+              <button
+                type="submit"
+                className="clay-btn text-sm disabled:opacity-50"
+                disabled={busy}
+              >
                 Save policy
               </button>
             </form>
@@ -581,7 +583,10 @@ function SettingsInner() {
           >
             <div className="min-w-0 flex-1 sm:max-w-xs">
               <div className="flex min-h-9 items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--surface)_92%,white)] px-3 shadow-sm">
-                <Search className="h-3.5 w-3.5 shrink-0 text-[var(--primary)] opacity-70" aria-hidden />
+                <Search
+                  className="h-3.5 w-3.5 shrink-0 text-[var(--primary)] opacity-70"
+                  aria-hidden
+                />
                 <input
                   className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:opacity-50"
                   value={auditQ}
@@ -640,7 +645,10 @@ function SettingsInner() {
                           {row.actor?.email ?? '—'}
                           {row.resource ? ` · ${row.resource}` : ''}
                         </p>
-                        <time className="mt-1 block text-[11px] opacity-50" dateTime={row.createdAt}>
+                        <time
+                          className="mt-1 block text-[11px] opacity-50"
+                          dateTime={row.createdAt}
+                        >
                           {new Date(row.createdAt).toLocaleString('en-IN')}
                         </time>
                       </li>
@@ -677,9 +685,7 @@ function SettingsInner() {
                               <td className="whitespace-nowrap px-3 py-2 text-xs">
                                 {new Date(row.createdAt).toLocaleString('en-IN')}
                               </td>
-                              <td className="px-2 py-2 pr-3 text-xs">
-                                {row.actor?.email ?? '—'}
-                              </td>
+                              <td className="px-2 py-2 pr-3 text-xs">{row.actor?.email ?? '—'}</td>
                               <td className="px-2 py-2 pr-3 font-mono text-xs">{row.action}</td>
                               <td className="px-2 py-2 pr-3 text-xs">
                                 {row.resource ?? '—'}

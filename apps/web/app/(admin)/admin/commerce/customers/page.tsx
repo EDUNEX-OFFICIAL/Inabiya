@@ -43,7 +43,6 @@ function parseStatus(raw: string | null): StatusFilter {
   return '';
 }
 
-
 function accountTone(isActive: boolean): string {
   return isActive
     ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80'
@@ -324,7 +323,10 @@ function CustomersDeskInner() {
       ) : null}
 
       {!loading && rows.length > 0 ? (
-        <div className={refreshing ? 'opacity-70 transition-opacity' : undefined} aria-busy={refreshing}>
+        <div
+          className={refreshing ? 'opacity-70 transition-opacity' : undefined}
+          aria-busy={refreshing}
+        >
           <div className="md:hidden">
             <ul className="space-y-2">
               {rows.map((c) => (
@@ -415,7 +417,9 @@ function CustomersDeskInner() {
                             {c.isActive ? 'Active' : 'Suspended'}
                           </span>
                         </td>
-                        <td className="px-2 py-2.5 pr-4 align-middle tabular-nums">{c.orderCount}</td>
+                        <td className="px-2 py-2.5 pr-4 align-middle tabular-nums">
+                          {c.orderCount}
+                        </td>
                         <td className="whitespace-nowrap px-2 py-2.5 pr-4 align-middle tabular-nums">
                           {formatInr(c.ltvPaise)}
                         </td>

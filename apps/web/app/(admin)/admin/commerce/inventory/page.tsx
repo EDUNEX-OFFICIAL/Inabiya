@@ -3,7 +3,17 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { History, Link2, ListFilter, Package, Pencil, RefreshCw, Search, Upload, X } from 'lucide-react';
+import {
+  History,
+  Link2,
+  ListFilter,
+  Package,
+  Pencil,
+  RefreshCw,
+  Search,
+  Upload,
+  X,
+} from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
@@ -175,9 +185,7 @@ function InventoryDeskInner() {
       // Low uses API filter; Out loads full (≤200) then client-filters
       if (stock === 'low') params.set('lowStock', '1');
       const qs = params.toString();
-      const data = await apiAuth<InventoryRow[]>(
-        `/admin/commerce/inventory${qs ? `?${qs}` : ''}`,
-      );
+      const data = await apiAuth<InventoryRow[]>(`/admin/commerce/inventory${qs ? `?${qs}` : ''}`);
       if (seq !== loadSeq.current) return;
       setRows(data);
       hasLoadedOnce.current = true;
@@ -694,7 +702,10 @@ function InventoryDeskInner() {
         </p>
       ) : null}
       {notice ? (
-        <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
+        <p
+          className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+          role="status"
+        >
           {notice}
         </p>
       ) : null}
@@ -729,7 +740,10 @@ function InventoryDeskInner() {
       ) : null}
 
       {!loading && displayed.length > 0 ? (
-        <div className={refreshing ? 'opacity-70 transition-opacity' : undefined} aria-busy={refreshing}>
+        <div
+          className={refreshing ? 'opacity-70 transition-opacity' : undefined}
+          aria-busy={refreshing}
+        >
           <div className="md:hidden">
             <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
               <p className="text-xs tabular-nums text-[var(--muted-foreground)]">
@@ -754,7 +768,9 @@ function InventoryDeskInner() {
                       >
                         {r.productTitle}
                       </Link>
-                      <p className="mt-0.5 font-mono text-xs text-[var(--muted-foreground)]">{r.sku}</p>
+                      <p className="mt-0.5 font-mono text-xs text-[var(--muted-foreground)]">
+                        {r.sku}
+                      </p>
                     </div>
                     <span
                       className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${statusTone(r.productStatus)}`}
@@ -860,7 +876,8 @@ function InventoryDeskInner() {
             <p className="mt-1 text-xs text-[var(--muted-foreground)]">{adjustFor.productTitle}</p>
             <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--muted-foreground)]">
               <span className="tabular-nums">
-                On hand · <span className="font-medium text-[var(--foreground)]">{adjustFor.onHand}</span>
+                On hand ·{' '}
+                <span className="font-medium text-[var(--foreground)]">{adjustFor.onHand}</span>
               </span>
               <span className="tabular-nums">Reserved · {adjustFor.reserved}</span>
               <span className="tabular-nums">
@@ -967,10 +984,15 @@ function InventoryDeskInner() {
               <h2 id="history-title" className="font-display text-lg">
                 History — {historyFor.sku}
               </h2>
-              <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{historyFor.productTitle}</p>
+              <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                {historyFor.productTitle}
+              </p>
             </div>
             {historyError ? (
-              <p className="mx-4 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+              <p
+                className="mx-4 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"
+                role="alert"
+              >
                 {historyError}
               </p>
             ) : null}
@@ -1050,7 +1072,10 @@ function InventoryDeskInner() {
               </p>
             </div>
             {reservesError ? (
-              <p className="mx-4 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+              <p
+                className="mx-4 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"
+                role="alert"
+              >
                 {reservesError}
               </p>
             ) : null}

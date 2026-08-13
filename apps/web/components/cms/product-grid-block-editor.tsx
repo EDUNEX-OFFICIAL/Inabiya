@@ -278,8 +278,7 @@ export function ProductGridBlockEditor({ props, onChange }: Props) {
                   className="flex items-center gap-1 rounded border bg-white px-2 py-1 text-xs"
                 >
                   <span className="flex-1 truncate">
-                    {title}{' '}
-                    <span className="opacity-50 font-mono">{slug}</span>
+                    {title} <span className="opacity-50 font-mono">{slug}</span>
                   </span>
                   <button type="button" className="px-1" onClick={() => moveSlug(slug, -1)}>
                     ↑

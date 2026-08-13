@@ -107,7 +107,9 @@ function ImportDeskInner() {
 
   async function run(dryRun: boolean) {
     if (!getStoredAccessToken()) {
-      router.replace(loginUrl(`/admin/commerce/import${kind === 'products' ? '?kind=products' : ''}`));
+      router.replace(
+        loginUrl(`/admin/commerce/import${kind === 'products' ? '?kind=products' : ''}`),
+      );
       return;
     }
 
@@ -217,7 +219,9 @@ function ImportDeskInner() {
           <>
             <div className="hidden items-center gap-2 sm:flex">
               <Link
-                href={kind === 'products' ? '/admin/commerce/products' : '/admin/commerce/inventory'}
+                href={
+                  kind === 'products' ? '/admin/commerce/products' : '/admin/commerce/inventory'
+                }
                 className="clay-btn-ghost min-h-10 text-sm"
               >
                 {kind === 'products' ? (
@@ -342,9 +346,7 @@ function ImportDeskInner() {
           autoCorrect="off"
           autoCapitalize="off"
           placeholder={
-            kind === 'products'
-              ? 'slug,title,sku,pricePaise,onHand,...'
-              : 'sku,delta,reason,note'
+            kind === 'products' ? 'slug,title,sku,pricePaise,onHand,...' : 'sku,delta,reason,note'
           }
         />
 
@@ -456,7 +458,9 @@ function ImportDeskInner() {
                 <thead>
                   <tr className="border-b border-[var(--border)] text-left text-[var(--muted-foreground)]">
                     <th className="px-4 py-2 font-medium">Row</th>
-                    <th className="py-2 pr-2 font-medium">{kind === 'products' ? 'Slug' : 'SKU'}</th>
+                    <th className="py-2 pr-2 font-medium">
+                      {kind === 'products' ? 'Slug' : 'SKU'}
+                    </th>
                     <th className="py-2 pr-2 font-medium">Status</th>
                     <th className="py-2 pr-4 font-medium">Detail</th>
                   </tr>

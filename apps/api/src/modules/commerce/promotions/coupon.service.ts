@@ -143,8 +143,7 @@ export class CouponService {
     const conflictsById = buildConflictCodesById(peers, now);
 
     const items = page.map((c) => {
-      const type =
-        c.discountPercent != null ? ('PERCENT' as const) : ('FIXED_PAISE' as const);
+      const type = c.discountPercent != null ? ('PERCENT' as const) : ('FIXED_PAISE' as const);
       return {
         id: c.id,
         code: c.code,

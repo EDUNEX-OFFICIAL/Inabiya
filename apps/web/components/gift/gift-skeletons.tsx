@@ -7,7 +7,11 @@ function Pulse({ className }: { className?: string }) {
 /** Product detail page — gallery + buy box silhouette. */
 export function PdpSkeleton() {
   return (
-    <main className="gift-page flex flex-col gap-gs-6 sm:gap-gs-7" aria-busy="true" aria-label="Loading product">
+    <main
+      className="gift-page flex flex-col gap-gs-6 sm:gap-gs-7"
+      aria-busy="true"
+      aria-label="Loading product"
+    >
       <Pulse className="h-3 w-48 max-w-full rounded" />
       <div className="grid gap-gs-6 lg:grid-cols-2 lg:gap-gs-8">
         <div className="space-y-gs-3">

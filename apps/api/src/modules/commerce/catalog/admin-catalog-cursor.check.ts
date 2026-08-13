@@ -25,7 +25,10 @@ assert.equal(round.id, id);
 assert.equal(round.updatedAt.toISOString(), updatedAt.toISOString());
 
 assert.throws(() => decodeAdminProductCursor('not-a-cursor'), /INVALID_CURSOR/);
-assert.throws(() => decodeAdminProductCursor(Buffer.from('bad').toString('base64url')), /INVALID_CURSOR/);
+assert.throws(
+  () => decodeAdminProductCursor(Buffer.from('bad').toString('base64url')),
+  /INVALID_CURSOR/,
+);
 
 const keyset = adminProductKeysetAfter(round);
 assert.equal(keyset.OR.length, 2);

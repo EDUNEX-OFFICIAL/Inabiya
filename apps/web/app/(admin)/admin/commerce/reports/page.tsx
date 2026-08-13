@@ -133,7 +133,6 @@ function parseProductsSort(raw: string | null): ProductsSort {
   return raw === 'units' ? 'units' : 'revenue';
 }
 
-
 function deltaLabel(current: number, previous: number): string {
   const d = current - previous;
   if (previous === 0) return d === 0 ? '±0' : 'new';
@@ -186,13 +185,7 @@ function downloadCsv(filename: string, header: string[], rows: Array<Array<strin
   URL.revokeObjectURL(url);
 }
 
-function EmptyPanel({
-  icon: Icon,
-  message,
-}: {
-  icon: typeof Package;
-  message: string;
-}) {
+function EmptyPanel({ icon: Icon, message }: { icon: typeof Package; message: string }) {
   return (
     <div className="clay-panel flex flex-col items-center gap-3 px-6 py-12 text-center">
       <Icon className="h-8 w-8 opacity-30" aria-hidden />
@@ -671,7 +664,10 @@ function ReportsDeskInner() {
       ) : null}
 
       {!loading ? (
-        <div className={contentBusy ? 'opacity-70 transition-opacity' : undefined} aria-busy={contentBusy}>
+        <div
+          className={contentBusy ? 'opacity-70 transition-opacity' : undefined}
+          aria-busy={contentBusy}
+        >
           {active === 'sales' && sales ? (
             <section className="space-y-4">
               <div className="grid gap-2 sm:grid-cols-3">
@@ -682,7 +678,9 @@ function ReportsDeskInner() {
                   <p className="mt-1 font-display text-2xl tabular-nums">
                     {formatInr(sales.totals.revenuePaise)}
                   </p>
-                  <p className={`mt-1 text-xs ${deltaTone(sales.totals.revenuePaise, sales.previous.revenuePaise)}`}>
+                  <p
+                    className={`mt-1 text-xs ${deltaTone(sales.totals.revenuePaise, sales.previous.revenuePaise)}`}
+                  >
                     {deltaLabel(sales.totals.revenuePaise, sales.previous.revenuePaise)} vs prev ·{' '}
                     {formatInr(sales.previous.revenuePaise)}
                   </p>
@@ -691,8 +689,12 @@ function ReportsDeskInner() {
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
                     Orders
                   </p>
-                  <p className="mt-1 text-2xl font-medium tabular-nums">{sales.totals.orderCount}</p>
-                  <p className={`mt-1 text-xs ${deltaTone(sales.totals.orderCount, sales.previous.orderCount)}`}>
+                  <p className="mt-1 text-2xl font-medium tabular-nums">
+                    {sales.totals.orderCount}
+                  </p>
+                  <p
+                    className={`mt-1 text-xs ${deltaTone(sales.totals.orderCount, sales.previous.orderCount)}`}
+                  >
                     {deltaLabel(sales.totals.orderCount, sales.previous.orderCount)} vs prev
                   </p>
                 </div>
@@ -719,7 +721,10 @@ function ReportsDeskInner() {
 
                   <div className="md:hidden space-y-2">
                     {salesPageRows.map((r) => (
-                      <div key={r.date} className="clay-panel flex items-center justify-between gap-3 p-2.5">
+                      <div
+                        key={r.date}
+                        className="clay-panel flex items-center justify-between gap-3 p-2.5"
+                      >
                         <div>
                           <p className="font-medium tabular-nums">{r.date}</p>
                           <p className="text-xs text-[var(--muted-foreground)]">
@@ -827,9 +832,13 @@ function ReportsDeskInner() {
                               key={r.sku}
                               className="border-b border-[var(--border-subtle)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)]"
                             >
-                              <td className="px-3 py-2.5 align-middle font-mono text-xs">{r.sku}</td>
+                              <td className="px-3 py-2.5 align-middle font-mono text-xs">
+                                {r.sku}
+                              </td>
                               <td className="px-2 py-2.5 pr-4 align-middle">{r.title}</td>
-                              <td className="px-2 py-2.5 pr-4 align-middle tabular-nums">{r.units}</td>
+                              <td className="px-2 py-2.5 pr-4 align-middle tabular-nums">
+                                {r.units}
+                              </td>
                               <td className="px-2 py-2.5 pr-3 align-middle text-right tabular-nums">
                                 {formatInr(r.revenuePaise)}
                               </td>
@@ -1115,7 +1124,9 @@ function ReportsDeskInner() {
                               key={c.code}
                               className="border-b border-[var(--border-subtle)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)]"
                             >
-                              <td className="px-3 py-2.5 align-middle font-mono text-xs">{c.code}</td>
+                              <td className="px-3 py-2.5 align-middle font-mono text-xs">
+                                {c.code}
+                              </td>
                               <td className="px-2 py-2.5 pr-4 align-middle tabular-nums">
                                 {c.usedCount}
                                 {c.maxUses != null ? ` / ${c.maxUses}` : ''}

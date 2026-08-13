@@ -19,7 +19,5 @@ export function ArticleBody({ body, className }: Props) {
 
   const html = sanitizeArticleHtml(normalizeArticleBody(body));
 
-  return (
-    <div className={`article-prose ${base}`} dangerouslySetInnerHTML={{ __html: html }} />
-  );
+  return <div className={`article-prose ${base}`} dangerouslySetInnerHTML={{ __html: html }} />;
 }

@@ -194,7 +194,9 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
             <dd className="mt-gs-1 font-medium">{invoice.orderNumber}</dd>
           </div>
           <div>
-            <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">Issued</dt>
+            <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">
+              Issued
+            </dt>
             <dd className="mt-gs-1">{formatDate(invoice.issuedAt)}</dd>
           </div>
           <div>
@@ -288,7 +290,9 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
             <tbody>
               <tr>
                 <td className="py-gs-1 opacity-70">Subtotal</td>
-                <td className="py-gs-1 text-right tabular-nums">{formatInr(invoice.subtotalPaise)}</td>
+                <td className="py-gs-1 text-right tabular-nums">
+                  {formatInr(invoice.subtotalPaise)}
+                </td>
               </tr>
               {invoice.discountPaise > 0 ? (
                 <tr>
@@ -302,7 +306,9 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
               ) : null}
               <tr>
                 <td className="py-gs-1 opacity-70">Shipping</td>
-                <td className="py-gs-1 text-right tabular-nums">{formatInr(invoice.shippingPaise)}</td>
+                <td className="py-gs-1 text-right tabular-nums">
+                  {formatInr(invoice.shippingPaise)}
+                </td>
               </tr>
               {invoice.taxPaise > 0 ? (
                 <tr>

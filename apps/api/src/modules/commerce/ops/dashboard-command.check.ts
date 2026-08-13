@@ -10,11 +10,7 @@ export function deltaLabel(current: number, previous: number): string {
 }
 
 export type AlertPrefKey =
-  | 'failedPayments'
-  | 'awaitingProcess'
-  | 'pendingShip'
-  | 'openReturns'
-  | 'lowStock';
+  'failedPayments' | 'awaitingProcess' | 'pendingShip' | 'openReturns' | 'lowStock';
 
 export type AlertPrefs = Record<AlertPrefKey, boolean>;
 

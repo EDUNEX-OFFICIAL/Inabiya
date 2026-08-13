@@ -199,8 +199,12 @@ export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
           ))}
         </div>
 
-        <div className={`gift-footer__lower${showNewsletter ? '' : ' gift-footer__lower--reach-only'}`}>
-          {showNewsletter ? <div className="gift-footer__newsletter">{props.newsletterSlot}</div> : null}
+        <div
+          className={`gift-footer__lower${showNewsletter ? '' : ' gift-footer__lower--reach-only'}`}
+        >
+          {showNewsletter ? (
+            <div className="gift-footer__newsletter">{props.newsletterSlot}</div>
+          ) : null}
           <ReachUs />
         </div>
 

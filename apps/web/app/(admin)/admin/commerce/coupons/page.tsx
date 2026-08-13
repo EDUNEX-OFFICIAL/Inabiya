@@ -63,7 +63,6 @@ const SCOPE_CHIPS: Array<{ value: CouponScope; label: string }> = [
   { value: 'COLLECTION', label: 'Collections' },
 ];
 
-
 function generateCode(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let suffix = '';
@@ -198,7 +197,9 @@ function CouponsDeskInner() {
   }, [router, load, searchParams]);
 
   useEffect(() => {
-    void apiAuth<Array<CollectionOption & { membershipMode?: string }>>('/admin/catalog/collections')
+    void apiAuth<Array<CollectionOption & { membershipMode?: string }>>(
+      '/admin/catalog/collections',
+    )
       .then((rows) => setCollections(rows.filter((c) => c.membershipMode !== 'SMART')))
       .catch(() => setCollections([]));
   }, []);
@@ -416,7 +417,10 @@ function CouponsDeskInner() {
         title="Promotions"
         actions={
           <>
-            <Link href="/admin/commerce/reports?report=coupons" className="clay-btn-ghost min-h-10 text-sm">
+            <Link
+              href="/admin/commerce/reports?report=coupons"
+              className="clay-btn-ghost min-h-10 text-sm"
+            >
               Reports
             </Link>
             <button
@@ -459,10 +463,7 @@ function CouponsDeskInner() {
       ) : null}
 
       {showBuilder ? (
-        <form
-          onSubmit={(e) => void onCreate(e)}
-          className="clay-panel mb-5 space-y-4 p-4 text-sm"
-        >
+        <form onSubmit={(e) => void onCreate(e)} className="clay-panel mb-5 space-y-4 p-4 text-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-display text-lg leading-tight">New coupon</h2>
             <button
@@ -722,17 +723,17 @@ function CouponsDeskInner() {
             {previewResult ? <p className="w-full text-xs opacity-80">{previewResult}</p> : null}
           </div>
 
-          <button type="submit" className="clay-btn w-fit text-sm disabled:opacity-50" disabled={busy}>
+          <button
+            type="submit"
+            className="clay-btn w-fit text-sm disabled:opacity-50"
+            disabled={busy}
+          >
             Create promotion
           </button>
         </form>
       ) : null}
 
-      <form
-        className="mb-3 w-full max-w-xl"
-        role="search"
-        onSubmit={(e) => e.preventDefault()}
-      >
+      <form className="mb-3 w-full max-w-xl" role="search" onSubmit={(e) => e.preventDefault()}>
         <div className="flex min-h-9 items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--surface)_92%,white)] px-3 shadow-sm">
           <Search className="h-3.5 w-3.5 shrink-0 text-[var(--primary)] opacity-70" aria-hidden />
           <input
@@ -801,7 +802,10 @@ function CouponsDeskInner() {
       {loading ? (
         <div className="clay-panel space-y-3 p-4" aria-busy="true" aria-label="Loading promotions">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-10 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" />
+            <div
+              key={i}
+              className="h-10 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]"
+            />
           ))}
         </div>
       ) : null}
@@ -817,11 +821,7 @@ function CouponsDeskInner() {
               Clear filters
             </button>
           ) : (
-            <button
-              type="button"
-              className="clay-btn text-sm"
-              onClick={() => setShowBuilder(true)}
-            >
+            <button type="button" className="clay-btn text-sm" onClick={() => setShowBuilder(true)}>
               New coupon
             </button>
           )}
@@ -829,7 +829,10 @@ function CouponsDeskInner() {
       ) : null}
 
       {!loading && filtered.length > 0 ? (
-        <div className={refreshing ? 'opacity-70 transition-opacity' : undefined} aria-busy={refreshing}>
+        <div
+          className={refreshing ? 'opacity-70 transition-opacity' : undefined}
+          aria-busy={refreshing}
+        >
           <div className="md:hidden">
             <ul className="space-y-2">
               {filtered.map((c) => (
@@ -838,7 +841,9 @@ function CouponsDeskInner() {
                     <div className="min-w-0">
                       <p className="font-mono text-sm font-medium">{c.code}</p>
                       {c.description ? (
-                        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{c.description}</p>
+                        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                          {c.description}
+                        </p>
                       ) : null}
                     </div>
                     <span

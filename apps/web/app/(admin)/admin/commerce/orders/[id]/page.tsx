@@ -74,7 +74,9 @@ function addrLine(a: Address, keys: string[]): string {
 function formatAddress(a: Address | null | undefined): string[] {
   if (!a || typeof a !== 'object') return ['—'];
   const lines = [
-    [addrLine(a, ['name', 'fullName']), addrLine(a, ['phone', 'mobile'])].filter(Boolean).join(' · '),
+    [addrLine(a, ['name', 'fullName']), addrLine(a, ['phone', 'mobile'])]
+      .filter(Boolean)
+      .join(' · '),
     addrLine(a, ['line1', 'addressLine1']),
     addrLine(a, ['line2', 'addressLine2']),
     [addrLine(a, ['city']), addrLine(a, ['state']), addrLine(a, ['pincode', 'postalCode', 'zip'])]
@@ -174,7 +176,9 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
   const [roles, setRoles] = useState<string[]>(getStoredUser()?.roles ?? []);
 
   const canMutateStatus = roles.some((r) => r === 'COMMERCE_ADMIN' || r === 'SUPER_ADMIN');
-  const canCancel = roles.some((r) => r === 'COMMERCE_ADMIN' || r === 'SUPER_ADMIN' || r === 'FINANCE');
+  const canCancel = roles.some(
+    (r) => r === 'COMMERCE_ADMIN' || r === 'SUPER_ADMIN' || r === 'FINANCE',
+  );
   const canNote = roles.some(
     (r) => r === 'COMMERCE_ADMIN' || r === 'SUPER_ADMIN' || r === 'SUPPORT',
   );
@@ -308,8 +312,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
 
   const next = order.allowedNextStatuses ?? [];
   const primaryPayment = order.paymentVerification[0];
-  const showShipFields =
-    Boolean(order.carrier || order.trackingNumber || next.includes('SHIPPED'));
+  const showShipFields = Boolean(order.carrier || order.trackingNumber || next.includes('SHIPPED'));
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -366,7 +369,9 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
           </div>
           <span className="hidden h-3 w-px bg-[var(--border-subtle)] sm:block" aria-hidden />
           <span className="text-sm font-semibold tabular-nums">{formatInr(order.totalPaise)}</span>
-          <span className="text-xs tabular-nums text-[var(--muted-foreground)]">{order.ageHours}h</span>
+          <span className="text-xs tabular-nums text-[var(--muted-foreground)]">
+            {order.ageHours}h
+          </span>
           <Link
             href={`/admin/commerce/customers/${order.customer.id}`}
             className="max-w-full truncate text-xs text-[var(--muted-foreground)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
@@ -393,7 +398,9 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
             </li>
           ))}
         </ul>
-        {order.giftMessage ? <p className="mt-2 text-sm">Gift message: {order.giftMessage}</p> : null}
+        {order.giftMessage ? (
+          <p className="mt-2 text-sm">Gift message: {order.giftMessage}</p>
+        ) : null}
       </section>
 
       {error ? (
@@ -447,11 +454,16 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
             </div>
             <ul className="mt-2 divide-y divide-[var(--border-subtle)]">
               {order.items.map((i) => (
-                <li key={i.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 py-2.5">
+                <li
+                  key={i.id}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 py-2.5"
+                >
                   <div className="min-w-0">
                     <p className="font-medium leading-snug">
                       {i.title}{' '}
-                      <span className="font-normal text-[var(--muted-foreground)]">({i.label})</span>
+                      <span className="font-normal text-[var(--muted-foreground)]">
+                        ({i.label})
+                      </span>
                     </p>
                     <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
                       <span className="font-mono">{i.sku}</span>
@@ -685,7 +697,9 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                 {order.customer.email}
               </Link>
               {order.customer.displayName ? (
-                <p className="mt-0.5 text-[var(--muted-foreground)]">{order.customer.displayName}</p>
+                <p className="mt-0.5 text-[var(--muted-foreground)]">
+                  {order.customer.displayName}
+                </p>
               ) : null}
               <p className="mt-1">
                 <span

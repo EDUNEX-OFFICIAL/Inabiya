@@ -16,9 +16,7 @@ function conditionToWhere(c: SmartCondition): Prisma.ProductWhereInput | null {
 
   if (field === 'recipient') {
     const tags =
-      value === 'girl' || value === 'boy'
-        ? { hasSome: [value, 'unisex'] }
-        : { has: value };
+      value === 'girl' || value === 'boy' ? { hasSome: [value, 'unisex'] } : { has: value };
     if (op === 'is') return { recipientTags: tags };
     if (op === 'is_not') {
       return value === 'girl' || value === 'boy'

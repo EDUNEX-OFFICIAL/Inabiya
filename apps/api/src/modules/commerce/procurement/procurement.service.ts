@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PurchaseOrderStatus, type Prisma } from '@prisma/client';
 import type {
   AdminPurchaseOrdersQuery,
@@ -90,18 +86,16 @@ export class ProcurementService {
       return created;
     } catch (e) {
       if (e instanceof Error && e.message.includes('Unique constraint')) {
-        throw new BadRequestException({ code: 'CODE_TAKEN', message: 'Supplier code already exists.' });
+        throw new BadRequestException({
+          code: 'CODE_TAKEN',
+          message: 'Supplier code already exists.',
+        });
       }
       throw e;
     }
   }
 
-  async updateSupplier(
-    id: string,
-    body: UpdateSupplierBody,
-    actorId: string,
-    requestId?: string,
-  ) {
+  async updateSupplier(id: string, body: UpdateSupplierBody, actorId: string, requestId?: string) {
     const existing = await this.prisma.supplier.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Supplier not found.' });
@@ -132,7 +126,10 @@ export class ProcurementService {
       return updated;
     } catch (e) {
       if (e instanceof Error && e.message.includes('Unique constraint')) {
-        throw new BadRequestException({ code: 'CODE_TAKEN', message: 'Supplier code already exists.' });
+        throw new BadRequestException({
+          code: 'CODE_TAKEN',
+          message: 'Supplier code already exists.',
+        });
       }
       throw e;
     }
@@ -197,11 +194,7 @@ export class ProcurementService {
     return this.mapPoDetail(po);
   }
 
-  async createPurchaseOrder(
-    body: CreatePurchaseOrderBody,
-    actorId: string,
-    requestId?: string,
-  ) {
+  async createPurchaseOrder(body: CreatePurchaseOrderBody, actorId: string, requestId?: string) {
     const supplier = await this.prisma.supplier.findUnique({ where: { id: body.supplierId } });
     if (!supplier || !supplier.isActive) {
       throw new BadRequestException({
@@ -354,12 +347,7 @@ export class ProcurementService {
     return this.getPurchaseOrder(id);
   }
 
-  private async transition(
-    id: string,
-    to: PoStatus,
-    actorId: string,
-    requestId?: string,
-  ) {
+  private async transition(id: string, to: PoStatus, actorId: string, requestId?: string) {
     const po = await this.prisma.purchaseOrder.findUnique({ where: { id } });
     if (!po) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Purchase order not found.' });
@@ -386,42 +374,40 @@ export class ProcurementService {
     return this.getPurchaseOrder(id);
   }
 
-  private mapPoDetail(
-    po: {
+  private mapPoDetail(po: {
+    id: string;
+    poNumber: string;
+    status: PurchaseOrderStatus;
+    notes: string | null;
+    orderedAt: Date | null;
+    receivedAt: Date | null;
+    createdAt: Date;
+    supplier: {
       id: string;
-      poNumber: string;
-      status: PurchaseOrderStatus;
-      notes: string | null;
-      orderedAt: Date | null;
-      receivedAt: Date | null;
-      createdAt: Date;
-      supplier: {
+      code: string;
+      name: string;
+      city: string | null;
+      state: string | null;
+      contactName: string | null;
+      email: string | null;
+      phone: string | null;
+    };
+    lines: Array<{
+      id: string;
+      variantId: string;
+      sku: string;
+      title: string;
+      quantityOrdered: number;
+      quantityReceived: number;
+      unitCostPaise: number;
+      variant: {
         id: string;
-        code: string;
-        name: string;
-        city: string | null;
-        state: string | null;
-        contactName: string | null;
-        email: string | null;
-        phone: string | null;
-      };
-      lines: Array<{
-        id: string;
-        variantId: string;
         sku: string;
-        title: string;
-        quantityOrdered: number;
-        quantityReceived: number;
-        unitCostPaise: number;
-        variant: {
-          id: string;
-          sku: string;
-          label: string;
-          product: { id: string; title: string };
-        };
-      }>;
-    },
-  ) {
+        label: string;
+        product: { id: string; title: string };
+      };
+    }>;
+  }) {
     return {
       id: po.id,
       poNumber: po.poNumber,

@@ -93,8 +93,7 @@ const productAssetUrlSchema = z
   .max(500)
   .refine(
     (s) =>
-      /^https?:\/\//i.test(s) ||
-      (s.startsWith('/') && !s.startsWith('//') && !s.includes('..')),
+      /^https?:\/\//i.test(s) || (s.startsWith('/') && !s.startsWith('//') && !s.includes('..')),
     'Must be http(s) URL or same-origin path',
   );
 
@@ -545,14 +544,20 @@ export const updateInventoryBodySchema = z.object({
 
 /** OPS-3 — relative stock adjust with reason */
 export const inventoryAdjustBodySchema = z.object({
-  delta: z.number().int().refine((n) => n !== 0, { message: 'delta must be non-zero' }),
+  delta: z
+    .number()
+    .int()
+    .refine((n) => n !== 0, { message: 'delta must be non-zero' }),
   reason: z.enum(['RECEIVE', 'DAMAGE', 'RECOUNT', 'CORRECTION']),
   note: z.string().trim().max(500).optional(),
 });
 
 export const inventoryImportRowSchema = z.object({
   sku: z.string().trim().min(1).max(80),
-  delta: z.number().int().refine((n) => n !== 0, { message: 'delta must be non-zero' }),
+  delta: z
+    .number()
+    .int()
+    .refine((n) => n !== 0, { message: 'delta must be non-zero' }),
   reason: z.enum(['RECEIVE', 'DAMAGE', 'RECOUNT', 'CORRECTION']),
   note: z.string().trim().max(500).optional(),
 });
@@ -609,10 +614,9 @@ export const createSupplierBodySchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export const updateSupplierBodySchema = createSupplierBodySchema.partial().refine(
-  (b) => Object.keys(b).length > 0,
-  { message: 'At least one field required' },
-);
+export const updateSupplierBodySchema = createSupplierBodySchema
+  .partial()
+  .refine((b) => Object.keys(b).length > 0, { message: 'At least one field required' });
 
 export const purchaseOrderLineInputSchema = z.object({
   variantId: z.string().uuid(),
@@ -958,14 +962,14 @@ export const createCouponBodySchema = z
       });
     }
     const scope = v.scope ?? 'CART';
-    if (scope === 'PRODUCT' && !(v.productIds?.length)) {
+    if (scope === 'PRODUCT' && !v.productIds?.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Select at least one product for a product coupon.',
         path: ['productIds'],
       });
     }
-    if (scope === 'COLLECTION' && !(v.collectionIds?.length)) {
+    if (scope === 'COLLECTION' && !v.collectionIds?.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Select at least one collection for a collection coupon.',

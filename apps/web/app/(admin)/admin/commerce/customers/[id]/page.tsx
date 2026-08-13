@@ -317,7 +317,10 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
       </div>
 
       {notice ? (
-        <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
+        <p
+          className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+          role="status"
+        >
           {notice}
         </p>
       ) : null}
@@ -356,10 +359,7 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
           ) : (
             <ul className="mt-2 space-y-2">
               {data.addresses.map((a) => (
-                <li
-                  key={a.id}
-                  className="rounded-lg border border-[var(--border-subtle)] p-2.5"
-                >
+                <li key={a.id} className="rounded-lg border border-[var(--border-subtle)] p-2.5">
                   <p className="font-medium">
                     {a.fullName}
                     {a.isDefault ? (
@@ -448,7 +448,9 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
               </select>
             </label>
             <label className="block text-xs">
-              <span className="mb-1 block font-medium text-[var(--muted-foreground)]">Template</span>
+              <span className="mb-1 block font-medium text-[var(--muted-foreground)]">
+                Template
+              </span>
               <input
                 className="clay-input min-h-10 w-full text-sm"
                 value={commTemplate}
@@ -560,10 +562,7 @@ export default function AdminCustomerDetailPage({ params }: { params: { id: stri
           ) : (
             <ul className="mt-2 space-y-2">
               {data.inquiries.map((i) => (
-                <li
-                  key={i.id}
-                  className="rounded-lg border border-[var(--border-subtle)] p-2.5"
-                >
+                <li key={i.id} className="rounded-lg border border-[var(--border-subtle)] p-2.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{i.type}</span>
                     <span

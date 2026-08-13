@@ -148,9 +148,7 @@ export class StorefrontConfigService {
       : DEFAULT_GIFT_CHROME.shopLinks;
     const nonAutoCollection = authoredShop.filter((l) => {
       const href = String(l.href ?? '');
-      return (
-        !href.includes('/gift/collections/') && !href.includes('/gift/products?category=')
-      );
+      return !href.includes('/gift/collections/') && !href.includes('/gift/products?category=');
     });
     const collectionLinks = collections.map((c) => ({
       href: `/gift/collections/${c.slug}`,

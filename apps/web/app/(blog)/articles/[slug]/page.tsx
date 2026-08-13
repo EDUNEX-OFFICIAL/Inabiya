@@ -5,11 +5,7 @@ import { fetchArticles, type PublicArticleDetail } from '@/lib/articles';
 import { ArticleBody } from '@/components/editorial/article-body';
 import { JsonLdScript } from '@/components/seo/json-ld-script';
 import { getSiteOrigin } from '@/lib/cms-seo';
-import {
-  articleJsonLd,
-  breadcrumbJsonLd,
-  mergeSeoJsonLdWithExtras,
-} from '@/lib/seo-json-ld';
+import { articleJsonLd, breadcrumbJsonLd, mergeSeoJsonLdWithExtras } from '@/lib/seo-json-ld';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,9 +89,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           ← Articles
         </Link>
 
-        {article.category ? (
-          <p className="mt-gs-6 blog-overline">{article.category.name}</p>
-        ) : null}
+        {article.category ? <p className="mt-gs-6 blog-overline">{article.category.name}</p> : null}
 
         <h1 className="blog-h1 mt-gs-3 text-balance">{article.title}</h1>
 
@@ -123,11 +117,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         {article.seo.ogImageUrl ? (
           <div className="relative mt-gs-6 aspect-[16/10] overflow-hidden rounded-clay border border-border-subtle bg-surface-soft">
             {/* eslint-disable-next-line @next/next/no-img-element -- editorial covers may be SVG */}
-            <img
-              src={article.seo.ogImageUrl}
-              alt=""
-              className="h-full w-full object-cover"
-            />
+            <img src={article.seo.ogImageUrl} alt="" className="h-full w-full object-cover" />
           </div>
         ) : null}
 

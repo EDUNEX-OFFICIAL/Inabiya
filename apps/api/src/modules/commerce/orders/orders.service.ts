@@ -209,7 +209,9 @@ export class OrdersService {
         },
       });
     } catch {
-      const existing = await this.prisma.commerceInvoice.findUnique({ where: { orderId: order.id } });
+      const existing = await this.prisma.commerceInvoice.findUnique({
+        where: { orderId: order.id },
+      });
       if (existing) {
         return deserializeInvoiceSnapshot(existing.snapshot, existing.invoiceNumber);
       }
@@ -336,9 +338,7 @@ export class OrdersService {
 
     const last = page[page.length - 1];
     const nextCursor =
-      hasMore && last
-        ? encodeAdminOrderCursor({ createdAt: last.createdAt, id: last.id })
-        : null;
+      hasMore && last ? encodeAdminOrderCursor({ createdAt: last.createdAt, id: last.id }) : null;
 
     return { items, nextCursor, limit };
   }
@@ -362,8 +362,8 @@ export class OrdersService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Order not found.' });
     }
 
-    const paymentIssue = order.payments.some((p) => p.status === 'FAILED') ||
-      order.status === 'PAYMENT_FAILED';
+    const paymentIssue =
+      order.payments.some((p) => p.status === 'FAILED') || order.status === 'PAYMENT_FAILED';
     const addrRisk = addressRisk(order.shippingAddress);
     const openReturns = order.returnRequests.filter(
       (r) => r.status === 'REQUESTED' || r.status === 'APPROVED',
@@ -411,7 +411,8 @@ export class OrdersService {
       exceptions,
       allowedNextStatuses: next,
       canCancel: CANCELABLE.includes(order.status),
-      canFulfill: !paymentIssue && order.status !== 'PAYMENT_FAILED' && order.status !== 'PENDING_PAYMENT',
+      canFulfill:
+        !paymentIssue && order.status !== 'PAYMENT_FAILED' && order.status !== 'PENDING_PAYMENT',
       ageHours: ageHours(order.paidAt ?? order.createdAt),
       addressRisk: addrRisk,
     };
@@ -451,8 +452,7 @@ export class OrdersService {
 
     if (status === OrderStatus.SHIPPED || status === OrderStatus.DELIVERED) {
       const payFail =
-        order.status === OrderStatus.PAYMENT_FAILED ||
-        order.status === OrderStatus.PENDING_PAYMENT;
+        order.status === OrderStatus.PAYMENT_FAILED || order.status === OrderStatus.PENDING_PAYMENT;
       if (payFail) {
         throw new BadRequestException({
           code: 'PAYMENT_BLOCKED',

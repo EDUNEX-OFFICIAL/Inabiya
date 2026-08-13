@@ -319,7 +319,6 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
               className="gift-link max-w-[40vw] truncate sm:max-w-none"
             >
               {primaryCollection.title}
-
             </Link>
             <span aria-hidden className="shrink-0">
               /
@@ -362,9 +361,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           <h1 className="gift-h1 mt-gs-3 break-words leading-tight">{product.title}</h1>
 
           <ProductBrandLine
-            brands={
-              product.brandNames?.length ? product.brandNames : collectBrandNames(product)
-            }
+            brands={product.brandNames?.length ? product.brandNames : collectBrandNames(product)}
             className="mt-gs-2"
           />
 
@@ -378,8 +375,8 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           {product.isReadyMadeHamper && (product.hamperItems?.length ?? 0) > 0 ? (
             <p className="gift-muted mt-gs-3">
               Contains{' '}
-              {product.hamperItems!
-                .slice(0, 2)
+              {product
+                .hamperItems!.slice(0, 2)
                 .map((i) => i.title)
                 .join(', ')}
               {(product.hamperItems?.length ?? 0) > 2
@@ -429,7 +426,9 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             <p className="mt-gs-4 text-body text-danger">This gift has no buyable options yet.</p>
           )}
 
-          <p className={`mt-gs-2 text-body font-medium ${inStock ? 'text-success' : 'text-danger'}`}>
+          <p
+            className={`mt-gs-2 text-body font-medium ${inStock ? 'text-success' : 'text-danger'}`}
+          >
             {inStock
               ? variant && variant.available <= 5
                 ? `Only ${variant.available} left`
@@ -538,7 +537,10 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 >
                   −
                 </button>
-                <span className="min-w-[2rem] text-center text-body tabular-nums" aria-live="polite">
+                <span
+                  className="min-w-[2rem] text-center text-body tabular-nums"
+                  aria-live="polite"
+                >
                   {quantity}
                 </span>
                 <button
@@ -754,7 +756,9 @@ function PersonalizationField({
         />
       )}
       {opt.maxLength && !isSelect ? (
-        <span className="mt-gs-1 block text-caption opacity-55">Up to {opt.maxLength} characters</span>
+        <span className="mt-gs-1 block text-caption opacity-55">
+          Up to {opt.maxLength} characters
+        </span>
       ) : null}
     </label>
   );
@@ -871,11 +875,16 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
       <div className="min-w-0 space-y-gs-3">
         {tags.length > 0 ? (
           <div className="pt-gs-1">
-            <p className="text-caption font-medium uppercase tracking-wide opacity-55">Shop similar</p>
+            <p className="text-caption font-medium uppercase tracking-wide opacity-55">
+              Shop similar
+            </p>
             <ul className="mt-gs-2 flex flex-wrap gap-gs-2" aria-label="Browse similar">
               {tags.map((t) => (
                 <li key={`${t.href}-${t.label}`}>
-                  <Link href={t.href} className="clay-chip text-caption capitalize hover:text-primary">
+                  <Link
+                    href={t.href}
+                    className="clay-chip text-caption capitalize hover:text-primary"
+                  >
                     {t.label}
                   </Link>
                 </li>

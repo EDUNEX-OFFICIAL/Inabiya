@@ -3,12 +3,7 @@
  * Soft Gift dense admin; role-gated items. No fourth theme.
  */
 
-export type OpsRole =
-  | 'COMMERCE_ADMIN'
-  | 'SUPER_ADMIN'
-  | 'SUPPORT'
-  | 'FINANCE'
-  | string;
+export type OpsRole = 'COMMERCE_ADMIN' | 'SUPER_ADMIN' | 'SUPPORT' | 'FINANCE' | string;
 
 export type OpsNavItem = {
   id: string;
@@ -189,7 +184,9 @@ export function filterNavForRoles(roles: string[]): OpsNavItem[] {
   return COMMERCE_OPS_NAV.filter((item) => item.roles.some((r) => roles.includes(r)));
 }
 
-export function groupNavBySection(items: OpsNavItem[]): Array<{ section: string; label: string; items: OpsNavItem[] }> {
+export function groupNavBySection(
+  items: OpsNavItem[],
+): Array<{ section: string; label: string; items: OpsNavItem[] }> {
   const order = ['main', 'catalog', 'ops', 'growth', 'system'];
   const map = new Map<string, OpsNavItem[]>();
   for (const item of items) {
@@ -220,7 +217,10 @@ export function buildOpsBreadcrumbs(pathname: string): BreadcrumbCrumb[] {
     return [{ label: 'Dashboard' }];
   }
 
-  const segments = pathname.replace(/^\/admin\/commerce\/?/, '').split('/').filter(Boolean);
+  const segments = pathname
+    .replace(/^\/admin\/commerce\/?/, '')
+    .split('/')
+    .filter(Boolean);
   if (segments.length === 0) return crumbs;
 
   const labelMap: Record<string, string> = {

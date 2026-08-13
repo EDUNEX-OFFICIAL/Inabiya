@@ -1,12 +1,6 @@
 import Image from 'next/image';
 
-export function LineThumb({
-  imageUrl,
-  quantity,
-}: {
-  imageUrl?: string | null;
-  quantity: number;
-}) {
+export function LineThumb({ imageUrl, quantity }: { imageUrl?: string | null; quantity: number }) {
   return (
     <span className="relative size-14 shrink-0">
       <span className="absolute inset-0 overflow-hidden rounded-control border border-border-subtle bg-surface">

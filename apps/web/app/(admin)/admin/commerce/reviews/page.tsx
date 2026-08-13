@@ -356,7 +356,10 @@ function ReviewsDeskInner() {
         </p>
       ) : null}
       {notice ? (
-        <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
+        <p
+          className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+          role="status"
+        >
           {notice}
         </p>
       ) : null}
@@ -387,7 +390,10 @@ function ReviewsDeskInner() {
       ) : null}
 
       {!loading && rows.length > 0 ? (
-        <div className={refreshing ? 'opacity-70 transition-opacity' : undefined} aria-busy={refreshing}>
+        <div
+          className={refreshing ? 'opacity-70 transition-opacity' : undefined}
+          aria-busy={refreshing}
+        >
           <div className="md:hidden">
             <ul className="space-y-2">
               {rows.map((r) => (
@@ -411,9 +417,13 @@ function ReviewsDeskInner() {
                     </span>
                   </div>
                   {r.headline ? (
-                    <p className="mt-2 text-sm font-medium text-[var(--foreground)]">{r.headline}</p>
+                    <p className="mt-2 text-sm font-medium text-[var(--foreground)]">
+                      {r.headline}
+                    </p>
                   ) : null}
-                  <p className="mt-1 line-clamp-3 text-sm text-[var(--muted-foreground)]">{r.body}</p>
+                  <p className="mt-1 line-clamp-3 text-sm text-[var(--muted-foreground)]">
+                    {r.body}
+                  </p>
                   <p className="mt-2 text-[11px] text-[var(--muted-foreground)]">
                     {formatWhen(r.createdAt)}
                   </p>
@@ -465,7 +475,9 @@ function ReviewsDeskInner() {
                           {r.headline ? (
                             <p className="font-medium text-[var(--foreground)]">{r.headline}</p>
                           ) : null}
-                          <p className="mt-0.5 line-clamp-2 text-[var(--muted-foreground)]">{r.body}</p>
+                          <p className="mt-0.5 line-clamp-2 text-[var(--muted-foreground)]">
+                            {r.body}
+                          </p>
                         </td>
                         <td className="px-2 py-2.5 pr-4 align-top">
                           <p className="text-[var(--foreground)]">{r.customerEmail}</p>

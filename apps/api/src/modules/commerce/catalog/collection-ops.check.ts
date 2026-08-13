@@ -4,11 +4,7 @@
 import assert from 'node:assert/strict';
 import { updateCollectionBodySchema, createCollectionBodySchema } from '@inabiya/validation';
 import { collectionDeleteBlocked } from './collection-ops';
-import {
-  applySmartRulesToWhere,
-  parseSmartRules,
-  smartRulesHideFacets,
-} from './collection-smart';
+import { applySmartRulesToWhere, parseSmartRules, smartRulesHideFacets } from './collection-smart';
 
 assert.equal(collectionDeleteBlocked('MANUAL', 0), false);
 assert.equal(collectionDeleteBlocked('MANUAL', 1), true);

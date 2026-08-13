@@ -62,25 +62,19 @@ export class OpsAdminController {
 
   @Get('reports/daily')
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
-  dailyReport(
-    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
-  ) {
+  dailyReport(@Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery) {
     return this.dashboard.dailyReport(query.days);
   }
 
   @Get('reports/sales')
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
-  salesReport(
-    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
-  ) {
+  salesReport(@Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery) {
     return this.dashboard.salesReport(query.days);
   }
 
   @Get('reports/products')
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
-  productsReport(
-    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
-  ) {
+  productsReport(@Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery) {
     return this.dashboard.productsReport(query.days);
   }
 
@@ -92,17 +86,13 @@ export class OpsAdminController {
 
   @Get('reports/returns')
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
-  returnsReport(
-    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
-  ) {
+  returnsReport(@Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery) {
     return this.dashboard.returnsReport(query.days);
   }
 
   @Get('reports/coupons')
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
-  couponsReport(
-    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
-  ) {
+  couponsReport(@Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery) {
     return this.dashboard.couponsReport(query.days);
   }
 
@@ -114,9 +104,7 @@ export class OpsAdminController {
 
   @Get('reports/funnel')
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
-  funnelReport(
-    @Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery,
-  ) {
+  funnelReport(@Query(new ZodValidationPipe(adminReportsQuerySchema)) query: AdminReportsQuery) {
     return this.analytics.funnelSummary(query.days);
   }
 
@@ -163,16 +151,12 @@ export class OpsAdminController {
   }
 
   @Get('coupons')
-  listCoupons(
-    @Query(new ZodValidationPipe(adminCouponsQuerySchema)) query: AdminCouponsQuery,
-  ) {
+  listCoupons(@Query(new ZodValidationPipe(adminCouponsQuerySchema)) query: AdminCouponsQuery) {
     return this.coupons.listAdmin(query);
   }
 
   @Post('coupons/preview')
-  previewCoupon(
-    @Body(new ZodValidationPipe(couponPreviewBodySchema)) body: CouponPreviewBody,
-  ) {
+  previewCoupon(@Body(new ZodValidationPipe(couponPreviewBodySchema)) body: CouponPreviewBody) {
     return this.coupons.preview(body);
   }
 

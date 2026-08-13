@@ -50,7 +50,6 @@ function filterSelectClass(): string {
   return 'clay-input min-h-9 w-full min-w-0 text-sm';
 }
 
-
 function typeLabel(type: string): string {
   if (type === 'corporate') return 'Corporate';
   if (type === 'bulk') return 'Bulk';
@@ -106,7 +105,9 @@ function InquiriesDeskInner() {
         else params.set(k, v);
       }
       const s = params.toString();
-      router.replace(s ? `/admin/commerce/gifting-inquiries?${s}` : '/admin/commerce/gifting-inquiries');
+      router.replace(
+        s ? `/admin/commerce/gifting-inquiries?${s}` : '/admin/commerce/gifting-inquiries',
+      );
     },
     [router, searchParams],
   );
@@ -159,15 +160,7 @@ function InquiriesDeskInner() {
       if (type && r.type !== type) return false;
       if (status && r.status !== status) return false;
       if (!needle) return true;
-      const hay = [
-        r.fullName,
-        r.email,
-        r.phone ?? '',
-        r.company ?? '',
-        r.message,
-        r.type,
-        r.status,
-      ]
+      const hay = [r.fullName, r.email, r.phone ?? '', r.company ?? '', r.message, r.type, r.status]
         .join(' ')
         .toLowerCase();
       return hay.includes(needle);
@@ -414,7 +407,10 @@ function InquiriesDeskInner() {
       ) : null}
 
       {!loading && displayed.length > 0 ? (
-        <div className={refreshing ? 'opacity-70 transition-opacity' : undefined} aria-busy={refreshing}>
+        <div
+          className={refreshing ? 'opacity-70 transition-opacity' : undefined}
+          aria-busy={refreshing}
+        >
           <div className="md:hidden">
             <ul className="space-y-2">
               {displayed.map((r) => {
@@ -438,7 +434,9 @@ function InquiriesDeskInner() {
                     <p className="mt-1 text-xs text-[var(--muted-foreground)]">
                       {r.company ?? '—'} · qty {r.estimatedQty ?? '—'} · {formatWhen(r.createdAt)}
                     </p>
-                    <p className={`mt-2 text-sm text-[var(--muted-foreground)] ${open ? '' : 'line-clamp-3'}`}>
+                    <p
+                      className={`mt-2 text-sm text-[var(--muted-foreground)] ${open ? '' : 'line-clamp-3'}`}
+                    >
                       {r.message}
                     </p>
                     {r.message.length > 120 ? (

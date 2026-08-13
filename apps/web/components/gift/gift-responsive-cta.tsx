@@ -20,12 +20,7 @@ type Shared = {
   className?: string;
 };
 
-function CtaInner({
-  label,
-  icon: Icon,
-  iconPosition = 'start',
-  labelFrom = 'container',
-}: Shared) {
+function CtaInner({ label, icon: Icon, iconPosition = 'start', labelFrom = 'container' }: Shared) {
   const iconEl = <Icon className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />;
   const textEl = (
     <span className={labelFrom === 'container' ? 'gift-cta-label' : undefined} aria-hidden>
@@ -68,7 +63,8 @@ export function GiftResponsiveLink({
   variant = 'primary',
   className,
   ...rest
-}: Shared & Omit<ComponentProps<typeof Link>, 'children' | 'className' | 'href'> & { href: string }) {
+}: Shared &
+  Omit<ComponentProps<typeof Link>, 'children' | 'className' | 'href'> & { href: string }) {
   return (
     <Link
       href={href}

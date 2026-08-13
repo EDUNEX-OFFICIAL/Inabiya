@@ -100,7 +100,9 @@ export default function NewCollectionPage() {
             />
           </label>
           <label className="block text-xs sm:col-span-2">
-            <span className="mb-1 block font-medium text-[var(--muted-foreground)]">Description</span>
+            <span className="mb-1 block font-medium text-[var(--muted-foreground)]">
+              Description
+            </span>
             <input
               className="clay-input min-h-10 w-full text-sm"
               value={form.description}

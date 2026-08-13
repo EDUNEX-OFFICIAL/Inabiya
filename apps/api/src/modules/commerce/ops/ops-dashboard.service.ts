@@ -293,7 +293,9 @@ export class OpsDashboardService {
           onHand: { lte: lowStockThreshold },
           variant: { product: { status: ProductStatus.PUBLISHED } },
         },
-        include: { variant: { include: { product: { select: { id: true, title: true, slug: true } } } } },
+        include: {
+          variant: { include: { product: { select: { id: true, title: true, slug: true } } } },
+        },
         orderBy: { onHand: 'asc' },
         take: 100,
       }),
@@ -313,8 +315,7 @@ export class OpsDashboardService {
         lowStockCount: lowStock.length,
         onHandUnits: aggregates._sum.onHand ?? 0,
         reservedUnits: aggregates._sum.reserved ?? 0,
-        availableUnits:
-          (aggregates._sum.onHand ?? 0) - (aggregates._sum.reserved ?? 0),
+        availableUnits: (aggregates._sum.onHand ?? 0) - (aggregates._sum.reserved ?? 0),
       },
       lowStock: lowStock.map((r) => ({
         sku: r.variant.sku,
@@ -462,9 +463,7 @@ export class OpsDashboardService {
     const term = q.trim();
     const digits = term.replace(/\D/g, '');
     const customerPhoneOr =
-      digits.length >= 7
-        ? [{ addresses: { some: { phone: { contains: digits } } } } as const]
-        : [];
+      digits.length >= 7 ? [{ addresses: { some: { phone: { contains: digits } } } } as const] : [];
     const orderPhoneOr =
       digits.length >= 7
         ? [

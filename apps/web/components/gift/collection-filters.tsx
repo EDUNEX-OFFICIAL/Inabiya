@@ -102,7 +102,9 @@ function FacetEditor({
   return (
     <div className="flex flex-col gap-gs-1">
       <div className="mb-gs-3 rounded-control bg-foreground/[0.03] px-gs-3 py-gs-3">
-        <p className="text-caption font-medium uppercase tracking-wide text-foreground/45">Browsing</p>
+        <p className="text-caption font-medium uppercase tracking-wide text-foreground/45">
+          Browsing
+        </p>
         <p className="mt-gs-1 text-body font-medium text-foreground">{collection.lockedLabel}</p>
       </div>
 
@@ -202,7 +204,10 @@ function DesktopSidebar({ collection, refine }: Props) {
         {activeCount > 0 ? (
           <div className="sticky bottom-0 mt-gs-4 border-t border-foreground/8 bg-[var(--background)] pt-gs-3">
             <Link
-              href={collectionHref(collection.slug, refineParamsForUrl(collection, { sort: refine.sort }))}
+              href={collectionHref(
+                collection.slug,
+                refineParamsForUrl(collection, { sort: refine.sort }),
+              )}
               className="gift-link text-body"
             >
               Clear filters
@@ -275,7 +280,10 @@ function MobileFilters({ collection, refine }: Props) {
 
   const applyDraft = () => {
     router.push(
-      collectionHref(collection.slug, refineParamsForUrl(collection, { ...draft, sort: refine.sort })),
+      collectionHref(
+        collection.slug,
+        refineParamsForUrl(collection, { ...draft, sort: refine.sort }),
+      ),
     );
     close();
   };
@@ -340,7 +348,11 @@ function MobileFilters({ collection, refine }: Props) {
               <FacetEditor collection={collection} value={draft} onChange={setDraft} />
             </div>
             <div className="flex shrink-0 gap-gs-3 border-t border-foreground/8 px-gs-5 py-gs-4">
-              <button type="button" className="clay-btn-secondary flex-1 justify-center" onClick={clearDraft}>
+              <button
+                type="button"
+                className="clay-btn-secondary flex-1 justify-center"
+                onClick={clearDraft}
+              >
                 Clear
               </button>
               <button type="button" className="clay-btn flex-1 justify-center" onClick={applyDraft}>

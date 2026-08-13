@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CustomerCommunicationChannel,
   CustomerCommunicationStatus,
@@ -32,9 +37,7 @@ export class CustomerAdminService {
 
   async list(query: AdminCustomersQuery = { limit: 25 }) {
     const limit = query.limit ?? 25;
-    const andParts: Prisma.UserWhereInput[] = [
-      { roles: { some: { role: { code: 'CUSTOMER' } } } },
-    ];
+    const andParts: Prisma.UserWhereInput[] = [{ roles: { some: { role: { code: 'CUSTOMER' } } } }];
 
     if (query.status === 'active') andParts.push({ isActive: true });
     if (query.status === 'suspended') andParts.push({ isActive: false });
@@ -54,7 +57,9 @@ export class CustomerAdminService {
     if (query.cursor) {
       try {
         andParts.push(
-          adminCustomerKeysetAfter(decodeAdminCustomerCursor(query.cursor)) as Prisma.UserWhereInput,
+          adminCustomerKeysetAfter(
+            decodeAdminCustomerCursor(query.cursor),
+          ) as Prisma.UserWhereInput,
         );
       } catch {
         throw new BadRequestException({

@@ -1,9 +1,5 @@
 import assert from 'node:assert/strict';
-import {
-  HOLD_ORDER_STATUSES,
-  isHoldOrderStatus,
-  sumHoldQuantity,
-} from './inventory-reservations';
+import { HOLD_ORDER_STATUSES, isHoldOrderStatus, sumHoldQuantity } from './inventory-reservations';
 
 assert.deepEqual([...HOLD_ORDER_STATUSES], ['PENDING_PAYMENT']);
 assert.equal(isHoldOrderStatus('PENDING_PAYMENT'), true);

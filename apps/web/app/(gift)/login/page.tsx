@@ -74,9 +74,12 @@ function LoginForm() {
       )
     ) {
       // Finance: commerce reports if they open ops; editorial remains default for content roles
-      if (roles.includes('FINANCE') && !roles.some((r) =>
-        ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER'].includes(r),
-      )) {
+      if (
+        roles.includes('FINANCE') &&
+        !roles.some((r) =>
+          ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER'].includes(r),
+        )
+      ) {
         router.push('/admin/commerce/reports');
       } else {
         router.push('/admin/editorial');
@@ -181,9 +184,12 @@ function LoginForm() {
       {SHOW_DEMO_LOGINS ? (
         <div className="clay-card space-y-gs-3 p-gs-4" data-testid="demo-login-panel">
           <div>
-            <p className="text-body font-semibold text-foreground">Demo accounts — one click fill</p>
+            <p className="text-body font-semibold text-foreground">
+              Demo accounts — one click fill
+            </p>
             <p className="mt-gs-1 text-caption opacity-70">
-              Password for all: <code className="rounded bg-muted px-1 py-gs-1">{DEMO_PASSWORD}</code>
+              Password for all:{' '}
+              <code className="rounded bg-muted px-1 py-gs-1">{DEMO_PASSWORD}</code>
             </p>
           </div>
           <ul className="grid gap-gs-2 sm:grid-cols-2">
@@ -196,7 +202,9 @@ function LoginForm() {
                   data-testid={`demo-fill-${u.email.split('@')[0]}`}
                 >
                   <span className="text-caption font-semibold text-primary">{u.note}</span>
-                  <span className="mt-gs-1 truncate font-mono text-[11px] opacity-80">{u.email}</span>
+                  <span className="mt-gs-1 truncate font-mono text-[11px] opacity-80">
+                    {u.email}
+                  </span>
                 </button>
               </li>
             ))}

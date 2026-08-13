@@ -220,8 +220,7 @@
   --clay-shadow-hover:
     0 1px 0 color-mix(in srgb, var(--blog-white) 95%, transparent) inset,
     0 16px 36px color-mix(in srgb, var(--blog-ink) 12%, transparent);
-  --clay-shadow-press:
-    0 2px 6px color-mix(in srgb, var(--blog-ink) 10%, transparent) inset;
+  --clay-shadow-press: 0 2px 6px color-mix(in srgb, var(--blog-ink) 10%, transparent) inset;
   --shadow-brand: 0 8px 28px color-mix(in srgb, var(--blog-accent) 16%, transparent);
   --shadow-soft: 0 10px 36px color-mix(in srgb, var(--blog-ink) 8%, transparent);
   --shadow-card: var(--clay-shadow);
@@ -298,7 +297,8 @@
 
   --clay-shadow: 0 8px 24px color-mix(in srgb, var(--creator-forest-deep) 8%, transparent);
   --clay-shadow-hover: 0 14px 32px color-mix(in srgb, var(--creator-forest-deep) 12%, transparent);
-  --clay-shadow-press: 0 2px 6px color-mix(in srgb, var(--creator-forest-deep) 10%, transparent) inset;
+  --clay-shadow-press: 0 2px 6px color-mix(in srgb, var(--creator-forest-deep) 10%, transparent)
+    inset;
   --shadow-brand: 0 8px 28px color-mix(in srgb, var(--creator-forest) 18%, transparent);
   --shadow-soft: 0 10px 36px color-mix(in srgb, var(--creator-forest-deep) 8%, transparent);
   --shadow-card: var(--clay-shadow);
@@ -341,7 +341,11 @@
   --background: color-mix(
     in srgb,
     var(--inabiya-heading) 3.5%,
-    color-mix(in srgb, var(--inabiya-blush) 16%, color-mix(in srgb, var(--inabiya-yellow) 5%, white))
+    color-mix(
+      in srgb,
+      var(--inabiya-blush) 16%,
+      color-mix(in srgb, var(--inabiya-yellow) 5%, white)
+    )
   );
   --surface: var(--inabiya-white);
   --surface-soft: color-mix(in srgb, var(--inabiya-blush) 8%, white);
@@ -354,7 +358,11 @@
   --border-focus: color-mix(in srgb, var(--inabiya-pink) 45%, transparent);
   --border: var(--border-subtle);
 
-  --muted: color-mix(in srgb, var(--inabiya-blush) 6%, color-mix(in srgb, var(--inabiya-heading) 3%, white));
+  --muted: color-mix(
+    in srgb,
+    var(--inabiya-blush) 6%,
+    color-mix(in srgb, var(--inabiya-heading) 3%, white)
+  );
   --muted-foreground: color-mix(in srgb, var(--inabiya-body) 88%, #2d2640);
 
   --input-bg: var(--inabiya-white);
@@ -1216,7 +1224,8 @@ h3 {
       box-shadow 160ms ease;
   }
 
-  :is([data-theme='gift'], [data-theme='blog']) .clay-input:hover:not(:disabled):not([aria-invalid='true']) {
+  :is([data-theme='gift'], [data-theme='blog'])
+    .clay-input:hover:not(:disabled):not([aria-invalid='true']) {
     border-color: var(--border-strong);
   }
 
@@ -1290,7 +1299,11 @@ h3 {
   [data-theme='blog'] .blog-shell {
     background:
       radial-gradient(90% 60% at 0% 0%, var(--blog-wash) 0%, transparent 50%),
-      radial-gradient(70% 50% at 100% 10%, color-mix(in srgb, var(--blog-highlight) 55%, transparent) 0%, transparent 45%),
+      radial-gradient(
+        70% 50% at 100% 10%,
+        color-mix(in srgb, var(--blog-highlight) 55%, transparent) 0%,
+        transparent 45%
+      ),
       var(--blog-paper);
     color: var(--foreground);
     min-height: 100vh;
@@ -2200,8 +2213,16 @@ h3 {
 
   [data-theme='gift'] .gift-footer-dark {
     background:
-      radial-gradient(ellipse 80% 60% at 12% 0%, color-mix(in srgb, var(--inabiya-pink) 18%, transparent), transparent 55%),
-      radial-gradient(ellipse 50% 40% at 92% 100%, color-mix(in srgb, var(--inabiya-lavender) 22%, transparent), transparent 50%),
+      radial-gradient(
+        ellipse 80% 60% at 12% 0%,
+        color-mix(in srgb, var(--inabiya-pink) 18%, transparent),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse 50% 40% at 92% 100%,
+        color-mix(in srgb, var(--inabiya-lavender) 22%, transparent),
+        transparent 50%
+      ),
       #1a1228;
     color: #f8f4fb;
   }
@@ -2715,7 +2736,8 @@ h3 {
     overflow-x: clip;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: var(--space-3) var(--gift-pad-x) calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+    padding: var(--space-3) var(--gift-pad-x)
+      calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
@@ -3373,7 +3395,9 @@ h3 {
     font-weight: 600;
     color: #fff;
     text-decoration: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
   }
 
   [data-theme='gift'] .gift-recipient-card--pink .gift-recipient-card__cta,
@@ -3468,7 +3492,9 @@ h3 {
     background: #fff;
     border: 1px solid var(--border-subtle);
     box-shadow: var(--clay-shadow);
-    transition: transform 0.28s var(--ease-standard, ease), box-shadow 0.28s var(--ease-standard, ease);
+    transition:
+      transform 0.28s var(--ease-standard, ease),
+      box-shadow 0.28s var(--ease-standard, ease);
   }
 
   [data-theme='gift'] .gift-category-card:hover .gift-category-card__sticker {
@@ -3585,7 +3611,9 @@ h3 {
     gap: 0.35rem;
     overflow: visible;
     padding: 0.42rem 0.95rem;
-    transition: background 0.18s var(--ease-standard, ease), box-shadow 0.18s var(--ease-standard, ease);
+    transition:
+      background 0.18s var(--ease-standard, ease),
+      box-shadow 0.18s var(--ease-standard, ease);
   }
 
   [data-theme='gift'] .gift-category-card:hover .gift-pill-overlap {
@@ -3627,13 +3655,7 @@ h3 {
     padding: var(--space-5);
     border-radius: calc(var(--radius-card) + 4px);
     /* Deeper mid-tones so white copy stays readable across pink → sky */
-    background: linear-gradient(
-      125deg,
-      #e65688 0%,
-      #d96ba8 38%,
-      #7aa8d4 72%,
-      #4facc0 100%
-    );
+    background: linear-gradient(125deg, #e65688 0%, #d96ba8 38%, #7aa8d4 72%, #4facc0 100%);
     box-shadow: var(--clay-shadow);
   }
 
@@ -4090,7 +4112,6 @@ h3 {
     color: var(--inabiya-body);
     opacity: 0.75;
   }
-
 
   /* Brand strip — hierarchy + breathing room below USP */
   [data-theme='gift'] .gift-brand-strip {

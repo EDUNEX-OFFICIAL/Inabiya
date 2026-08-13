@@ -1,8 +1,7 @@
 /** Product PDP video URL classification (YouTube or direct file). */
 
 export type ProductVideoSource =
-  | { kind: 'youtube'; id: string; url: string }
-  | { kind: 'direct'; url: string };
+  { kind: 'youtube'; id: string; url: string } | { kind: 'direct'; url: string };
 
 const YOUTUBE_HOSTS = new Set([
   'youtube.com',
@@ -54,8 +53,8 @@ function extractYoutubeId(raw: string): string | null {
 
   const parts = url.pathname.split('/').filter(Boolean);
   // /embed/ID, /shorts/ID, /live/ID, /v/ID
-  const marker = parts.findIndex((p) =>
-    p === 'embed' || p === 'shorts' || p === 'live' || p === 'v',
+  const marker = parts.findIndex(
+    (p) => p === 'embed' || p === 'shorts' || p === 'live' || p === 'v',
   );
   if (marker >= 0 && parts[marker + 1]) {
     const id = parts[marker + 1]!;

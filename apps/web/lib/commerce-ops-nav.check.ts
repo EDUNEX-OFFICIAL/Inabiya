@@ -36,9 +36,36 @@ assert.equal(canAccessCommerceOps(['SUPPORT']), true);
 assert.equal(defaultOpsLanding(['SUPPORT']), '/admin/commerce/support');
 assert.equal(defaultOpsLanding(['FINANCE']), '/admin/commerce/reports');
 
-assert.equal(isNavItemActive('/admin/commerce', { id: 'd', label: 'D', href: '/admin/commerce', roles: ['COMMERCE_ADMIN'], match: 'exact' }), true);
-assert.equal(isNavItemActive('/admin/commerce/orders', { id: 'd', label: 'D', href: '/admin/commerce', roles: ['COMMERCE_ADMIN'], match: 'exact' }), false);
-assert.equal(isNavItemActive('/admin/commerce/orders/abc', { id: 'o', label: 'O', href: '/admin/commerce/orders', roles: ['COMMERCE_ADMIN'], match: 'prefix' }), true);
+assert.equal(
+  isNavItemActive('/admin/commerce', {
+    id: 'd',
+    label: 'D',
+    href: '/admin/commerce',
+    roles: ['COMMERCE_ADMIN'],
+    match: 'exact',
+  }),
+  true,
+);
+assert.equal(
+  isNavItemActive('/admin/commerce/orders', {
+    id: 'd',
+    label: 'D',
+    href: '/admin/commerce',
+    roles: ['COMMERCE_ADMIN'],
+    match: 'exact',
+  }),
+  false,
+);
+assert.equal(
+  isNavItemActive('/admin/commerce/orders/abc', {
+    id: 'o',
+    label: 'O',
+    href: '/admin/commerce/orders',
+    roles: ['COMMERCE_ADMIN'],
+    match: 'prefix',
+  }),
+  true,
+);
 
 const crumbs = buildOpsBreadcrumbs('/admin/commerce/orders/xyz');
 assert.equal(crumbs[0]?.label, 'Commerce Ops');

@@ -101,7 +101,9 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
           />
         </div>
       </div>
-      <div className={`gift-cta-host flex min-w-0 flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}>
+      <div
+        className={`gift-cta-host flex min-w-0 flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}
+      >
         {product.isReadyMadeHamper && !hideHamperChip ? (
           <span className="clay-chip w-fit text-caption">Ready-made hamper</span>
         ) : null}

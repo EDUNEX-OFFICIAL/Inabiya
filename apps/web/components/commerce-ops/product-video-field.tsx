@@ -2,10 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Upload, Images, Trash2, X } from 'lucide-react';
-import {
-  MediaLibraryModal,
-  uploadCmsMediaFile,
-} from '@/components/cms/cms-media-field';
+import { MediaLibraryModal, uploadCmsMediaFile } from '@/components/cms/cms-media-field';
 import { OpsIconButton, OpsIconFileLabel } from '@/components/commerce-ops/ops-icon-action';
 import { isValidProductVideoUrl, parseProductVideoUrl } from '@/lib/product-video';
 

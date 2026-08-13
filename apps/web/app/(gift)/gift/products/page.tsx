@@ -2,10 +2,7 @@ import Link from 'next/link';
 import { ClayProductCard } from '@/components/gift/clay-product-card';
 import { TrackView } from '@/components/track-view';
 import { fetchCatalog, type CatalogProduct } from '@/lib/catalog';
-import {
-  collectionPlpHref,
-  fetchCatalogCollections,
-} from '@/lib/catalog-collections';
+import { collectionPlpHref, fetchCatalogCollections } from '@/lib/catalog-collections';
 
 export const dynamic = 'force-dynamic';
 

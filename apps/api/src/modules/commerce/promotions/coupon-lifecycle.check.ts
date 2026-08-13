@@ -1,9 +1,5 @@
 import assert from 'node:assert/strict';
-import {
-  computeDiscountPaise,
-  couponLifecycle,
-  eligibleSubtotalPaise,
-} from './coupon-lifecycle';
+import { computeDiscountPaise, couponLifecycle, eligibleSubtotalPaise } from './coupon-lifecycle';
 
 const now = new Date('2026-07-29T12:00:00Z');
 
@@ -41,17 +37,11 @@ assert.equal(
   'expired',
 );
 assert.equal(
-  couponLifecycle(
-    { active: true, startsAt: null, expiresAt: null, maxUses: 5, usedCount: 5 },
-    now,
-  ),
+  couponLifecycle({ active: true, startsAt: null, expiresAt: null, maxUses: 5, usedCount: 5 }, now),
   'exhausted',
 );
 assert.equal(
-  couponLifecycle(
-    { active: true, startsAt: null, expiresAt: null, maxUses: 5, usedCount: 1 },
-    now,
-  ),
+  couponLifecycle({ active: true, startsAt: null, expiresAt: null, maxUses: 5, usedCount: 1 }, now),
   'active',
 );
 

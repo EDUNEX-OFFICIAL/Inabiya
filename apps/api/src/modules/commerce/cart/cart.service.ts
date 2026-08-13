@@ -13,7 +13,11 @@ const cartInclude = {
           product: {
             include: {
               collections: true,
-              media: { where: { kind: 'IMAGE' as const }, orderBy: { sortOrder: 'asc' as const }, take: 1 },
+              media: {
+                where: { kind: 'IMAGE' as const },
+                orderBy: { sortOrder: 'asc' as const },
+                take: 1,
+              },
             },
           },
           inventory: true,

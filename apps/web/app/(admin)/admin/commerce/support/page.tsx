@@ -3,16 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Gift,
-  LifeBuoy,
-  Package,
-  RefreshCw,
-  Search,
-  ShoppingBag,
-  Users,
-  X,
-} from 'lucide-react';
+import { Gift, LifeBuoy, Package, RefreshCw, Search, ShoppingBag, Users, X } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
@@ -283,7 +274,11 @@ function SupportLookupInner() {
               <X className="h-3.5 w-3.5" aria-hidden />
             </button>
           ) : null}
-          <button type="submit" className="clay-btn min-h-8 shrink-0 px-3 text-sm" disabled={lookingUp}>
+          <button
+            type="submit"
+            className="clay-btn min-h-8 shrink-0 px-3 text-sm"
+            disabled={lookingUp}
+          >
             {lookingUp ? '…' : 'Lookup'}
           </button>
         </div>
