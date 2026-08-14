@@ -18,11 +18,13 @@ import {
   apiAuth,
   clearSession,
   getStoredAccessToken,
+  getStoredUser,
   isUnauthorizedError,
   loginUrl,
 } from '@/lib/auth-client';
 import { formatInr, type CatalogProduct } from '@/lib/catalog';
 import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
+import { canMutateCommerceFinance } from '@/lib/commerce-ops-nav';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 import { OpsSortTh } from '@/components/commerce-ops/ops-sort-th';
@@ -211,6 +213,7 @@ function ProductsDeskInner() {
     [searchParams],
   );
   const cursorParam = searchParams.get('cursor') ?? '';
+  const canFinance = canMutateCommerceFinance(getStoredUser()?.roles ?? []);
 
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -520,9 +523,11 @@ function ProductsDeskInner() {
                 Merch
               </Link>
             </div>
-            <Link href="/admin/commerce/products/new" className="clay-btn shrink-0 text-sm">
-              New product
-            </Link>
+            {canFinance ? (
+              <Link href="/admin/commerce/products/new" className="clay-btn shrink-0 text-sm">
+                New product
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -845,9 +850,11 @@ function ProductsDeskInner() {
           <p className="text-sm opacity-70">
             {filterActive ? 'No products match this filter.' : 'No products yet.'}
           </p>
-          <Link href="/admin/commerce/products/new" className="clay-btn text-sm">
-            New product
-          </Link>
+          {canFinance ? (
+            <Link href="/admin/commerce/products/new" className="clay-btn text-sm">
+              New product
+            </Link>
+          ) : null}
         </div>
       ) : null}
 

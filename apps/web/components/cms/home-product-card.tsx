@@ -8,8 +8,7 @@ import { getStoredAccessToken } from '@/lib/auth-client';
 import { trackEvent } from '@/lib/analytics';
 import { ProductLabels } from '@/components/gift/product-labels';
 import { ProductBrandLine } from '@/components/gift/product-brand-line';
-import { ProductCardRating } from '@/components/gift/product-card-rating';
-import { ProductCardPrice } from '@/components/gift/product-card-price';
+import { ProductCardMeta } from '@/components/gift/product-card-meta';
 import { ProductCardWishlist } from '@/components/gift/product-card-wishlist';
 import { GiftResponsiveButton, GiftResponsiveLink } from '@/components/gift/gift-responsive-cta';
 import { HamperContentsTrigger } from '@/components/gift/hamper-contents-modal';
@@ -59,7 +58,9 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
     <ProductCardGallery media={product.media} title={product.title}>
       <div
         className={`group clay-card relative overflow-hidden ${
-          featured ? 'sm:grid sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]' : ''
+          featured
+            ? 'sm:grid sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]'
+            : 'flex h-full flex-col'
         }`}
       >
         <ProductCardHero
@@ -89,7 +90,7 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
               }
               placement="inline"
               max={1}
-              className="max-w-[65%] justify-end"
+              className="max-w-[85%] justify-end"
             />
           </div>
           <ProductCardWishlist
@@ -98,58 +99,55 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
           />
         </ProductCardHero>
         <div
-          className={`gift-cta-host flex min-w-0 flex-col justify-center p-gs-4 ${featured ? 'sm:p-gs-6' : ''}`}
+          className={`gift-cta-host flex min-w-0 flex-col p-gs-4 ${
+            featured ? 'justify-center sm:p-gs-6' : 'flex-1'
+          }`}
         >
-          {product.isReadyMadeHamper && !hideHamperChip ? (
-            <span className="clay-chip w-fit text-caption">Ready-made hamper</span>
-          ) : null}
-          <Link
-            href={`/gift/products/${product.slug}`}
-            className={`font-medium leading-snug text-foreground transition-colors hover:text-primary ${
-              product.isReadyMadeHamper && !hideHamperChip
-                ? featured
-                  ? 'mt-gs-3 gift-h2'
-                  : 'mt-gs-2'
-                : featured
-                  ? 'gift-h2'
-                  : ''
+          <div className="flex min-w-0 flex-col gap-gs-1">
+            {product.isReadyMadeHamper && !hideHamperChip ? (
+              <span className="clay-chip w-fit text-caption">Ready-made hamper</span>
+            ) : null}
+            <Link
+              href={`/gift/products/${product.slug}`}
+              className={`line-clamp-2 font-medium leading-snug text-foreground transition-colors hover:text-primary ${
+                featured ? 'gift-h2' : ''
+              }`}
+            >
+              {product.title}
+            </Link>
+            <ProductBrandLine
+              brands={
+                product.brandNames?.length
+                  ? product.brandNames
+                  : product.brandName
+                    ? [product.brandName]
+                    : []
+              }
+              className="min-w-0 truncate !text-[0.625rem] sm:!text-caption"
+            />
+            <ProductCardMeta
+              fromPricePaise={product.fromPricePaise}
+              salePricePaise={product.salePricePaise}
+              compareAtPaise={product.fromCompareAtPaise}
+              fromPrefix
+              rating={product.averageRating}
+              count={product.reviewCount}
+              className={featured ? 'mt-gs-1' : ''}
+              priceClassName={featured ? 'text-h2 text-foreground' : 'text-body text-foreground'}
+            />
+            {product.isReadyMadeHamper ? (
+              <HamperContentsTrigger
+                product={product}
+                variantId={canQuickAdd ? product.quickAddVariantId : null}
+              />
+            ) : null}
+            <ProductCardThumbs className={featured ? 'mt-gs-2' : 'mt-gs-1'} />
+          </div>
+          <div
+            className={`flex flex-nowrap items-center gap-gs-2 ${
+              featured ? 'mt-gs-4' : 'mt-auto pt-gs-3'
             }`}
           >
-            {product.title}
-          </Link>
-          <ProductBrandLine
-            brands={
-              product.brandNames?.length
-                ? product.brandNames
-                : product.brandName
-                  ? [product.brandName]
-                  : []
-            }
-            className={`!text-caption ${featured ? 'mt-gs-2' : 'mt-gs-1'}`}
-          />
-          <ProductCardRating
-            rating={product.averageRating}
-            count={product.reviewCount}
-            className={featured ? 'mt-gs-2' : 'mt-gs-1'}
-          />
-          <ProductCardPrice
-            fromPricePaise={product.fromPricePaise}
-            salePricePaise={product.salePricePaise}
-            compareAtPaise={product.fromCompareAtPaise}
-            fromPrefix
-            className={`font-semibold text-foreground ${
-              featured ? 'mt-gs-3 text-h2' : 'mt-gs-2 text-body'
-            }`}
-          />
-          {product.isReadyMadeHamper ? (
-            <HamperContentsTrigger
-              product={product}
-              variantId={canQuickAdd ? product.quickAddVariantId : null}
-              className={featured ? 'mt-gs-2' : 'mt-gs-1'}
-            />
-          ) : null}
-          <ProductCardThumbs className={featured ? 'mt-gs-3' : 'mt-gs-2'} />
-          <div className="mt-gs-4 flex flex-nowrap items-center gap-gs-2">
             <GiftResponsiveLink
               href={`/gift/products/${product.slug}`}
               label="View gift"

@@ -1,4 +1,20 @@
 import { z } from 'zod';
+import { sanitizeArticleHtml } from './html-sanitize';
+import { optionalSafeStorefrontHrefSchema, safeStorefrontHrefSchema } from './safe-href';
+
+export {
+  isProbablyHtml,
+  normalizeArticleBody,
+  sanitizeArticleHtml,
+  sanitizeArticleHtmlLite,
+} from './html-sanitize';
+export {
+  isSafeStorefrontHref,
+  optionalSafeStorefrontHrefSchema,
+  safeHrefOrHash,
+  safeNextPath,
+  safeStorefrontHrefSchema,
+} from './safe-href';
 
 /** Shared health/version response shapes */
 export const healthResponseSchema = z.object({
@@ -167,7 +183,11 @@ export const productFaqItemSchema = z.object({
 export const productSeoSectionSchema = z.object({
   /** Empty when body is a single rich-text HTML document. */
   heading: z.string().max(200).optional().default(''),
-  bodyText: z.string().min(1).max(50000),
+  bodyText: z
+    .string()
+    .min(1)
+    .max(50000)
+    .transform((s) => (s.trim().startsWith('<') ? sanitizeArticleHtml(s) : s)),
 });
 
 export const productHamperItemSchema = z.object({
@@ -831,7 +851,10 @@ export const giftBoxCreateBodySchema = z.object({
 export const giftBoxAddItemBodySchema = z.object({
   variantId: z.string().uuid(),
   quantity: z.number().int().min(1).max(99).default(1),
-  personalization: z.record(z.string()).optional(),
+  personalization: z
+    .record(z.string().max(80), z.string().max(200))
+    .refine((obj) => Object.keys(obj).length <= 20, { message: 'Too many personalization fields' })
+    .optional(),
 });
 
 export const giftingInquiryBodySchema = z.object({
@@ -870,7 +893,10 @@ export const addressBodySchema = z.object({
 export const cartAddItemBodySchema = z.object({
   variantId: z.string().uuid(),
   quantity: z.number().int().min(1).max(99).default(1),
-  personalization: z.record(z.string()).optional(),
+  personalization: z
+    .record(z.string().max(80), z.string().max(200))
+    .refine((obj) => Object.keys(obj).length <= 20, { message: 'Too many personalization fields' })
+    .optional(),
 });
 
 export const cartUpdateItemBodySchema = z.object({
@@ -884,6 +910,8 @@ export const cartCouponBodySchema = z.object({
 export const checkoutPreviewBodySchema = z.object({
   shippingMethod: z.enum(['STANDARD', 'EXPRESS']),
   couponCode: z.string().max(40).optional(),
+  /** When set, preview/pay only this variant; other cart lines stay. */
+  buyNowVariantId: z.string().uuid().optional(),
 });
 
 export const checkoutPlaceOrderBodySchema = z.object({
@@ -894,6 +922,7 @@ export const checkoutPlaceOrderBodySchema = z.object({
   giftWrap: z.boolean().optional(),
   couponCode: z.string().max(40).optional(),
   saveAddress: z.boolean().optional(),
+  buyNowVariantId: z.string().uuid().optional(),
 });
 
 export const mockPaymentWebhookBodySchema = z.object({
@@ -1206,7 +1235,11 @@ export const createArticleBodySchema = z.object({
 
 export const updateArticleBodySchema = z.object({
   title: z.string().trim().min(3).max(200).optional(),
-  body: z.string().max(200_000).optional(),
+  body: z
+    .string()
+    .max(200_000)
+    .optional()
+    .transform((s) => (s == null ? s : sanitizeArticleHtml(s))),
   assigneeId: z.string().uuid().nullable().optional(),
   dueAt: z.string().min(8).max(40).nullable().optional(),
   /** Cover / OG image — media library, https, or same-origin /gift/media/… (incl. SVG). */
@@ -1427,9 +1460,9 @@ const heroPropsSchema = z.object({
   headline: z.string().min(1).max(200),
   subcopy: z.string().max(1000).optional(),
   ctaLabel: z.string().max(80).optional(),
-  ctaHref: z.string().max(500).optional(),
+  ctaHref: optionalSafeStorefrontHrefSchema,
   ctaLabel2: z.string().max(80).optional(),
-  ctaHref2: z.string().max(500).optional(),
+  ctaHref2: optionalSafeStorefrontHrefSchema,
   /** Pipe/middot-separated trust chips, e.g. "A · B · C" */
   trustLine: z.string().max(400).optional(),
   eyebrow: z.string().max(80).optional(),
@@ -1438,7 +1471,7 @@ const heroPropsSchema = z.object({
 });
 
 const richTextPropsSchema = z.object({
-  html: z.string().min(1).max(50_000),
+  html: z.string().min(1).max(50_000).transform(sanitizeArticleHtml),
 });
 
 const imagePropsSchema = z.object({
@@ -1471,13 +1504,13 @@ const productGridPropsSchema = z.object({
   /** Days window when source=new (default 30). */
   newWithinDays: z.number().int().min(1).max(90).optional(),
   limit: z.number().int().min(1).max(24).optional(),
-  seeAllHref: z.string().max(500).optional(),
+  seeAllHref: optionalSafeStorefrontHrefSchema,
   seeAllLabel: z.string().max(80).optional(),
 });
 
 const ctaPropsSchema = z.object({
   label: z.string().min(1).max(80),
-  href: z.string().min(1).max(500),
+  href: safeStorefrontHrefSchema,
   variant: z.enum(['primary', 'secondary']).optional(),
   title: z.string().max(120).optional(),
   body: z.string().max(500).optional(),
@@ -1512,7 +1545,7 @@ const brandStripPropsSchema = z.object({
 
 const recipientCardSchema = z.object({
   label: z.string().min(1).max(40),
-  href: z.string().min(1).max(500),
+  href: safeStorefrontHrefSchema,
   eyebrow: z.string().max(80).optional(),
   blurb: z.string().max(200).optional(),
   cta: z.string().max(80).optional(),
@@ -1533,7 +1566,7 @@ const articleTeasersPropsSchema = z.object({
   title: z.string().max(120).optional(),
   subtitle: z.string().max(300).optional(),
   limit: z.number().int().min(1).max(12).optional(),
-  seeAllHref: z.string().max(500).optional(),
+  seeAllHref: optionalSafeStorefrontHrefSchema,
   seeAllLabel: z.string().max(80).optional(),
   /** Default: hide section when no published articles */
   showEmptyPlaceholder: z.boolean().optional(),
@@ -1541,7 +1574,7 @@ const articleTeasersPropsSchema = z.object({
 
 const discoveryChipSchema = z.object({
   label: z.string().min(1).max(40),
-  href: z.string().min(1).max(500),
+  href: safeStorefrontHrefSchema,
   imageUrl: cmsMediaUrlSchema.optional(),
   imageAlt: z.string().max(200).optional(),
 });
@@ -1550,7 +1583,7 @@ const discoveryChipsPropsSchema = z.object({
   overline: z.string().max(80).optional(),
   title: z.string().max(120).optional(),
   subtitle: z.string().max(300).optional(),
-  seeAllHref: z.string().max(500).optional(),
+  seeAllHref: optionalSafeStorefrontHrefSchema,
   seeAllLabel: z.string().max(80).optional(),
   items: z.array(discoveryChipSchema).min(1).max(8),
 });
@@ -1565,7 +1598,7 @@ const buildYourBoxTeaserPropsSchema = z.object({
   title: z.string().min(1).max(120),
   body: z.string().max(400).optional(),
   ctaLabel: z.string().max(80).optional(),
-  ctaHref: z.string().max(500).optional(),
+  ctaHref: optionalSafeStorefrontHrefSchema,
   /** Visual for the right panel — JPEG/PNG/WebP/GIF/AVIF/SVG via URL, media library, or /public path. */
   imageUrl: cmsMediaUrlSchema.optional(),
   imageAlt: z.string().max(200).optional(),
@@ -1576,7 +1609,7 @@ const buildYourBoxTeaserPropsSchema = z.object({
 
 const footerLinkSchema = z.object({
   label: z.string().min(1).max(80),
-  href: z.string().min(1).max(500),
+  href: safeStorefrontHrefSchema,
 });
 
 const footerColumnSchema = z.object({
@@ -1586,28 +1619,41 @@ const footerColumnSchema = z.object({
 
 const footerSocialLinkSchema = z.object({
   label: z.string().min(1).max(40),
-  href: z.string().min(1).max(500),
+  href: safeStorefrontHrefSchema,
+  network: z.string().max(40).optional(),
+});
+
+const footerReachLinkSchema = z.object({
+  label: z.string().min(1).max(80),
+  href: safeStorefrontHrefSchema,
   network: z.string().max(40).optional(),
 });
 
 const footerPropsSchema = z.object({
   brandName: z.string().max(80).optional(),
+  brandHref: optionalSafeStorefrontHrefSchema,
   tagline: z.string().max(300).optional(),
   columns: z.array(footerColumnSchema).max(4).optional(),
   socialLinks: z.array(footerSocialLinkSchema).max(8).optional(),
+  reachTitle: z.string().max(80).optional(),
+  reachLinks: z.array(footerReachLinkSchema).max(8).optional(),
+  legalLinks: z.array(footerLinkSchema).max(8).optional(),
+  copyright: z.string().max(200).optional(),
+  newsletterTitle: z.string().max(80).optional(),
+  newsletterHint: z.string().max(200).optional(),
   showNewsletter: z.boolean().optional(),
 });
 
 const saleStripPropsSchema = z.object({
   text: z.string().min(1).max(200),
   ctaLabel: z.string().max(80).optional(),
-  ctaHref: z.string().max(500).optional(),
+  ctaHref: optionalSafeStorefrontHrefSchema,
   tone: z.enum(['blush', 'mint', 'sky', 'soft']).optional(),
 });
 
 const faqItemSchema = z.object({
   question: z.string().trim().min(1).max(300),
-  answerHtml: z.string().trim().min(1).max(10_000),
+  answerHtml: z.string().trim().min(1).max(10_000).transform(sanitizeArticleHtml),
 });
 
 const faqPropsSchema = z.object({
@@ -1621,7 +1667,7 @@ const exclusiveOfferCardSchema = z.object({
   subtitle: z.string().max(120).optional(),
   body: z.string().max(400).optional(),
   ctaLabel: z.string().min(1).max(80),
-  ctaHref: z.string().min(1).max(500),
+  ctaHref: safeStorefrontHrefSchema,
   tone: z.enum(['blush', 'sky', 'lavender']).optional(),
   icon: z.enum(['heart', 'briefcase', 'box']).optional(),
 });
@@ -1654,7 +1700,7 @@ const countdownPropsSchema = z.object({
   title: z.string().max(160).optional(),
   expiredLabel: z.string().max(160).optional(),
   ctaLabel: z.string().max(80).optional(),
-  ctaHref: z.string().max(500).optional(),
+  ctaHref: optionalSafeStorefrontHrefSchema,
 });
 
 export const pageBlockInputSchema = z.discriminatedUnion('type', [
@@ -1714,22 +1760,32 @@ export type CreateMarketingPageBody = z.infer<typeof createMarketingPageBodySche
 export type UpdateMarketingPageBody = z.infer<typeof updateMarketingPageBodySchema>;
 
 const giftNavLinkSchema = z.object({
-  href: z.string().min(1).max(500),
+  href: safeStorefrontHrefSchema,
   label: z.string().min(1).max(80),
+  /** Mega/drawer column heading (e.g. Shop, Occasion, For baby). */
+  group: z.string().max(40).optional(),
+  headline: z.string().max(120).optional(),
+  body: z.string().max(300).optional(),
+  ctaLabel: z.string().max(80).optional(),
+  imageSrc: z.string().max(500).optional(),
 });
 
 const giftMegaPanelSchema = z.object({
   headline: z.string().max(120).optional(),
   body: z.string().max(300).optional(),
-  ctaHref: z.string().max(500).optional(),
+  ctaHref: optionalSafeStorefrontHrefSchema,
   ctaLabel: z.string().max(80).optional(),
   imageSrc: z.string().max(500).optional(),
 });
 
 /** Soft Gift global chrome (nav + default footer) — CommerceSetting JSON */
 export const giftChromeBodySchema = z.object({
-  shopLinks: z.array(giftNavLinkSchema).max(16).optional(),
-  forWhomLinks: z.array(giftNavLinkSchema).max(16).optional(),
+  shopLabel: z.string().max(40).optional(),
+  forWhomLabel: z.string().max(40).optional(),
+  journalLabel: z.string().max(40).optional(),
+  journalHref: optionalSafeStorefrontHrefSchema,
+  shopLinks: z.array(giftNavLinkSchema).max(32).optional(),
+  forWhomLinks: z.array(giftNavLinkSchema).max(32).optional(),
   shopMega: giftMegaPanelSchema.optional(),
   forWhomMega: giftMegaPanelSchema.optional(),
   footer: footerPropsSchema.optional(),

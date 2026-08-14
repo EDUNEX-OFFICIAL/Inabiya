@@ -1,35 +1,22 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import type { AccessPayload } from './auth.service';
-import { extractAccessToken, type AuthedRequest } from './jwt-auth.guard';
-
-function readAccessUser(
-  jwt: JwtService,
-  token: string,
-): { id: string; email: string; roles: AccessPayload['roles'] } | null {
-  const secret = process.env.JWT_ACCESS_SECRET;
-  if (!secret) return null;
-  const payload = jwt.verify<AccessPayload>(token, { secret });
-  return {
-    id: payload.sub,
-    email: payload.email,
-    roles: payload.roles ?? [],
-  };
-}
+import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { extractAccessToken, hydrateAccessUser, type AuthedRequest } from './jwt-auth.guard';
 
 /** Sets req.user when a valid token is present; never blocks anonymous requests. */
 @Injectable()
 export class OptionalJwtAuthGuard implements CanActivate {
-  constructor(private readonly jwt: JwtService) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthedRequest>();
     const token = extractAccessToken(req);
     if (!token) return true;
-
     try {
-      const user = readAccessUser(this.jwt, token);
-      if (user) req.user = user;
+      req.user = await hydrateAccessUser(this.jwt, this.prisma, token);
     } catch {
       /* invalid token treated as guest */
     }
@@ -43,16 +30,17 @@ export class OptionalJwtAuthGuard implements CanActivate {
  */
 @Injectable()
 export class OptionalJwtRefreshGuard implements CanActivate {
-  constructor(private readonly jwt: JwtService) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthedRequest>();
     const token = extractAccessToken(req);
     if (!token) return true;
-
     try {
-      const user = readAccessUser(this.jwt, token);
-      if (user) req.user = user;
+      req.user = await hydrateAccessUser(this.jwt, this.prisma, token);
       return true;
     } catch {
       throw new UnauthorizedException({

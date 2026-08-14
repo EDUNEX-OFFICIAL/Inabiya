@@ -3,16 +3,15 @@
 # Usage: bash scripts/smoke-cancel-refund.sh
 set -euo pipefail
 API="${API_URL:-http://127.0.0.1:4001}/api/v1"
+CSRF='X-Requested-With: InabiyaWeb'
+JAR=$(mktemp)
+trap 'rm -f "$JAR"' EXIT
 
-login() {
-  curl -sf "$API/auth/login" -H 'content-type: application/json' \
-    -d "{\"email\":\"$1\",\"password\":\"Password123!\"}" \
-    | python3 -c 'import sys,json; print(json.load(sys.stdin)["tokens"]["accessToken"])'
-}
+curl -sf -c "$JAR" -b "$JAR" "$API/auth/login" \
+  -H 'content-type: application/json' -H "$CSRF" \
+  -d '{"email":"commerce@test.inabiya","password":"Password123!"}' >/dev/null
 
-COMMERCE_TOKEN=$(login commerce@test.inabiya)
-
-ORDER_ID=$(curl -sf "$API/admin/orders" -H "authorization: Bearer $COMMERCE_TOKEN" \
+ORDER_ID=$(curl -sf -b "$JAR" "$API/admin/orders" \
   | python3 -c '
 import sys,json
 rows=json.load(sys.stdin)
@@ -26,9 +25,9 @@ if [[ -z "${ORDER_ID}" ]]; then
   exit 0
 fi
 
-BEFORE=$(curl -sf "$API/admin/orders/$ORDER_ID" -H "authorization: Bearer $COMMERCE_TOKEN")
+BEFORE=$(curl -sf -b "$JAR" "$API/admin/orders/$ORDER_ID")
 echo "Canceling $ORDER_ID ..."
-AFTER=$(curl -sf -X POST "$API/admin/orders/$ORDER_ID/cancel" -H "authorization: Bearer $COMMERCE_TOKEN")
+AFTER=$(curl -sf -b "$JAR" -H "$CSRF" -X POST "$API/admin/orders/$ORDER_ID/cancel")
 
 python3 -c '
 import json,sys

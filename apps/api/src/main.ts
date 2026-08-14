@@ -13,14 +13,16 @@ async function bootstrap() {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  const origins = [
-    process.env.APP_URL,
-    'http://localhost:3001',
-    'http://127.0.0.1:3001',
-    'http://localhost:3101',
-    'http://127.0.0.1:3101',
-    ...extra,
-  ].filter(Boolean) as string[];
+  const localDev =
+    process.env.NODE_ENV === 'production'
+      ? []
+      : [
+          'http://localhost:3001',
+          'http://127.0.0.1:3001',
+          'http://localhost:3101',
+          'http://127.0.0.1:3101',
+        ];
+  const origins = [process.env.APP_URL, ...localDev, ...extra].filter(Boolean) as string[];
   app.enableCors({
     origin: origins,
     credentials: true,

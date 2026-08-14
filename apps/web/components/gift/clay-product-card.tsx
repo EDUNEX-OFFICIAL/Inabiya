@@ -9,8 +9,7 @@ import { formatInr, type CatalogProduct } from '@/lib/catalog';
 import { trackEvent } from '@/lib/analytics';
 import { ProductLabels } from '@/components/gift/product-labels';
 import { ProductBrandLine } from '@/components/gift/product-brand-line';
-import { ProductCardRating } from '@/components/gift/product-card-rating';
-import { ProductCardPrice } from '@/components/gift/product-card-price';
+import { ProductCardMeta } from '@/components/gift/product-card-meta';
 import { ProductCardWishlist } from '@/components/gift/product-card-wishlist';
 import { HamperContentsTrigger } from '@/components/gift/hamper-contents-modal';
 import {
@@ -96,7 +95,7 @@ export function ClayProductCard({
               labels={labels}
               placement="inline"
               max={2}
-              className="max-w-[65%] justify-end"
+              className="max-w-[85%] justify-end"
             />
           </div>
           {showQuickAdd && quickVariant ? (
@@ -116,31 +115,29 @@ export function ClayProductCard({
           />
         </ProductCardHero>
         <Link href={href} className="block min-w-0">
-          <div className="p-gs-4 pb-0">
-            <p className="font-medium leading-snug text-foreground">{product.title}</p>
-            <ProductBrandLine brands={brands} className="mt-gs-1 !text-caption" />
-            <ProductCardRating
+          <div className="flex flex-col gap-gs-1 p-gs-4 pb-0">
+            <p className="line-clamp-2 font-medium leading-snug text-foreground">{product.title}</p>
+            <ProductBrandLine
+              brands={brands}
+              className="min-w-0 truncate !text-[0.625rem] sm:!text-caption"
+            />
+            <ProductCardMeta
+              fromPricePaise={product.fromPricePaise}
+              salePricePaise={product.salePricePaise}
+              compareAtPaise={product.fromCompareAtPaise}
               rating={product.averageRating}
               count={product.reviewCount}
-              className="mt-gs-1"
+              extra={
+                isHamper && (product.hamperSavingsPaise ?? 0) > 0 ? (
+                  <span className="text-caption font-semibold text-[color:var(--danger)]">
+                    Save {formatInr(product.hamperSavingsPaise!)}
+                  </span>
+                ) : null
+              }
+              priceClassName="text-body text-primary"
             />
-            <div className="mt-gs-2 flex flex-wrap items-baseline gap-x-gs-2 gap-y-0">
-              <ProductCardPrice
-                fromPricePaise={product.fromPricePaise}
-                salePricePaise={product.salePricePaise}
-                compareAtPaise={product.fromCompareAtPaise}
-                className="text-body font-semibold text-primary"
-              />
-              {isHamper && (product.hamperSavingsPaise ?? 0) > 0 ? (
-                <span className="text-caption font-semibold text-[color:var(--danger)]">
-                  Save {formatInr(product.hamperSavingsPaise!)}
-                </span>
-              ) : null}
-            </div>
-            {out ? <p className="mt-gs-2 text-caption text-danger">Out of stock</p> : null}
-            {msg && msg !== 'Added' ? (
-              <p className="mt-gs-1 text-caption text-danger">{msg}</p>
-            ) : null}
+            {out ? <p className="text-caption text-danger">Out of stock</p> : null}
+            {msg && msg !== 'Added' ? <p className="text-caption text-danger">{msg}</p> : null}
           </div>
         </Link>
 

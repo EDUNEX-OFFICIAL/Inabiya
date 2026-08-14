@@ -41,7 +41,11 @@ export function GiftChromeFooter() {
       <GiftStorefrontFooter
         {...props}
         showNewsletter={showNewsletter}
-        newsletterSlot={showNewsletter ? <NewsletterForm compact /> : undefined}
+        newsletterSlot={
+          showNewsletter ? (
+            <NewsletterForm compact title={props.newsletterTitle} hint={props.newsletterHint} />
+          ) : undefined
+        }
       />
     </div>
   );

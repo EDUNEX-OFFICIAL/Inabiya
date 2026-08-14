@@ -37,7 +37,7 @@ export class AuthController {
       requestId: String(req.id ?? ''),
     });
     setAuthCookies(res, session.tokens.accessToken, session.tokens.refreshToken);
-    return session;
+    return publicSession(session);
   }
 
   @Post('login')
@@ -54,7 +54,7 @@ export class AuthController {
       requestId: String(req.id ?? ''),
     });
     setAuthCookies(res, session.tokens.accessToken, session.tokens.refreshToken);
-    return session;
+    return publicSession(session);
   }
 
   @Post('refresh')
@@ -80,7 +80,7 @@ export class AuthController {
     }
     const session = await this.auth.refresh(raw);
     setAuthCookies(res, session.tokens.accessToken, session.tokens.refreshToken);
-    return session;
+    return publicSession(session);
   }
 
   @Post('logout')
@@ -162,9 +162,14 @@ export class AuthController {
   }
 }
 
+function publicSession(session: { user: unknown }): { user: unknown } {
+  return { user: session.user };
+}
+
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
-  // Prefer COOKIE_SECURE=true behind HTTPS; default off so loopback http testing works.
-  const secure = process.env.COOKIE_SECURE === 'true';
+  const secure =
+    process.env.COOKIE_SECURE === 'true' ||
+    (process.env.COOKIE_SECURE !== 'false' && process.env.NODE_ENV === 'production');
   const common = {
     httpOnly: true,
     secure,

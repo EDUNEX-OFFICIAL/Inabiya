@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth } from '@/lib/auth-client';
+import { apiAuth, getStoredUser } from '@/lib/auth-client';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { ProductMediaField } from '@/components/commerce-ops/product-media-field';
+import { canMutateCommerceFinance } from '@/lib/commerce-ops-nav';
 
 function slugifyTitle(title: string): string {
   return title
@@ -20,6 +21,7 @@ type CreateMode = 'draft' | 'publish';
 
 export default function NewProductPage() {
   const router = useRouter();
+  const canFinance = canMutateCommerceFinance(getStoredUser()?.roles ?? []);
   const [slug, setSlug] = useState('');
   const [slugTouched, setSlugTouched] = useState(false);
   const [title, setTitle] = useState('');
@@ -113,173 +115,179 @@ export default function NewProductPage() {
         <OpsPageHeader title="New product" />
       </div>
 
-      <form onSubmit={onSubmit} className="mt-2 space-y-5">
-        <section className="clay-panel space-y-3 p-4">
-          <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">Basics</h2>
-          <label className="block text-sm">
-            Title
-            <input
-              className="clay-input"
-              value={title}
-              onChange={(e) => onTitleChange(e.target.value)}
-              required
-              autoFocus
-            />
-          </label>
-          <label className="block text-sm">
-            Slug (kebab-case)
-            <input
-              className="clay-input font-mono text-sm"
-              value={slug}
-              onChange={(e) => {
-                setSlugTouched(true);
-                setSlug(e.target.value);
-              }}
-              required
-              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-              title="lowercase kebab-case"
-            />
-          </label>
-          <label className="block text-sm">
-            Description
-            <textarea
-              className="clay-input"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-            />
-          </label>
-        </section>
-
-        <section className="clay-panel space-y-3 p-4">
-          <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">
-            Pricing &amp; stock
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
+      {!canFinance ? (
+        <p className="gift-banner mt-4" role="status">
+          Finance role required
+        </p>
+      ) : (
+        <form onSubmit={onSubmit} className="mt-2 space-y-5">
+          <section className="clay-panel space-y-3 p-4">
+            <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">Basics</h2>
             <label className="block text-sm">
-              SKU
+              Title
               <input
                 className="clay-input"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
+                value={title}
+                onChange={(e) => onTitleChange(e.target.value)}
                 required
+                autoFocus
               />
             </label>
             <label className="block text-sm">
-              Variant label
+              Slug (kebab-case)
               <input
-                className="clay-input"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-              />
-            </label>
-            <label className="block text-sm">
-              Price (₹)
-              <input
-                className="clay-input"
-                value={priceInr}
-                onChange={(e) => setPriceInr(e.target.value)}
-                inputMode="decimal"
+                className="clay-input font-mono text-sm"
+                value={slug}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  setSlug(e.target.value);
+                }}
                 required
+                pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                title="lowercase kebab-case"
               />
             </label>
             <label className="block text-sm">
-              Stock on hand
-              <input
+              Description
+              <textarea
                 className="clay-input"
-                value={onHand}
-                onChange={(e) => setOnHand(e.target.value)}
-                inputMode="numeric"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
               />
             </label>
+          </section>
+
+          <section className="clay-panel space-y-3 p-4">
+            <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">
+              Pricing &amp; stock
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm">
+                SKU
+                <input
+                  className="clay-input"
+                  value={sku}
+                  onChange={(e) => setSku(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="block text-sm">
+                Variant label
+                <input
+                  className="clay-input"
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                />
+              </label>
+              <label className="block text-sm">
+                Price (₹)
+                <input
+                  className="clay-input"
+                  value={priceInr}
+                  onChange={(e) => setPriceInr(e.target.value)}
+                  inputMode="decimal"
+                  required
+                />
+              </label>
+              <label className="block text-sm">
+                Stock on hand
+                <input
+                  className="clay-input"
+                  value={onHand}
+                  onChange={(e) => setOnHand(e.target.value)}
+                  inputMode="numeric"
+                />
+              </label>
+            </div>
+          </section>
+
+          <section className="clay-panel space-y-3 p-4">
+            <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">Media</h2>
+            <ProductMediaField
+              url={imageUrl}
+              altText={imageAlt}
+              onUrlChange={setImageUrl}
+              onAltChange={setImageAlt}
+              altPlaceholder={title || 'Product name'}
+              label="Primary image"
+            />
+          </section>
+
+          <section className="clay-panel space-y-3 p-4">
+            <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">SEO</h2>
+            <label className="block text-sm">
+              SEO title
+              <input
+                className="clay-input"
+                value={seoTitle}
+                onChange={(e) => setSeoTitle(e.target.value)}
+                maxLength={200}
+                placeholder={title || 'SEO title'}
+              />
+              <span className="mt-1 block text-[11px] opacity-50">
+                {(seoTitle || title).length}/200
+              </span>
+            </label>
+            <label className="block text-sm">
+              SEO description
+              <textarea
+                className="clay-input"
+                rows={2}
+                value={seoDescription}
+                onChange={(e) => setSeoDescription(e.target.value)}
+                maxLength={500}
+                placeholder="SEO description"
+              />
+              <span className="mt-1 block text-[11px] opacity-50">{seoDescription.length}/500</span>
+            </label>
+            <label className="block text-sm">
+              Canonical path
+              <input
+                className="clay-input font-mono text-sm"
+                value={canonicalPath}
+                onChange={(e) => setCanonicalPath(e.target.value)}
+                placeholder={slug ? `/gift/products/${slug}` : '/gift/products/…'}
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={robotsIndex}
+                onChange={(e) => setRobotsIndex(e.target.checked)}
+              />
+              Allow search indexing
+            </label>
+          </section>
+
+          {error ? (
+            <div className="gift-banner gift-banner--danger" role="alert">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="flex flex-col gap-3 border-t border-[color:var(--gift-line)] pt-4 pb-8 sm:flex-row sm:flex-wrap sm:items-center">
+            <button
+              type="submit"
+              disabled={busy !== null}
+              className="clay-btn-secondary text-sm disabled:opacity-60"
+            >
+              {busy === 'draft' ? 'Saving draft…' : 'Save as draft'}
+            </button>
+            <button
+              type="button"
+              disabled={busy !== null}
+              className="clay-btn text-sm disabled:opacity-60"
+              onClick={() => void createProduct('publish')}
+            >
+              {busy === 'publish' ? 'Publishing…' : 'Create & publish'}
+            </button>
+            <Link href="/admin/commerce/products" className="clay-btn-ghost text-sm sm:ml-1">
+              Cancel
+            </Link>
           </div>
-        </section>
-
-        <section className="clay-panel space-y-3 p-4">
-          <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">Media</h2>
-          <ProductMediaField
-            url={imageUrl}
-            altText={imageAlt}
-            onUrlChange={setImageUrl}
-            onAltChange={setImageAlt}
-            altPlaceholder={title || 'Product name'}
-            label="Primary image"
-          />
-        </section>
-
-        <section className="clay-panel space-y-3 p-4">
-          <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">SEO</h2>
-          <label className="block text-sm">
-            SEO title
-            <input
-              className="clay-input"
-              value={seoTitle}
-              onChange={(e) => setSeoTitle(e.target.value)}
-              maxLength={200}
-              placeholder={title || 'SEO title'}
-            />
-            <span className="mt-1 block text-[11px] opacity-50">
-              {(seoTitle || title).length}/200
-            </span>
-          </label>
-          <label className="block text-sm">
-            SEO description
-            <textarea
-              className="clay-input"
-              rows={2}
-              value={seoDescription}
-              onChange={(e) => setSeoDescription(e.target.value)}
-              maxLength={500}
-              placeholder="SEO description"
-            />
-            <span className="mt-1 block text-[11px] opacity-50">{seoDescription.length}/500</span>
-          </label>
-          <label className="block text-sm">
-            Canonical path
-            <input
-              className="clay-input font-mono text-sm"
-              value={canonicalPath}
-              onChange={(e) => setCanonicalPath(e.target.value)}
-              placeholder={slug ? `/gift/products/${slug}` : '/gift/products/…'}
-            />
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={robotsIndex}
-              onChange={(e) => setRobotsIndex(e.target.checked)}
-            />
-            Allow search indexing
-          </label>
-        </section>
-
-        {error ? (
-          <div className="gift-banner gift-banner--danger" role="alert">
-            {error}
-          </div>
-        ) : null}
-
-        <div className="flex flex-col gap-3 border-t border-[color:var(--gift-line)] pt-4 pb-8 sm:flex-row sm:flex-wrap sm:items-center">
-          <button
-            type="submit"
-            disabled={busy !== null}
-            className="clay-btn-secondary text-sm disabled:opacity-60"
-          >
-            {busy === 'draft' ? 'Saving draft…' : 'Save as draft'}
-          </button>
-          <button
-            type="button"
-            disabled={busy !== null}
-            className="clay-btn text-sm disabled:opacity-60"
-            onClick={() => void createProduct('publish')}
-          >
-            {busy === 'publish' ? 'Publishing…' : 'Create & publish'}
-          </button>
-          <Link href="/admin/commerce/products" className="clay-btn-ghost text-sm sm:ml-1">
-            Cancel
-          </Link>
-        </div>
-      </form>
+        </form>
+      )}
     </div>
   );
 }

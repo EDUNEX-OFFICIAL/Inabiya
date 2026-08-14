@@ -35,7 +35,7 @@ export class CustomerAdminService {
     private readonly audit: AuditService,
   ) {}
 
-  async list(query: AdminCustomersQuery = { limit: 25 }) {
+  async list(query: AdminCustomersQuery = { limit: 25 }, actorId?: string, requestId?: string) {
     const limit = query.limit ?? 25;
     const andParts: Prisma.UserWhereInput[] = [{ roles: { some: { role: { code: 'CUSTOMER' } } } }];
 
@@ -116,10 +116,24 @@ export class CustomerAdminService {
       };
     });
 
+    if (actorId) {
+      await this.audit.write({
+        actorId,
+        action: 'customer.list',
+        resource: 'customer',
+        metadata: {
+          limit,
+          hasQuery: Boolean(query.q?.trim()),
+          status: query.status ?? null,
+        },
+        requestId,
+      });
+    }
+
     return { items, nextCursor, limit };
   }
 
-  async get(userId: string) {
+  async get(userId: string, actorId?: string, requestId?: string) {
     const user = await this.prisma.user.findFirst({
       where: {
         id: userId,
@@ -183,6 +197,16 @@ export class CustomerAdminService {
     const paidOrderCount = ltvAgg._count;
     const orderCount = await this.prisma.order.count({ where: { userId } });
     const { orders, addresses, ...profile } = user;
+
+    if (actorId) {
+      await this.audit.write({
+        actorId,
+        action: 'customer.get',
+        resource: 'customer',
+        resourceId: userId,
+        requestId,
+      });
+    }
 
     return {
       profile: {

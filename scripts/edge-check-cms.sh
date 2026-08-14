@@ -61,24 +61,27 @@ CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$API/admin/commerce/gift-chrome"
 [[ "$CODE" == "401" || "$CODE" == "403" ]] && pass "gift-chrome unauth $CODE" || fail "gift-chrome unauth got $CODE"
 
 echo "== chrome write + restore =="
-TOK=$(curl -fsS -X POST "$API/auth/login" -H 'Content-Type: application/json' \
-  -d '{"email":"commerce@test.inabiya","password":"Password123!"}' \
-  | python3 -c 'import sys,json; print(json.load(sys.stdin)["tokens"]["accessToken"])')
+JAR=$(mktemp)
+CSRF='X-Requested-With: InabiyaWeb'
+curl -fsS -c "$JAR" -b "$JAR" -X POST "$API/auth/login" \
+  -H 'Content-Type: application/json' -H "$CSRF" \
+  -d '{"email":"commerce@test.inabiya","password":"Password123!"}' >/dev/null
 
 CODE=$(curl -sS -o /tmp/gc_bad.json -w '%{http_code}' -X POST "$API/admin/commerce/gift-chrome" \
-  -H "Authorization: Bearer $TOK" -H 'Content-Type: application/json' \
+  -b "$JAR" -H "$CSRF" -H 'Content-Type: application/json' \
   -d '{"shopLinks":[{"href":"","label":"x"}]}')
 [[ "$CODE" == "400" ]] && pass "invalid chrome rejected $CODE" || fail "invalid chrome got $CODE $(head -c 120 /tmp/gc_bad.json)"
 
 curl -fsS -X POST "$API/admin/commerce/gift-chrome" \
-  -H "Authorization: Bearer $TOK" -H 'Content-Type: application/json' \
+  -b "$JAR" -H "$CSRF" -H 'Content-Type: application/json' \
   -d '{"shopMega":{"headline":"Edge test hamper"}}' \
   | python3 -c 'import sys,json; d=json.load(sys.stdin); assert d["shopMega"]["headline"]=="Edge test hamper"' \
   && pass chrome-patch || fail chrome-patch
 
 curl -fsS -X POST "$API/admin/commerce/gift-chrome" \
-  -H "Authorization: Bearer $TOK" -H 'Content-Type: application/json' \
+  -b "$JAR" -H "$CSRF" -H 'Content-Type: application/json' \
   -d '{"shopMega":{"headline":"Build or pick a hamper"}}' >/dev/null
+rm -f "$JAR"
 
 echo "== web gift =="
 HTML=$(curl -fsS "$WEB/gift")

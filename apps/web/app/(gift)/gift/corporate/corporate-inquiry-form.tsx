@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { apiUrl } from '@/lib/api-base';
+import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
 
 export function CorporateInquiryForm() {
   const [type, setType] = useState<'corporate' | 'bulk'>('corporate');
@@ -23,7 +24,8 @@ export function CorporateInquiryForm() {
     try {
       const res = await fetch(apiUrl('/catalog/gifting-inquiries'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', [CSRF_HEADER]: CSRF_HEADER_VALUE },
+        credentials: 'include',
         body: JSON.stringify({
           type,
           fullName,

@@ -31,6 +31,7 @@ import {
   type UpdateVariantBody,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
+import { AdminMutationRateLimitGuard } from '../../../common/guards/rate-limit.guard';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
 import { CurrentUser } from '../../identity/current-user.decorator';
 import { Roles } from '../../identity/roles.decorator';
@@ -89,6 +90,7 @@ export class CatalogAdminController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get('products')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
   listProducts(
     @Query(new ZodValidationPipe(adminCatalogListQuerySchema)) query: AdminCatalogListQuery,
   ) {
@@ -96,11 +98,13 @@ export class CatalogAdminController {
   }
 
   @Get('products/:id')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
   getProduct(@Param('id') id: string) {
     return this.catalog.getAdminProduct(id);
   }
 
   @Post('products')
+  @Roles('FINANCE', 'SUPER_ADMIN')
   createProduct(
     @Body(new ZodValidationPipe(createProductBodySchema))
     body: CreateProductBody,
@@ -121,6 +125,7 @@ export class CatalogAdminController {
   }
 
   @Post('products/import')
+  @Roles('FINANCE', 'SUPER_ADMIN')
   importProducts(
     @Body(new ZodValidationPipe(productImportBodySchema)) body: ProductImportBody,
     @CurrentUser() user: { id: string },
@@ -141,11 +146,13 @@ export class CatalogAdminController {
   }
 
   @Post('products/:id/publish')
+  @UseGuards(AdminMutationRateLimitGuard)
   publish(@Param('id') id: string, @CurrentUser() user: { id: string }, @Req() req: AuthedRequest) {
     return this.catalog.publishProduct(id, user.id, String(req.id ?? ''));
   }
 
   @Post('products/:id/unpublish')
+  @UseGuards(AdminMutationRateLimitGuard)
   unpublish(
     @Param('id') id: string,
     @CurrentUser() user: { id: string },
@@ -166,6 +173,7 @@ export class CatalogAdminController {
   }
 
   @Patch('variants/:variantId')
+  @Roles('FINANCE', 'SUPER_ADMIN')
   updateVariant(
     @Param('variantId') variantId: string,
     @Body(new ZodValidationPipe(updateVariantBodySchema))
@@ -177,6 +185,7 @@ export class CatalogAdminController {
   }
 
   @Get('collections')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
   listCollections() {
     return this.catalog.listAdminCollections();
   }

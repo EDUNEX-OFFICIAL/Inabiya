@@ -1,4 +1,5 @@
 import { apiUrl } from './api-base';
+import { safeNextPath } from '@inabiya/validation';
 
 export type AuthUser = {
   id: string;
@@ -9,7 +10,7 @@ export type AuthUser = {
 
 export type AuthSession = {
   user: AuthUser;
-  tokens: {
+  tokens?: {
     accessToken: string;
     refreshToken: string;
     expiresIn: number;
@@ -20,6 +21,9 @@ const ACCESS_KEY = 'inabiya_access_token';
 const REFRESH_KEY = 'inabiya_refresh_token';
 const USER_KEY = 'inabiya_user';
 const AUTH_CHANGED = 'inabiya-auth-changed';
+
+export const CSRF_HEADER = 'X-Requested-With';
+export const CSRF_HEADER_VALUE = 'InabiyaWeb';
 
 /** Error from apiAuth / apiAuthUpload with HTTP status (for 401 vs other failures). */
 export class ApiClientError extends Error {
@@ -38,17 +42,17 @@ export function isUnauthorizedError(err: unknown): boolean {
 
 /** Soft Gift / ops return path after login. */
 export function loginUrl(nextPath: string): string {
-  return `/login?next=${encodeURIComponent(nextPath)}`;
+  const safe = safeNextPath(nextPath) ?? '/gift';
+  return `/login?next=${encodeURIComponent(safe)}`;
 }
 
+/** Cookie session: never a real JWT. Truthy when a cached user exists. */
 export function getStoredAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(ACCESS_KEY);
+  return getStoredUser() ? 'cookie' : null;
 }
 
 export function getStoredRefreshToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(REFRESH_KEY);
+  return null;
 }
 
 export function getStoredUser(): AuthUser | null {
@@ -79,8 +83,8 @@ export function subscribeAuthChanged(onChange: () => void): () => void {
 }
 
 export function storeSession(session: AuthSession): void {
-  localStorage.setItem(ACCESS_KEY, session.tokens.accessToken);
-  localStorage.setItem(REFRESH_KEY, session.tokens.refreshToken);
+  localStorage.removeItem(ACCESS_KEY);
+  localStorage.removeItem(REFRESH_KEY);
   localStorage.setItem(USER_KEY, JSON.stringify(session.user));
   notifyAuthChanged();
 }
@@ -99,28 +103,31 @@ export function clearSession(): void {
   notifyAuthChanged();
 }
 
+function withCsrf(headers: Headers): Headers {
+  headers.set(CSRF_HEADER, CSRF_HEADER_VALUE);
+  return headers;
+}
+
 let refreshInFlight: Promise<boolean> | null = null;
 
-/** Silent refresh; shared across parallel 401s. */
+/** Silent refresh via httpOnly cookie; shared across parallel 401s. */
 export async function tryRefreshSession(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
   if (refreshInFlight) return refreshInFlight;
   refreshInFlight = (async () => {
-    const refreshToken = getStoredRefreshToken();
-    if (!refreshToken) return false;
     try {
       const res = await fetch(apiUrl('/auth/refresh'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrf(new Headers({ 'Content-Type': 'application/json' })),
         credentials: 'include',
-        body: JSON.stringify({ refreshToken }),
+        body: JSON.stringify({}),
       });
       if (!res.ok) {
         clearSession();
         return false;
       }
       const session = (await res.json()) as AuthSession;
-      storeSession(session);
+      if (session.user) storeSession(session);
       return true;
     } catch {
       return false;
@@ -135,12 +142,10 @@ export async function apiAuth<T>(
   path: string,
   init?: RequestInit & { json?: unknown; _retried?: boolean },
 ): Promise<T> {
-  const headers = new Headers(init?.headers);
+  const headers = withCsrf(new Headers(init?.headers));
   if (init?.json !== undefined) {
     headers.set('Content-Type', 'application/json');
   }
-  const token = getStoredAccessToken();
-  if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const res = await fetch(apiUrl(path), {
     ...init,
@@ -176,9 +181,7 @@ export async function apiAuthUpload<T>(
   form: FormData,
   init?: { _retried?: boolean },
 ): Promise<T> {
-  const headers = new Headers();
-  const token = getStoredAccessToken();
-  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const headers = withCsrf(new Headers());
 
   const res = await fetch(apiUrl(path), {
     method: 'POST',
@@ -207,9 +210,7 @@ export async function apiAuthUpload<T>(
 
 /** Authenticated binary/HTML download (invoice, etc.). Triggers browser save. */
 export async function apiAuthDownload(path: string, fallbackFilename: string): Promise<void> {
-  const headers = new Headers();
-  const token = getStoredAccessToken();
-  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const headers = withCsrf(new Headers());
 
   let res = await fetch(apiUrl(path), {
     headers,
@@ -219,10 +220,7 @@ export async function apiAuthDownload(path: string, fallbackFilename: string): P
   if (res.status === 401) {
     const ok = await tryRefreshSession();
     if (ok) {
-      const headers2 = new Headers();
-      const token2 = getStoredAccessToken();
-      if (token2) headers2.set('Authorization', `Bearer ${token2}`);
-      res = await fetch(apiUrl(path), { headers: headers2, credentials: 'include' });
+      res = await fetch(apiUrl(path), { headers: withCsrf(new Headers()), credentials: 'include' });
     }
   }
 

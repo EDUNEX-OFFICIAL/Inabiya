@@ -423,9 +423,16 @@ export class OrdersService {
     if (!order) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Order not found.' });
     }
-    return this.prisma.orderNote.create({
+    const note = await this.prisma.orderNote.create({
       data: { orderId, authorId, body },
     });
+    await this.audit.write({
+      actorId: authorId,
+      action: 'order.addNote',
+      resource: 'order',
+      resourceId: orderId,
+    });
+    return note;
   }
 
   async updateStatusAdmin(

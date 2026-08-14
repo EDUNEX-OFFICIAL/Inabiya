@@ -4,6 +4,7 @@ import { CartStatus, ProductStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CouponService } from '../promotions/coupon.service';
 import { shippingPaise } from '../commerce-pricing';
+import { selectBuyNowItems } from './buy-now-slice';
 
 const cartInclude = {
   items: {
@@ -76,40 +77,48 @@ export class CartService {
       where: { id: cartDto.id },
     });
 
-    const variant = await this.prisma.productVariant.findUnique({
-      where: { id: input.variantId },
-      include: { product: true, inventory: true },
-    });
-    if (!variant || variant.product.status !== ProductStatus.PUBLISHED) {
-      throw new BadRequestException({
-        code: 'INVALID_VARIANT',
-        message: 'Product is not available.',
+    await this.prisma.$transaction(async (tx) => {
+      const variant = await tx.productVariant.findUnique({
+        where: { id: input.variantId },
+        include: { product: true, inventory: true },
       });
-    }
-    const available = (variant.inventory?.onHand ?? 0) - (variant.inventory?.reserved ?? 0);
-    const existing = await this.prisma.cartItem.findUnique({
-      where: { cartId_variantId: { cartId: cart.id, variantId: input.variantId } },
-    });
-    const nextQty = (existing?.quantity ?? 0) + input.quantity;
-    if (available < nextQty) {
-      throw new BadRequestException({
-        code: 'INSUFFICIENT_STOCK',
-        message: 'Not enough stock.',
+      if (!variant || variant.product.status !== ProductStatus.PUBLISHED) {
+        throw new BadRequestException({
+          code: 'INVALID_VARIANT',
+          message: 'Product is not available.',
+        });
+      }
+      await tx.$executeRaw`
+        SELECT id FROM inventory_items WHERE variant_id = ${input.variantId}::uuid FOR UPDATE
+      `;
+      const inv = await tx.inventoryItem.findUnique({
+        where: { variantId: input.variantId },
       });
-    }
+      const available = (inv?.onHand ?? 0) - (inv?.reserved ?? 0);
+      const existing = await tx.cartItem.findUnique({
+        where: { cartId_variantId: { cartId: cart.id, variantId: input.variantId } },
+      });
+      const nextQty = (existing?.quantity ?? 0) + input.quantity;
+      if (available < nextQty) {
+        throw new BadRequestException({
+          code: 'INSUFFICIENT_STOCK',
+          message: 'Not enough stock.',
+        });
+      }
 
-    await this.prisma.cartItem.upsert({
-      where: { cartId_variantId: { cartId: cart.id, variantId: input.variantId } },
-      create: {
-        cartId: cart.id,
-        variantId: input.variantId,
-        quantity: input.quantity,
-        personalization: input.personalization ?? undefined,
-      },
-      update: {
-        quantity: { increment: input.quantity },
-        personalization: input.personalization ?? undefined,
-      },
+      await tx.cartItem.upsert({
+        where: { cartId_variantId: { cartId: cart.id, variantId: input.variantId } },
+        create: {
+          cartId: cart.id,
+          variantId: input.variantId,
+          quantity: input.quantity,
+          personalization: input.personalization ?? undefined,
+        },
+        update: {
+          quantity: { increment: input.quantity },
+          personalization: input.personalization ?? undefined,
+        },
+      });
     });
 
     return this.getOrCreate(userId, cartDto.guestToken ?? guestToken);
@@ -220,21 +229,63 @@ export class CartService {
     return this.getOrCreate(userId);
   }
 
-  async totals(cartId: string, shippingMethod: 'STANDARD' | 'EXPRESS') {
+  async totals(
+    cartId: string,
+    shippingMethod: 'STANDARD' | 'EXPRESS',
+    opts?: { buyNowVariantId?: string },
+  ) {
     const cart = await this.prisma.cart.findUniqueOrThrow({
       where: { id: cartId },
       include: cartInclude,
     });
-    const mapped = await this.toCartDto(cart, cart.guestToken ?? undefined);
-    const subtotalAfterDiscount = mapped.subtotalPaise - mapped.discountPaise;
+    if (!opts?.buyNowVariantId) {
+      const mapped = await this.toCartDto(cart, cart.guestToken ?? undefined);
+      const subtotalAfterDiscount = mapped.subtotalPaise - mapped.discountPaise;
+      const ship = shippingPaise(shippingMethod, subtotalAfterDiscount);
+      return {
+        subtotalPaise: mapped.subtotalPaise,
+        discountPaise: mapped.discountPaise,
+        shippingPaise: ship,
+        taxPaise: 0,
+        totalPaise: subtotalAfterDiscount + ship,
+        couponCode: mapped.couponCode,
+      };
+    }
+
+    const mapped = this.mapCart(cart, cart.guestToken ?? undefined);
+    const items = selectBuyNowItems(mapped.items, opts.buyNowVariantId);
+    if (items.length === 0) {
+      throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });
+    }
+    const subtotalPaise = items.reduce((s, i) => s + i.lineTotalPaise, 0);
+    let discountPaise = 0;
+    let couponCode = mapped.couponCode;
+    if (mapped.couponCode) {
+      try {
+        const coupon = await this.coupons.validate(
+          mapped.couponCode,
+          subtotalPaise,
+          items.map((i) => ({
+            productId: i.productId,
+            collectionIds: i.collectionIds,
+            lineTotalPaise: i.lineTotalPaise,
+          })),
+        );
+        discountPaise = coupon.discountPaise;
+      } catch {
+        couponCode = null;
+        discountPaise = 0;
+      }
+    }
+    const subtotalAfterDiscount = subtotalPaise - discountPaise;
     const ship = shippingPaise(shippingMethod, subtotalAfterDiscount);
     return {
-      subtotalPaise: mapped.subtotalPaise,
-      discountPaise: mapped.discountPaise,
+      subtotalPaise,
+      discountPaise,
       shippingPaise: ship,
       taxPaise: 0,
       totalPaise: subtotalAfterDiscount + ship,
-      couponCode: cart.couponCode,
+      couponCode,
     };
   }
 

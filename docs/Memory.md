@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 14, 2026 (hamper What’s inside modal theme)
+Last Updated: August 15, 2026 (security tree CI-green; push main → deploy-vps.yml)
 
 ---
 
@@ -141,11 +141,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Hard-refresh `/gift`: tap hamper **?** — What’s inside is an opaque overlay (no card bleed)
-2. Tap a thumb — hero photo swaps; 5+ still shows 3 + **+N**
-3. After pay: `/orders/:id?placed=1` thank-you; invoice + All orders
-4. **QA:** `/admin/commerce/suppliers` + New PO → Receive all → inventory
-5. Resume OPS-10 after storefront QA
+1. **Deferred:** demo logins + real PSP (C1/C2)
+2. Resume OPS-10 after storefront QA
+3. Optional: CSP nonce instead of `script-src 'unsafe-inline'`
+4. Optional: Caddy warns `header_up X-Forwarded-For` is redundant vs default — confirm spoofed XFF is ignored behind Cloudflare
+5. After GH `Build and deploy VPS` green: hard-refresh public storefront
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -178,6 +178,23 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-14 — Gift/commerce security: demo login + payments remain (human)
+
+- **Override:** Phase 14; human: demo logins and payment provider are **remaining to implement** — do not treat C1/C2 as this-session fixes.
+- Aligns with Q2 (Razorpay after project complete; mock until then). Seed/demo login UI stays until that work.
+- Other audit items still open: XSS sanitizer, localStorage JWTs, XFF rate-limit, CSP, inventory race, chrome `javascript:` hrefs, JSON-LD, media stubs, coupon TOCTOU, inquiry/newsletter spam, admin audit/rate-limit gaps.
+
+### 2026-08-14 — PDP Buy now is isolated checkout (human override)
+
+- **Override:** Phase 14 Procurement in progress; human: PDP had Add to cart + gift box, not Buy now.
+- Buy now adds the line (same stock/personalisation rules), then `/checkout?buyNow=<variantId>`.
+- Preview/place-order charge **that variant only**; remaining cart stays ACTIVE. Guest: add then `login?next=` that checkout URL; merge keeps the line.
+
+### 2026-08-14 — Product card details unstacked (human override)
+
+- **Override:** Phase 14; human: card copy was a tall vertical stack (title / brands / stars / price / extra).
+- Shared `ProductCardMeta`: price left, stars right. Title `line-clamp-2`, brands truncate. Grid cards `h-full` so CTAs align.
 
 ### 2026-08-14 — Card thumbs below copy, not on photo (human override)
 
@@ -698,7 +715,9 @@ Resolve → move to Decisions Log → remove from this table.
 | Risk | Boiling entire PRD at once | No ship | Phase P0/P1/P2 tiers | Active watch |
 | Risk | Architecture LMS contamination | Wrong domains | PRD+Rules language | Active watch |
 | Risk | Theme bleed A↔B | Brand damage | Design.md QA | Active watch |
-| Risk | Non-idempotent payments | Money defects | Phase 3 hard stops | Future |
+| Risk | Gift XSS + localStorage JWTs | Session theft on /gift | Parser sanitizer + cookie-only tokens + CSP | Open (2026-08-14 audit) |
+| Risk | Inventory reserve race | Oversell | Conditional UPDATE / row lock | Open |
+| Risk | Non-idempotent payments | Money defects | Phase 3 hard stops | Future (PSP remaining; mock confirm still live) |
 | Risk | Medical gate bypass | Trust failure | Phase 6–7 tests | Future |
 | Blocker | None yet | — | — | — |
 
@@ -1133,6 +1152,142 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-15 (CI verify + push main)
+
+- **Override:** Phase 14; human: check build, push GitHub, monitor workflow.
+- Local verify (same as `deploy-vps.yml` verify): prisma generate+validate, types+validation build, lint (existing Next warnings only), Prettier, typecheck, unit smokes — **green**.
+- Push `main` → GitHub `Build and deploy VPS` (verify + VPS `git reset --hard origin/main` + `deploy-vps.sh`). Caddy site file stays outside this repo.
+- Env/migration: none. C1/C2 still deferred.
+
+### Session — 2026-08-15 (deploy security waves to Docker + Caddy)
+
+- **Override:** Phase 14; human: `deploly` → local `bash scripts/deploy-vps.sh web api` (no git commit, no GH Actions reset).
+- Built/recreated `inabiya-web` + `inabiya-api` (image tag still `3e2ea03`; working tree included). Prisma: no pending migrations. Worker left running (no worker code in this set).
+- Caddy reload `green-city-caddy` (`inabiya.caddy` XFF overwrite + CSP). No second public proxy.
+- Smoke: login without CSRF → **403** `CSRF_FORBIDDEN` on `:4001` and `https://inabiya.edunexservices.in`; CSRF login → `{ user }` only, `/auth/me` 200; COMMERCE_ADMIN coupon POST → **403**; `/gift` 200 + CSP on loopback and public host.
+- Env/migration: none. C1/C2 still deferred. Uncommitted files remain on disk.
+
+### Session — 2026-08-15 (cross-check gift + commerce ops + CMS)
+
+- **Override:** Phase 14; human: cross-check gift webpages, commerce control panel, CMS after security waves.
+- Live smoke on **dev** `3101`/`4101` (hardening code): gift home/PLP/PDP/collection/cart/BYB/corporate/login/articles/wishlist/account/checkout **200**; theme + JSON-LD + CSP + no `javascript:` in `/gift` HTML. Public catalog/CMS/chrome APIs **200**. Home CMS 20 blocks; 33 stored hrefs all same-origin paths.
+- Cookie login `{ user }` only; `/auth/me` cookie; CSRF missing → 403 (login/newsletter/guest cart). COMMERCE_ADMIN: dashboard/products/CMS/chrome/coupons/orders GET **200**; coupon POST + product create **403**; product PATCH merchandising **200**. FINANCE: coupons GET **200**. CONTENT_ADMIN: CMS list + home PATCH **200**. Commerce gift-chrome POST **201**.
+- Docker prod `:3001`/`:4001` pages healthy but **API still old** (login without CSRF → 401). Rebuild needed.
+- Fix: render-time `safeHrefOrHash` on CMS block CTAs, footer social/reach/brand, `GiftResponsiveLink` (old rows, not only Zod-on-write).
+- Env/migration: none. C1/C2 still deferred.
+
+### Session — 2026-08-14 (gift + commerce security hardening W1–W6)
+
+- **Override:** Phase 14 / OPS-10; human asked to implement security hardening waves (plan). C1 demo logins + C2 Razorpay/mock confirm still deferred — not marked done.
+- W1: `sanitize-html` write+render; `safeStorefrontHref`; JSON-LD `\\u003c`; tighter `safeNextPath`.
+- W2: httpOnly cookies only (login JSON `{ user }`); CSRF `X-Requested-With: InabiyaWeb`; `COOKIE_SECURE` prod default; JWT hydrate `isActive`+roles from DB.
+- W3: Caddy overwrite XFF; rate-limit on `X-Real-IP`; inquiry/newsletter/coupon/admin POST limits; prod CORS no localhost; personalization cap; public feature-flags `{ enabled }` only.
+- W4: atomic inventory reserve SQL; cart addItem `FOR UPDATE`; coupon increment in capture tx; apply errors collapsed to `INVALID_COUPON`.
+- W5: magic-byte MIME; drop SVG uploads; no stub signed URLs; filename sanitize; storefront CSP; FOUC CSS file import.
+- W6: `FINANCE`/`SUPER_ADMIN` for coupons, product create/import, compare-at; audit gift-chrome/storefront/notes/customer list+get (no PII in metadata); ops UI gates.
+- Env: none new (existing `COOKIE_SECURE`, `ALLOW_BEARER_AUTH`, `CORS_ORIGINS`). Migration: none.
+- Risks: Caddy reload needed for XFF/CSP; Next CSP still `script-src 'unsafe-inline'` (JSON-LD + Next runtime). Bearer scripts need CSRF + cookies (tokens stripped from login JSON).
+
+### Session — 2026-08-14 (gift + commerce security audit)
+
+- **Override:** Phase 14; human: note demo login + payment remaining to implement; list other issues.
+- Code/config audit of `/gift` + `/admin/commerce` (no live exploits, no `.env` dump). Admin APIs Jwt+Roles+Zod; no customer IDOR on orders/invoices/addresses.
+- **Deferred (remaining):** C1 demo/seed logins on public `/login` (prod compose default `NEXT_PUBLIC_SHOW_DEMO_LOGINS=1`); C2 mock payments + checkout auto-confirm (`checkout/page.tsx` → `…/payments/:id/confirm`). Q2 still Razorpay later.
+- **Still open (not demo/pay):** H1 regex HTML XSS; H2 JWTs in localStorage; H3 XFF rate-limit bypass; H4 no CSP; H5 inventory oversell race; H6 chrome/footer unrestricted hrefs; M1 JSON-LD `</script>`; M2 inquiry+newsletter unthrottled; M3 MIME trust + stub signed URLs; M4 coupon maxUses TOCTOU; M5 JWT roles not re-read; M6 gift-chrome/PII audit gaps; M7 CORS localhost; M8 COOKIE_SECURE/CSRF; M9 no admin mutation rate limit; M10 COMMERCE_ADMIN finance levers.
+- Canvas: Cursor canvases `gift-commerce-security-audit.canvas.tsx`. Env/migration: none.
+
+### Session — 2026-08-14 (CMS-editable gift footer)
+
+- **Override:** Phase 14; human: check footer, then cross-check navbar + footer CMS.
+- Footer was only half-CMS: columns locked to Shop/Help/Company textareas; Reach us (email/WA/@inabiya), legal bar, copyright suffix, brand href, newsletter copy were hardcoded.
+- Schema + chrome: `brandHref`, `copyright` (`{year}` `{brand}`), `reachTitle`/`reachLinks`, `legalLinks`, `newsletterTitle`/`newsletterHint`. Empty reach/legal/social arrays hide those blocks.
+- CMS: structured columns (rename/add/remove/reorder, max 4), social, reach, legal. Storefront consumes all of it.
+- Nav cross-check: mega `aria-label` + drawer title use CMS Shop/For Whom labels. Cart/wishlist/account stay app chrome (not marketing CMS).
+- Check: `gift-footer-chrome.check.ts`. Env: none. Migration: none.
+
+### Session — 2026-08-14 (CMS-editable gift nav)
+
+- **Override:** Phase 14; human: navbar fully editable through CMS.
+- API `getGiftChrome` no longer dumps every published collection into Shop (that overwrote CMS). Authored `shopLinks` / `forWhomLinks` round-trip as saved. Legacy slim seed (BYB + hampers only) falls back to grouped defaults.
+- Schema: per-link `group` + mega preview fields; `shopLabel` / `forWhomLabel` / `journalLabel` / `journalHref`; link cap 32.
+- `organizeGiftNav` does not move links between Shop and For Whom. CMS group wins; slug classify only if group is blank. Per-link headline/body/cta/image override collection fallback.
+- CMS `/admin/cms/gift-chrome`: row editor (add/remove/reorder, group, preview, insert collection). Storefront + drawer consume trigger labels + Journal URL.
+- Check: `apps/web/lib/gift-nav-ia.check.ts`. Env: none. Migration: none.
+
+### Session — 2026-08-14 (drawer close X)
+
+- **Override:** Phase 14; human: menu drawer close icon not working.
+- Cause: overlay z-50 under header (nav bumped to 60); inert used `[data-theme=gift] .flex-1` which hit GiftNav, so the visible hamburger X ignored taps. Overlay close sat behind the header.
+- Overlay now `z-nav + 40`; inert targets `.clay-shell > .flex-1` only.
+- Env: none. Migration: none.
+
+### Session — 2026-08-14 (drawer nav accordions)
+
+- **Override:** Phase 14; human: menu drawer groups → dropdowns; link text looked too basic.
+- Shop / Occasion / Curated / For baby / By age are clay accordions (FAQ 0fr→1fr, Shop open by default).
+- Collection links: Fraunces + thumb + chevron rows. Shop hampers: title over photo, not caption under.
+- Env: none. Migration: none.
+
+### Session — 2026-08-14 (Soft Gift nav polish)
+
+- **Override:** Phase 14; human: cross-check nav mega/drawer for responsiveness, performance, polish.
+- Desktop: hover only on fine pointers + 80ms open / 140ms close; flyout portaled (header `overflow-x-clip` no longer clips); container query stacks preview when mega is narrow; `dvh` max-height + thin scrollbar; preview CLS (aspect + line-clamp, no Image remount); ArrowDown/Escape focus.
+- Drawer: lazy tiles, `quality={60}`, sizes for 2/3-col; first hamper eager. Reduced-motion on chevron/tiles.
+- Check: `gift-nav-ia.check.ts`. Env: none. Migration: none.
+
+### Session — 2026-08-14 (Soft Gift nav mega hover)
+
+- **Override:** Phase 14; human: Shop/For Whom dropdown — open on hover as well as click; organise links; right-panel copy follows the hovered link; menu drawer matches.
+- Shop mega groups: Shop (Build Your Box, hampers) · Occasion · Curated. Recipient/age no longer dumped under Shop.
+- For Whom: For baby (incl. Unisex) · By age. Hover/focus a link swaps the right card (image, headline, blurb, CTA).
+- Mobile hamper overlay uses the same groups. Check: `apps/web/lib/gift-nav-ia.check.ts`.
+- Env: none. Migration: none.
+
+### Session — 2026-08-14 (PDP buy-box CTA pair)
+
+- **Override:** Phase 14; human: stacked Buy now / Add to cart / gift box looked same-weight and tall.
+- Purchase pair one row: Add to cart (secondary) | Buy now (primary). Heart + gift box on the row below; gift box is ghost + sky wash so it doesn’t twin Add to cart.
+- Env: none. Migration: none.
+- Next: hard-refresh PDP at phone width.
+
+### Session — 2026-08-14 (PDP Buy now)
+
+- **Override:** Phase 14; human: product page can add to cart / gift box but not Buy now — implement properly.
+- PDP: primary **Buy now** (Zap), secondary Add to cart, gift box unchanged. Shared `buyLine()` validation.
+- Checkout `buyNowVariantId`: totals/order/reserve that SKU; delete that line; convert cart only if empty. Coupon miss on the slice does not strip the saved cart coupon.
+- Guest: add to guest cart → login/register `next=/checkout?buyNow=…`.
+- Checks: `buy-now-slice.check.ts`, `buy-now.check.ts`. Env: none. Migration: none.
+- Next: hard-refresh PDP → Buy now → pay; confirm other cart items remain.
+
+### Session — 2026-08-14 (PDP About this gift collapsible)
+
+- **Override:** Phase 14; human: product page “About this gift” should be collapsible, closed by default, smooth open/close.
+- Toggle on the heading (+ rotates to ×); body uses the FAQ `0fr→1fr` height ease. Shop similar / shipping note sit inside the panel.
+- Env: none. Migration: none.
+- Next: hard-refresh a PDP and tap About this gift.
+
+### Session — 2026-08-14 (product card labels no-wrap on mobile)
+
+- **Override:** Phase 14; human: mobile 2-col cards — Editor's pick ribbon wrapped; prefer smaller type over wrap.
+- `ProductLabels`: nowrap + 10px on small screens (caption from `sm`); slightly more overlay width (65%→85%). Card brand line also 10px so names fit instead of ellipsis.
+- Env: none. Migration: none.
+- Next: hard-refresh `/gift/products` at ~375px — Editor's pick one line.
+
+### Session — 2026-08-14 (hero CTA labels on mobile)
+
+- **Override:** Phase 14; human: mobile hero had icon-only CTAs — show Build Your Box / Browse Hampers; space is there.
+- Cause: `gift-cta-host--long` hid labels under ~24rem (typical phone copy column).
+- Hero pair now `labelFrom="always"` (pills, not circles). Tighter phone padding so both fit; wrap if needed. Dropped unused `--long` container query.
+- Env: none. Migration: none.
+- Next: hard-refresh `/gift` at ~375px.
+
+### Session — 2026-08-14 (product card details unstacked)
+
+- **Override:** Phase 14; human: card details stacked — make the body tighter.
+- `ProductCardMeta` on home / Clay PLP / compact CMS: price + rating one row. Title clamp 2; brands one-line ellipsis. Home cards fill grid height so View/Add sit on a shared baseline.
+- Env: none. Migration: none.
+- Next: hard-refresh `/gift` product grids.
 
 ### Session — 2026-08-14 (hamper What’s inside modal theme)
 

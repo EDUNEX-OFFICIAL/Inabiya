@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useEffect, useId, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { FormEvent, Suspense, useEffect, useId, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { cartApi, fetchCart, formatInr, type CartDto } from '@/lib/cart-client';
+import { buyNowCartItems, parseBuyNowVariantId } from '@/lib/buy-now';
 import { trackEvent } from '@/lib/analytics';
 import { CheckoutSkeleton } from '@/components/gift/gift-skeletons';
 import { LineThumb } from '@/components/gift/line-thumb';
@@ -74,8 +75,11 @@ const emptyForm = {
 
 const inputClass = 'clay-input';
 
-export default function CheckoutPage() {
+function CheckoutPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const buyNowVariantId = parseBuyNowVariantId(searchParams.get('buyNow'));
+  const checkoutNext = buyNowVariantId ? `/checkout?buyNow=${buyNowVariantId}` : '/checkout';
   const shipGroupId = useId();
   const addrGroupId = useId();
   const [gate, setGate] = useState<Gate>('checking');
@@ -98,16 +102,17 @@ export default function CheckoutPage() {
   const preview = quotes?.[shippingMethod] ?? null;
 
   async function loadQuotes(token: string, couponCode?: string | null) {
+    const extra = buyNowVariantId ? { buyNowVariantId } : {};
     const [standard, express] = await Promise.all([
       cartApi<Preview>('/checkout/preview', {
         method: 'POST',
         authToken: token,
-        json: { shippingMethod: 'STANDARD', couponCode: couponCode ?? undefined },
+        json: { shippingMethod: 'STANDARD', couponCode: couponCode ?? undefined, ...extra },
       }),
       cartApi<Preview>('/checkout/preview', {
         method: 'POST',
         authToken: token,
-        json: { shippingMethod: 'EXPRESS', couponCode: couponCode ?? undefined },
+        json: { shippingMethod: 'EXPRESS', couponCode: couponCode ?? undefined, ...extra },
       }),
     ]);
     setQuotes({ STANDARD: standard, EXPRESS: express });
@@ -142,7 +147,7 @@ export default function CheckoutPage() {
             postalCode: def.postalCode,
           });
         }
-        if (!c.items.length) {
+        if (!buyNowCartItems(c.items, buyNowVariantId).length) {
           setGate('empty');
           return;
         }
@@ -153,7 +158,7 @@ export default function CheckoutPage() {
         setError(e instanceof Error ? e.message : 'Could not load checkout');
         setGate('error');
       });
-  }, []);
+  }, [buyNowVariantId]);
 
   function applySavedAddress(id: string) {
     setSelectedAddressId(id);
@@ -251,6 +256,7 @@ export default function CheckoutPage() {
           giftWrap,
           couponCode: cart?.couponCode ?? undefined,
           saveAddress: addressMode === 'new' && saveAddress,
+          buyNowVariantId,
         },
       });
       await apiAuth(`/checkout/payments/${result.paymentId}/confirm`, { method: 'POST' });
@@ -272,11 +278,11 @@ export default function CheckoutPage() {
       <main className="gift-page max-w-md">
         <h1 className="gift-h1">Sign in to checkout</h1>
         <div className="mt-gs-6 flex w-full flex-col gap-gs-3 text-body">
-          <Link href="/login?next=/checkout" className="clay-btn w-full justify-center">
+          <Link href={loginUrl(checkoutNext)} className="clay-btn w-full justify-center">
             Sign in
           </Link>
           <Link
-            href="/register?next=/checkout"
+            href={`/register?next=${encodeURIComponent(checkoutNext)}`}
             className="clay-btn-secondary w-full justify-center"
           >
             Create account
@@ -292,7 +298,7 @@ export default function CheckoutPage() {
   if (gate === 'empty') {
     return (
       <main className="gift-page max-w-md">
-        <h1 className="gift-h1">Cart is empty</h1>
+        <h1 className="gift-h1">{buyNowVariantId ? 'Item not in cart' : 'Cart is empty'}</h1>
         <Link href="/gift/products" className="clay-btn mt-gs-6 inline-flex w-full justify-center">
           Browse gifts
         </Link>
@@ -309,7 +315,7 @@ export default function CheckoutPage() {
           <Link href="/gift/cart" className="gift-link">
             Cart
           </Link>
-          <Link href="/login?next=/checkout" className="gift-link">
+          <Link href={loginUrl(checkoutNext)} className="gift-link">
             Sign in
           </Link>
         </div>
@@ -317,7 +323,11 @@ export default function CheckoutPage() {
     );
   }
 
-  const itemCount = cart.items.reduce((n, i) => n + i.quantity, 0);
+  const displayCart = {
+    ...cart,
+    items: buyNowCartItems(cart.items, buyNowVariantId),
+  };
+  const itemCount = displayCart.items.reduce((n, i) => n + i.quantity, 0);
   const payLabel = busy ? 'Placing order…' : `Pay ${formatInr(preview.totalPaise)}`;
   const showAddressForm = addressMode === 'new' || addresses.length === 0;
 
@@ -339,7 +349,7 @@ export default function CheckoutPage() {
 
       <form onSubmit={onSubmit} className="mt-gs-5" autoComplete="on">
         <OrderSummaryPanel
-          cart={cart}
+          cart={displayCart}
           preview={preview}
           couponDraft={couponDraft}
           couponBusy={couponBusy}
@@ -619,7 +629,7 @@ export default function CheckoutPage() {
           </div>
 
           <OrderSummaryPanel
-            cart={cart}
+            cart={displayCart}
             preview={preview}
             couponDraft={couponDraft}
             couponBusy={couponBusy}
@@ -649,6 +659,14 @@ export default function CheckoutPage() {
         </div>
       </form>
     </main>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutSkeleton />}>
+      <CheckoutPageInner />
+    </Suspense>
   );
 }
 

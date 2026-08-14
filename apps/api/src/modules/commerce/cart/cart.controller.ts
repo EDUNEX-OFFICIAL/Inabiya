@@ -16,6 +16,7 @@ import {
   cartUpdateItemBodySchema,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
+import { SensitivePostRateLimitGuard } from '../../../common/guards/rate-limit.guard';
 import { OptionalJwtAuthGuard } from '../../identity/optional-jwt-auth.guard';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
 import { CurrentUser } from '../../identity/current-user.decorator';
@@ -65,6 +66,7 @@ export class CartController {
   }
 
   @Post('coupon')
+  @UseGuards(SensitivePostRateLimitGuard)
   applyCoupon(
     @Req() req: AuthedRequest,
     @Headers('x-cart-token') cartHeader: string | undefined,

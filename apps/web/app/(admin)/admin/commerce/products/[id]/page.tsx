@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { formatInr, type CatalogProduct, type ManualStorefrontLabel } from '@/lib/catalog';
 import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
@@ -27,6 +27,7 @@ import { productJsonLd } from '@/lib/seo-json-ld';
 import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
 import type { SeoSchemaEntry } from '@inabiya/validation';
 import { History, Package, Trash2, ArrowLeft, ExternalLink, FilePenLine, Plus } from 'lucide-react';
+import { canMutateCommerceFinance } from '@/lib/commerce-ops-nav';
 
 const RECIPIENTS = ['girl', 'boy', 'mom', 'unisex'] as const;
 const AGES = ['newborn', 'infant', 'toddler', 'any'] as const;
@@ -184,6 +185,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [hamperRows, setHamperRows] = useState<HamperRow[]>([]);
   const [stock, setStock] = useState<Record<string, string>>({});
   const [mrpRupees, setMrpRupees] = useState<Record<string, string>>({});
+  const canFinance = canMutateCommerceFinance(getStoredUser()?.roles ?? []);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -767,12 +769,14 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                         placeholder="Blank = no MRP"
                         onChange={(e) => setMrpRupees((s) => ({ ...s, [v.id]: e.target.value }))}
                         inputMode="decimal"
+                        disabled={!canFinance}
                       />
                     </label>
                     <button
                       type="button"
                       className="clay-btn-secondary w-full text-sm"
                       onClick={() => void saveMrp(v.id)}
+                      disabled={!canFinance}
                     >
                       Save MRP
                     </button>

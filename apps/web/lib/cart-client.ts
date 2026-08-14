@@ -37,9 +37,11 @@ export type CartDto = {
   }>;
 };
 
-function cartHeaders(token?: string | null, auth?: string | null): Headers {
-  const headers = new Headers({ 'Content-Type': 'application/json' });
-  if (auth) headers.set('Authorization', `Bearer ${auth}`);
+function cartHeaders(token?: string | null): Headers {
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'InabiyaWeb',
+  });
   const t = token ?? getCartToken();
   if (t) headers.set('x-cart-token', t);
   return headers;
@@ -53,7 +55,7 @@ export async function cartApi<T>(
   path: string,
   init?: RequestInit & { json?: unknown; authToken?: string | null; _retried?: boolean },
 ): Promise<T> {
-  const headers = cartHeaders(getCartToken(), init?.authToken ?? getStoredAccessToken());
+  const headers = cartHeaders(getCartToken());
   const res = await fetch(apiUrl(path), {
     ...init,
     headers,

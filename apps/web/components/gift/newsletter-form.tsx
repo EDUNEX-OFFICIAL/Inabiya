@@ -2,18 +2,23 @@
 
 import { FormEvent, useState } from 'react';
 import { apiUrl } from '@/lib/api-base';
+import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
 
 type Props = {
   /** Shorter layout (footer / mid-page panels). */
   compact?: boolean;
   /** Hide the default “Newsletter” heading (when parent already has a title). */
   hideTitle?: boolean;
+  title?: string;
+  hint?: string;
 };
 
-export function NewsletterForm({ compact = false, hideTitle = false }: Props) {
+export function NewsletterForm({ compact = false, hideTitle = false, title, hint }: Props) {
   const [email, setEmail] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const heading = title?.trim() || 'Stay in the loop';
+  const sub = hint?.trim() || 'New drops & gentle parenting notes — no spam.';
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -22,7 +27,8 @@ export function NewsletterForm({ compact = false, hideTitle = false }: Props) {
     try {
       const res = await fetch(apiUrl('/articles/newsletter'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', [CSRF_HEADER]: CSRF_HEADER_VALUE },
+        credentials: 'include',
         body: JSON.stringify({ email }),
       });
       if (!res.ok) throw new Error('Could not subscribe');
@@ -40,8 +46,8 @@ export function NewsletterForm({ compact = false, hideTitle = false }: Props) {
       <div className="gift-newsletter">
         {!hideTitle ? (
           <>
-            <p className="gift-newsletter__title">Stay in the loop</p>
-            <p className="gift-newsletter__hint">New drops & gentle parenting notes — no spam.</p>
+            <p className="gift-newsletter__title">{heading}</p>
+            <p className="gift-newsletter__hint">{sub}</p>
           </>
         ) : null}
         <form

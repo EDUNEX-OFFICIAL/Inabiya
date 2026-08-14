@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { apiUrl } from '@/lib/api-base';
+import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -18,7 +19,8 @@ export default function ForgotPasswordPage() {
     try {
       const res = await fetch(apiUrl('/auth/forgot-password'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', [CSRF_HEADER]: CSRF_HEADER_VALUE },
+        credentials: 'include',
         body: JSON.stringify({ email }),
       });
       const data = (await res.json().catch(() => ({}))) as {

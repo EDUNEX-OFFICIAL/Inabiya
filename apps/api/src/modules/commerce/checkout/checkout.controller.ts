@@ -40,7 +40,7 @@ export class CheckoutController {
     @CurrentUser() user: { id: string },
     @Headers('x-cart-token') cartHeader: string | undefined,
     @Body(new ZodValidationPipe(checkoutPreviewBodySchema))
-    body: { shippingMethod: 'STANDARD' | 'EXPRESS'; couponCode?: string },
+    body: { shippingMethod: 'STANDARD' | 'EXPRESS'; couponCode?: string; buyNowVariantId?: string },
   ) {
     return this.checkout.preview(user.id, cartHeader?.trim(), body);
   }

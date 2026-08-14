@@ -14,7 +14,7 @@ export function ProductCardRating({ rating, count = 0, className = '' }: Props) 
 
   return (
     <p
-      className={`flex flex-wrap items-center gap-x-gs-2 gap-y-0 text-caption ${className}`.trim()}
+      className={`inline-flex flex-nowrap items-center gap-x-gs-1 whitespace-nowrap text-caption ${className}`.trim()}
     >
       <span className="inline-flex tracking-tight" aria-label={label} role="img">
         {[1, 2, 3, 4, 5].map((n) => (

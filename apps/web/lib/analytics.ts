@@ -1,5 +1,6 @@
 /** Lightweight funnel event tracker for Soft Gift storefront. */
 import { apiUrl } from './api-base';
+import { CSRF_HEADER, CSRF_HEADER_VALUE } from './auth-client';
 
 const SESSION_KEY = 'inabiya_analytics_sid';
 
@@ -27,7 +28,8 @@ export function trackEvent(
   };
   void fetch(apiUrl('/analytics/track'), {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', [CSRF_HEADER]: CSRF_HEADER_VALUE },
+    credentials: 'include',
     body: JSON.stringify(body),
     keepalive: true,
   }).catch(() => undefined);

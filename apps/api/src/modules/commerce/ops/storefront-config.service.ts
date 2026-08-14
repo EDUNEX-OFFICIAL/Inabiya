@@ -1,11 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import type { GiftChromeBody } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
+import { AuditService } from '../../audit/audit.service';
 
 const FEATURED_KEY = 'homepage.featured_slugs';
 const HERO_TITLE_KEY = 'homepage.hero_title';
 const HERO_SUBTITLE_KEY = 'homepage.hero_subtitle';
 const GIFT_CHROME_KEY = 'gift.chrome';
+
+/** Old seed was BYB + hampers only (no groups). Treat as unset so CMS defaults apply. */
+function isLegacySlimShop(links: GiftChromeBody['shopLinks']): boolean {
+  if (!links?.length) return true;
+  if (links.length > 2) return false;
+  if (links.some((l) => l.group)) return false;
+  return links.every((l) => {
+    const p = String(l.href ?? '')
+      .split(/[?#]/, 1)[0]
+      ?.replace(/\/$/, '');
+    return p === '/gift/build-your-box' || p?.endsWith('/ready-hampers') || p?.endsWith('/hampers');
+  });
+}
 
 export type StorefrontHomeConfig = {
   featuredSlugs: string[];
@@ -15,17 +29,34 @@ export type StorefrontHomeConfig = {
 
 export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'forWhomLinks'>> &
   GiftChromeBody = {
+  shopLabel: 'Shop',
+  forWhomLabel: 'For Whom',
+  journalLabel: 'Journal',
+  journalHref: '/articles',
   shopLinks: [
-    { href: '/gift/build-your-box', label: 'Build Your Box' },
-    { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
+    { href: '/gift/build-your-box', label: 'Build Your Box', group: 'Shop' },
+    { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
+    { href: '/gift/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
+    { href: '/gift/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
+    {
+      href: '/gift/collections/naming-ceremony',
+      label: 'Naming ceremony gifts',
+      group: 'Occasion',
+    },
+    { href: '/gift/collections/first-birthday', label: 'First birthday gifts', group: 'Occasion' },
+    { href: '/gift/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
+    { href: '/gift/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
+    { href: '/gift/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
+    { href: '/gift/collections/on-sale', label: 'On sale', group: 'Curated' },
   ],
   forWhomLinks: [
-    { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
-    { href: '/gift/collections/for-baby-boy', label: 'Baby Boy' },
-    { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom' },
-    { href: '/gift/collections/newborn', label: 'Newborn' },
-    { href: '/gift/collections/infant', label: 'Infant' },
-    { href: '/gift/collections/toddler', label: 'Toddler' },
+    { href: '/gift/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
+    { href: '/gift/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
+    { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom', group: 'For baby' },
+    { href: '/gift/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
+    { href: '/gift/collections/newborn', label: 'Newborn', group: 'By age' },
+    { href: '/gift/collections/infant', label: 'Infant', group: 'By age' },
+    { href: '/gift/collections/toddler', label: 'Toddler', group: 'By age' },
   ],
   shopMega: {
     headline: 'Shop the Soft Gift edit',
@@ -43,8 +74,22 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
   },
   footer: {
     brandName: 'Inabiya',
+    brandHref: '/gift',
     tagline: 'Thoughtfully personalised baby essentials & gifting.',
     showNewsletter: true,
+    copyright: '© {year} {brand}. Soft gifts for tiny humans.',
+    newsletterTitle: 'Stay in the loop',
+    newsletterHint: 'New drops & gentle parenting notes — no spam.',
+    reachTitle: 'Reach us',
+    reachLinks: [
+      { label: 'hello@inabiya.in', href: 'mailto:hello@inabiya.in', network: 'mail' },
+      { label: 'WhatsApp', href: 'https://wa.me/919693940330', network: 'whatsapp' },
+      { label: '@inabiya', href: 'https://instagram.com/inabiya', network: 'instagram' },
+    ],
+    legalLinks: [
+      { label: 'Shipping', href: '/gift#faq' },
+      { label: 'Contact', href: '/contact' },
+    ],
     socialLinks: [
       { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
       { label: 'Facebook', href: 'https://facebook.com/inabiya', network: 'facebook' },
@@ -84,7 +129,10 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
 
 @Injectable()
 export class StorefrontConfigService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async getHomeConfig(): Promise<StorefrontHomeConfig> {
     const rows = await this.prisma.commerceSetting.findMany({
@@ -103,11 +151,15 @@ export class StorefrontConfigService {
     };
   }
 
-  async setHomeConfig(input: {
-    featuredSlugs: string[];
-    heroTitle?: string;
-    heroSubtitle?: string;
-  }): Promise<StorefrontHomeConfig> {
+  async setHomeConfig(
+    input: {
+      featuredSlugs: string[];
+      heroTitle?: string;
+      heroSubtitle?: string;
+    },
+    actorId: string,
+    requestId?: string,
+  ): Promise<StorefrontHomeConfig> {
     await this.prisma.commerceSetting.upsert({
       where: { key: FEATURED_KEY },
       create: { key: FEATURED_KEY, value: input.featuredSlugs },
@@ -127,6 +179,14 @@ export class StorefrontConfigService {
         update: { value: input.heroSubtitle },
       });
     }
+    await this.audit.write({
+      actorId,
+      action: 'storefront.setHomeConfig',
+      resource: 'commerce_setting',
+      resourceId: FEATURED_KEY,
+      metadata: { slugCount: input.featuredSlugs.length },
+      requestId,
+    });
     return this.getHomeConfig();
   }
 
@@ -138,24 +198,14 @@ export class StorefrontConfigService {
       row?.value && typeof row.value === 'object' && !Array.isArray(row.value)
         ? (row.value as GiftChromeBody)
         : {};
-    const collections = await this.prisma.collection.findMany({
-      where: { status: 'PUBLISHED' },
-      orderBy: [{ createdAt: 'asc' }, { title: 'asc' }],
-      select: { slug: true, title: true },
-    });
-    const authoredShop = stored.shopLinks?.length
-      ? stored.shopLinks
-      : DEFAULT_GIFT_CHROME.shopLinks;
-    const nonAutoCollection = authoredShop.filter((l) => {
-      const href = String(l.href ?? '');
-      return !href.includes('/gift/collections/') && !href.includes('/gift/products?category=');
-    });
-    const collectionLinks = collections.map((c) => ({
-      href: `/gift/collections/${c.slug}`,
-      label: c.title,
-    }));
     return {
-      shopLinks: [...nonAutoCollection, ...collectionLinks],
+      shopLabel: stored.shopLabel?.trim() || DEFAULT_GIFT_CHROME.shopLabel,
+      forWhomLabel: stored.forWhomLabel?.trim() || DEFAULT_GIFT_CHROME.forWhomLabel,
+      journalLabel: stored.journalLabel?.trim() || DEFAULT_GIFT_CHROME.journalLabel,
+      journalHref: stored.journalHref?.trim() || DEFAULT_GIFT_CHROME.journalHref,
+      shopLinks: isLegacySlimShop(stored.shopLinks)
+        ? DEFAULT_GIFT_CHROME.shopLinks
+        : stored.shopLinks,
       forWhomLinks: stored.forWhomLinks?.length
         ? stored.forWhomLinks
         : DEFAULT_GIFT_CHROME.forWhomLinks,
@@ -167,18 +217,32 @@ export class StorefrontConfigService {
         columns: stored.footer?.columns?.length
           ? stored.footer.columns
           : DEFAULT_GIFT_CHROME.footer?.columns,
-        socialLinks: stored.footer?.socialLinks?.length
+        socialLinks: Array.isArray(stored.footer?.socialLinks)
           ? stored.footer.socialLinks
           : DEFAULT_GIFT_CHROME.footer?.socialLinks,
+        reachLinks: Array.isArray(stored.footer?.reachLinks)
+          ? stored.footer.reachLinks
+          : DEFAULT_GIFT_CHROME.footer?.reachLinks,
+        legalLinks: Array.isArray(stored.footer?.legalLinks)
+          ? stored.footer.legalLinks
+          : DEFAULT_GIFT_CHROME.footer?.legalLinks,
         showNewsletter:
           stored.footer?.showNewsletter ?? DEFAULT_GIFT_CHROME.footer?.showNewsletter ?? true,
       },
     };
   }
 
-  async setGiftChrome(input: GiftChromeBody): Promise<GiftChromeBody> {
+  async setGiftChrome(
+    input: GiftChromeBody,
+    actorId: string,
+    requestId?: string,
+  ): Promise<GiftChromeBody> {
     const current = await this.getGiftChrome();
     const next: GiftChromeBody = {
+      shopLabel: input.shopLabel ?? current.shopLabel,
+      forWhomLabel: input.forWhomLabel ?? current.forWhomLabel,
+      journalLabel: input.journalLabel ?? current.journalLabel,
+      journalHref: input.journalHref ?? current.journalHref,
       shopLinks: input.shopLinks ?? current.shopLinks,
       forWhomLinks: input.forWhomLinks ?? current.forWhomLinks,
       shopMega: input.shopMega ? { ...current.shopMega, ...input.shopMega } : current.shopMega,
@@ -191,6 +255,8 @@ export class StorefrontConfigService {
             ...input.footer,
             columns: input.footer.columns ?? current.footer?.columns,
             socialLinks: input.footer.socialLinks ?? current.footer?.socialLinks,
+            reachLinks: input.footer.reachLinks ?? current.footer?.reachLinks,
+            legalLinks: input.footer.legalLinks ?? current.footer?.legalLinks,
             showNewsletter: input.footer.showNewsletter ?? current.footer?.showNewsletter ?? true,
           }
         : current.footer,
@@ -199,6 +265,13 @@ export class StorefrontConfigService {
       where: { key: GIFT_CHROME_KEY },
       create: { key: GIFT_CHROME_KEY, value: next },
       update: { value: next },
+    });
+    await this.audit.write({
+      actorId,
+      action: 'storefront.setGiftChrome',
+      resource: 'commerce_setting',
+      resourceId: GIFT_CHROME_KEY,
+      requestId,
     });
     return this.getGiftChrome();
   }

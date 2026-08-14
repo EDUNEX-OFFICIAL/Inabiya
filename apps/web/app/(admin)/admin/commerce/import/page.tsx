@@ -23,10 +23,11 @@ import {
   ShoppingBag,
   Upload,
 } from 'lucide-react';
-import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { parseInventoryCsv } from '@/lib/parse-inventory-csv';
 import { parseProductCsv } from '@/lib/parse-product-csv';
 import { opsChipClass } from '@/lib/ops-desk-ui';
+import { canMutateCommerceFinance } from '@/lib/commerce-ops-nav';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -68,7 +69,9 @@ function parseKind(raw: string | null): ImportKind {
 function ImportDeskInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const kind = parseKind(searchParams.get('kind'));
+  const kindRaw = parseKind(searchParams.get('kind'));
+  const canFinance = canMutateCommerceFinance(getStoredUser()?.roles ?? []);
+  const kind: ImportKind = kindRaw === 'products' && !canFinance ? 'stock' : kindRaw;
   const editorId = useId();
   const fileInputId = useId();
   const abortRef = useRef<AbortController | null>(null);
@@ -122,6 +125,11 @@ function ImportDeskInner() {
     setResultLimit(RESULT_PAGE);
 
     if (kind === 'products') {
+      if (!canFinance) {
+        setError('Finance role required');
+        setBusy(false);
+        return;
+      }
       const parsed = parseProductCsv(text);
       if (!parsed.rows.length) {
         setError('No valid rows to import');
@@ -270,6 +278,7 @@ function ImportDeskInner() {
           aria-selected={kind === 'products'}
           className={opsChipClass(kind === 'products')}
           onClick={() => setKind('products')}
+          disabled={!canFinance}
         >
           Products
         </button>

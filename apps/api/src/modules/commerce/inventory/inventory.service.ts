@@ -44,19 +44,18 @@ export class InventoryService {
 
   async reserve(tx: Tx, items: Array<{ variantId: string; quantity: number }>): Promise<void> {
     for (const item of items) {
-      const inv = await tx.inventoryItem.findUnique({
-        where: { variantId: item.variantId },
-      });
-      if (!inv || inv.onHand - inv.reserved < item.quantity) {
+      const updated = await tx.$executeRaw`
+        UPDATE inventory_items
+        SET reserved = reserved + ${item.quantity}
+        WHERE variant_id = ${item.variantId}::uuid
+          AND (on_hand - reserved) >= ${item.quantity}
+      `;
+      if (Number(updated) === 0) {
         throw new BadRequestException({
           code: 'INSUFFICIENT_STOCK',
           message: 'Not enough stock for one or more items.',
         });
       }
-      await tx.inventoryItem.update({
-        where: { variantId: item.variantId },
-        data: { reserved: { increment: item.quantity } },
-      });
     }
   }
 

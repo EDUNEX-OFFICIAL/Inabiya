@@ -26,13 +26,14 @@ import {
   resolveCatalogCollectionChips,
 } from '@/lib/catalog-collections';
 import { sanitizeArticleHtml } from '@/lib/article-html';
+import { safeHrefOrHash } from '@inabiya/validation';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
 import { FaqAccordion } from '@/components/gift/faq-accordion';
 import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
+import { jsonLdToScriptHtml } from '@/components/seo/json-ld-script';
 import { GiftHomeMotion } from '@/components/cms/gift-home-motion';
 import { HomeProductCard } from '@/components/cms/home-product-card';
-import { ProductCardPrice } from '@/components/gift/product-card-price';
-import { ProductCardRating } from '@/components/gift/product-card-rating';
+import { ProductCardMeta } from '@/components/gift/product-card-meta';
 import { ProductCardWishlist } from '@/components/gift/product-card-wishlist';
 import { HamperContentsTrigger } from '@/components/gift/hamper-contents-modal';
 import {
@@ -54,6 +55,11 @@ type Props = {
   /** When false, parent owns FAQ JSON-LD (merged @graph). Default true. */
   emitFaqJsonLd?: boolean;
 };
+
+function cmsHref(raw: unknown, fallback = '/gift'): string {
+  const s = typeof raw === 'string' && raw.trim() ? raw.trim() : fallback;
+  return safeHrefOrHash(s);
+}
 
 function GiftToysDecor({ variant = 'default' }: { variant?: 'default' | 'sky' | 'mint' }) {
   const cls =
@@ -151,7 +157,7 @@ function GiftSectionHeader({
         {subtitle ? <p className="gift-muted mt-gs-2 max-w-prose">{subtitle}</p> : null}
       </div>
       {actionHref && actionLabel ? (
-        <Link href={actionHref} className="clay-btn-secondary shrink-0 self-end text-body">
+        <Link href={cmsHref(actionHref)} className="clay-btn-secondary shrink-0 self-end text-body">
           {actionLabel}
         </Link>
       ) : aside && aside.trim() ? (
@@ -357,12 +363,12 @@ function HeroBlock({ props, layout }: { props: Record<string, unknown>; layout: 
         ) : null}
         <div className="mt-gs-6 flex flex-wrap gap-gs-3">
           {props.ctaLabel && props.ctaHref ? (
-            <Link href={String(props.ctaHref)} className="clay-btn">
+            <Link href={cmsHref(props.ctaHref)} className="clay-btn">
               {String(props.ctaLabel)}
             </Link>
           ) : null}
           {props.ctaLabel2 && props.ctaHref2 ? (
-            <Link href={String(props.ctaHref2)} className="clay-btn-secondary">
+            <Link href={cmsHref(props.ctaHref2)} className="clay-btn-secondary">
               {String(props.ctaLabel2)}
             </Link>
           ) : null}
@@ -379,7 +385,7 @@ function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: bool
       <h2 className="gift-h2">{String(props.title)}</h2>
       {props.body ? <p className="gift-muted mt-gs-3 max-w-prose">{String(props.body)}</p> : null}
       <Link
-        href={String(props.href ?? '/gift')}
+        href={cmsHref(props.href, '/gift')}
         className={`mt-gs-6 ${secondary ? 'clay-btn-secondary' : 'clay-btn'}`}
       >
         {String(props.label ?? 'Continue')}
@@ -388,7 +394,7 @@ function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: bool
   ) : (
     <div className="flex justify-center py-gs-2">
       <Link
-        href={String(props.href ?? '/gift')}
+        href={cmsHref(props.href, '/gift')}
         className={secondary ? 'clay-btn-secondary' : 'clay-btn'}
       >
         {String(props.label ?? 'Continue')}
@@ -521,32 +527,28 @@ function ProductGridBlock({
                     productTitle={p.title}
                   />
                 </ProductCardHero>
-                <div className="p-gs-4">
+                <div className="flex flex-col gap-gs-1 p-gs-4">
                   <Link
                     href={`/gift/products/${p.slug}`}
-                    className="font-medium text-foreground hover:text-primary"
+                    className="line-clamp-2 font-medium text-foreground hover:text-primary"
                   >
                     {p.title}
                   </Link>
-                  <ProductCardRating
-                    rating={p.averageRating}
-                    count={p.reviewCount}
-                    className="mt-gs-1"
-                  />
-                  <ProductCardPrice
+                  <ProductCardMeta
                     fromPricePaise={p.fromPricePaise}
                     salePricePaise={p.salePricePaise}
                     compareAtPaise={p.fromCompareAtPaise}
-                    className="mt-gs-1 text-body font-semibold text-primary"
+                    rating={p.averageRating}
+                    count={p.reviewCount}
+                    priceClassName="text-body text-primary"
                   />
                   {p.isReadyMadeHamper ? (
                     <HamperContentsTrigger
                       product={p}
                       variantId={p.available && p.available > 0 ? p.quickAddVariantId : null}
-                      className="mt-gs-1"
                     />
                   ) : null}
-                  <ProductCardThumbs className="mt-gs-2" />
+                  <ProductCardThumbs className="mt-gs-1" />
                 </div>
               </ProductCardGallery>
             </li>
@@ -802,7 +804,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
             return (
               <Link
                 key={key}
-                href={String(card.href ?? '/gift/products')}
+                href={cmsHref(card.href, '/gift/products')}
                 className={`gift-recipient-card group ${sky ? 'gift-recipient-card--sky' : 'gift-recipient-card--pink'}`}
                 data-testid={`recipient-${label || key}`}
               >
@@ -835,7 +837,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
           return (
             <Link
               key={key}
-              href={String(card.href ?? '/gift/products')}
+              href={cmsHref(card.href, '/gift/products')}
               className={`${sky ? 'gift-panel-sky ' : ''}clay-panel block overflow-hidden p-gs-6 transition hover:-translate-y-px`}
             >
               <p className="gift-muted">{eyebrow}</p>
@@ -1033,7 +1035,7 @@ function SaleStripBlock({ props, home }: { props: Record<string, unknown>; home?
     <div className="flex flex-col items-start justify-between gap-gs-3 sm:flex-row sm:items-center">
       <p className="gift-h2 leading-snug">{text}</p>
       {ctaLabel && ctaHref ? (
-        <Link href={ctaHref} className="clay-btn-secondary shrink-0 text-body">
+        <Link href={cmsHref(ctaHref)} className="clay-btn-secondary shrink-0 text-body">
           {ctaLabel}
         </Link>
       ) : null}
@@ -1087,7 +1089,7 @@ function CountdownBlock({ props, home }: { props: Record<string, unknown>; home?
         ) : null}
       </div>
       {ctaLabel && ctaHref && !expired ? (
-        <Link href={ctaHref} className="clay-btn shrink-0 text-body">
+        <Link href={cmsHref(ctaHref)} className="clay-btn shrink-0 text-body">
           {ctaLabel}
         </Link>
       ) : null}
@@ -1179,7 +1181,10 @@ function FaqJsonLd({ blocks }: { blocks: CmsPageBlock[] }) {
   const data = collectFaqJsonLd(blocks);
   if (!data) return null;
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: jsonLdToScriptHtml(data) }}
+    />
   );
 }
 
@@ -1258,7 +1263,7 @@ async function DiscoveryChipsBlock({
             return (
               <li key={`${item.label}-${item.href}`}>
                 <Link
-                  href={item.href}
+                  href={cmsHref(item.href)}
                   className={`gift-category-card gift-category-card--${tone} group`}
                   data-testid={`category-${item.label}`}
                 >
@@ -1301,7 +1306,7 @@ async function DiscoveryChipsBlock({
           {items.map((item) => (
             <li key={`${item.label}-${item.href}`}>
               <Link
-                href={item.href}
+                href={cmsHref(item.href)}
                 className="clay-chip inline-flex text-body hover:bg-primary/10"
               >
                 {item.label}
@@ -1355,7 +1360,7 @@ function BuildYourBoxTeaserBlock({
           <h2 className="gift-byb-banner__title">{title}</h2>
           {body ? <p className="gift-byb-banner__body">{body}</p> : null}
           <Link
-            href={ctaHref}
+            href={cmsHref(ctaHref)}
             className="gift-byb-banner__cta inline-flex items-center gap-gs-2"
             data-testid="byb-cta"
           >
@@ -1460,7 +1465,7 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
               {card.subtitle ? <p className="gift-offer-card__subtitle">{card.subtitle}</p> : null}
               {card.body ? <p className="gift-offer-card__body">{card.body}</p> : null}
               <Link
-                href={card.ctaHref}
+                href={cmsHref(card.ctaHref)}
                 className="gift-offer-card__cta clay-btn-secondary inline-flex items-center gap-gs-2"
                 data-testid={`offer-cta-${card.tone}`}
               >

@@ -18,16 +18,15 @@ export class MediaService {
     return `/api/v1/media/${id}/content`;
   }
 
-  private mapAsset<T extends { id: string; storageKey: string }>(asset: T, signedUrl?: string) {
+  private mapAsset<T extends { id: string; storageKey: string }>(asset: T) {
     return {
       ...asset,
       publicUrl: this.publicUrlFor(asset.id),
-      ...(signedUrl ? { signedUrl } : {}),
     };
   }
 
   async upload(input: { file: Express.Multer.File; actorId: string; requestId?: string }) {
-    const check = validateMediaUpload(input.file.mimetype, input.file.size);
+    const check = validateMediaUpload(input.file.mimetype, input.file.size, input.file.buffer);
     if (!check.ok) {
       throw new BadRequestException({
         code: check.code,
@@ -67,8 +66,7 @@ export class MediaService {
       requestId: input.requestId,
     });
 
-    const signedUrl = await this.storage.getSignedUrl({ key: asset.storageKey });
-    return this.mapAsset(asset, signedUrl);
+    return this.mapAsset(asset);
   }
 
   async list(input: { cursor?: string; limit: number }) {
@@ -84,12 +82,7 @@ export class MediaService {
     });
     const hasMore = rows.length > input.limit;
     const slice = hasMore ? rows.slice(0, input.limit) : rows;
-    const items = await Promise.all(
-      slice.map(async (asset) => {
-        const signedUrl = await this.storage.getSignedUrl({ key: asset.storageKey });
-        return this.mapAsset(asset, signedUrl);
-      }),
-    );
+    const items = slice.map((asset) => this.mapAsset(asset));
     const nextCursor = hasMore ? items[items.length - 1]?.id : null;
     return { items, nextCursor };
   }
@@ -102,8 +95,7 @@ export class MediaService {
         message: 'Media asset not found.',
       });
     }
-    const signedUrl = await this.storage.getSignedUrl({ key: asset.storageKey });
-    return this.mapAsset(asset, signedUrl);
+    return this.mapAsset(asset);
   }
 
   async update(
@@ -136,8 +128,7 @@ export class MediaService {
       },
       requestId,
     });
-    const signedUrl = await this.storage.getSignedUrl({ key: asset.storageKey });
-    return this.mapAsset(asset, signedUrl);
+    return this.mapAsset(asset);
   }
 
   async getPublicContent(id: string): Promise<{
@@ -196,8 +187,6 @@ function extensionForMime(mime: string): string {
       return '.gif';
     case 'image/avif':
       return '.avif';
-    case 'image/svg+xml':
-      return '.svg';
     case 'application/pdf':
       return '.pdf';
     default:

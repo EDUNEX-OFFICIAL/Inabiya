@@ -11,7 +11,7 @@ type Props = {
 
 function toneClass(tone: StorefrontDisplayLabel['tone']): string {
   const base =
-    'rounded-pill px-gs-2 py-gs-1 text-caption font-semibold uppercase tracking-wide shadow-sm';
+    'max-w-full whitespace-nowrap rounded-pill px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase leading-none tracking-wide shadow-sm sm:px-gs-2 sm:py-gs-1 sm:text-caption';
   switch (tone) {
     case 'sale':
       return `${base} bg-[color:var(--danger)] text-white`;

@@ -35,13 +35,14 @@ for ((r = 1; r <= ROUNDS; r++)); do
   wait
 done
 
-# Authenticated hot path sample
-TOKEN=$(curl -sS -X POST "$API/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"customer@test.inabiya","password":"Password123!"}' \
-  | python3 -c 'import sys,json; print(json.load(sys.stdin)["tokens"]["accessToken"])')
-
-code=$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "$API/orders/me")
+# Authenticated hot path sample (httpOnly cookie session)
+JAR=$(mktemp)
+CSRF='X-Requested-With: InabiyaWeb'
+curl -sS -c "$JAR" -b "$JAR" -X POST "$API/auth/login" \
+  -H 'Content-Type: application/json' -H "$CSRF" \
+  -d '{"email":"customer@test.inabiya","password":"Password123!"}' >/dev/null
+code=$(curl -sS -o /dev/null -w '%{http_code}' -b "$JAR" "$API/orders/me")
+rm -f "$JAR"
 [[ "$code" == "200" ]] || { echo "FAIL orders/me $code"; fail=$((fail + 1)); }
 
 echo "==> failures=$fail"

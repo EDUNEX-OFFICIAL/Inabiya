@@ -96,7 +96,7 @@ export const COMMERCE_OPS_NAV: OpsNavItem[] = [
     id: 'promotions',
     label: 'Promotions',
     href: '/admin/commerce/coupons',
-    roles: ['COMMERCE_ADMIN'],
+    roles: ['COMMERCE_ADMIN', 'FINANCE'],
     match: 'prefix',
     section: 'growth',
   },
@@ -177,6 +177,11 @@ const SECTION_LABELS: Record<string, string> = {
 export function canAccessCommerceOps(roles: string[]): boolean {
   if (roles.includes('SUPER_ADMIN')) return true;
   return OPS_SHELL_ROLES.some((r) => r !== 'SUPER_ADMIN' && roles.includes(r));
+}
+
+/** Coupons, product create/import, compare-at price — API still enforces. */
+export function canMutateCommerceFinance(roles: string[]): boolean {
+  return roles.includes('SUPER_ADMIN') || roles.includes('FINANCE');
 }
 
 export function filterNavForRoles(roles: string[]): OpsNavItem[] {

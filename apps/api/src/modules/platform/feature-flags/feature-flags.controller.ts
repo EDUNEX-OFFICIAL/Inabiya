@@ -18,11 +18,11 @@ export class FeatureFlagsController {
     return this.flags.list();
   }
 
-  /** Evaluate: returns enabled for a known key (404 if missing). */
+  /** Evaluate: `{ enabled }` only. Missing key is disabled (no existence leak). */
   @Get(':key')
   async getOne(@Param('key') key: string) {
-    const row = await this.flags.getOne(key);
-    return { key: row.key, enabled: row.enabled, description: row.description };
+    const enabled = await this.flags.isEnabled(key);
+    return { enabled };
   }
 
   @Put(':key')

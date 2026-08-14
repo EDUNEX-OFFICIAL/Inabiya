@@ -4,6 +4,7 @@ import type { CheckoutPlaceOrderBody } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { PaymentsService } from '../../../infrastructure/payments/payments.service';
 import { AuditService } from '../../audit/audit.service';
+import { convertCartAfterBuyNow, selectBuyNowItems } from '../cart/buy-now-slice';
 import { CartService } from '../cart/cart.service';
 import { generateOrderNumber } from '../commerce-pricing';
 import { InventoryService } from '../inventory/inventory.service';
@@ -34,16 +35,23 @@ export class CheckoutService {
   async preview(
     userId: string | undefined,
     guestToken: string | undefined,
-    input: { shippingMethod: 'STANDARD' | 'EXPRESS'; couponCode?: string },
+    input: {
+      shippingMethod: 'STANDARD' | 'EXPRESS';
+      couponCode?: string;
+      buyNowVariantId?: string;
+    },
   ) {
     const cartDto = await this.cart.getOrCreate(userId, guestToken);
-    if (cartDto.items.length === 0) {
+    const items = selectBuyNowItems(cartDto.items, input.buyNowVariantId);
+    if (items.length === 0) {
       throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });
     }
     if (input.couponCode && input.couponCode !== cartDto.couponCode) {
       await this.cart.applyCoupon(userId, guestToken, input.couponCode);
     }
-    return this.cart.totals(cartDto.id, input.shippingMethod);
+    return this.cart.totals(cartDto.id, input.shippingMethod, {
+      buyNowVariantId: input.buyNowVariantId,
+    });
   }
 
   async placeOrder(
@@ -55,7 +63,8 @@ export class CheckoutService {
     await this.customers.assertActiveForCheckout(userId);
 
     const cartDto = await this.cart.getOrCreate(userId, guestToken);
-    if (cartDto.items.length === 0) {
+    const items = selectBuyNowItems(cartDto.items, body.buyNowVariantId);
+    if (items.length === 0) {
       throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });
     }
 
@@ -64,8 +73,10 @@ export class CheckoutService {
       await this.cart.applyCoupon(userId, guestToken, couponCode);
     }
 
-    const totals = await this.cart.totals(cartDto.id, body.shippingMethod);
-    const reserveItems = cartDto.items.map((i) => ({
+    const totals = await this.cart.totals(cartDto.id, body.shippingMethod, {
+      buyNowVariantId: body.buyNowVariantId,
+    });
+    const reserveItems = items.map((i) => ({
       variantId: i.variantId,
       quantity: i.quantity,
     }));
@@ -105,7 +116,7 @@ export class CheckoutService {
             },
           },
           items: {
-            create: cartDto.items.map((item) => ({
+            create: items.map((item) => ({
               variantId: item.variantId,
               sku: item.sku,
               title: item.productTitle,
@@ -130,10 +141,23 @@ export class CheckoutService {
         },
       });
 
-      await tx.cart.update({
-        where: { id: cartDto.id },
-        data: { status: CartStatus.CONVERTED },
-      });
+      if (body.buyNowVariantId) {
+        await tx.cartItem.deleteMany({
+          where: { cartId: cartDto.id, variantId: body.buyNowVariantId },
+        });
+        const remaining = await tx.cartItem.count({ where: { cartId: cartDto.id } });
+        if (convertCartAfterBuyNow(remaining)) {
+          await tx.cart.update({
+            where: { id: cartDto.id },
+            data: { status: CartStatus.CONVERTED },
+          });
+        }
+      } else {
+        await tx.cart.update({
+          where: { id: cartDto.id },
+          data: { status: CartStatus.CONVERTED },
+        });
+      }
 
       return { order, payment };
     });

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { apiAuth, storeSession, type AuthSession } from '@/lib/auth-client';
 import { mergeGuestCommerce } from '@/lib/merge-guest-commerce';
+import { safeNextPath } from '@inabiya/validation';
 
 /** Seeded demo accounts — shown when NEXT_PUBLIC_SHOW_DEMO_LOGINS=1 or in development. */
 const DEMO_PASSWORD = 'Password123!';
@@ -28,11 +29,6 @@ const SHOW_DEMO_LOGINS =
   process.env.NODE_ENV === 'development' ||
   process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === '1' ||
   process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === 'true';
-
-function safeNextPath(raw: string | null): string | null {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return null;
-  return raw;
-}
 
 function LoginForm() {
   const router = useRouter();
@@ -99,7 +95,7 @@ function LoginForm() {
         json: { email: email.trim().toLowerCase(), password },
       });
       storeSession(session);
-      await mergeGuestCommerce(session.tokens.accessToken);
+      await mergeGuestCommerce();
       redirectAfterLogin(session);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');

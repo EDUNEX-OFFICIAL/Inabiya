@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 import type { ButtonHTMLAttributes, ComponentProps } from 'react';
+import { safeHrefOrHash } from '@inabiya/validation';
 import { cn } from '@/lib/utils';
 
 const variants = {
@@ -67,7 +68,7 @@ export function GiftResponsiveLink({
   Omit<ComponentProps<typeof Link>, 'children' | 'className' | 'href'> & { href: string }) {
   return (
     <Link
-      href={href}
+      href={safeHrefOrHash(href)}
       aria-label={label}
       title={label}
       className={ctaClass({ variant, labelFrom, className })}

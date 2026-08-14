@@ -2,18 +2,21 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import {
   CartIcon,
   HeartIcon,
   SparklesIcon,
+  ZapIcon,
   type CartIconHandle,
   type HeartIconHandle,
   type SparklesIconHandle,
+  type ZapIconHandle,
 } from 'lucide-animated';
 import { useOnceIcon } from '@/components/gift/use-once-icon';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { cartApi } from '@/lib/cart-client';
+import { buyNowCheckoutPath } from '@/lib/buy-now';
 import { giftBoxApi } from '@/lib/gift-box-client';
 import { formatInr, type CatalogProduct } from '@/lib/catalog';
 import { trackEvent } from '@/lib/analytics';
@@ -107,15 +110,17 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyCart, setBusyCart] = useState(false);
+  const [busyBuy, setBusyBuy] = useState(false);
   const [busyWish, setBusyWish] = useState(false);
   const [busyBox, setBusyBox] = useState(false);
-  const anyBusy = busyCart || busyWish || busyBox;
+  const anyBusy = busyCart || busyBuy || busyWish || busyBox;
   const [reviewSummary, setReviewSummary] = useState<Pick<
     ReviewList,
     'averageRating' | 'count'
   > | null>(null);
   const [reviewsPayload, setReviewsPayload] = useState<ReviewList | null>(null);
   const cartIcon = useOnceIcon<CartIconHandle>();
+  const buyIcon = useOnceIcon<ZapIconHandle>();
   const heartIcon = useOnceIcon<HeartIconHandle>();
   const boxIcon = useOnceIcon<SparklesIconHandle>();
 
@@ -198,8 +203,10 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     return out;
   }
 
-  async function addToCart() {
-    if (!product || !variant || variant.available <= 0) return;
+  function buyLine():
+    | { ok: true; variantId: string; quantity: number; personalization: Record<string, string> }
+    | { ok: false } {
+    if (!product || !variant || variant.available <= 0) return { ok: false };
     const payload = personalizationPayload();
     const missing = missingRequiredPersonalization(product, {
       ...personalization,
@@ -209,22 +216,60 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       setError(missing);
       setMessage(null);
       setPersonalizeOpen(true);
-      return;
+      return { ok: false };
     }
+    return { ok: true, variantId: variant.id, quantity, personalization: payload };
+  }
+
+  async function addToCart() {
+    const line = buyLine();
+    if (!line.ok || !product) return;
     setBusyCart(true);
     setError(null);
     try {
       await cartApi('/cart/items', {
         method: 'POST',
         authToken: getStoredAccessToken(),
-        json: { variantId: variant.id, quantity, personalization: payload },
+        json: {
+          variantId: line.variantId,
+          quantity: line.quantity,
+          personalization: line.personalization,
+        },
       });
       trackEvent('add_to_cart', { productId: product.id });
-      setMessage(quantity > 1 ? `Added ${quantity} to cart` : 'Added to cart');
+      setMessage(line.quantity > 1 ? `Added ${line.quantity} to cart` : 'Added to cart');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed');
     } finally {
       setBusyCart(false);
+    }
+  }
+
+  async function buyNow() {
+    const line = buyLine();
+    if (!line.ok || !product) return;
+    setBusyBuy(true);
+    setError(null);
+    try {
+      await cartApi('/cart/items', {
+        method: 'POST',
+        authToken: getStoredAccessToken(),
+        json: {
+          variantId: line.variantId,
+          quantity: line.quantity,
+          personalization: line.personalization,
+        },
+      });
+      trackEvent('add_to_cart', { productId: product.id });
+      const next = buyNowCheckoutPath(line.variantId);
+      if (!getStoredAccessToken()) {
+        router.push(loginUrl(next));
+        return;
+      }
+      router.push(next);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed');
+      setBusyBuy(false);
     }
   }
 
@@ -247,25 +292,19 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   }
 
   async function addToBox() {
-    if (!product || !variant || variant.available <= 0) return;
-    const payload = personalizationPayload();
-    const missing = missingRequiredPersonalization(product, {
-      ...personalization,
-      ...payload,
-    });
-    if (missing) {
-      setError(missing);
-      setMessage(null);
-      setPersonalizeOpen(true);
-      return;
-    }
+    const line = buyLine();
+    if (!line.ok) return;
     setBusyBox(true);
     setError(null);
     try {
       const box = await giftBoxApi<{ id: string }>('/catalog/gift-boxes/active');
       await giftBoxApi(`/catalog/gift-boxes/${box.id}/items`, {
         method: 'POST',
-        json: { variantId: variant.id, quantity, personalization: payload },
+        json: {
+          variantId: line.variantId,
+          quantity: line.quantity,
+          personalization: line.personalization,
+        },
       });
       await giftBoxApi('/catalog/gift-boxes', {
         method: 'POST',
@@ -557,17 +596,17 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             </div>
           ) : null}
 
-          <div className="mt-gs-5 flex flex-col gap-gs-3">
-            <div className="flex items-stretch gap-gs-2">
+          <div className="mt-gs-5 flex flex-col gap-gs-2">
+            <div className="grid grid-cols-2 gap-gs-2">
               <button
                 type="button"
-                disabled={busyCart || !inStock}
+                disabled={anyBusy || !inStock}
                 onMouseEnter={cartIcon.play}
                 onClick={() => {
                   cartIcon.play();
                   void addToCart();
                 }}
-                className="clay-btn gift-icon-motion min-w-0 flex-1 justify-center gap-gs-2 disabled:opacity-50"
+                className="clay-btn-secondary gift-icon-motion min-w-0 justify-center gap-gs-2 !px-gs-3 whitespace-nowrap text-[0.8125rem] sm:!px-gs-4 sm:text-body disabled:opacity-50"
               >
                 <CartIcon
                   ref={cartIcon.ref}
@@ -580,13 +619,34 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
               </button>
               <button
                 type="button"
+                disabled={anyBusy || !inStock}
+                onMouseEnter={buyIcon.play}
+                onClick={() => {
+                  buyIcon.play();
+                  void buyNow();
+                }}
+                className="clay-btn gift-icon-motion min-w-0 justify-center gap-gs-2 !px-gs-3 whitespace-nowrap text-[0.8125rem] sm:!px-gs-4 sm:text-body disabled:opacity-50"
+              >
+                <ZapIcon
+                  ref={buyIcon.ref}
+                  size={18}
+                  animateOnHover={false}
+                  aria-hidden
+                  className="shrink-0"
+                />
+                {busyBuy ? 'Buying…' : 'Buy now'}
+              </button>
+            </div>
+            <div className="flex items-stretch gap-gs-2">
+              <button
+                type="button"
                 disabled={busyWish || !variant}
                 onMouseEnter={heartIcon.play}
                 onClick={() => {
                   heartIcon.play();
                   void addToWishlist();
                 }}
-                className="inline-flex size-12 shrink-0 items-center justify-center rounded-pill border border-border-strong bg-white p-0 text-foreground shadow-sm transition hover:bg-[var(--surface-soft)] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex size-12 shrink-0 items-center justify-center rounded-pill border border-border-subtle bg-white/80 p-0 text-foreground transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Save to wishlist"
                 title="Save to wishlist"
               >
@@ -598,28 +658,28 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                   className="shrink-0"
                 />
               </button>
+              {variant?.giftBoxEligible ? (
+                <button
+                  type="button"
+                  disabled={anyBusy || !inStock}
+                  onMouseEnter={boxIcon.play}
+                  onClick={() => {
+                    boxIcon.play();
+                    void addToBox();
+                  }}
+                  className="clay-btn-ghost gift-icon-motion min-w-0 flex-1 justify-center gap-gs-2 !border-[color:var(--inabiya-sky)]/80 !bg-[color:var(--inabiya-sky)]/35 disabled:opacity-50"
+                >
+                  <SparklesIcon
+                    ref={boxIcon.ref}
+                    size={18}
+                    animateOnHover={false}
+                    aria-hidden
+                    className="shrink-0"
+                  />
+                  {busyBox ? 'Adding…' : 'Add to gift box'}
+                </button>
+              ) : null}
             </div>
-            {variant?.giftBoxEligible ? (
-              <button
-                type="button"
-                disabled={busyBox || !inStock}
-                onMouseEnter={boxIcon.play}
-                onClick={() => {
-                  boxIcon.play();
-                  void addToBox();
-                }}
-                className="clay-btn-secondary gift-icon-motion w-full justify-center gap-gs-2 disabled:opacity-50"
-              >
-                <SparklesIcon
-                  ref={boxIcon.ref}
-                  size={18}
-                  animateOnHover={false}
-                  aria-hidden
-                  className="shrink-0"
-                />
-                {busyBox ? 'Adding…' : 'Add to gift box'}
-              </button>
-            ) : null}
           </div>
 
           {message ? (
@@ -765,6 +825,10 @@ function PersonalizationField({
 }
 
 function ProductDetailsBand({ product }: { product: CatalogProduct }) {
+  const uid = useId();
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const aboutBtnId = `${uid}-about-btn`;
+  const aboutPanelId = `${uid}-about-panel`;
   const aboutHtml = seoSectionsToHtml(product.seoSections).trim();
   const useCmsAbout = aboutHtml.length > 0;
 
@@ -841,64 +905,96 @@ function ProductDetailsBand({ product }: { product: CatalogProduct }) {
   }
 
   return (
-    <section className="grid gap-gs-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-gs-6">
-      <div className="min-w-0">
-        <h2 className="gift-h2">About this gift</h2>
-        {useCmsAbout ? (
-          <div className="mt-gs-3">
-            <ArticleBody body={aboutHtml} className="text-foreground/85" />
-          </div>
-        ) : (
-          <>
-            <p className="mt-gs-3 text-body leading-relaxed opacity-90">
-              {product.description ??
-                'A thoughtfully chosen Soft Gift piece — ready to personalise and send with love.'}
-            </p>
-            <ul className="mt-gs-4 space-y-gs-3" aria-label="Gift highlights">
-              {highlights.map((h) => (
-                <li
-                  key={h.title}
-                  className="flex gap-gs-3 rounded-clay border border-border-subtle bg-white/60 px-gs-4 py-gs-3"
-                >
-                  <span className="mt-gs-1 h-2 w-2 shrink-0 rounded-pill bg-primary" aria-hidden />
-                  <span className="min-w-0">
-                    <p className="text-body font-medium">{h.title}</p>
-                    <p className="mt-gs-1 text-body leading-relaxed opacity-75">{h.body}</p>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
+    <section>
+      <h2 className="gift-h2">
+        <button
+          type="button"
+          id={aboutBtnId}
+          aria-expanded={aboutOpen}
+          aria-controls={aboutPanelId}
+          className="flex w-full cursor-pointer items-center justify-between gap-gs-3 text-left"
+          onClick={() => setAboutOpen((open) => !open)}
+        >
+          <span>About this gift</span>
+          <span
+            className={`shrink-0 font-sans text-h2 font-normal leading-none opacity-50 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+              aboutOpen ? 'rotate-45' : 'rotate-0'
+            }`}
+            aria-hidden
+          >
+            +
+          </span>
+        </button>
+      </h2>
+      <div
+        id={aboutPanelId}
+        role="region"
+        aria-labelledby={aboutBtnId}
+        className="grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        style={{ gridTemplateRows: aboutOpen ? '1fr' : '0fr' }}
+      >
+        <div className="min-h-0 overflow-hidden" inert={!aboutOpen || undefined}>
+          <div className="grid gap-gs-5 pt-gs-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-gs-6">
+            <div className="min-w-0">
+              {useCmsAbout ? (
+                <ArticleBody body={aboutHtml} className="text-foreground/85" />
+              ) : (
+                <>
+                  <p className="text-body leading-relaxed opacity-90">
+                    {product.description ??
+                      'A thoughtfully chosen Soft Gift piece — ready to personalise and send with love.'}
+                  </p>
+                  <ul className="mt-gs-4 space-y-gs-3" aria-label="Gift highlights">
+                    {highlights.map((h) => (
+                      <li
+                        key={h.title}
+                        className="flex gap-gs-3 rounded-clay border border-border-subtle bg-white/60 px-gs-4 py-gs-3"
+                      >
+                        <span
+                          className="mt-gs-1 h-2 w-2 shrink-0 rounded-pill bg-primary"
+                          aria-hidden
+                        />
+                        <span className="min-w-0">
+                          <p className="text-body font-medium">{h.title}</p>
+                          <p className="mt-gs-1 text-body leading-relaxed opacity-75">{h.body}</p>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
 
-      <div className="min-w-0 space-y-gs-3">
-        {tags.length > 0 ? (
-          <div className="pt-gs-1">
-            <p className="text-caption font-medium uppercase tracking-wide opacity-55">
-              Shop similar
-            </p>
-            <ul className="mt-gs-2 flex flex-wrap gap-gs-2" aria-label="Browse similar">
-              {tags.map((t) => (
-                <li key={`${t.href}-${t.label}`}>
-                  <Link
-                    href={t.href}
-                    className="clay-chip text-caption capitalize hover:text-primary"
-                  >
-                    {t.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className="min-w-0 space-y-gs-3">
+              {tags.length > 0 ? (
+                <div className="pt-gs-1">
+                  <p className="text-caption font-medium uppercase tracking-wide opacity-55">
+                    Shop similar
+                  </p>
+                  <ul className="mt-gs-2 flex flex-wrap gap-gs-2" aria-label="Browse similar">
+                    {tags.map((t) => (
+                      <li key={`${t.href}-${t.label}`}>
+                        <Link
+                          href={t.href}
+                          className="clay-chip text-caption capitalize hover:text-primary"
+                        >
+                          {t.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              <p className="text-body opacity-70">
+                Shipping & returns details are in the{' '}
+                <a href="#faq" className="gift-link">
+                  FAQ
+                </a>{' '}
+                below.
+              </p>
+            </div>
           </div>
-        ) : null}
-        <p className="text-body opacity-70">
-          Shipping & returns details are in the{' '}
-          <a href="#faq" className="gift-link">
-            FAQ
-          </a>{' '}
-          below.
-        </p>
+        </div>
       </div>
     </section>
   );

@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, Tag, X } from 'lucide-react';
-import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
+import { canMutateCommerceFinance } from '@/lib/commerce-ops-nav';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -119,6 +120,7 @@ function CouponsDeskInner() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showBuilder, setShowBuilder] = useState(false);
+  const canFinance = canMutateCommerceFinance(getStoredUser()?.roles ?? []);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
   const [qInput, setQInput] = useState('');
@@ -435,18 +437,20 @@ function CouponsDeskInner() {
               />
               Refresh
             </button>
-            <button
-              type="button"
-              className="clay-btn inline-flex min-h-10 items-center gap-1.5 text-sm"
-              onClick={() => {
-                setShowBuilder((v) => !v);
-                setMsg(null);
-                setError(null);
-              }}
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden />
-              {showBuilder ? 'Close' : 'New coupon'}
-            </button>
+            {canFinance ? (
+              <button
+                type="button"
+                className="clay-btn inline-flex min-h-10 items-center gap-1.5 text-sm"
+                onClick={() => {
+                  setShowBuilder((v) => !v);
+                  setMsg(null);
+                  setError(null);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden />
+                {showBuilder ? 'Close' : 'New coupon'}
+              </button>
+            ) : null}
           </>
         }
       />
@@ -462,7 +466,7 @@ function CouponsDeskInner() {
         </p>
       ) : null}
 
-      {showBuilder ? (
+      {canFinance && showBuilder ? (
         <form onSubmit={(e) => void onCreate(e)} className="clay-panel mb-5 space-y-4 p-4 text-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-display text-lg leading-tight">New coupon</h2>
@@ -887,15 +891,17 @@ function CouponsDeskInner() {
                     </p>
                   ) : null}
                   <div className="mt-2 flex flex-wrap gap-0.5">
-                    <button
-                      type="button"
-                      className={`${opsRowActionClass} text-[var(--primary)]`}
-                      disabled={busy}
-                      aria-label={c.active ? `Deactivate ${c.code}` : `Activate ${c.code}`}
-                      onClick={() => void toggle(c)}
-                    >
-                      {c.active ? 'Deactivate' : 'Activate'}
-                    </button>
+                    {canFinance ? (
+                      <button
+                        type="button"
+                        className={`${opsRowActionClass} text-[var(--primary)]`}
+                        disabled={busy}
+                        aria-label={c.active ? `Deactivate ${c.code}` : `Activate ${c.code}`}
+                        onClick={() => void toggle(c)}
+                      >
+                        {c.active ? 'Deactivate' : 'Activate'}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className={opsRowActionClass}
@@ -1010,15 +1016,19 @@ function CouponsDeskInner() {
                         </td>
                         <td className="px-2 py-2.5 pr-3 align-top">
                           <div className="flex flex-wrap justify-end gap-0.5">
-                            <button
-                              type="button"
-                              className={`${opsRowActionClass} text-[var(--primary)]`}
-                              disabled={busy}
-                              aria-label={c.active ? `Deactivate ${c.code}` : `Activate ${c.code}`}
-                              onClick={() => void toggle(c)}
-                            >
-                              {c.active ? 'Deactivate' : 'Activate'}
-                            </button>
+                            {canFinance ? (
+                              <button
+                                type="button"
+                                className={`${opsRowActionClass} text-[var(--primary)]`}
+                                disabled={busy}
+                                aria-label={
+                                  c.active ? `Deactivate ${c.code}` : `Activate ${c.code}`
+                                }
+                                onClick={() => void toggle(c)}
+                              >
+                                {c.active ? 'Deactivate' : 'Activate'}
+                              </button>
+                            ) : null}
                             <button
                               type="button"
                               className={opsRowActionClass}

@@ -21,6 +21,7 @@ import {
   type BulkOrdersBody,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
+import { AdminMutationRateLimitGuard } from '../../../common/guards/rate-limit.guard';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
 import { CurrentUser } from '../../identity/current-user.decorator';
 import { Roles } from '../../identity/roles.decorator';
@@ -74,6 +75,7 @@ export class OrdersAdminController {
   }
 
   @Post('bulk')
+  @UseGuards(AdminMutationRateLimitGuard)
   bulkStatus(
     @Body(new ZodValidationPipe(bulkOrdersBodySchema)) body: BulkOrdersBody,
     @CurrentUser() user: { id: string },
@@ -100,11 +102,13 @@ export class OrdersAdminController {
 
   @Post(':id/cancel')
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
+  @UseGuards(AdminMutationRateLimitGuard)
   cancel(@Param('id') id: string, @CurrentUser() user: { id: string }, @Req() req: AuthedRequest) {
     return this.orders.cancelAndRefundAdmin(id, user.id, String(req.id ?? ''));
   }
 
   @Patch(':id/status')
+  @UseGuards(AdminMutationRateLimitGuard)
   updateStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(adminOrderStatusSchema)) body: AdminOrderStatusBody,

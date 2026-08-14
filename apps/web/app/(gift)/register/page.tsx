@@ -6,11 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { apiAuth, storeSession, type AuthSession } from '@/lib/auth-client';
 import { mergeGuestCommerce } from '@/lib/merge-guest-commerce';
-
-function safeNextPath(raw: string | null): string | null {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return null;
-  return raw;
-}
+import { safeNextPath } from '@inabiya/validation';
 
 function RegisterForm() {
   const router = useRouter();
@@ -37,7 +33,7 @@ function RegisterForm() {
         },
       });
       storeSession(session);
-      await mergeGuestCommerce(session.tokens.accessToken);
+      await mergeGuestCommerce();
       router.push(nextPath ?? '/gift');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Register failed');

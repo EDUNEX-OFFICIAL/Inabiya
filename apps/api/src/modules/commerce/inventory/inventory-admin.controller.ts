@@ -8,6 +8,7 @@ import {
   type InventoryImportBody,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
+import { AdminMutationRateLimitGuard } from '../../../common/guards/rate-limit.guard';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
 import { CurrentUser } from '../../identity/current-user.decorator';
 import { Roles } from '../../identity/roles.decorator';
@@ -36,6 +37,7 @@ export class InventoryAdminController {
   }
 
   @Post('import')
+  @UseGuards(AdminMutationRateLimitGuard)
   importCsv(
     @Body(new ZodValidationPipe(inventoryImportBodySchema)) body: InventoryImportBody,
     @CurrentUser() user: { id: string },
@@ -59,6 +61,7 @@ export class InventoryAdminController {
   }
 
   @Post(':variantId/adjust')
+  @UseGuards(AdminMutationRateLimitGuard)
   adjust(
     @Param('variantId') variantId: string,
     @Body(new ZodValidationPipe(inventoryAdjustBodySchema)) body: InventoryAdjustBody,

@@ -135,8 +135,10 @@ export class OpsAdminController {
       heroTitle?: string;
       heroSubtitle?: string;
     },
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
   ) {
-    return this.storefront.setHomeConfig(body);
+    return this.storefront.setHomeConfig(body, user.id, String(req.id ?? ''));
   }
 
   /** Soft Gift nav + default footer chrome (CMS-controllable). */
@@ -146,21 +148,28 @@ export class OpsAdminController {
   }
 
   @Post('gift-chrome')
-  setGiftChrome(@Body(new ZodValidationPipe(giftChromeBodySchema)) body: GiftChromeBody) {
-    return this.storefront.setGiftChrome(body);
+  setGiftChrome(
+    @Body(new ZodValidationPipe(giftChromeBodySchema)) body: GiftChromeBody,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.storefront.setGiftChrome(body, user.id, String(req.id ?? ''));
   }
 
   @Get('coupons')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
   listCoupons(@Query(new ZodValidationPipe(adminCouponsQuerySchema)) query: AdminCouponsQuery) {
     return this.coupons.listAdmin(query);
   }
 
   @Post('coupons/preview')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
   previewCoupon(@Body(new ZodValidationPipe(couponPreviewBodySchema)) body: CouponPreviewBody) {
     return this.coupons.preview(body);
   }
 
   @Post('coupons')
+  @Roles('FINANCE', 'SUPER_ADMIN')
   createCoupon(
     @Body(new ZodValidationPipe(createCouponBodySchema)) body: CreateCouponBody,
     @CurrentUser() user: { id: string },
@@ -170,6 +179,7 @@ export class OpsAdminController {
   }
 
   @Patch('coupons/:code')
+  @Roles('FINANCE', 'SUPER_ADMIN')
   setCouponActive(
     @Param('code') code: string,
     @Body(new ZodValidationPipe(couponActiveBodySchema)) body: CouponActiveBody,
@@ -183,14 +193,20 @@ export class OpsAdminController {
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT')
   listCustomers(
     @Query(new ZodValidationPipe(adminCustomersQuerySchema)) query: AdminCustomersQuery,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
   ) {
-    return this.customers.list(query);
+    return this.customers.list(query, user.id, String(req.id ?? ''));
   }
 
   @Get('customers/:id')
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT')
-  getCustomer(@Param('id') id: string) {
-    return this.customers.get(id);
+  getCustomer(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.customers.get(id, user.id, String(req.id ?? ''));
   }
 
   @Post('customers/:id/communications')

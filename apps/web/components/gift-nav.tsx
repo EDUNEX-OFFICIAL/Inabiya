@@ -3,7 +3,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+  type RefObject,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Heart, LogOut, Package, ShoppingBag, UserRound } from 'lucide-react';
 import { GiftMenuOverlay } from '@/components/gift/gift-menu-overlay';
 import {
@@ -15,29 +27,42 @@ import {
 import { fetchCart } from '@/lib/cart-client';
 import { GiftSearch } from '@/components/gift/gift-search';
 import { apiUrl } from '@/lib/api-base';
+import {
+  findNavLink,
+  organizeGiftNav,
+  previewForNavLink,
+  splitNavColumns,
+  type GiftNavGroup,
+  type GiftNavLink,
+  type GiftNavPreview,
+} from '@/lib/gift-nav-ia';
+import { cn } from '@/lib/utils';
+import { safeHrefOrHash } from '@inabiya/validation';
 
-type MegaLink = { href: string; label: string };
-
-type MegaCopy = {
-  headline: string;
-  body: string;
-  ctaHref: string;
-  ctaLabel: string;
-  imageSrc: string;
-};
+type MegaLink = GiftNavLink;
+type MegaCopy = GiftNavPreview;
 
 const DEFAULT_SHOP_LINKS: MegaLink[] = [
-  { href: '/gift/build-your-box', label: 'Build Your Box' },
-  { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
+  { href: '/gift/build-your-box', label: 'Build Your Box', group: 'Shop' },
+  { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
+  { href: '/gift/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
+  { href: '/gift/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
+  { href: '/gift/collections/naming-ceremony', label: 'Naming ceremony gifts', group: 'Occasion' },
+  { href: '/gift/collections/first-birthday', label: 'First birthday gifts', group: 'Occasion' },
+  { href: '/gift/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
+  { href: '/gift/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
+  { href: '/gift/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
+  { href: '/gift/collections/on-sale', label: 'On sale', group: 'Curated' },
 ];
 
 const DEFAULT_FOR_WHOM_LINKS: MegaLink[] = [
-  { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
-  { href: '/gift/collections/for-baby-boy', label: 'Baby Boy' },
-  { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom' },
-  { href: '/gift/collections/newborn', label: 'Newborn' },
-  { href: '/gift/collections/infant', label: 'Infant' },
-  { href: '/gift/collections/toddler', label: 'Toddler' },
+  { href: '/gift/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
+  { href: '/gift/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
+  { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom', group: 'For baby' },
+  { href: '/gift/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
+  { href: '/gift/collections/newborn', label: 'Newborn', group: 'By age' },
+  { href: '/gift/collections/infant', label: 'Infant', group: 'By age' },
+  { href: '/gift/collections/toddler', label: 'Toddler', group: 'By age' },
 ];
 
 const DEFAULT_SHOP_MEGA: MegaCopy = {
@@ -92,64 +117,148 @@ function IconLink({
 }
 
 function MegaPanel({
-  links,
-  imageSrc,
+  groups,
+  fallback,
   imageClass,
-  headline,
-  body,
-  ctaHref,
-  ctaLabel,
   onNavigate,
 }: {
-  links: MegaLink[];
-  imageSrc: string;
+  groups: GiftNavGroup[];
+  fallback: MegaCopy;
   imageClass?: string;
-  headline: string;
-  body: string;
-  ctaHref: string;
-  ctaLabel: string;
   onNavigate: () => void;
 }) {
+  const [activeHref, setActiveHref] = useState<string | null>(null);
+  const active = activeHref ? findNavLink(groups, activeHref) : undefined;
+  const preview = active ? previewForNavLink(active, fallback) : fallback;
+  const [colA, colB] = splitNavColumns(groups);
+  const columns = colB.length ? [colA, colB] : [colA];
+
   return (
-    <div className="grid gap-gs-4 md:grid-cols-[1fr_minmax(12rem,16rem)]">
-      <ul className="grid gap-gs-1 sm:grid-cols-2">
-        {links.map((l) => (
-          <li key={l.href}>
-            <Link
-              href={l.href}
-              className="block rounded-control px-gs-3 py-gs-2 font-medium hover:bg-surface-soft hover:text-primary"
-              onClick={onNavigate}
-            >
-              {l.label}
-            </Link>
-          </li>
+    <div className="gift-mega__layout">
+      <div className={cn('grid min-w-0 gap-gs-4', columns.length > 1 && 'grid-cols-2')}>
+        {columns.map((col, i) => (
+          <div key={col[0]?.id ?? i} className="grid min-w-0 content-start gap-gs-3">
+            {col.map((g) => (
+              <div key={g.id} className="min-w-0">
+                <p className="gift-overline px-gs-3">{g.title}</p>
+                <ul className="mt-gs-1 grid gap-0.5">
+                  {g.links.map((l) => (
+                    <li key={l.href}>
+                      <Link
+                        href={safeHrefOrHash(l.href)}
+                        className={cn(
+                          'block rounded-control px-gs-3 py-gs-2 font-medium transition-colors hover:bg-surface-soft hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none',
+                          activeHref === l.href && 'bg-surface-soft text-primary',
+                        )}
+                        onMouseEnter={() => setActiveHref(l.href)}
+                        onFocus={() => setActiveHref(l.href)}
+                        onClick={onNavigate}
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         ))}
-      </ul>
+      </div>
       <aside
-        className={`overflow-hidden rounded-clay border border-border-subtle ${imageClass ?? ''}`}
+        className={cn(
+          'flex min-w-0 flex-col overflow-hidden rounded-clay border border-border-subtle',
+          imageClass,
+        )}
       >
-        <div className="relative h-28 w-full sm:h-36">
+        <div className="relative aspect-[16/10] w-full shrink-0 bg-surface-soft">
           <Image
-            src={imageSrc}
+            src={preview.imageSrc}
             alt=""
             fill
-            sizes="(max-width: 640px) 100vw, 320px"
+            sizes="280px"
+            quality={70}
             className="object-cover"
           />
         </div>
-        <div className="bg-white/90 p-gs-3">
-          <p className="gift-h2">{headline}</p>
-          <p className="mt-gs-1 text-caption opacity-75">{body}</p>
+        <div className="flex min-h-[7.5rem] flex-1 flex-col bg-white/90 p-gs-3">
+          <p className="line-clamp-2 font-display text-[1.05rem] leading-snug text-foreground">
+            {preview.headline}
+          </p>
+          <p className="mt-gs-1 line-clamp-2 text-caption opacity-75">{preview.body}</p>
           <Link
-            href={ctaHref}
-            className="mt-gs-3 inline-flex text-body font-semibold text-primary hover:underline"
+            href={safeHrefOrHash(preview.ctaHref)}
+            className="mt-auto pt-gs-2 inline-flex text-body font-semibold text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             onClick={onNavigate}
           >
-            {ctaLabel}
+            {preview.ctaLabel}
           </Link>
         </div>
       </aside>
     </div>
+  );
+}
+
+function MegaFlyout({
+  id,
+  label,
+  anchorRef,
+  open,
+  onMouseEnter,
+  onMouseLeave,
+  children,
+}: {
+  id: string;
+  label: string;
+  anchorRef: RefObject<HTMLDivElement | null>;
+  open: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  children: ReactNode;
+}) {
+  const [box, setBox] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setBox(null);
+      return;
+    }
+    const el = anchorRef.current;
+    if (!el) return;
+    const sync = () => {
+      const r = el.getBoundingClientRect();
+      const pad = 8;
+      const left = Math.max(pad, r.left);
+      const width = Math.min(r.width, Math.max(0, window.innerWidth - left - pad));
+      setBox({ top: r.bottom, left, width });
+    };
+    sync();
+    window.addEventListener('resize', sync, { passive: true });
+    window.addEventListener('scroll', sync, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener('resize', sync);
+      window.removeEventListener('scroll', sync, true);
+    };
+  }, [open, anchorRef]);
+
+  if (!open || !box || box.width < 8) return null;
+
+  return createPortal(
+    <div
+      id={id}
+      data-theme="gift"
+      data-lenis-prevent
+      role="region"
+      aria-label={label}
+      className="fixed z-40 pt-gs-2"
+      style={{ top: box.top, left: box.left, width: box.width }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <div className="gift-mega gift-mega-scroll clay-panel p-gs-4 shadow-clay-hover sm:p-gs-5">
+        {children}
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -167,8 +276,21 @@ export function GiftNav() {
   const [forWhomLinks, setForWhomLinks] = useState<MegaLink[]>(DEFAULT_FOR_WHOM_LINKS);
   const [shopMega, setShopMega] = useState<MegaCopy>(DEFAULT_SHOP_MEGA);
   const [whomMega, setWhomMega] = useState<MegaCopy>(DEFAULT_WHOM_MEGA);
+  const [shopLabel, setShopLabel] = useState('Shop');
+  const [forWhomLabel, setForWhomLabel] = useState('For Whom');
+  const [journalLabel, setJournalLabel] = useState('Journal');
+  const [journalHref, setJournalHref] = useState('/articles');
   const profileRef = useRef<HTMLDivElement>(null);
   const megaRef = useRef<HTMLDivElement>(null);
+  const shopBtnRef = useRef<HTMLButtonElement>(null);
+  const whomBtnRef = useRef<HTMLButtonElement>(null);
+  const megaCloseTimer = useRef<number | null>(null);
+  const megaOpenTimer = useRef<number | null>(null);
+  const fineHover = useRef(false);
+  const megaKeyRef = useRef<MegaKey>(null);
+  megaKeyRef.current = mega;
+
+  const navIa = useMemo(() => organizeGiftNav(shopLinks, forWhomLinks), [shopLinks, forWhomLinks]);
 
   useEffect(() => {
     let cancelled = false;
@@ -181,6 +303,18 @@ export function GiftNav() {
         }
         if (Array.isArray(data.forWhomLinks) && data.forWhomLinks.length) {
           setForWhomLinks(data.forWhomLinks);
+        }
+        if (typeof data.shopLabel === 'string' && data.shopLabel.trim()) {
+          setShopLabel(data.shopLabel.trim());
+        }
+        if (typeof data.forWhomLabel === 'string' && data.forWhomLabel.trim()) {
+          setForWhomLabel(data.forWhomLabel.trim());
+        }
+        if (typeof data.journalLabel === 'string' && data.journalLabel.trim()) {
+          setJournalLabel(data.journalLabel.trim());
+        }
+        if (typeof data.journalHref === 'string' && data.journalHref.trim()) {
+          setJournalHref(data.journalHref.trim());
         }
         if (data.shopMega) {
           setShopMega({
@@ -250,11 +384,18 @@ export function GiftNav() {
     function onDocClick(e: MouseEvent) {
       const t = e.target as Node;
       if (profileRef.current && !profileRef.current.contains(t)) setProfileOpen(false);
-      if (megaRef.current && !megaRef.current.contains(t)) setMega(null);
+      const inTrigger = Boolean(megaRef.current?.contains(t));
+      const inFlyout =
+        t instanceof Element && Boolean(t.closest('#gift-mega-shop, #gift-mega-for-whom'));
+      if (!inTrigger && !inFlyout) setMega(null);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        setMega(null);
+        setMega((cur) => {
+          if (cur === 'shop') shopBtnRef.current?.focus();
+          else if (cur === 'forWhom') whomBtnRef.current?.focus();
+          return null;
+        });
         setProfileOpen(false);
         setMenuOpen(false);
       }
@@ -264,6 +405,35 @@ export function GiftNav() {
     return () => {
       document.removeEventListener('mousedown', onDocClick);
       document.removeEventListener('keydown', onKey);
+      if (megaCloseTimer.current != null) {
+        window.clearTimeout(megaCloseTimer.current);
+        megaCloseTimer.current = null;
+      }
+      if (megaOpenTimer.current != null) {
+        window.clearTimeout(megaOpenTimer.current);
+        megaOpenTimer.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const hoverMq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const desktopMq = window.matchMedia('(min-width: 1024px)');
+    const syncHover = () => {
+      fineHover.current = hoverMq.matches;
+    };
+    const onDesktop = () => {
+      if (!desktopMq.matches) {
+        setMega(null);
+        setMenuOpen(false);
+      }
+    };
+    syncHover();
+    hoverMq.addEventListener('change', syncHover);
+    desktopMq.addEventListener('change', onDesktop);
+    return () => {
+      hoverMq.removeEventListener('change', syncHover);
+      desktopMq.removeEventListener('change', onDesktop);
     };
   }, []);
 
@@ -272,12 +442,77 @@ export function GiftNav() {
     window.location.href = '/gift';
   }
 
+  function clearMegaTimers() {
+    if (megaCloseTimer.current != null) {
+      window.clearTimeout(megaCloseTimer.current);
+      megaCloseTimer.current = null;
+    }
+    if (megaOpenTimer.current != null) {
+      window.clearTimeout(megaOpenTimer.current);
+      megaOpenTimer.current = null;
+    }
+  }
+
+  function openMega(key: Exclude<MegaKey, null>) {
+    clearMegaTimers();
+    setMega(key);
+    setProfileOpen(false);
+  }
+
+  function scheduleMegaOpen(key: Exclude<MegaKey, null>) {
+    if (!fineHover.current) return;
+    if (megaCloseTimer.current != null) {
+      window.clearTimeout(megaCloseTimer.current);
+      megaCloseTimer.current = null;
+    }
+    if (megaKeyRef.current === key) return;
+    if (megaOpenTimer.current != null) {
+      window.clearTimeout(megaOpenTimer.current);
+    }
+    megaOpenTimer.current = window.setTimeout(() => openMega(key), 80);
+  }
+
+  function scheduleMegaClose() {
+    if (megaOpenTimer.current != null) {
+      window.clearTimeout(megaOpenTimer.current);
+      megaOpenTimer.current = null;
+    }
+    if (megaCloseTimer.current != null) {
+      window.clearTimeout(megaCloseTimer.current);
+    }
+    megaCloseTimer.current = window.setTimeout(() => setMega(null), 140);
+  }
+
   function toggleMega(key: Exclude<MegaKey, null>) {
+    clearMegaTimers();
     setMega((cur) => (cur === key ? null : key));
     setProfileOpen(false);
   }
 
+  function onMegaTriggerClick(e: ReactMouseEvent<HTMLButtonElement>, key: Exclude<MegaKey, null>) {
+    const pointerType = (e.nativeEvent as PointerEvent).pointerType;
+    if (pointerType === 'mouse' || (pointerType !== 'touch' && e.detail > 0)) {
+      openMega(key);
+      return;
+    }
+    toggleMega(key);
+  }
+
+  function onMegaTriggerKey(
+    e: ReactKeyboardEvent<HTMLButtonElement>,
+    key: Exclude<MegaKey, null>,
+    panelId: string,
+  ) {
+    if (e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    openMega(key);
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLAnchorElement>(`#${panelId} a`)?.focus();
+    });
+  }
+
   function closeOverlays() {
+    clearMegaTimers();
     setMega(null);
     setProfileOpen(false);
   }
@@ -296,68 +531,46 @@ export function GiftNav() {
       >
         <GiftSearch onExpand={closeOverlays} />
         <button
+          ref={shopBtnRef}
           type="button"
-          className="inline-flex items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary"
+          className="inline-flex shrink-0 items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary motion-reduce:transition-none"
           aria-expanded={mega === 'shop'}
           aria-haspopup="true"
           aria-controls="gift-mega-shop"
-          onClick={() => toggleMega('shop')}
+          onMouseEnter={() => scheduleMegaOpen('shop')}
+          onMouseLeave={scheduleMegaClose}
+          onClick={(e) => onMegaTriggerClick(e, 'shop')}
+          onKeyDown={(e) => onMegaTriggerKey(e, 'shop', 'gift-mega-shop')}
         >
-          Shop
-          <ChevronDown className={`h-4 w-4 transition ${mega === 'shop' ? 'rotate-180' : ''}`} />
+          {shopLabel}
+          <ChevronDown
+            className={`gift-nav-chevron h-4 w-4 transition motion-reduce:transition-none ${mega === 'shop' ? 'rotate-180' : ''}`}
+          />
         </button>
         <button
+          ref={whomBtnRef}
           type="button"
-          className="inline-flex items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary"
+          className="inline-flex shrink-0 items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary motion-reduce:transition-none"
           aria-expanded={mega === 'forWhom'}
           aria-haspopup="true"
           aria-controls="gift-mega-for-whom"
-          onClick={() => toggleMega('forWhom')}
+          onMouseEnter={() => scheduleMegaOpen('forWhom')}
+          onMouseLeave={scheduleMegaClose}
+          onClick={(e) => onMegaTriggerClick(e, 'forWhom')}
+          onKeyDown={(e) => onMegaTriggerKey(e, 'forWhom', 'gift-mega-for-whom')}
         >
-          For Whom
-          <ChevronDown className={`h-4 w-4 transition ${mega === 'forWhom' ? 'rotate-180' : ''}`} />
+          {forWhomLabel}
+          <ChevronDown
+            className={`gift-nav-chevron h-4 w-4 transition motion-reduce:transition-none ${mega === 'forWhom' ? 'rotate-180' : ''}`}
+          />
         </button>
         <Link
-          href="/articles"
-          className="rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary"
+          href={safeHrefOrHash(journalHref)}
+          className="shrink-0 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary motion-reduce:transition-none"
           onClick={closeOverlays}
         >
-          Journal
+          {journalLabel}
         </Link>
-
-        {mega === 'shop' ? (
-          <div
-            id="gift-mega-shop"
-            className="absolute left-0 right-0 top-full z-40 mt-gs-2 max-h-[min(70vh,28rem)] overflow-y-auto clay-panel p-gs-5 shadow-clay-hover"
-          >
-            <MegaPanel
-              links={shopLinks}
-              imageSrc={shopMega.imageSrc}
-              headline={shopMega.headline}
-              body={shopMega.body}
-              ctaHref={shopMega.ctaHref}
-              ctaLabel={shopMega.ctaLabel}
-              onNavigate={() => setMega(null)}
-            />
-          </div>
-        ) : null}
-        {mega === 'forWhom' ? (
-          <div
-            id="gift-mega-for-whom"
-            className="absolute left-0 right-0 top-full z-40 mt-gs-2 max-h-[min(70vh,28rem)] overflow-y-auto clay-panel p-gs-5 shadow-clay-hover"
-          >
-            <MegaPanel
-              links={forWhomLinks}
-              imageSrc={whomMega.imageSrc}
-              imageClass="gift-panel-sky"
-              headline={whomMega.headline}
-              body={whomMega.body}
-              ctaHref={whomMega.ctaHref}
-              ctaLabel={whomMega.ctaLabel}
-              onNavigate={() => setMega(null)}
-            />
-          </div>
-        ) : null}
       </div>
 
       {/* Utilities */}
@@ -465,11 +678,39 @@ export function GiftNav() {
         </button>
       </div>
 
+      <MegaFlyout
+        id="gift-mega-shop"
+        label={shopLabel}
+        anchorRef={megaRef}
+        open={mega === 'shop'}
+        onMouseEnter={clearMegaTimers}
+        onMouseLeave={scheduleMegaClose}
+      >
+        <MegaPanel groups={navIa.shop} fallback={shopMega} onNavigate={() => setMega(null)} />
+      </MegaFlyout>
+      <MegaFlyout
+        id="gift-mega-for-whom"
+        label={forWhomLabel}
+        anchorRef={megaRef}
+        open={mega === 'forWhom'}
+        onMouseEnter={clearMegaTimers}
+        onMouseLeave={scheduleMegaClose}
+      >
+        <MegaPanel
+          groups={navIa.whom}
+          fallback={whomMega}
+          imageClass="gift-panel-sky"
+          onNavigate={() => setMega(null)}
+        />
+      </MegaFlyout>
       <GiftMenuOverlay
         open={menuOpen}
         onClose={closeMenu}
         shopLinks={shopLinks}
         forWhomLinks={forWhomLinks}
+        journalHref={journalHref}
+        journalLabel={journalLabel}
+        menuTitle={shopLabel}
         signedIn={signedIn}
         accountLabel={label}
         onSignOut={signOut}

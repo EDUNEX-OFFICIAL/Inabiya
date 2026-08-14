@@ -5,12 +5,14 @@ import Image from 'next/image';
 import { useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLenis } from 'lenis/react';
-import { BookOpen, LogOut, Package, UserRound, X } from 'lucide-react';
+import { BookOpen, ChevronRight, LogOut, Package, UserRound, X } from 'lucide-react';
 import { GiftSearch } from '@/components/gift/gift-search';
 import { getGiftCollection } from '@/lib/gift-collections';
+import { organizeGiftNav, type GiftNavGroup, type GiftNavLink } from '@/lib/gift-nav-ia';
 import { cn } from '@/lib/utils';
+import { safeHrefOrHash } from '@inabiya/validation';
 
-export type GiftMenuLink = { href: string; label: string };
+export type GiftMenuLink = GiftNavLink;
 
 type TileTone = 'blush' | 'sky' | 'mint' | 'lavender' | 'soft';
 
@@ -68,31 +70,43 @@ const MENU_PHOTO: Record<string, TileLook> = {
   'on-sale': { src: '/gift/media/baby-clothes.jpg', tone: 'blush' },
 };
 
-function lookFor(href: string, label = ''): TileLook {
-  if (href.includes('/gift/build-your-box')) return MENU_PHOTO['build-your-box']!;
+function lookFor(link: GiftNavLink): TileLook {
+  const href = link.href;
+  const label = link.label;
+  if (href.includes('/gift/build-your-box')) {
+    const base = MENU_PHOTO['build-your-box']!;
+    return link.imageSrc ? { ...base, src: link.imageSrc } : base;
+  }
 
   const slug = collectionSlug(href);
-  if (slug && MENU_PHOTO[slug]) return MENU_PHOTO[slug]!;
-  if (slug) {
+  let look: TileLook | undefined;
+  if (slug && MENU_PHOTO[slug]) look = MENU_PHOTO[slug];
+  else if (slug) {
     const col = getGiftCollection(slug);
     if (col) {
       const tone: TileTone =
         col.accent === 'sky' ? 'sky' : col.accent === 'pink' ? 'blush' : 'soft';
-      return { src: col.heroImageUrl, tone };
+      look = { src: col.heroImageUrl, tone };
     }
   }
 
-  const key = `${href} ${label}`.toLowerCase();
-  if (/girl/.test(key)) return MENU_PHOTO['for-baby-girl']!;
-  if (/boy/.test(key)) return MENU_PHOTO['for-baby-boy']!;
-  if (/mom|expect/.test(key)) return MENU_PHOTO['for-expecting-mom']!;
-  if (/shower/.test(key)) return MENU_PHOTO['baby-shower']!;
-  if (/newborn|welcome/.test(key)) return MENU_PHOTO['welcome-baby']!;
-  if (/birthday|toddler|train/.test(key)) return MENU_PHOTO['first-birthday']!;
-  if (/hamper|ready/.test(key)) return MENU_PHOTO['ready-hampers']!;
+  if (!look) {
+    const key = `${href} ${label}`.toLowerCase();
+    if (/girl/.test(key)) look = MENU_PHOTO['for-baby-girl'];
+    else if (/boy/.test(key)) look = MENU_PHOTO['for-baby-boy'];
+    else if (/mom|expect/.test(key)) look = MENU_PHOTO['for-expecting-mom'];
+    else if (/shower/.test(key)) look = MENU_PHOTO['baby-shower'];
+    else if (/newborn|welcome/.test(key)) look = MENU_PHOTO['welcome-baby'];
+    else if (/birthday|toddler|train/.test(key)) look = MENU_PHOTO['first-birthday'];
+    else if (/hamper|ready/.test(key)) look = MENU_PHOTO['ready-hampers'];
+  }
 
-  const i = hashPick(href, PHOTO_POOL.length);
-  return { src: PHOTO_POOL[i]!, tone: TONES[i % TONES.length]! };
+  if (!look) {
+    const i = hashPick(href, PHOTO_POOL.length);
+    look = { src: PHOTO_POOL[i]!, tone: TONES[i % TONES.length]! };
+  }
+  if (link.imageSrc) return { ...look, src: link.imageSrc };
+  return look;
 }
 
 type Props = {
@@ -100,6 +114,9 @@ type Props = {
   onClose: () => void;
   shopLinks: GiftMenuLink[];
   forWhomLinks: GiftMenuLink[];
+  journalHref?: string;
+  journalLabel?: string;
+  menuTitle?: string;
   signedIn: boolean;
   accountLabel: string;
   onSignOut: () => void;
@@ -130,6 +147,7 @@ function HamperCard({
   tone,
   featured,
   onNavigate,
+  priority,
 }: {
   href: string;
   label: string;
@@ -137,10 +155,11 @@ function HamperCard({
   tone: TileTone;
   featured?: boolean;
   onNavigate: () => void;
+  priority?: boolean;
 }) {
   return (
     <Link
-      href={href}
+      href={safeHrefOrHash(href)}
       onClick={onNavigate}
       className={cn(
         'gift-menu__tile',
@@ -153,7 +172,13 @@ function HamperCard({
           src={src}
           alt=""
           fill
-          sizes={featured ? '(max-width: 640px) 50vw, 280px' : '(max-width: 640px) 45vw, 180px'}
+          sizes={
+            featured
+              ? '(max-width: 639px) 50vw, (max-width: 1023px) 40vw, 280px'
+              : '(max-width: 639px) 45vw, (max-width: 1023px) 30vw, 180px'
+          }
+          quality={60}
+          priority={Boolean(priority)}
           className="object-cover"
         />
       </span>
@@ -162,11 +187,132 @@ function HamperCard({
   );
 }
 
+function MenuRow({
+  href,
+  label,
+  src,
+  tone,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  src: string;
+  tone: TileTone;
+  onNavigate: () => void;
+}) {
+  return (
+    <Link
+      href={safeHrefOrHash(href)}
+      onClick={onNavigate}
+      className={`gift-menu__row gift-menu__row--${tone}`}
+    >
+      <span className="gift-menu__row-thumb">
+        <Image src={src} alt="" fill sizes="72px" quality={50} className="object-cover" />
+      </span>
+      <span className="gift-menu__row-label">{label}</span>
+      <ChevronRight className="gift-menu__row-chevron" strokeWidth={1.75} aria-hidden />
+    </Link>
+  );
+}
+
+function MenuAccordion({ groups, onNavigate }: { groups: GiftNavGroup[]; onNavigate: () => void }) {
+  const uid = useId();
+  const [openId, setOpenId] = useState<string | null>(groups[0]?.id ?? null);
+
+  if (!groups.length) return null;
+
+  return (
+    <div className="gift-menu__acc-list">
+      {groups.map((g) => {
+        const open = openId === g.id;
+        const featured = g.id === 'shop';
+        const featuredLinks = featured
+          ? g.links.filter((l) => FEATURED_SHOP.has(l.href)).slice(0, 2)
+          : [];
+        const featuredHrefs = new Set(featuredLinks.map((l) => l.href));
+        const rest = featured ? g.links.filter((l) => !featuredHrefs.has(l.href)) : g.links;
+        const btnId = `${uid}-${g.id}-btn`;
+        const panelId = `${uid}-${g.id}-panel`;
+
+        return (
+          <div key={g.id} className={cn('gift-menu__acc', open && 'is-open')}>
+            <button
+              type="button"
+              id={btnId}
+              className="gift-menu__acc-btn"
+              aria-expanded={open}
+              aria-controls={panelId}
+              onClick={() => setOpenId(open ? null : g.id)}
+            >
+              <span className="gift-menu__acc-title">{g.title}</span>
+              <span className="gift-menu__acc-plus" aria-hidden>
+                +
+              </span>
+            </button>
+            <div
+              id={panelId}
+              role="region"
+              aria-labelledby={btnId}
+              className="gift-menu__acc-panel"
+              style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+            >
+              <div className="gift-menu__acc-clip">
+                <div className="gift-menu__acc-body">
+                  {featuredLinks.length ? (
+                    <div className="gift-menu__hamper-grid">
+                      {featuredLinks.map((l, i) => {
+                        const look = lookFor(l);
+                        return (
+                          <HamperCard
+                            key={l.href}
+                            href={l.href}
+                            label={l.label}
+                            src={look.src}
+                            tone={look.tone}
+                            featured
+                            priority={i === 0}
+                            onNavigate={onNavigate}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                  {rest.length ? (
+                    <ul className="gift-menu__rows">
+                      {rest.map((l) => {
+                        const look = lookFor(l);
+                        return (
+                          <li key={l.href}>
+                            <MenuRow
+                              href={l.href}
+                              label={l.label}
+                              src={look.src}
+                              tone={look.tone}
+                              onNavigate={onNavigate}
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function GiftMenuOverlay({
   open,
   onClose,
   shopLinks,
   forWhomLinks,
+  journalHref = '/articles',
+  journalLabel = 'Journal',
+  menuTitle = 'Shop',
   signedIn,
   accountLabel,
   onSignOut,
@@ -198,7 +344,7 @@ export function GiftMenuOverlay({
     html.style.overflow = 'hidden';
     lenis?.stop();
 
-    const main = document.querySelector<HTMLElement>('[data-theme="gift"] .flex-1');
+    const main = document.querySelector<HTMLElement>('[data-theme="gift"] header + .flex-1');
     const inerted: HTMLElement[] = [];
     if (main) {
       let el: HTMLElement | null = main;
@@ -230,11 +376,7 @@ export function GiftMenuOverlay({
 
   if (!mounted || !open) return null;
 
-  const featuredShop = shopLinks.filter((l) => FEATURED_SHOP.has(l.href)).slice(0, 2);
-  const moreShop = shopLinks.filter((l) => !FEATURED_SHOP.has(l.href));
-  const shopTiles = featuredShop.length ? moreShop : shopLinks;
-  const shopHrefs = new Set(shopLinks.map((l) => l.href));
-  const whomTiles = forWhomLinks.filter((l) => !shopHrefs.has(l.href));
+  const navIa = organizeGiftNav(shopLinks, forWhomLinks);
 
   return createPortal(
     <div
@@ -253,7 +395,10 @@ export function GiftMenuOverlay({
         <button
           type="button"
           className="gift-menu__close"
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
           aria-label="Close menu"
         >
           <X className="h-5 w-5" strokeWidth={2} />
@@ -262,95 +407,20 @@ export function GiftMenuOverlay({
 
       <div className="gift-menu__body">
         <h2 id={titleId} className="sr-only">
-          Shop
+          {menuTitle}
         </h2>
 
         <div className="gift-menu__search">
           <GiftSearch defaultExpanded onNavigate={onClose} />
         </div>
 
-        {featuredShop.length ? (
-          <section className="gift-menu__section" aria-label="Shop">
-            <p className="gift-overline">Shop</p>
-            <div className="gift-menu__hamper-grid">
-              {featuredShop.map((l) => {
-                const look = lookFor(l.href, l.label);
-                return (
-                  <HamperCard
-                    key={l.href}
-                    href={l.href}
-                    label={l.label}
-                    src={look.src}
-                    tone={look.tone}
-                    featured
-                    onNavigate={onClose}
-                  />
-                );
-              })}
-            </div>
-            {shopTiles.length ? (
-              <div className="gift-menu__whom-grid">
-                {shopTiles.map((l) => {
-                  const look = lookFor(l.href, l.label);
-                  return (
-                    <HamperCard
-                      key={l.href}
-                      href={l.href}
-                      label={l.label}
-                      src={look.src}
-                      tone={look.tone}
-                      onNavigate={onClose}
-                    />
-                  );
-                })}
-              </div>
-            ) : null}
-          </section>
-        ) : shopTiles.length ? (
-          <section className="gift-menu__section" aria-label="Shop">
-            <p className="gift-overline">Shop</p>
-            <div className="gift-menu__whom-grid">
-              {shopTiles.map((l) => {
-                const look = lookFor(l.href, l.label);
-                return (
-                  <HamperCard
-                    key={l.href}
-                    href={l.href}
-                    label={l.label}
-                    src={look.src}
-                    tone={look.tone}
-                    onNavigate={onClose}
-                  />
-                );
-              })}
-            </div>
-          </section>
+        {navIa.shop.length || navIa.whom.length ? (
+          <MenuAccordion groups={[...navIa.shop, ...navIa.whom]} onNavigate={onClose} />
         ) : null}
 
-        {whomTiles.length ? (
-          <section className="gift-menu__section" aria-label="For whom">
-            <p className="gift-overline">For whom</p>
-            <div className="gift-menu__whom-grid">
-              {whomTiles.map((l) => {
-                const look = lookFor(l.href, l.label);
-                return (
-                  <HamperCard
-                    key={l.href}
-                    href={l.href}
-                    label={l.label}
-                    src={look.src}
-                    tone={look.tone}
-                    onNavigate={onClose}
-                  />
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
-
-        <Link href="/articles" className="gift-menu__journal" onClick={onClose}>
+        <Link href={journalHref} className="gift-menu__journal" onClick={onClose}>
           <BookOpen className="h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />
-          <span>Journal</span>
+          <span>{journalLabel}</span>
         </Link>
 
         <div className="gift-menu__account">

@@ -13,6 +13,7 @@ import {
 } from '@inabiya/validation';
 import type { RoleCode } from '@inabiya/types';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
+import { SensitivePostRateLimitGuard } from '../../../common/guards/rate-limit.guard';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
 import { CurrentUser } from '../../identity/current-user.decorator';
 import { Roles } from '../../identity/roles.decorator';
@@ -51,6 +52,7 @@ export class PublishingPublicController {
   }
 
   @Post('newsletter')
+  @UseGuards(SensitivePostRateLimitGuard)
   newsletter(@Body(new ZodValidationPipe(newsletterSignupBodySchema)) body: NewsletterSignupBody) {
     return this.publishing.newsletterSignup(body.email);
   }

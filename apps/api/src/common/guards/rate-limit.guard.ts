@@ -10,6 +10,23 @@ import type { Request } from 'express';
 type Bucket = { count: number; resetAt: number };
 
 /**
+ * Client IP for rate limits: trust Caddy's X-Real-IP (overwritten), never client XFF.
+ */
+export function clientIpFromRequest(req: {
+  headers: Record<string, unknown>;
+  ip?: string;
+}): string {
+  const real = req.headers['x-real-ip'];
+  if (typeof real === 'string' && real.trim()) {
+    return real.trim().split(',')[0]?.trim() || 'unknown';
+  }
+  if (Array.isArray(real) && typeof real[0] === 'string' && real[0].trim()) {
+    return real[0].trim().split(',')[0]?.trim() || 'unknown';
+  }
+  return req.ip || 'unknown';
+}
+
+/**
  * In-process sliding window rate limit for auth/sensitive POSTs.
  * Single-node VPS MVP — swap for Redis when multi-instance.
  * // ponytail: in-memory Map → Redis shared counter when horizontal scale
@@ -29,12 +46,7 @@ export class RateLimitGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest<Request>();
-    const ip =
-      (typeof req.headers['x-forwarded-for'] === 'string'
-        ? req.headers['x-forwarded-for'].split(',')[0]?.trim()
-        : null) ||
-      req.ip ||
-      'unknown';
+    const ip = clientIpFromRequest(req);
     const key = `${this.keyPrefix}:${ip}`;
     const now = Date.now();
     let bucket = this.buckets.get(key);
@@ -66,3 +78,5 @@ export class RateLimitGuard implements CanActivate {
 /** 60 attempts / 15 min — tunnel shares one IP; keep usable for local testing */
 export const AuthRateLimitGuard = new RateLimitGuard(60, 15 * 60 * 1000, 'auth');
 export const SensitivePostRateLimitGuard = new RateLimitGuard(60, 60 * 1000, 'sensitive');
+/** Looser admin desk mutations — still stops bulk scrape/scripting from one IP. */
+export const AdminMutationRateLimitGuard = new RateLimitGuard(120, 60 * 1000, 'admin-post');

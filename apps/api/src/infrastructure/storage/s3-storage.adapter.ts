@@ -55,12 +55,11 @@ export class S3StorageAdapter {
     }
   }
 
-  async getSignedUrl(input: SignedUrlInput): Promise<string> {
-    const endpoint = process.env.S3_ENDPOINT ?? 'http://127.0.0.1:9002';
-    const bucket = process.env.S3_BUCKET ?? 'inabiya';
-    const expires = input.expiresInSeconds ?? 3600;
-    // Legacy stub URL for admin list display — prefer publicUrl from MediaService
-    return `${endpoint}/${bucket}/${input.key}?stub=1&expires=${expires}`;
+  async getSignedUrl(_input: SignedUrlInput): Promise<string> {
+    throw new NotFoundException({
+      code: 'SIGNED_URL_UNAVAILABLE',
+      message: 'Use the media publicUrl path instead of stub signed URLs.',
+    });
   }
 
   async deleteObject(key: string): Promise<void> {

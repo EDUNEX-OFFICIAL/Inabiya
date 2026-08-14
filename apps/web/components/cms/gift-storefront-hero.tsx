@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import { ArrowRight, Gift, HeartHandshake, ShieldCheck, Truck } from 'lucide-react';
-import { GIFT_HERO_FOUC_CSS, runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
+import { runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
 import { GiftResponsiveLink } from '@/components/gift/gift-responsive-cta';
 
 const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.jpg';
@@ -97,7 +97,6 @@ export function GiftStorefrontHero({
   const trustChips = parseTrustChips(trustLine);
   const eyebrowText = eyebrow?.trim() || 'Personalised baby gifting';
   const accent = accentWord?.trim() || (/\bjoy\b/i.test(headline) ? 'joy' : undefined);
-  const dualCtas = Boolean(ctaLabel && ctaHref && ctaLabel2 && ctaHref2);
   const [photoReady, setPhotoReady] = useState(false);
 
   const markPhotoReady = useCallback(() => {
@@ -137,12 +136,10 @@ export function GiftStorefrontHero({
 
   return (
     <section ref={containerRef} className="gift-hero-split relative overflow-x-clip">
-      {/* In-DOM critical CSS: hides targets before globals.css / GSAP (kills flash→hide→in) */}
-      <style dangerouslySetInnerHTML={{ __html: GIFT_HERO_FOUC_CSS }} />
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
 
       <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full gap-gs-3 lg:grid-cols-2 lg:items-stretch lg:gap-gs-8">
-        <div className="gift-hero-split__copy gift-cta-host gift-cta-host--long flex flex-col items-center justify-center text-center lg:items-start lg:text-left">
+        <div className="gift-hero-split__copy flex flex-col items-center justify-center text-center lg:items-start lg:text-left">
           <p data-hero-anim="eyebrow" className="gift-hero-split__eyebrow gift-overline">
             {eyebrowText}
           </p>
@@ -163,7 +160,7 @@ export function GiftStorefrontHero({
             </p>
           ) : null}
 
-          <div className="mt-gs-3 flex w-full max-w-md flex-row flex-nowrap items-center justify-center gap-gs-2 sm:mt-gs-4 sm:max-w-none sm:w-auto sm:gap-gs-3 lg:justify-start">
+          <div className="mt-gs-3 flex w-full max-w-md flex-row flex-wrap items-center justify-center gap-gs-2 sm:mt-gs-4 sm:max-w-none sm:w-auto sm:gap-gs-3 lg:justify-start">
             {ctaLabel && ctaHref ? (
               <GiftResponsiveLink
                 data-hero-cta="primary"
@@ -171,8 +168,8 @@ export function GiftStorefrontHero({
                 href={ctaHref}
                 label={ctaLabel}
                 icon={Gift}
-                labelFrom={dualCtas ? 'container' : 'always'}
-                className="gift-hero-split__cta-primary gift-hero-split__cta sm:px-[var(--btn-pad-x)]"
+                labelFrom="always"
+                className="gift-hero-split__cta-primary gift-hero-split__cta"
               />
             ) : null}
             {ctaLabel2 && ctaHref2 ? (
@@ -184,8 +181,8 @@ export function GiftStorefrontHero({
                 icon={ArrowRight}
                 iconPosition="end"
                 variant="secondary"
-                labelFrom={dualCtas ? 'container' : 'always'}
-                className="gift-hero-split__cta-secondary gift-hero-split__cta sm:px-[var(--btn-pad-x)]"
+                labelFrom="always"
+                className="gift-hero-split__cta-secondary gift-hero-split__cta"
               />
             ) : null}
           </div>

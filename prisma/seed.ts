@@ -1595,121 +1595,100 @@ async function main() {
   }
   console.log('Seeded Inabiya homepage MarketingPage (slug=home)');
 
+  const giftChromeValue = {
+    shopLabel: 'Shop',
+    forWhomLabel: 'For Whom',
+    journalLabel: 'Journal',
+    journalHref: '/articles',
+    shopLinks: [
+      { href: '/gift/build-your-box', label: 'Build Your Box', group: 'Shop' },
+      { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
+      { href: '/gift/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
+      { href: '/gift/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
+      {
+        href: '/gift/collections/naming-ceremony',
+        label: 'Naming ceremony gifts',
+        group: 'Occasion',
+      },
+      {
+        href: '/gift/collections/first-birthday',
+        label: 'First birthday gifts',
+        group: 'Occasion',
+      },
+      { href: '/gift/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
+      { href: '/gift/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
+      { href: '/gift/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
+      { href: '/gift/collections/on-sale', label: 'On sale', group: 'Curated' },
+    ],
+    forWhomLinks: [
+      { href: '/gift/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
+      { href: '/gift/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
+      { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom', group: 'For baby' },
+      { href: '/gift/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
+      { href: '/gift/collections/newborn', label: 'Newborn', group: 'By age' },
+      { href: '/gift/collections/infant', label: 'Infant', group: 'By age' },
+      { href: '/gift/collections/toddler', label: 'Toddler', group: 'By age' },
+    ],
+    footer: {
+      brandName: 'Inabiya',
+      brandHref: '/gift',
+      tagline:
+        'Thoughtfully personalised baby essentials & gifting for the tiny humans (and their moms) you love.',
+      showNewsletter: true,
+      copyright: '© {year} {brand}. Soft gifts for tiny humans.',
+      newsletterTitle: 'Stay in the loop',
+      newsletterHint: 'New drops & gentle parenting notes — no spam.',
+      reachTitle: 'Reach us',
+      reachLinks: [
+        { label: 'hello@inabiya.in', href: 'mailto:hello@inabiya.in', network: 'mail' },
+        { label: 'WhatsApp', href: 'https://wa.me/919693940330', network: 'whatsapp' },
+        { label: '@inabiya', href: 'https://instagram.com/inabiya', network: 'instagram' },
+      ],
+      legalLinks: [
+        { label: 'Shipping', href: '/gift#faq' },
+        { label: 'Contact', href: '/contact' },
+      ],
+      socialLinks: [
+        { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
+        { label: 'Facebook', href: 'https://facebook.com/inabiya', network: 'facebook' },
+        { label: 'WhatsApp', href: 'https://wa.me/919693940330', network: 'whatsapp' },
+      ],
+      columns: [
+        {
+          title: 'Shop',
+          links: [
+            { label: 'Build Your Box', href: '/gift/build-your-box' },
+            { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
+            { label: 'Shop by Age', href: '/gift/collections/newborn' },
+            { label: 'Corporate Gifting', href: '/gift/corporate' },
+          ],
+        },
+        {
+          title: 'Help',
+          links: [
+            { label: 'Shipping', href: '/gift#faq' },
+            { label: 'Returns', href: '/gift#faq' },
+            { label: 'FAQ', href: '/gift#faq' },
+            { label: 'WhatsApp', href: 'https://wa.me/919693940330' },
+          ],
+        },
+        {
+          title: 'Company',
+          links: [
+            { label: 'About', href: '/about' },
+            { label: 'Contact', href: '/contact' },
+            { label: 'Parenting Blog', href: '/articles' },
+            { label: 'Our Specialists', href: '/specialists' },
+          ],
+        },
+      ],
+    },
+  };
+
   await prisma.commerceSetting.upsert({
     where: { key: 'gift.chrome' },
-    update: {
-      value: {
-        shopLinks: [
-          { href: '/gift/build-your-box', label: 'Build Your Box' },
-          { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
-        ],
-        forWhomLinks: [
-          { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
-          { href: '/gift/collections/for-baby-boy', label: 'Baby Boy' },
-          { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom' },
-          { href: '/gift/collections/newborn', label: 'Newborn' },
-          { href: '/gift/collections/infant', label: 'Infant' },
-          { href: '/gift/collections/toddler', label: 'Toddler' },
-        ],
-        footer: {
-          brandName: 'Inabiya',
-          tagline:
-            'Thoughtfully personalised baby essentials & gifting for the tiny humans (and their moms) you love.',
-          showNewsletter: true,
-          socialLinks: [
-            { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
-            { label: 'Facebook', href: 'https://facebook.com/inabiya', network: 'facebook' },
-            { label: 'WhatsApp', href: 'https://wa.me/919693940330', network: 'whatsapp' },
-          ],
-          columns: [
-            {
-              title: 'Shop',
-              links: [
-                { label: 'Build Your Box', href: '/gift/build-your-box' },
-                { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
-                { label: 'Shop by Age', href: '/gift/collections/newborn' },
-                { label: 'Corporate Gifting', href: '/gift/corporate' },
-              ],
-            },
-            {
-              title: 'Help',
-              links: [
-                { label: 'Shipping', href: '/gift#faq' },
-                { label: 'Returns', href: '/gift#faq' },
-                { label: 'FAQ', href: '/gift#faq' },
-                { label: 'WhatsApp', href: 'https://wa.me/919693940330' },
-              ],
-            },
-            {
-              title: 'Company',
-              links: [
-                { label: 'About', href: '/about' },
-                { label: 'Contact', href: '/contact' },
-                { label: 'Parenting Blog', href: '/articles' },
-                { label: 'Our Specialists', href: '/specialists' },
-              ],
-            },
-          ],
-        },
-      },
-    },
-    create: {
-      key: 'gift.chrome',
-      value: {
-        shopLinks: [
-          { href: '/gift/build-your-box', label: 'Build Your Box' },
-          { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
-        ],
-        forWhomLinks: [
-          { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
-          { href: '/gift/collections/for-baby-boy', label: 'Baby Boy' },
-          { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom' },
-          { href: '/gift/collections/newborn', label: 'Newborn' },
-          { href: '/gift/collections/infant', label: 'Infant' },
-          { href: '/gift/collections/toddler', label: 'Toddler' },
-        ],
-        footer: {
-          brandName: 'Inabiya',
-          tagline:
-            'Thoughtfully personalised baby essentials & gifting for the tiny humans (and their moms) you love.',
-          showNewsletter: true,
-          socialLinks: [
-            { label: 'Instagram', href: 'https://instagram.com/inabiya', network: 'instagram' },
-            { label: 'Facebook', href: 'https://facebook.com/inabiya', network: 'facebook' },
-            { label: 'WhatsApp', href: 'https://wa.me/919693940330', network: 'whatsapp' },
-          ],
-          columns: [
-            {
-              title: 'Shop',
-              links: [
-                { label: 'Build Your Box', href: '/gift/build-your-box' },
-                { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
-                { label: 'Shop by Age', href: '/gift/collections/newborn' },
-                { label: 'Corporate Gifting', href: '/gift/corporate' },
-              ],
-            },
-            {
-              title: 'Help',
-              links: [
-                { label: 'Shipping', href: '/gift#faq' },
-                { label: 'Returns', href: '/gift#faq' },
-                { label: 'FAQ', href: '/gift#faq' },
-                { label: 'WhatsApp', href: 'https://wa.me/919693940330' },
-              ],
-            },
-            {
-              title: 'Company',
-              links: [
-                { label: 'About', href: '/about' },
-                { label: 'Contact', href: '/contact' },
-                { label: 'Parenting Blog', href: '/articles' },
-                { label: 'Our Specialists', href: '/specialists' },
-              ],
-            },
-          ],
-        },
-      },
-    },
+    update: { value: giftChromeValue },
+    create: { key: 'gift.chrome', value: giftChromeValue },
   });
   console.log('Seeded gift.chrome setting (defaults)');
 

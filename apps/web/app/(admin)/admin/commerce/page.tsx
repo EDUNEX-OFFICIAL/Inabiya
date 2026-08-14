@@ -18,6 +18,7 @@ import {
 import { apiAuth, type AuthUser } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import { opsChipClass } from '@/lib/ops-desk-ui';
+import { canMutateCommerceFinance } from '@/lib/commerce-ops-nav';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
 
@@ -130,12 +131,14 @@ export default function CommerceAdminPage() {
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [nowTick, setNowTick] = useState(() => Date.now());
+  const [canFinance, setCanFinance] = useState(false);
 
   const load = useCallback(async (days: RangeDays, silent = false) => {
     if (!silent) setLoading(true);
     setError(null);
     try {
       const u = await apiAuth<AuthUser>('/auth/me');
+      setCanFinance(canMutateCommerceFinance(u.roles));
       if (!u.roles.includes('COMMERCE_ADMIN') && !u.roles.includes('SUPER_ADMIN')) {
         setError('Dashboard requires Commerce Admin.');
         setDash(null);
@@ -478,13 +481,19 @@ export default function CommerceAdminPage() {
           <section>
             <h2 className="mb-2 font-display text-lg">Quick actions</h2>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <QuickAction
-                href="/admin/commerce/products/new"
-                label="New product"
-                icon={Plus}
-                primary
-              />
-              <QuickAction href="/admin/commerce/coupons" label="Create coupon" icon={Tag} />
+              {canFinance ? (
+                <QuickAction
+                  href="/admin/commerce/products/new"
+                  label="New product"
+                  icon={Plus}
+                  primary
+                />
+              ) : null}
+              {canFinance ? (
+                <QuickAction href="/admin/commerce/coupons" label="Create coupon" icon={Tag} />
+              ) : (
+                <QuickAction href="/admin/commerce/coupons" label="Promotions" icon={Tag} />
+              )}
               <QuickAction href="/admin/commerce/orders" label="Orders queue" icon={ShoppingBag} />
               <QuickAction
                 href="/admin/commerce/merchandising"

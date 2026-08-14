@@ -41,9 +41,11 @@ export type GiftBoxDto = {
 
 type GiftBoxPayload = GiftBoxDto & { cart?: CartDto; box?: GiftBoxDto };
 
-function giftBoxHeaders(auth?: string | null): Headers {
-  const headers = new Headers({ 'Content-Type': 'application/json' });
-  if (auth) headers.set('Authorization', `Bearer ${auth}`);
+function giftBoxHeaders(): Headers {
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'InabiyaWeb',
+  });
   const t = getGiftBoxToken();
   if (t) headers.set('x-gift-box-token', t);
   const cartToken = getCartToken();
@@ -62,7 +64,7 @@ export async function giftBoxApi<T>(
   path: string,
   init?: RequestInit & { json?: unknown; authToken?: string | null; _retried?: boolean },
 ): Promise<T> {
-  const headers = giftBoxHeaders(init?.authToken ?? getStoredAccessToken());
+  const headers = giftBoxHeaders();
   const res = await fetch(apiUrl(path), {
     ...init,
     headers,

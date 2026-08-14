@@ -403,20 +403,20 @@ export class CouponService {
     const now = new Date();
     if (coupon.startsAt && coupon.startsAt > now) {
       throw new BadRequestException({
-        code: 'COUPON_NOT_STARTED',
-        message: 'Coupon is not active yet.',
+        code: 'INVALID_COUPON',
+        message: 'Coupon is not valid.',
       });
     }
     if (coupon.expiresAt && coupon.expiresAt < now) {
       throw new BadRequestException({
-        code: 'COUPON_EXPIRED',
-        message: 'Coupon has expired.',
+        code: 'INVALID_COUPON',
+        message: 'Coupon is not valid.',
       });
     }
     if (coupon.maxUses != null && coupon.usedCount >= coupon.maxUses) {
       throw new BadRequestException({
-        code: 'COUPON_EXHAUSTED',
-        message: 'Coupon usage limit reached.',
+        code: 'INVALID_COUPON',
+        message: 'Coupon is not valid.',
       });
     }
 
@@ -431,18 +431,15 @@ export class CouponService {
 
     if (scope !== 'CART' && eligible <= 0) {
       throw new BadRequestException({
-        code: 'COUPON_NOT_ELIGIBLE',
-        message:
-          scope === 'PRODUCT'
-            ? 'Coupon does not apply to items in this cart.'
-            : 'Coupon does not apply to collections in this cart.',
+        code: 'INVALID_COUPON',
+        message: 'Coupon is not valid.',
       });
     }
 
     if (eligible < coupon.minSubtotalPaise) {
       throw new BadRequestException({
-        code: 'COUPON_MIN_NOT_MET',
-        message: `Minimum order ${coupon.minSubtotalPaise / 100} INR required.`,
+        code: 'INVALID_COUPON',
+        message: 'Coupon is not valid.',
       });
     }
 
@@ -460,10 +457,19 @@ export class CouponService {
     };
   }
 
-  async incrementUsage(code: string): Promise<void> {
-    await this.prisma.coupon.update({
-      where: { code },
-      data: { usedCount: { increment: 1 } },
-    });
+  async incrementUsage(code: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const db = tx ?? this.prisma;
+    const updated = await db.$executeRaw`
+      UPDATE coupons
+      SET used_count = used_count + 1
+      WHERE code = ${code}
+        AND (max_uses IS NULL OR used_count < max_uses)
+    `;
+    if (Number(updated) === 0) {
+      throw new BadRequestException({
+        code: 'INVALID_COUPON',
+        message: 'Coupon is not valid.',
+      });
+    }
   }
 }

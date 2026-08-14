@@ -115,11 +115,11 @@ export class PaymentFulfillmentService {
             note: 'Payment captured',
           },
         });
+        if (payment.order.couponCode) {
+          await this.coupons.incrementUsage(payment.order.couponCode, tx);
+        }
       });
       await this.inventory.commit(lineItems);
-      if (payment.order.couponCode) {
-        await this.coupons.incrementUsage(payment.order.couponCode);
-      }
       await this.notifications.enqueueOrderConfirmation({
         orderId: payment.orderId,
         orderNumber: payment.order.orderNumber,

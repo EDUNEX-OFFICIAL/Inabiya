@@ -56,7 +56,7 @@ export function buildProductFaqItems(
     items.push({
       question: 'Can I send this as a gift?',
       answerText:
-        'Yes. Add to cart or gift box, then enter the recipient address at checkout. You can also Build Your Box for a custom mix of Soft Gift pieces.',
+        'Yes. Buy now, add to cart, or add to gift box, then enter the recipient address at checkout. You can also Build Your Box for a custom mix of Soft Gift pieces.',
     });
   }
 

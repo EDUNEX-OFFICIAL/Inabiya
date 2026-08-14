@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiUrl } from '@/lib/api-base';
+import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -29,7 +30,8 @@ function ResetPasswordForm() {
     try {
       const res = await fetch(apiUrl('/auth/reset-password'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', [CSRF_HEADER]: CSRF_HEADER_VALUE },
+        credentials: 'include',
         body: JSON.stringify({ token, password }),
       });
       const data = (await res.json().catch(() => ({}))) as {

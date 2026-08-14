@@ -24,7 +24,7 @@ export function ProductCardPrice({
   const onSale = compareAtPaise != null && compareAtPaise > current;
 
   return (
-    <p className={`flex flex-wrap items-baseline gap-x-gs-2 gap-y-0 ${className}`.trim()}>
+    <span className={`inline-flex flex-wrap items-baseline gap-x-gs-2 gap-y-0 ${className}`.trim()}>
       {onSale ? (
         <>
           <span className="font-normal text-foreground/45 line-through">
@@ -38,6 +38,6 @@ export function ProductCardPrice({
           {formatInr(fromPricePaise)}
         </span>
       )}
-    </p>
+    </span>
   );
 }

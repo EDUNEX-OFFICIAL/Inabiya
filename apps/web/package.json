@@ -8,7 +8,7 @@
     "start": "next start -p ${WEB_PORT:-3001}",
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo \"No web unit tests yet\""
+    "test": "tsx lib/commerce-ops-nav.check.ts && tsx next-csp.check.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

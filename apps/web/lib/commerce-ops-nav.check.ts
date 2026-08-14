@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   buildOpsBreadcrumbs,
   canAccessCommerceOps,
+  canMutateCommerceFinance,
   COMMERCE_OPS_NAV,
   defaultOpsLanding,
   filterNavForRoles,
@@ -26,7 +27,13 @@ assert.ok(supportNav.some((i) => i.id === 'orders'));
 
 const financeNav = filterNavForRoles(['FINANCE']);
 assert.ok(financeNav.some((i) => i.id === 'reports'));
+assert.ok(financeNav.some((i) => i.id === 'promotions'));
 assert.ok(!financeNav.some((i) => i.id === 'products'));
+
+assert.equal(canMutateCommerceFinance(['COMMERCE_ADMIN']), false);
+assert.equal(canMutateCommerceFinance(['CUSTOMER']), false);
+assert.equal(canMutateCommerceFinance(['FINANCE']), true);
+assert.equal(canMutateCommerceFinance(['SUPER_ADMIN']), true);
 
 const adminNav = filterNavForRoles(['COMMERCE_ADMIN']);
 assert.equal(adminNav.length, filterNavForRoles(['SUPER_ADMIN']).length);

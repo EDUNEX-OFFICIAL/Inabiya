@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import { ArrowRight, Building2, Package, Sparkles } from 'lucide-react';
-import { GIFT_HERO_FOUC_CSS, runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
+import { runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
 
 const TRUST = [
   { label: 'Dedicated quote', Icon: Building2 },
@@ -45,7 +45,6 @@ export function CorporateHero() {
 
   return (
     <section ref={containerRef} className="gift-hero-split relative overflow-hidden">
-      <style dangerouslySetInnerHTML={{ __html: GIFT_HERO_FOUC_CSS }} />
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
 
       <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full items-center gap-gs-6 lg:grid-cols-2 lg:gap-gs-8">

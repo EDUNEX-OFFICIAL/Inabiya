@@ -26,7 +26,8 @@ import { JwtAuthGuard, type AuthedRequest } from '../identity/jwt-auth.guard';
 import { Roles } from '../identity/roles.decorator';
 import { RolesGuard } from '../identity/roles.guard';
 import { MediaService } from './media.service';
-import { MAX_MEDIA_BYTES } from './media-mime';
+import { MAX_MEDIA_BYTES, sanitizeContentDispositionFilename } from './media-mime';
+import { AdminMutationRateLimitGuard } from '../../common/guards/rate-limit.guard';
 
 /** Public image bytes for Soft Gift / CMS `<img src="/api/v1/media/:id/content">`. */
 @Controller('media')
@@ -47,7 +48,8 @@ export class MediaPublicController {
       res.setHeader('X-Content-Type-Options', 'nosniff');
     }
     if (originalName) {
-      res.setHeader('Content-Disposition', `inline; filename="${originalName.replace(/"/g, '')}"`);
+      const filename = sanitizeContentDispositionFilename(originalName);
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     }
     return new StreamableFile(buffer);
   }
@@ -60,6 +62,7 @@ export class MediaController {
 
   @Post()
   @Roles('COMMERCE_ADMIN', 'CONTENT_ADMIN', 'SUPER_ADMIN')
+  @UseGuards(AdminMutationRateLimitGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: MAX_MEDIA_BYTES },
