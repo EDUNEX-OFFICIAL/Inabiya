@@ -1140,6 +1140,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 - Cause: portal to `document.body` sat outside `[data-theme='gift']`, so `--surface` / borders / `clay-btn` did not apply (transparent panel + black borders).
 - Fix: `data-theme="gift"` on portal (same as gift menu); opaque header/list/footer; drop backdrop-blur.
 - Env: none. Migration: none.
+- **Live:** `bash scripts/deploy-vps.sh web api` @ `15da913` — health/ready 200; web+api healthy. Recreate hit a stale api name; containers recovered on 15da913.
 
 ### Session — 2026-08-14 (card thumbs below copy)
 
