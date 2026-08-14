@@ -3,6 +3,7 @@ import {
   percentOff,
   pickLabelAnchorVariant,
   resolveStorefrontDisplayLabels,
+  saleAnchorPrices,
 } from './storefront-display-labels';
 
 assert.equal(percentOff(250000, 500000), 50);
@@ -17,6 +18,13 @@ const variants = [
 ];
 const anchor = pickLabelAnchorVariant(variants);
 assert.equal(anchor?.pricePaise, 200000);
+
+const sale = saleAnchorPrices(variants);
+assert.deepEqual(sale, { pricePaise: 200000, compareAtPaise: 400000 });
+assert.equal(
+  saleAnchorPrices([{ pricePaise: 100000, compareAtPricePaise: null, available: 5 }]),
+  null,
+);
 
 const now = new Date('2026-07-22T12:00:00Z');
 const labels = resolveStorefrontDisplayLabels({

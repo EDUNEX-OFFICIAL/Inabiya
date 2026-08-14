@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ProductStatus } from '@prisma/client';
+import { Prisma, ProductStatus, ReviewStatus } from '@prisma/client';
 import type {
   AdminCatalogListQuery,
   CreateCollectionBody,
@@ -40,6 +40,7 @@ import {
 import {
   isManualStorefrontLabel,
   resolveStorefrontDisplayLabels,
+  saleAnchorPrices,
 } from './storefront-display-labels';
 import { readSeoSchemaExtras, seoSchemaExtrasWriteValue } from '../../../common/seo-schema-extras';
 const productInclude = {
@@ -592,7 +593,7 @@ export class CatalogService {
     } else if (sort === 'price_desc') {
       mapped.sort((a, b) => b.fromPricePaise - a.fromPricePaise);
     }
-    return mapped;
+    return this.attachReviewSummaries(mapped);
   }
 
   async getPublishedProductBySlug(slug: string) {
@@ -603,7 +604,8 @@ export class CatalogService {
     if (!product) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Product not found.' });
     }
-    return this.mapProduct(product);
+    const [withReviews] = await this.attachReviewSummaries([this.mapProduct(product)]);
+    return withReviews!;
   }
 
   async listAdminProducts(query: AdminCatalogListQuery) {
@@ -1303,6 +1305,39 @@ export class CatalogService {
     return cols.map((c) => c.id);
   }
 
+  /** Batch approved-review avg + count onto storefront product DTOs. */
+  private async attachReviewSummaries<T extends { id: string }>(
+    products: T[],
+  ): Promise<Array<T & { averageRating: number | null; reviewCount: number }>> {
+    if (products.length === 0) return [];
+    const groups = await this.prisma.productReview.groupBy({
+      by: ['productId'],
+      where: { productId: { in: products.map((p) => p.id) }, status: ReviewStatus.APPROVED },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+    const byId = new Map(
+      groups.map((g) => {
+        const avg = g._avg.rating;
+        return [
+          g.productId,
+          {
+            averageRating: avg == null ? null : Math.round(Number(avg) * 10) / 10,
+            reviewCount: g._count._all,
+          },
+        ] as const;
+      }),
+    );
+    return products.map((p) => {
+      const s = byId.get(p.id);
+      return {
+        ...p,
+        averageRating: s?.averageRating ?? null,
+        reviewCount: s?.reviewCount ?? 0,
+      };
+    });
+  }
+
   mapAdminListProduct(product: Prisma.ProductGetPayload<{ include: typeof adminListInclude }>) {
     const variants = product.variants.map((v) => {
       const onHand = v.inventory?.onHand ?? 0;
@@ -1351,6 +1386,7 @@ export class CatalogService {
       };
     });
     const fromPricePaise = variants.length ? Math.min(...variants.map((v) => v.pricePaise)) : 0;
+    const sale = saleAnchorPrices(variants);
     const storefrontLabels = (product.storefrontLabels ?? []).filter(isManualStorefrontLabel);
     const displayLabels = resolveStorefrontDisplayLabels({
       publishedAt: product.publishedAt,
@@ -1400,6 +1436,8 @@ export class CatalogService {
       status: product.status,
       publishedAt: product.publishedAt,
       fromPricePaise,
+      salePricePaise: sale?.pricePaise ?? null,
+      fromCompareAtPaise: sale?.compareAtPaise ?? null,
       recipientTags: product.recipientTags,
       ageBands: product.ageBands,
       occasionTags: product.occasionTags,

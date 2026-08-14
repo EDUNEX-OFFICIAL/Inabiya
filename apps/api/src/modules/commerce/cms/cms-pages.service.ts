@@ -308,12 +308,33 @@ export class CmsPagesService {
     slug: string;
     title: string;
     fromPricePaise: number;
+    salePricePaise?: number | null;
+    fromCompareAtPaise?: number | null;
+    averageRating?: number | null;
+    reviewCount?: number;
     brandName?: string | null;
     brandNames?: string[];
     isReadyMadeHamper?: boolean;
     hamperItemCount?: number;
+    hamperItems?: Array<{
+      id: string;
+      title: string;
+      blurb: string | null;
+      brandName?: string | null;
+      imageUrl: string | null;
+      qty: number;
+      unitPricePaise: number;
+      sortOrder: number;
+    }>;
+    contentsValuePaise?: number | null;
+    hamperSavingsPaise?: number | null;
     displayLabels?: Array<{ code: string; text: string; tone: string }>;
-    media: Array<{ url: string; altText: string | null }>;
+    media: Array<{
+      url: string;
+      altText: string | null;
+      kind?: string | null;
+      id?: string | null;
+    }>;
     variants?: Array<{ id: string; available: number }>;
   }) {
     const quick = (p.variants ?? []).find((v) => v.available > 0);
@@ -323,14 +344,27 @@ export class CmsPagesService {
       slug: p.slug,
       title: p.title,
       fromPricePaise: p.fromPricePaise,
+      salePricePaise: p.salePricePaise ?? null,
+      fromCompareAtPaise: p.fromCompareAtPaise ?? null,
+      averageRating: p.averageRating ?? null,
+      reviewCount: p.reviewCount ?? 0,
       brandName: p.brandName ?? null,
       brandNames,
       isReadyMadeHamper: Boolean(p.isReadyMadeHamper),
       hamperItemCount: p.hamperItemCount ?? 0,
+      hamperItems: p.hamperItems ?? [],
+      contentsValuePaise: p.contentsValuePaise ?? null,
+      hamperSavingsPaise: p.hamperSavingsPaise ?? 0,
       displayLabels: p.displayLabels ?? [],
       quickAddVariantId: quick?.id ?? null,
+      wishlistVariantId: quick?.id ?? (p.variants ?? [])[0]?.id ?? null,
       available: quick?.available ?? 0,
-      media: p.media.map((m) => ({ url: m.url, altText: m.altText })),
+      media: p.media.map((m) => ({
+        url: m.url,
+        altText: m.altText,
+        kind: m.kind ?? null,
+        id: m.id ?? null,
+      })),
     };
   }
 

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
 import { cartApi, formatInr } from '@/lib/cart-client';
+import { removeWishlist } from '@/lib/wishlist-client';
 import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
 
 type WishlistRow = {
@@ -36,7 +37,7 @@ export default function WishlistPage() {
   }, [router]);
 
   async function remove(variantId: string) {
-    await apiAuth(`/catalog/wishlist/${variantId}`, { method: 'DELETE' });
+    await removeWishlist(variantId);
     await load();
   }
 
@@ -48,7 +49,7 @@ export default function WishlistPage() {
         json: { variantId, quantity: 1 },
         authToken: getStoredAccessToken(),
       });
-      await apiAuth(`/catalog/wishlist/${variantId}`, { method: 'DELETE' });
+      await removeWishlist(variantId);
       setMsg('Moved to cart');
       await load();
     } catch (e) {

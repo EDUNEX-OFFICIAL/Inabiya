@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 14, 2026 (CI prettier format)
+Last Updated: August 14, 2026 (hamper What’s inside modal theme)
 
 ---
 
@@ -141,9 +141,9 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Hard-refresh `/gift/build-your-box` step 6 on phone: Add to cart one line, Remaining stacked
-2. After pay: `/orders/:id?placed=1` thank-you; invoice + All orders
-3. Cart thumbs + qty −/+; coupon Enter must not place the order
+1. Hard-refresh `/gift`: tap hamper **?** — What’s inside is an opaque overlay (no card bleed)
+2. Tap a thumb — hero photo swaps; 5+ still shows 3 + **+N**
+3. After pay: `/orders/:id?placed=1` thank-you; invoice + All orders
 4. **QA:** `/admin/commerce/suppliers` + New PO → Receive all → inventory
 5. Resume OPS-10 after storefront QA
 
@@ -178,6 +178,26 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-14 — Card thumbs below copy, not on photo (human override)
+
+- **Override:** Phase 14; human: thumbs must not sit on the hero image — place under title/description (above CTAs).
+- `ProductCardGallery` context: hero + body thumbs stay in sync. Overlay strip removed.
+- Same on home, PLP, compact CMS. Hamper **?** unchanged.
+
+### 2026-08-14 — Card gallery thumbs +N (human override)
+
+- **Override:** Phase 14 Procurement in progress; human: product cards show extra uploaded photos as thumbs; overflow **+N**.
+- Shared `splitCardThumbs`: 1 photo → no strip; 2–4 → all; 5+ → 3 + leftover. Videos skipped. Tap thumb swaps hero (not nested in the image link).
+- Home / PLP / compact CMS. Clay hampers with item photos keep contents strip only (no double row).
+- Check: `card-thumbs.check.ts`. Env: none. Migration: none.
+
+### 2026-08-14 — Hamper card contents modal (human override)
+
+- **Override:** Phase 14 Procurement in progress; human: `?` on hamper cards so shoppers see contents without opening the PDP.
+- Home/CMS cards now ship `hamperItems` + value/savings; shared `HamperContentsTrigger` (home, PLP, compact CMS grid).
+- Modal: image, title×qty, brand, blurb, unit price; worth/save; in-stock **Add to cart**. Fetch by slug if payload has count but no items.
+- No extra how-to copy. Env: none. Migration: none.
 
 ### 2026-08-14 — Local pnpm browser API = same-origin
 
@@ -1113,6 +1133,50 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-14 (hamper What’s inside modal theme)
+
+- **Override:** Phase 14; human: ? modal on hamper card was broken (card CTAs/image bleeding through).
+- Cause: portal to `document.body` sat outside `[data-theme='gift']`, so `--surface` / borders / `clay-btn` did not apply (transparent panel + black borders).
+- Fix: `data-theme="gift"` on portal (same as gift menu); opaque header/list/footer; drop backdrop-blur.
+- Env: none. Migration: none.
+
+### Session — 2026-08-14 (card thumbs below copy)
+
+- **Override:** Phase 14; human: not on the image — under title/price, above buttons.
+- Moved gallery strip off `ProductCardHero`; `ProductCardThumbs` in the text block. Tap still swaps hero.
+- Env: none. Migration: none.
+
+### Session — 2026-08-14 (card gallery thumbs)
+
+- **Override:** Phase 14; human: multiple uploaded images → card thumbs, overflow +N; cross-check hamper modal.
+- Shared `ProductCardHero` + `CardThumbStrip` on home, Clay PLP, compact CMS grids. CMS media now includes `kind`/`id`.
+- Clay image link un-nested so thumbs/wishlist/quick-add are not inside `<a>`. Hamper **?** modal unchanged.
+- Check: `card-thumbs.check.ts` + existing `hamper-contents.check.ts`. Env: none. Migration: none.
+
+### Session — 2026-08-14 (hamper card contents modal)
+
+- **Override:** Phase 14; human: question mark on “N curated items in this set” → modal of hamper products.
+- CMS `mapProductCard` now includes `hamperItems` / contents value / savings (catalog already had them).
+- Shared trigger+modal: home cards, Clay PLP cards, compact CMS grids. Add to cart from modal when in stock.
+- Check: `apps/web/components/gift/hamper-contents.check.ts`. Env: none. Migration: none.
+- Next: hard-refresh `/gift` — tap **?** on a hamper card.
+
+### Session — 2026-08-14 (product card wishlist heart)
+
+- **Override:** Phase 14; human: heart icon at image bottom-right on product cards.
+- Overlay wishlist toggle on home / PLP / CMS cards; filled when saved; login redirect if guest.
+- Related-row Quick add moved to image bottom-left so it doesn’t sit on the heart.
+- Env: none. Migration: none.
+- Next: hard-refresh `/gift` — tap heart, then `/gift/wishlist`.
+
+### Session — 2026-08-14 (product cards rating + sale MRP)
+
+- **Override:** Phase 14; human: show rating + review counts on cards; strikethrough real price when OFF.
+- Catalog list/PDP now attach approved-review avg/count; sale anchor MRP + discounted price (same variant as % OFF).
+- Home + PLP + CMS grids: stars `(count)` under brand; `~~MRP~~ sale` when on offer.
+- Env: none. Migration: none. Check: `storefront-display-labels.check.ts` (`saleAnchorPrices`).
+- Next: hard-refresh `/gift` and `/gift/products`.
 
 ### Session — 2026-08-14 (CI prettier format)
 

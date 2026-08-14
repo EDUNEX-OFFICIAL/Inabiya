@@ -16,6 +16,17 @@ export type StorefrontDisplayLabel = {
   tone: 'sale' | 'new' | 'stock' | 'manual';
 };
 
+export type CatalogHamperItem = {
+  id: string;
+  title: string;
+  blurb: string | null;
+  brandName?: string | null;
+  imageUrl: string | null;
+  qty: number;
+  unitPricePaise: number;
+  sortOrder: number;
+};
+
 export type CatalogProduct = {
   id: string;
   slug: string;
@@ -23,6 +34,12 @@ export type CatalogProduct = {
   description: string | null;
   status: string;
   fromPricePaise: number;
+  /** Discounted price matching the % off badge (anchor variant). */
+  salePricePaise?: number | null;
+  /** MRP of the sale anchor — strikethrough on cards when set. */
+  fromCompareAtPaise?: number | null;
+  averageRating?: number | null;
+  reviewCount?: number;
   recipientTags?: string[];
   ageBands?: string[];
   occasionTags?: string[];
@@ -42,16 +59,7 @@ export type CatalogProduct = {
   faqItems?: Array<{ question: string; answerText: string }> | null;
   seoSections?: Array<{ heading: string; bodyText: string }> | null;
   seoSchemaExtras?: import('@inabiya/validation').SeoSchemaEntry[] | null;
-  hamperItems?: Array<{
-    id: string;
-    title: string;
-    blurb: string | null;
-    brandName?: string | null;
-    imageUrl: string | null;
-    qty: number;
-    unitPricePaise: number;
-    sortOrder: number;
-  }>;
+  hamperItems?: CatalogHamperItem[];
   hamperItemCount?: number;
   contentsValuePaise?: number;
   hamperSavingsPaise?: number;
@@ -92,4 +100,13 @@ export async function fetchCatalog<T>(path: string): Promise<T> {
     throw new Error(`Catalog fetch failed (${res.status})`);
   }
   return res.json() as Promise<T>;
+}
+
+/** Browser fetch of a published product (no Next `revalidate`). */
+export async function fetchPublishedProductClient(slug: string): Promise<CatalogProduct> {
+  const res = await fetch(apiUrl(`/catalog/products/${encodeURIComponent(slug)}`));
+  if (!res.ok) {
+    throw new Error(`Catalog fetch failed (${res.status})`);
+  }
+  return res.json() as Promise<CatalogProduct>;
 }

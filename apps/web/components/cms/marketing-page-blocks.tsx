@@ -19,7 +19,6 @@ import {
   Wallet,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
-import { formatInr } from '@/lib/catalog';
 import {
   fetchCatalogCollections,
   isCollectionHref,
@@ -32,6 +31,15 @@ import { FaqAccordion } from '@/components/gift/faq-accordion';
 import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
 import { GiftHomeMotion } from '@/components/cms/gift-home-motion';
 import { HomeProductCard } from '@/components/cms/home-product-card';
+import { ProductCardPrice } from '@/components/gift/product-card-price';
+import { ProductCardRating } from '@/components/gift/product-card-rating';
+import { ProductCardWishlist } from '@/components/gift/product-card-wishlist';
+import { HamperContentsTrigger } from '@/components/gift/hamper-contents-modal';
+import {
+  ProductCardGallery,
+  ProductCardHero,
+  ProductCardThumbs,
+} from '@/components/gift/product-card-hero';
 import { CategoryCarousel } from '@/components/gift/category-carousel';
 import type { CmsBlockProduct, CmsPageBlock } from '@/components/cms/marketing-page-types';
 
@@ -497,40 +505,50 @@ function ProductGridBlock({
         <ul className="grid gap-gs-5 sm:grid-cols-2">
           {products.map((p) => (
             <li key={p.id} className="clay-card overflow-hidden">
-              <div className="relative h-44 w-full">
-                {p.media[0]?.url ? (
-                  <Image
-                    src={p.media[0].url}
-                    alt={p.media[0].altText ?? p.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 50vw"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="gift-media-fallback absolute inset-0" />
-                )}
-                {p.isReadyMadeHamper && (p.hamperItemCount ?? 0) > 0 ? (
-                  <span className="absolute left-gs-2 top-gs-2 rounded-pill bg-foreground/85 px-gs-2 py-gs-1 text-caption font-semibold text-background">
-                    {p.hamperItemCount} items
-                  </span>
-                ) : null}
-              </div>
-              <div className="p-gs-4">
-                <Link
+              <ProductCardGallery media={p.media} title={p.title}>
+                <ProductCardHero
                   href={`/gift/products/${p.slug}`}
-                  className="font-medium text-foreground hover:text-primary"
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                  className="h-44 w-full"
                 >
-                  {p.title}
-                </Link>
-                <p className="mt-gs-1 text-body font-semibold text-primary">
-                  {formatInr(p.fromPricePaise)}
-                </p>
-                {p.isReadyMadeHamper && (p.hamperItemCount ?? 0) > 0 ? (
-                  <p className="mt-gs-1 text-caption opacity-70">
-                    {p.hamperItemCount} items in this set
-                  </p>
-                ) : null}
-              </div>
+                  {p.isReadyMadeHamper && (p.hamperItemCount ?? 0) > 0 ? (
+                    <span className="absolute left-gs-2 top-gs-2 rounded-pill bg-foreground/85 px-gs-2 py-gs-1 text-caption font-semibold text-background">
+                      {p.hamperItemCount} items
+                    </span>
+                  ) : null}
+                  <ProductCardWishlist
+                    variantId={p.wishlistVariantId ?? p.quickAddVariantId}
+                    productTitle={p.title}
+                  />
+                </ProductCardHero>
+                <div className="p-gs-4">
+                  <Link
+                    href={`/gift/products/${p.slug}`}
+                    className="font-medium text-foreground hover:text-primary"
+                  >
+                    {p.title}
+                  </Link>
+                  <ProductCardRating
+                    rating={p.averageRating}
+                    count={p.reviewCount}
+                    className="mt-gs-1"
+                  />
+                  <ProductCardPrice
+                    fromPricePaise={p.fromPricePaise}
+                    salePricePaise={p.salePricePaise}
+                    compareAtPaise={p.fromCompareAtPaise}
+                    className="mt-gs-1 text-body font-semibold text-primary"
+                  />
+                  {p.isReadyMadeHamper ? (
+                    <HamperContentsTrigger
+                      product={p}
+                      variantId={p.available && p.available > 0 ? p.quickAddVariantId : null}
+                      className="mt-gs-1"
+                    />
+                  ) : null}
+                  <ProductCardThumbs className="mt-gs-2" />
+                </div>
+              </ProductCardGallery>
             </li>
           ))}
         </ul>

@@ -44,6 +44,17 @@ export function percentOff(pricePaise: number, compareAtPricePaise: number): num
   return pct >= 1 ? pct : null;
 }
 
+/** Anchor variant prices when a % off ribbon would show (same variant as PCT_OFF). */
+export function saleAnchorPrices(variants: ResolveVariantInput[]): {
+  pricePaise: number;
+  compareAtPaise: number;
+} | null {
+  const anchor = pickLabelAnchorVariant(variants);
+  if (anchor?.compareAtPricePaise == null) return null;
+  if (percentOff(anchor.pricePaise, anchor.compareAtPricePaise) == null) return null;
+  return { pricePaise: anchor.pricePaise, compareAtPaise: anchor.compareAtPricePaise };
+}
+
 /**
  * Hybrid ribbons: PCT_OFF → LOW_STOCK → manuals → NEW. Cap 2.
  * Legacy NEW/SALE stored labels are ignored (not manuals).
