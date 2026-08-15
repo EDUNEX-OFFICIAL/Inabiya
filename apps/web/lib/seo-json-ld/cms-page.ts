@@ -1,7 +1,8 @@
 import type { SeoSchemaEntry } from '@inabiya/validation';
-import { collectCmsFaqJsonLd, type CmsPageBlock } from '@/components/cms/marketing-page-blocks';
+import type { CmsPageBlock } from '@/components/cms/marketing-page-types';
 import { webPageJsonLd, type CmsSeoPage } from '@/lib/cms-seo';
 import { mergeSeoJsonLdWithExtras } from '@/lib/seo-json-ld';
+import { collectCmsFaqJsonLd } from '@/lib/seo-json-ld/cms-faq';
 
 export function marketingPageMergedJsonLd(
   page: CmsSeoPage,

@@ -3,9 +3,6 @@ import type { GiftChromeBody } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 
-const FEATURED_KEY = 'homepage.featured_slugs';
-const HERO_TITLE_KEY = 'homepage.hero_title';
-const HERO_SUBTITLE_KEY = 'homepage.hero_subtitle';
 const GIFT_CHROME_KEY = 'gift.chrome';
 
 /** Old seed was BYB + hampers only (no groups). Treat as unset so CMS defaults apply. */
@@ -21,14 +18,68 @@ function isLegacySlimShop(links: GiftChromeBody['shopLinks']): boolean {
   });
 }
 
-export type StorefrontHomeConfig = {
-  featuredSlugs: string[];
-  heroTitle: string;
-  heroSubtitle: string;
-};
-
 export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'forWhomLinks'>> &
   GiftChromeBody = {
+  navItems: [
+    {
+      id: 'shop',
+      label: 'Shop',
+      type: 'mega',
+      links: [
+        { href: '/gift/build-your-box', label: 'Build Your Box', group: 'Shop' },
+        { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
+        { href: '/gift/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
+        { href: '/gift/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
+        {
+          href: '/gift/collections/naming-ceremony',
+          label: 'Naming ceremony gifts',
+          group: 'Occasion',
+        },
+        {
+          href: '/gift/collections/first-birthday',
+          label: 'First birthday gifts',
+          group: 'Occasion',
+        },
+        { href: '/gift/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
+        { href: '/gift/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
+        { href: '/gift/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
+        { href: '/gift/collections/on-sale', label: 'On sale', group: 'Curated' },
+      ],
+      mega: {
+        headline: 'Shop the Soft Gift edit',
+        body: 'Build a box or browse ready-made hampers — curated for new parents.',
+        ctaHref: '/gift/products',
+        ctaLabel: 'Browse all gifts',
+        imageSrc: '/gift/nav/shop.svg',
+      },
+    },
+    {
+      id: 'for-whom',
+      label: 'For Whom',
+      type: 'mega',
+      links: [
+        { href: '/gift/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
+        { href: '/gift/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
+        {
+          href: '/gift/collections/for-expecting-mom',
+          label: 'Expecting Mom',
+          group: 'For baby',
+        },
+        { href: '/gift/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
+        { href: '/gift/collections/newborn', label: 'Newborn', group: 'By age' },
+        { href: '/gift/collections/infant', label: 'Infant', group: 'By age' },
+        { href: '/gift/collections/toddler', label: 'Toddler', group: 'By age' },
+      ],
+      mega: {
+        headline: 'Gifts by little one',
+        body: 'Filter by recipient or age band — unisex-safe picks included.',
+        ctaHref: '/gift/products',
+        ctaLabel: 'Shop all',
+        imageSrc: '/gift/nav/for-whom.svg',
+      },
+    },
+    { id: 'journal', label: 'Journal', type: 'link', href: '/articles' },
+  ],
   shopLabel: 'Shop',
   forWhomLabel: 'For Whom',
   journalLabel: 'Journal',
@@ -134,62 +185,6 @@ export class StorefrontConfigService {
     private readonly audit: AuditService,
   ) {}
 
-  async getHomeConfig(): Promise<StorefrontHomeConfig> {
-    const rows = await this.prisma.commerceSetting.findMany({
-      where: {
-        key: { in: [FEATURED_KEY, HERO_TITLE_KEY, HERO_SUBTITLE_KEY] },
-      },
-    });
-    const map = new Map(rows.map((r) => [r.key, r.value]));
-    const slugs = map.get(FEATURED_KEY);
-    return {
-      featuredSlugs: Array.isArray(slugs) ? (slugs as string[]) : [],
-      heroTitle: (map.get(HERO_TITLE_KEY) as string) ?? 'Gift',
-      heroSubtitle:
-        (map.get(HERO_SUBTITLE_KEY) as string) ??
-        'Soft Gift storefront — browse curated baby gifts and build your box.',
-    };
-  }
-
-  async setHomeConfig(
-    input: {
-      featuredSlugs: string[];
-      heroTitle?: string;
-      heroSubtitle?: string;
-    },
-    actorId: string,
-    requestId?: string,
-  ): Promise<StorefrontHomeConfig> {
-    await this.prisma.commerceSetting.upsert({
-      where: { key: FEATURED_KEY },
-      create: { key: FEATURED_KEY, value: input.featuredSlugs },
-      update: { value: input.featuredSlugs },
-    });
-    if (input.heroTitle != null) {
-      await this.prisma.commerceSetting.upsert({
-        where: { key: HERO_TITLE_KEY },
-        create: { key: HERO_TITLE_KEY, value: input.heroTitle },
-        update: { value: input.heroTitle },
-      });
-    }
-    if (input.heroSubtitle != null) {
-      await this.prisma.commerceSetting.upsert({
-        where: { key: HERO_SUBTITLE_KEY },
-        create: { key: HERO_SUBTITLE_KEY, value: input.heroSubtitle },
-        update: { value: input.heroSubtitle },
-      });
-    }
-    await this.audit.write({
-      actorId,
-      action: 'storefront.setHomeConfig',
-      resource: 'commerce_setting',
-      resourceId: FEATURED_KEY,
-      metadata: { slugCount: input.featuredSlugs.length },
-      requestId,
-    });
-    return this.getHomeConfig();
-  }
-
   async getGiftChrome(): Promise<GiftChromeBody> {
     const row = await this.prisma.commerceSetting.findUnique({
       where: { key: GIFT_CHROME_KEY },
@@ -199,6 +194,7 @@ export class StorefrontConfigService {
         ? (row.value as GiftChromeBody)
         : {};
     return {
+      navItems: stored.navItems?.length ? stored.navItems : DEFAULT_GIFT_CHROME.navItems,
       shopLabel: stored.shopLabel?.trim() || DEFAULT_GIFT_CHROME.shopLabel,
       forWhomLabel: stored.forWhomLabel?.trim() || DEFAULT_GIFT_CHROME.forWhomLabel,
       journalLabel: stored.journalLabel?.trim() || DEFAULT_GIFT_CHROME.journalLabel,
@@ -239,6 +235,7 @@ export class StorefrontConfigService {
   ): Promise<GiftChromeBody> {
     const current = await this.getGiftChrome();
     const next: GiftChromeBody = {
+      navItems: input.navItems ?? current.navItems,
       shopLabel: input.shopLabel ?? current.shopLabel,
       forWhomLabel: input.forWhomLabel ?? current.forWhomLabel,
       journalLabel: input.journalLabel ?? current.journalLabel,

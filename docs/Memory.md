@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 15, 2026 (security tree CI-green; push main → deploy-vps.yml)
+Last Updated: August 15, 2026 (verify + push main → GHA deploy)
 
 ---
 
@@ -141,11 +141,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. **Deferred:** demo logins + real PSP (C1/C2)
-2. Resume OPS-10 after storefront QA
-3. Optional: CSP nonce instead of `script-src 'unsafe-inline'`
-4. Optional: Caddy warns `header_up X-Forwarded-For` is redundant vs default — confirm spoofed XFF is ignored behind Cloudflare
-5. After GH `Build and deploy VPS` green: hard-refresh public storefront
+1. Confirm GitHub **Build and deploy VPS** green after this push
+2. Hard-refresh storefront + `/admin/cms` (page builder, gift-chrome, about/contact)
+3. Resume OPS-10 after storefront QA
+4. **Deferred:** demo logins + real PSP (C1/C2)
+5. Optional: CSP nonce instead of `script-src 'unsafe-inline'`
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -178,6 +178,17 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-15 — CMS page schema = product Auto/Manual (human)
+
+- **Override:** Phase 14; human: SEO tab schema should match product-page schema if that’s the best way.
+- CMS inspector Schema is Auto (WebPage + FAQ from blocks) vs Manual (`replace` JSON-LD). Same field as product edit. Articles keep `SeoSchemaPanel` presets.
+
+### 2026-08-15 — Retire Commerce Ops merchandising page (human)
+
+- **Override:** Phase 14 Procurement in progress; human: featured pins unused; merchandising page was only shortcuts → remove the page.
+- Soft Gift homepage curation = CMS `productGrid` + catalog `storefrontLabels` (BESTSELLER / EDITORS_PICK / sale / new). Gift chrome stays `/admin/cms/gift-chrome`.
+- Route deleted completely (no redirect). Dead KV API `GET/POST /admin/commerce/storefront` + public `/catalog/home` removed. Seed no longer writes `homepage.featured_slugs`.
 
 ### 2026-08-14 — Gift/commerce security: demo login + payments remain (human)
 
@@ -1152,6 +1163,169 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-15 (verify clean + push for GHA deploy)
+
+- **Override:** Phase 14; human: check build, clean, deploy; push only if Actions do not deploy alone.
+- Local verify: prisma generate+validate, lint (existing Next warnings only), Prettier `--write` (16 files), typecheck, unit smokes, `pnpm build` — **green**.
+- `deploy-vps.yml` already deploys on `push` to `main` → **push only, no local `deploy-vps.sh`** (avoids race with Actions `git reset --hard`).
+- Env/migration: none.
+
+### Session — 2026-08-15 (gift-chrome copyright year picker)
+
+- **Override:** Phase 14; human: copyright curly braces accidental rewrite risk — pick year via calendar, brand from Name.
+- Admin Brand: Current year checkbox + `type=month` year pick + Line suffix; live preview. Still stores `© {year}|YYYY {brand}. …` template. `parseCopyrightTpl` / `composeCopyrightTpl`. Env/migration: none.
+
+### Session — 2026-08-15 (gift-chrome nav column organise)
+
+- **Override:** Phase 14; human: organise Navbar admin further (flat Label/Link/Column wall); also Footer.
+- Dropdown links editor: Column sections + compact expandable rows; per-column Add; move within column. Top-level summary `label · type · N`; only first item default-open. For Whom / Shop / custom groupOptions.
+- Footer: compact expandable link rows (Reach/Social/Legal + column links); collapsible columns with `title · N`; section counts; Brand default-open. Env/migration: none.
+
+### Session — 2026-08-15 (configurable navbar overflow)
+
+- **Override:** Phase 14; human: add configurable single links/dropdowns with a responsive navbar limit and mobile drawer coverage.
+- Gift chrome now authors ordered Link or Dropdown items. Desktop shows the first three, moves later items into a styled More flyout (including full dropdown content); the mobile drawer exposes every item. Legacy Shop / For Whom / Journal data is read as the default configuration. Env/migration: none. Verified: `pnpm typecheck`.
+
+### Session — 2026-08-15 (gift-chrome collapsible navbar UX)
+
+- **Override:** Phase 14; human: rename Header → Navbar, collapse long sections, fix empty Hover card.
+- All section cards are collapsible (Menu labels open initially). Removed misleading per-link hover overrides: storefront auto-resolves collection hover data. Menu preview cards now load populated system defaults. Env/migration: none.
+
+### Session — 2026-08-15 (gift-chrome admin UX polish)
+
+- **Override:** Phase 14; human: polish `/admin/cms/gift-chrome` for normal users.
+- Header | Footer tabs; section cards; clay inputs; icon reorder/remove; collection picker; featured panel collapsed; sticky mobile Save; View storefront. Env/migration: none.
+
+### Session — 2026-08-15 (CMS pages desk like products)
+
+- **Override:** Phase 14; human: `/admin/cms/pages` should match Products desk + responsive.
+- Search + status chips + Filters/sort; desktop table (thumb, selectable, sort headers, Edit/Publish/View/Duplicate); mobile cards; bulk publish/unpublish; Nav & footer hidden on xs. Env/migration: none.
+
+### Session — 2026-08-15 (CMS about/contact company pages)
+
+- **Override:** Phase 14; human: About/Contact missing from CMS list; want company pages in CMS; delete test pages.
+- Why missing: `/about` + `/contact` were hardcoded App Router pages, not `MarketingPage` rows. Now CMS-backed (`about`, `contact`, `privacy-policy`) with dedicated URLs; fallbacks if unpublished. Deleted welcome/dnd/Draft test pages. Footer legal → Privacy. Script: `scripts/sync-cms-company-pages.ts`. Env/migration: none.
+
+### Session — 2026-08-15 (CMS preview RSC fix)
+
+- **Override:** Phase 14; human: `/pages/preview/[id]` broke with async Client Component error.
+- Root: client preview imported `MarketingPageBlocks` (async DiscoveryChips). Preview is now RSC + cookie-forwarded admin fetch. Env/migration: none.
+
+### Session — 2026-08-15 (CMS delete block confirm)
+
+- **Override:** Phase 14; human: confirm before deleting a section/block.
+- Canvas trash → dialog “Delete {label}?” Cancel / Delete; Esc + backdrop cancel. Env/migration: none.
+
+### Session — 2026-08-15 (CMS resize grip affordance)
+
+- **Override:** Phase 14; human: no cue that panels are resizable.
+- Resize rail shows centered `GripVertical` pill + hover pink; wider hit target (`w-3`). Env/migration: none.
+
+### Session — 2026-08-15 (CMS resizable side panels)
+
+- **Override:** Phase 14; human: Blocks + Inspector resizable; too thin → close; middle adapts to free space.
+- Flex layout (not fixed grid cols); drag handles; widths in localStorage; close under ~148px restores prior width. Env/migration: none.
+
+### Session — 2026-08-15 (CMS inspector textarea heights)
+
+- **Override:** Phase 14; human: right-panel textareas too short.
+- Root cause: theme `.clay-input` min-height beat Tailwind `min-h`. Shared `INSPECTOR_TEXTAREA*` with `!min-h` (prose 7.5rem, short 5.5rem, code 10rem; schema Manual 18rem). Env/migration: none.
+
+### Session — 2026-08-15 (CMS SEO schema Auto/Manual)
+
+- **Override:** Phase 14; human: SEO tab schema like product page if that’s best.
+- CMS Schema = Auto (live WebPage + FAQ JSON-LD) / Manual replace. Reuses `ProductSeoSchemaField`. Articles still use `SeoSchemaPanel`. Check: `cms-faq.check.ts`. Env/migration: none.
+
+### Session — 2026-08-15 (CMS inspector panel design)
+
+- **Override:** Phase 14; human: redesign right inspector Block + SEO tabs.
+- Sticky segmented tabs; Block fields grouped Layout/Content/Buttons/Media/Style cards; SEO grouped Page/Search/Social/Schema with title/desc counts + Index/Noindex. Env/migration: none.
+
+### Session — 2026-08-15 (CMS custom/blank section)
+
+- **Override:** Phase 14; human: no blank section to drag; wants highly customisable new sections.
+- New `customSection` block: palette Custom (Blank / Text+media / Media+text / Two / Three / Full bleed). Inspector: layout, Gift bg, width, height, corners, copy, media/video, Style. Not freeform CSS. Env/migration: none (PageBlock.type is string).
+
+### Session — 2026-08-15 (CMS section Style panel)
+
+- **Override:** Phase 14; human: right inspector should align / position / type / color / size section content.
+- Token-only Style (not Elementor CSS): align, vertical (hero), headline S/M/L, ink/muted/pink, space, full-hero overlay. Zod `sectionStyleSchema` on block props. Env/migration: none.
+
+### Session — 2026-08-15 (CMS hero video)
+
+- **Override:** Phase 14; human: hero full + half should accept video.
+- Same `imageUrl` slot: YouTube or `.mp4`/`.webm` (muted loop). Library upload still images-only (no video MIME / 5MB). CSP: `media-src https:` + `frame-src youtube-nocookie`. Env/migration: none.
+
+### Session — 2026-08-15 (CMS preview under selected block)
+
+- **Override:** Phase 14; human: live preview should sit directly under the selected block, not below the whole list.
+- Canvas is one scroll list; selected row expands with the Soft Gift section preview. Env/migration: none.
+
+### Session — 2026-08-15 (CMS builder panel reopen)
+
+- **Override:** Phase 14; human: close icons were invisible (clay-btn-ghost padding clipped SVGs in 36px buttons).
+- Header now labelled Blocks / Inspector toggles. Closed panels show a pink edge rail to reopen. Env/migration: none.
+
+### Session — 2026-08-15 (CMS builder panel collapse)
+
+- **Override:** Phase 14; human: close left/right panels for max-width preview.
+- Header PanelLeft / PanelRight toggles hide inserter + inspector. Choice persists in localStorage. Env/migration: none.
+
+### Session — 2026-08-15 (CMS selected-block live preview)
+
+- **Override:** Phase 14; human: inspector edits required publish; want live preview of the section being edited, not the whole page.
+- Center canvas: block list (top) + live Soft Gift render of the **selected** block (unsaved). `useDeferredValue` so typing stays snappy. Hero uses `CmsHeroByLayout`; other types reuse `MarketingPageBlocks`. Product/article extras kept from last load.
+- Check: `blockToCmsPreview` in `cms-page-model.check.ts`. Env/migration: none.
+
+### Session — 2026-08-15 (CMS Gutenberg builder + hero layouts)
+
+- **Override:** Phase 14; human: WordPress-like page building; dedicated edit page; multiple hero types with icons + drag-drop.
+- Edit `/admin/cms/pages/:id` is a fullscreen builder (ops sidebar hidden). Inserter: 6 hero presets (Full, Full text, Image + text, Text + image, Two images, Two text) with layout thumbs; drag onto canvas or click. Other blocks have icons.
+- Zod `hero.layout` + `imageUrl2` / `headline2` / `subcopy2`. Legacy pages without layout keep storefront/panel. Not an Elementor pixel clone.
+- Check: `cms-page-model.check.ts`. Env/migration: none.
+
+### Session — 2026-08-15 (CMS pages ops desk)
+
+- **Override:** Phase 14; human: fully develop `/admin/cms/pages` UI/UX + performance.
+- CMS routes now sit in Commerce Ops shell (`gift` + compact). List: search, status chips, relative updated, duplicate/delete. Editor: grouped palette, human block labels + summaries, Block vs Page SEO tabs, unsaved + ⌘S, no TipTap remount on save, lazy TipTap.
+- CONTENT_ADMIN can enter the shell (Pages only). Nav: Pages + Nav & footer. `g` then `w` jumps to pages.
+- Check: `cms-page-model.check.ts`. Env/migration: none.
+
+### Session — 2026-08-15 (login Request failed 500)
+
+- **Override:** Phase 14; human: `/login` → `Request failed (500)` after Sign in.
+- Cause: `POST /auth/refresh` used `res.status(401).json()` with `@Res({ passthrough: true })` → double-send → `ERR_HTTP_HEADERS_SENT` → Nest on `:4101` died → Next proxy `ECONNREFUSED` as 500.
+- Fix: throw `UnauthorizedException`; exception filter no-ops if `headersSent`. Check added.
+- Env/migration: none. API back on 4101; login via `:3101` 200.
+
+### Session — 2026-08-15 (admin stuck on Checking access)
+
+- **Override:** Phase 14; human: `/admin/commerce` froze on “Checking access…” under `pnpm dev`.
+- Cause: Next `eval-source-map` + CSP `script-src` without `'unsafe-eval'` → React never hydrates; `/auth/me` never fired.
+- Fix: dev CSP adds `'unsafe-eval'`; prod CSP unchanged. AdminGate always hits `/auth/me` (cookie session) with 8s abort → login.
+- Env/migration: none. Restart `pnpm dev` to reload `next.config.js`.
+
+### Session — 2026-08-15 (VPS global port docs)
+
+- **Override:** Phase 14; human: upload Inabiya prod-vs-`pnpm` split to VPS global docs so ports never conflict.
+- Updated `/srv/scripts/PORT_REGISTRY.md`, `/srv/VPS_MULTI_PROJECT_GUIDELINE.md`, `/srv/.cursor/rules/vps-multi-project-isolation.mdc`.
+- Hard split: Docker `3001`/`4001` vs host `pnpm` `3101`/`4101`; automation Playwright `4101` stays `expose` only (never host-publish). Inabiya added to guideline project map.
+- Env/migration: none.
+
+### Session — 2026-08-15 (`pnpm dev` vs Docker ports)
+
+- **Override:** Phase 14; human: `pnpm dev` should start without extra env exports.
+- Root `pnpm dev` → `scripts/dev.sh`: load `.env` then force `3101`/`4101`, same-origin API rewrite, `COOKIE_SECURE=false`. Does **not** rewrite VPS `.env` (Docker prod `APP_URL`).
+- `dev:web` default `3101`, `dev:api` default `4101`. Prod Docker still `3001`/`4001`.
+- Env/migration: none.
+
+### Session — 2026-08-15 (retire merchandising page)
+
+- **Override:** Phase 14; human: featured pins had no storefront effect → remove pins **and** the merchandising page.
+- Deleted `/admin/commerce/merchandising` completely (no bookmark redirect). Nav + dashboard/products/settings links gone.
+- Removed unused storefront pin API (`/admin/commerce/storefront`, `/catalog/home`) and seed of `homepage.featured_slugs`.
+- Homepage shelves still: CMS blocks + product labels. Env/migration: none.
 
 ### Session — 2026-08-15 (CI verify + push main)
 

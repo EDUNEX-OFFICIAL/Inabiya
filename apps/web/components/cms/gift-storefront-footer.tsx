@@ -85,7 +85,7 @@ export const DEFAULT_REACH_LINKS: GiftSocialLink[] = [
 ];
 
 export const DEFAULT_LEGAL_LINKS: Array<{ label: string; href: string }> = [
-  { label: 'Shipping', href: '/gift#faq' },
+  { label: 'Privacy', href: '/privacy-policy' },
   { label: 'Contact', href: '/contact' },
 ];
 

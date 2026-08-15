@@ -13,6 +13,13 @@ import { cn } from '@/lib/utils';
 import { safeHrefOrHash } from '@inabiya/validation';
 
 export type GiftMenuLink = GiftNavLink;
+export type GiftMenuItem = {
+  id: string;
+  label: string;
+  type: 'link' | 'mega';
+  href?: string;
+  links?: GiftMenuLink[];
+};
 
 type TileTone = 'blush' | 'sky' | 'mint' | 'lavender' | 'soft';
 
@@ -112,11 +119,7 @@ function lookFor(link: GiftNavLink): TileLook {
 type Props = {
   open: boolean;
   onClose: () => void;
-  shopLinks: GiftMenuLink[];
-  forWhomLinks: GiftMenuLink[];
-  journalHref?: string;
-  journalLabel?: string;
-  menuTitle?: string;
+  navItems: GiftMenuItem[];
   signedIn: boolean;
   accountLabel: string;
   onSignOut: () => void;
@@ -308,11 +311,7 @@ function MenuAccordion({ groups, onNavigate }: { groups: GiftNavGroup[]; onNavig
 export function GiftMenuOverlay({
   open,
   onClose,
-  shopLinks,
-  forWhomLinks,
-  journalHref = '/articles',
-  journalLabel = 'Journal',
-  menuTitle = 'Shop',
+  navItems,
   signedIn,
   accountLabel,
   onSignOut,
@@ -376,7 +375,15 @@ export function GiftMenuOverlay({
 
   if (!mounted || !open) return null;
 
-  const navIa = organizeGiftNav(shopLinks, forWhomLinks);
+  const dropdowns = navItems.filter((item) => item.type === 'mega');
+  const links = navItems.filter((item) => item.type === 'link' && item.href);
+  const groups = dropdowns.flatMap((item) =>
+    organizeGiftNav(item.links ?? [], []).shop.map((group) => ({
+      ...group,
+      id: `${item.id}-${group.id}`,
+      title: `${item.label} · ${group.title}`,
+    })),
+  );
 
   return createPortal(
     <div
@@ -407,21 +414,26 @@ export function GiftMenuOverlay({
 
       <div className="gift-menu__body">
         <h2 id={titleId} className="sr-only">
-          {menuTitle}
+          Menu
         </h2>
 
         <div className="gift-menu__search">
           <GiftSearch defaultExpanded onNavigate={onClose} />
         </div>
 
-        {navIa.shop.length || navIa.whom.length ? (
-          <MenuAccordion groups={[...navIa.shop, ...navIa.whom]} onNavigate={onClose} />
-        ) : null}
+        {groups.length ? <MenuAccordion groups={groups} onNavigate={onClose} /> : null}
 
-        <Link href={journalHref} className="gift-menu__journal" onClick={onClose}>
-          <BookOpen className="h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />
-          <span>{journalLabel}</span>
-        </Link>
+        {links.map((item) => (
+          <Link
+            key={item.id}
+            href={safeHrefOrHash(item.href ?? '')}
+            className="gift-menu__journal"
+            onClick={onClose}
+          >
+            <BookOpen className="h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />
+            <span>{item.label}</span>
+          </Link>
+        ))}
 
         <div className="gift-menu__account">
           {signedIn ? (

@@ -1052,12 +1052,6 @@ export const adminSearchQuerySchema = z.object({
   q: z.string().min(1).max(120),
 });
 
-export const storefrontConfigBodySchema = z.object({
-  featuredSlugs: z.array(z.string().min(1).max(120)).max(12),
-  heroTitle: z.string().max(120).optional(),
-  heroSubtitle: z.string().max(300).optional(),
-});
-
 export const customerStatusBodySchema = z.object({
   isActive: z.boolean(),
 });
@@ -1436,6 +1430,11 @@ export const GIFT_HOMEPAGE_SLUG = 'home';
 /** Reserved MarketingPage.slug for Soft Gift corporate landing. */
 export const GIFT_CORPORATE_SLUG = 'corporate-gifting';
 
+/** Soft Gift company pages — CMS MarketingPage slugs with dedicated App Router paths. */
+export const GIFT_ABOUT_SLUG = 'about';
+export const GIFT_CONTACT_SLUG = 'contact';
+export const GIFT_PRIVACY_SLUG = 'privacy-policy';
+
 /** Phase 11 — Marketing page builder */
 export const pageBlockTypeSchema = z.enum([
   'hero',
@@ -1454,7 +1453,36 @@ export const pageBlockTypeSchema = z.enum([
   'faq',
   'exclusiveOffers',
   'testimonials',
+  'customSection',
 ]);
+
+export const customSectionLayoutSchema = z.enum([
+  'stack',
+  'split',
+  'splitReverse',
+  'two',
+  'three',
+  'bleed',
+]);
+
+export const heroLayoutSchema = z.enum([
+  'full',
+  'fullText',
+  'splitMediaCopy',
+  'splitCopyMedia',
+  'splitMedia',
+  'splitCopy',
+]);
+
+/** Gutenberg-like section style — Soft Gift tokens only, not freeform CSS. */
+export const sectionStyleSchema = z.object({
+  align: z.enum(['start', 'center', 'end']).optional(),
+  valign: z.enum(['start', 'center', 'end']).optional(),
+  headlineSize: z.enum(['h2', 'h1', 'display']).optional(),
+  ink: z.enum(['default', 'muted', 'blush']).optional(),
+  pad: z.enum(['sm', 'md', 'lg']).optional(),
+  overlay: z.enum(['none', 'soft', 'strong']).optional(),
+});
 
 const heroPropsSchema = z.object({
   headline: z.string().min(1).max(200),
@@ -1467,7 +1495,13 @@ const heroPropsSchema = z.object({
   trustLine: z.string().max(400).optional(),
   eyebrow: z.string().max(80).optional(),
   imageUrl: cmsMediaUrlSchema.optional(),
+  /** Second column media (two-image hero). */
+  imageUrl2: cmsMediaUrlSchema.optional(),
+  headline2: z.string().max(200).optional(),
+  subcopy2: z.string().max(1000).optional(),
   variant: z.enum(['panel', 'storefront']).optional(),
+  /** Visual composition. Absent = legacy storefront/panel. */
+  layout: heroLayoutSchema.optional(),
 });
 
 const richTextPropsSchema = z.object({
@@ -1703,24 +1737,80 @@ const countdownPropsSchema = z.object({
   ctaHref: optionalSafeStorefrontHrefSchema,
 });
 
+const optionalSanitizedHtml = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+  z.string().max(50_000).transform(sanitizeArticleHtml).optional(),
+);
+
+const customSectionPropsSchema = z.object({
+  layout: customSectionLayoutSchema.optional(),
+  overline: z.string().max(80).optional(),
+  title: z.string().max(200).optional(),
+  body: optionalSanitizedHtml,
+  title2: z.string().max(200).optional(),
+  body2: optionalSanitizedHtml,
+  title3: z.string().max(200).optional(),
+  body3: optionalSanitizedHtml,
+  imageUrl: cmsMediaUrlSchema.optional(),
+  imageUrl2: cmsMediaUrlSchema.optional(),
+  imageUrl3: cmsMediaUrlSchema.optional(),
+  ctaLabel: z.string().max(80).optional(),
+  ctaHref: optionalSafeStorefrontHrefSchema,
+  ctaLabel2: z.string().max(80).optional(),
+  ctaHref2: optionalSafeStorefrontHrefSchema,
+  bg: z.enum(['default', 'surface', 'blush', 'mint', 'sky', 'lavender', 'soft']).optional(),
+  bgImageUrl: cmsMediaUrlSchema.optional(),
+  width: z.enum(['page', 'narrow', 'full']).optional(),
+  minHeight: z.enum(['auto', 'sm', 'md', 'lg']).optional(),
+  radius: z.enum(['none', 'control', 'clay']).optional(),
+});
+
 export const pageBlockInputSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('hero'), props: heroPropsSchema }),
-  z.object({ type: z.literal('richText'), props: richTextPropsSchema }),
-  z.object({ type: z.literal('image'), props: imagePropsSchema }),
-  z.object({ type: z.literal('productGrid'), props: productGridPropsSchema }),
-  z.object({ type: z.literal('cta'), props: ctaPropsSchema }),
-  z.object({ type: z.literal('spacer'), props: spacerPropsSchema }),
-  z.object({ type: z.literal('brandStrip'), props: brandStripPropsSchema }),
-  z.object({ type: z.literal('recipientSplit'), props: recipientSplitPropsSchema }),
-  z.object({ type: z.literal('discoveryChips'), props: discoveryChipsPropsSchema }),
-  z.object({ type: z.literal('buildYourBoxTeaser'), props: buildYourBoxTeaserPropsSchema }),
-  z.object({ type: z.literal('articleTeasers'), props: articleTeasersPropsSchema }),
-  z.object({ type: z.literal('footer'), props: footerPropsSchema }),
-  z.object({ type: z.literal('saleStrip'), props: saleStripPropsSchema }),
-  z.object({ type: z.literal('faq'), props: faqPropsSchema }),
-  z.object({ type: z.literal('exclusiveOffers'), props: exclusiveOffersPropsSchema }),
-  z.object({ type: z.literal('testimonials'), props: testimonialsPropsSchema }),
-  z.object({ type: z.literal('countdown'), props: countdownPropsSchema }),
+  z.object({ type: z.literal('hero'), props: heroPropsSchema.merge(sectionStyleSchema) }),
+  z.object({ type: z.literal('richText'), props: richTextPropsSchema.merge(sectionStyleSchema) }),
+  z.object({ type: z.literal('image'), props: imagePropsSchema.merge(sectionStyleSchema) }),
+  z.object({
+    type: z.literal('productGrid'),
+    props: productGridPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({ type: z.literal('cta'), props: ctaPropsSchema.merge(sectionStyleSchema) }),
+  z.object({ type: z.literal('spacer'), props: spacerPropsSchema.merge(sectionStyleSchema) }),
+  z.object({
+    type: z.literal('brandStrip'),
+    props: brandStripPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({
+    type: z.literal('recipientSplit'),
+    props: recipientSplitPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({
+    type: z.literal('discoveryChips'),
+    props: discoveryChipsPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({
+    type: z.literal('buildYourBoxTeaser'),
+    props: buildYourBoxTeaserPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({
+    type: z.literal('articleTeasers'),
+    props: articleTeasersPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({ type: z.literal('footer'), props: footerPropsSchema.merge(sectionStyleSchema) }),
+  z.object({ type: z.literal('saleStrip'), props: saleStripPropsSchema.merge(sectionStyleSchema) }),
+  z.object({ type: z.literal('faq'), props: faqPropsSchema.merge(sectionStyleSchema) }),
+  z.object({
+    type: z.literal('exclusiveOffers'),
+    props: exclusiveOffersPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({
+    type: z.literal('testimonials'),
+    props: testimonialsPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({ type: z.literal('countdown'), props: countdownPropsSchema.merge(sectionStyleSchema) }),
+  z.object({
+    type: z.literal('customSection'),
+    props: customSectionPropsSchema.merge(sectionStyleSchema),
+  }),
 ]);
 
 /** Empty string → null so admin “clear field” does not fail path/URL regex. */
@@ -1756,6 +1846,8 @@ export const updateMarketingPageBodySchema = z.object({
 });
 
 export type PageBlockInput = z.infer<typeof pageBlockInputSchema>;
+export type HeroLayout = z.infer<typeof heroLayoutSchema>;
+export type SectionStyle = z.infer<typeof sectionStyleSchema>;
 export type CreateMarketingPageBody = z.infer<typeof createMarketingPageBodySchema>;
 export type UpdateMarketingPageBody = z.infer<typeof updateMarketingPageBodySchema>;
 
@@ -1778,8 +1870,36 @@ const giftMegaPanelSchema = z.object({
   imageSrc: z.string().max(500).optional(),
 });
 
+const giftTopNavItemSchema = z
+  .object({
+    id: z.string().min(1).max(48),
+    label: z.string().min(1).max(40),
+    type: z.enum(['link', 'mega']),
+    href: optionalSafeStorefrontHrefSchema,
+    links: z.array(giftNavLinkSchema).max(32).optional(),
+    mega: giftMegaPanelSchema.optional(),
+  })
+  .superRefine((item, ctx) => {
+    if (item.type === 'link' && !item.href) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'A link needs a destination.',
+        path: ['href'],
+      });
+    }
+    if (item.type === 'mega' && !item.links?.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'A dropdown needs at least one link.',
+        path: ['links'],
+      });
+    }
+  });
+
 /** Soft Gift global chrome (nav + default footer) — CommerceSetting JSON */
 export const giftChromeBodySchema = z.object({
+  /** Ordered navbar items. Legacy Shop / For Whom / Journal fields are migrated at read time. */
+  navItems: z.array(giftTopNavItemSchema).min(1).max(12).optional(),
   shopLabel: z.string().max(40).optional(),
   forWhomLabel: z.string().max(40).optional(),
   journalLabel: z.string().max(40).optional(),

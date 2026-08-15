@@ -41,6 +41,14 @@ import { safeHrefOrHash } from '@inabiya/validation';
 
 type MegaLink = GiftNavLink;
 type MegaCopy = GiftNavPreview;
+type GiftTopNavItem = {
+  id: string;
+  label: string;
+  type: 'link' | 'mega';
+  href?: string;
+  links?: MegaLink[];
+  mega?: Partial<MegaCopy>;
+};
 
 const DEFAULT_SHOP_LINKS: MegaLink[] = [
   { href: '/gift/build-your-box', label: 'Build Your Box', group: 'Shop' },
@@ -81,7 +89,25 @@ const DEFAULT_WHOM_MEGA: MegaCopy = {
   imageSrc: '/gift/nav/for-whom.svg',
 };
 
-type MegaKey = 'shop' | 'forWhom' | null;
+const DEFAULT_NAV_ITEMS: GiftTopNavItem[] = [
+  {
+    id: 'shop',
+    label: 'Shop',
+    type: 'mega',
+    links: DEFAULT_SHOP_LINKS,
+    mega: DEFAULT_SHOP_MEGA,
+  },
+  {
+    id: 'for-whom',
+    label: 'For Whom',
+    type: 'mega',
+    links: DEFAULT_FOR_WHOM_LINKS,
+    mega: DEFAULT_WHOM_MEGA,
+  },
+  { id: 'journal', label: 'Journal', type: 'link', href: '/articles' },
+];
+
+type MegaKey = string | null;
 
 function readAuth() {
   const token = getStoredAccessToken();
@@ -245,6 +271,7 @@ function MegaFlyout({
   return createPortal(
     <div
       id={id}
+      data-gift-mega
       data-theme="gift"
       data-lenis-prevent
       role="region"
@@ -262,6 +289,37 @@ function MegaFlyout({
   );
 }
 
+function MorePanel({ items, onNavigate }: { items: GiftTopNavItem[]; onNavigate: () => void }) {
+  return (
+    <div className="grid gap-gs-5">
+      {items.map((item) =>
+        item.type === 'link' ? (
+          <Link
+            key={item.id}
+            href={safeHrefOrHash(item.href ?? '')}
+            className="rounded-control px-gs-3 py-gs-2 font-medium hover:bg-surface-soft hover:text-primary"
+            onClick={onNavigate}
+          >
+            {item.label}
+          </Link>
+        ) : (
+          <section
+            key={item.id}
+            className="grid gap-gs-3 border-t border-border-subtle pt-gs-4 first:border-0 first:pt-0"
+          >
+            <p className="font-display text-lg">{item.label}</p>
+            <MegaPanel
+              groups={organizeGiftNav(item.links ?? [], []).shop}
+              fallback={{ ...DEFAULT_SHOP_MEGA, ...item.mega }}
+              onNavigate={onNavigate}
+            />
+          </section>
+        ),
+      )}
+    </div>
+  );
+}
+
 export function GiftNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -272,25 +330,17 @@ export function GiftNav() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
-  const [shopLinks, setShopLinks] = useState<MegaLink[]>(DEFAULT_SHOP_LINKS);
-  const [forWhomLinks, setForWhomLinks] = useState<MegaLink[]>(DEFAULT_FOR_WHOM_LINKS);
-  const [shopMega, setShopMega] = useState<MegaCopy>(DEFAULT_SHOP_MEGA);
-  const [whomMega, setWhomMega] = useState<MegaCopy>(DEFAULT_WHOM_MEGA);
-  const [shopLabel, setShopLabel] = useState('Shop');
-  const [forWhomLabel, setForWhomLabel] = useState('For Whom');
-  const [journalLabel, setJournalLabel] = useState('Journal');
-  const [journalHref, setJournalHref] = useState('/articles');
+  const [navItems, setNavItems] = useState<GiftTopNavItem[]>(DEFAULT_NAV_ITEMS);
   const profileRef = useRef<HTMLDivElement>(null);
   const megaRef = useRef<HTMLDivElement>(null);
-  const shopBtnRef = useRef<HTMLButtonElement>(null);
-  const whomBtnRef = useRef<HTMLButtonElement>(null);
   const megaCloseTimer = useRef<number | null>(null);
   const megaOpenTimer = useRef<number | null>(null);
   const fineHover = useRef(false);
   const megaKeyRef = useRef<MegaKey>(null);
   megaKeyRef.current = mega;
 
-  const navIa = useMemo(() => organizeGiftNav(shopLinks, forWhomLinks), [shopLinks, forWhomLinks]);
+  const visibleNavItems = useMemo(() => navItems.slice(0, 3), [navItems]);
+  const overflowNavItems = useMemo(() => navItems.slice(3), [navItems]);
 
   useEffect(() => {
     let cancelled = false;
@@ -298,45 +348,8 @@ export function GiftNav() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
-        if (Array.isArray(data.shopLinks) && data.shopLinks.length) {
-          setShopLinks(data.shopLinks);
-        }
-        if (Array.isArray(data.forWhomLinks) && data.forWhomLinks.length) {
-          setForWhomLinks(data.forWhomLinks);
-        }
-        if (typeof data.shopLabel === 'string' && data.shopLabel.trim()) {
-          setShopLabel(data.shopLabel.trim());
-        }
-        if (typeof data.forWhomLabel === 'string' && data.forWhomLabel.trim()) {
-          setForWhomLabel(data.forWhomLabel.trim());
-        }
-        if (typeof data.journalLabel === 'string' && data.journalLabel.trim()) {
-          setJournalLabel(data.journalLabel.trim());
-        }
-        if (typeof data.journalHref === 'string' && data.journalHref.trim()) {
-          setJournalHref(data.journalHref.trim());
-        }
-        if (data.shopMega) {
-          setShopMega({
-            ...DEFAULT_SHOP_MEGA,
-            ...data.shopMega,
-            headline: data.shopMega.headline || DEFAULT_SHOP_MEGA.headline,
-            body: data.shopMega.body || DEFAULT_SHOP_MEGA.body,
-            ctaHref: data.shopMega.ctaHref || DEFAULT_SHOP_MEGA.ctaHref,
-            ctaLabel: data.shopMega.ctaLabel || DEFAULT_SHOP_MEGA.ctaLabel,
-            imageSrc: data.shopMega.imageSrc || DEFAULT_SHOP_MEGA.imageSrc,
-          });
-        }
-        if (data.forWhomMega) {
-          setWhomMega({
-            ...DEFAULT_WHOM_MEGA,
-            ...data.forWhomMega,
-            headline: data.forWhomMega.headline || DEFAULT_WHOM_MEGA.headline,
-            body: data.forWhomMega.body || DEFAULT_WHOM_MEGA.body,
-            ctaHref: data.forWhomMega.ctaHref || DEFAULT_WHOM_MEGA.ctaHref,
-            ctaLabel: data.forWhomMega.ctaLabel || DEFAULT_WHOM_MEGA.ctaLabel,
-            imageSrc: data.forWhomMega.imageSrc || DEFAULT_WHOM_MEGA.imageSrc,
-          });
+        if (Array.isArray(data.navItems) && data.navItems.length) {
+          setNavItems(data.navItems);
         }
       })
       .catch(() => {
@@ -385,17 +398,12 @@ export function GiftNav() {
       const t = e.target as Node;
       if (profileRef.current && !profileRef.current.contains(t)) setProfileOpen(false);
       const inTrigger = Boolean(megaRef.current?.contains(t));
-      const inFlyout =
-        t instanceof Element && Boolean(t.closest('#gift-mega-shop, #gift-mega-for-whom'));
+      const inFlyout = t instanceof Element && Boolean(t.closest('[data-gift-mega]'));
       if (!inTrigger && !inFlyout) setMega(null);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        setMega((cur) => {
-          if (cur === 'shop') shopBtnRef.current?.focus();
-          else if (cur === 'forWhom') whomBtnRef.current?.focus();
-          return null;
-        });
+        setMega(null);
         setProfileOpen(false);
         setMenuOpen(false);
       }
@@ -530,47 +538,54 @@ export function GiftNav() {
         ref={megaRef}
       >
         <GiftSearch onExpand={closeOverlays} />
-        <button
-          ref={shopBtnRef}
-          type="button"
-          className="inline-flex shrink-0 items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary motion-reduce:transition-none"
-          aria-expanded={mega === 'shop'}
-          aria-haspopup="true"
-          aria-controls="gift-mega-shop"
-          onMouseEnter={() => scheduleMegaOpen('shop')}
-          onMouseLeave={scheduleMegaClose}
-          onClick={(e) => onMegaTriggerClick(e, 'shop')}
-          onKeyDown={(e) => onMegaTriggerKey(e, 'shop', 'gift-mega-shop')}
-        >
-          {shopLabel}
-          <ChevronDown
-            className={`gift-nav-chevron h-4 w-4 transition motion-reduce:transition-none ${mega === 'shop' ? 'rotate-180' : ''}`}
-          />
-        </button>
-        <button
-          ref={whomBtnRef}
-          type="button"
-          className="inline-flex shrink-0 items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary motion-reduce:transition-none"
-          aria-expanded={mega === 'forWhom'}
-          aria-haspopup="true"
-          aria-controls="gift-mega-for-whom"
-          onMouseEnter={() => scheduleMegaOpen('forWhom')}
-          onMouseLeave={scheduleMegaClose}
-          onClick={(e) => onMegaTriggerClick(e, 'forWhom')}
-          onKeyDown={(e) => onMegaTriggerKey(e, 'forWhom', 'gift-mega-for-whom')}
-        >
-          {forWhomLabel}
-          <ChevronDown
-            className={`gift-nav-chevron h-4 w-4 transition motion-reduce:transition-none ${mega === 'forWhom' ? 'rotate-180' : ''}`}
-          />
-        </button>
-        <Link
-          href={safeHrefOrHash(journalHref)}
-          className="shrink-0 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary motion-reduce:transition-none"
-          onClick={closeOverlays}
-        >
-          {journalLabel}
-        </Link>
+        {visibleNavItems.map((item) =>
+          item.type === 'link' ? (
+            <Link
+              key={item.id}
+              href={safeHrefOrHash(item.href ?? '')}
+              className="shrink-0 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary motion-reduce:transition-none"
+              onClick={closeOverlays}
+            >
+              {item.label}
+            </Link>
+          ) : (
+            <button
+              key={item.id}
+              type="button"
+              className="inline-flex shrink-0 items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary motion-reduce:transition-none"
+              aria-expanded={mega === item.id}
+              aria-haspopup="true"
+              aria-controls={`gift-mega-${item.id}`}
+              onMouseEnter={() => scheduleMegaOpen(item.id)}
+              onMouseLeave={scheduleMegaClose}
+              onClick={(e) => onMegaTriggerClick(e, item.id)}
+              onKeyDown={(e) => onMegaTriggerKey(e, item.id, `gift-mega-${item.id}`)}
+            >
+              {item.label}
+              <ChevronDown
+                className={`gift-nav-chevron h-4 w-4 transition motion-reduce:transition-none ${mega === item.id ? 'rotate-180' : ''}`}
+              />
+            </button>
+          ),
+        )}
+        {overflowNavItems.length ? (
+          <button
+            type="button"
+            className="inline-flex shrink-0 items-center gap-gs-1 rounded-pill px-gs-3 py-gs-2 font-medium opacity-90 transition hover:bg-white/70 hover:text-primary motion-reduce:transition-none"
+            aria-expanded={mega === '__more'}
+            aria-haspopup="true"
+            aria-controls="gift-mega-more"
+            onMouseEnter={() => scheduleMegaOpen('__more')}
+            onMouseLeave={scheduleMegaClose}
+            onClick={(e) => onMegaTriggerClick(e, '__more')}
+            onKeyDown={(e) => onMegaTriggerKey(e, '__more', 'gift-mega-more')}
+          >
+            More
+            <ChevronDown
+              className={`gift-nav-chevron h-4 w-4 transition motion-reduce:transition-none ${mega === '__more' ? 'rotate-180' : ''}`}
+            />
+          </button>
+        ) : null}
       </div>
 
       {/* Utilities */}
@@ -678,39 +693,41 @@ export function GiftNav() {
         </button>
       </div>
 
-      <MegaFlyout
-        id="gift-mega-shop"
-        label={shopLabel}
-        anchorRef={megaRef}
-        open={mega === 'shop'}
-        onMouseEnter={clearMegaTimers}
-        onMouseLeave={scheduleMegaClose}
-      >
-        <MegaPanel groups={navIa.shop} fallback={shopMega} onNavigate={() => setMega(null)} />
-      </MegaFlyout>
-      <MegaFlyout
-        id="gift-mega-for-whom"
-        label={forWhomLabel}
-        anchorRef={megaRef}
-        open={mega === 'forWhom'}
-        onMouseEnter={clearMegaTimers}
-        onMouseLeave={scheduleMegaClose}
-      >
-        <MegaPanel
-          groups={navIa.whom}
-          fallback={whomMega}
-          imageClass="gift-panel-sky"
-          onNavigate={() => setMega(null)}
-        />
-      </MegaFlyout>
+      {visibleNavItems
+        .filter((item) => item.type === 'mega')
+        .map((item) => (
+          <MegaFlyout
+            key={item.id}
+            id={`gift-mega-${item.id}`}
+            label={item.label}
+            anchorRef={megaRef}
+            open={mega === item.id}
+            onMouseEnter={clearMegaTimers}
+            onMouseLeave={scheduleMegaClose}
+          >
+            <MegaPanel
+              groups={organizeGiftNav(item.links ?? [], []).shop}
+              fallback={{ ...DEFAULT_SHOP_MEGA, ...item.mega }}
+              onNavigate={() => setMega(null)}
+            />
+          </MegaFlyout>
+        ))}
+      {overflowNavItems.length ? (
+        <MegaFlyout
+          id="gift-mega-more"
+          label="More"
+          anchorRef={megaRef}
+          open={mega === '__more'}
+          onMouseEnter={clearMegaTimers}
+          onMouseLeave={scheduleMegaClose}
+        >
+          <MorePanel items={overflowNavItems} onNavigate={() => setMega(null)} />
+        </MegaFlyout>
+      ) : null}
       <GiftMenuOverlay
         open={menuOpen}
         onClose={closeMenu}
-        shopLinks={shopLinks}
-        forWhomLinks={forWhomLinks}
-        journalHref={journalHref}
-        journalLabel={journalLabel}
-        menuTitle={shopLabel}
+        navItems={navItems}
         signedIn={signedIn}
         accountLabel={label}
         onSignOut={signOut}

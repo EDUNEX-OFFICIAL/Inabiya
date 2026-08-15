@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Patch,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { Response } from 'express';
 import {
   loginBodySchema,
@@ -70,12 +81,11 @@ export class AuthController {
       body.refreshToken ??
       (req as AuthedRequest & { cookies?: Record<string, string> }).cookies?.[COOKIE_REFRESH];
     if (!raw) {
-      return res.status(401).json({
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Refresh token required.',
-          requestId: String(req.id ?? 'unknown'),
-        },
+      // Must throw — `res.json()` + `@Res({ passthrough: true })` double-sends and
+      // crashes the process (ERR_HTTP_HEADERS_SENT), taking :4101 down.
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        message: 'Refresh token required.',
       });
     }
     const session = await this.auth.refresh(raw);

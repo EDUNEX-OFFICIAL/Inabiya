@@ -104,6 +104,22 @@ export function parseProductVideoUrl(raw: string | null | undefined): ProductVid
   return null;
 }
 
+/**
+ * Hero / ambient media: YouTube URL or a real video file (.mp4/.webm/…).
+ * Does not treat bare ids or `/gift/media` images as video.
+ */
+export function parseAmbientVideoUrl(raw: string | null | undefined): ProductVideoSource | null {
+  const trimmed = (raw ?? '').trim();
+  if (!trimmed) return null;
+  if (!/^https?:\/\//i.test(trimmed) && !trimmed.startsWith('/')) return null;
+
+  const yt = extractYoutubeId(trimmed);
+  if (yt) return { kind: 'youtube', id: yt, url: trimmed };
+
+  if (DIRECT_EXT.test(trimmed)) return { kind: 'direct', url: trimmed };
+  return null;
+}
+
 /** Privacy-enhanced embed URL (load only after click). */
 export function youtubeNocookieEmbedUrl(id: string, autoplay = true): string {
   const q = new URLSearchParams({
@@ -112,6 +128,21 @@ export function youtubeNocookieEmbedUrl(id: string, autoplay = true): string {
     playsinline: '1',
   });
   if (autoplay) q.set('autoplay', '1');
+  return `https://www.youtube-nocookie.com/embed/${id}?${q.toString()}`;
+}
+
+/** Muted looping YouTube for hero backgrounds (autoplay requires mute). */
+export function youtubeNocookieAmbientUrl(id: string): string {
+  const q = new URLSearchParams({
+    autoplay: '1',
+    mute: '1',
+    controls: '0',
+    loop: '1',
+    playlist: id,
+    playsinline: '1',
+    rel: '0',
+    modestbranding: '1',
+  });
   return `https://www.youtube-nocookie.com/embed/${id}?${q.toString()}`;
 }
 

@@ -7,9 +7,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "pnpm run --parallel --filter @inabiya/web --filter @inabiya/api --filter @inabiya/worker dev",
-    "dev:web": "pnpm --filter @inabiya/web dev",
-    "dev:api": "pnpm --filter @inabiya/api dev",
+    "dev": "bash scripts/dev.sh",
+    "dev:web": "WEB_PORT=3101 pnpm --filter @inabiya/web dev",
+    "dev:api": "API_PORT=4101 pnpm --filter @inabiya/api dev",
     "dev:worker": "pnpm --filter @inabiya/worker dev",
     "build": "pnpm -r run build",
     "lint": "pnpm -r --if-present run lint",

@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import { ArrowRight, Gift, HeartHandshake, ShieldCheck, Truck } from 'lucide-react';
 import { runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
+import { HeroMedia } from '@/components/cms/hero-media';
 import { GiftResponsiveLink } from '@/components/gift/gift-responsive-cta';
+import type { SectionStyle } from '@/components/cms/section-style';
 
 const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.jpg';
 
@@ -31,6 +32,9 @@ export type GiftStorefrontHeroProps = {
   imageUrl?: string;
   /** Word to italic-accent in headline when present (CMS-owned). */
   accentWord?: string;
+  /** Which column the photo sits in. Default right (current storefront). */
+  mediaSide?: 'left' | 'right';
+  style?: SectionStyle;
 };
 
 function parseTrustChips(trustLine?: string): string[] {
@@ -91,6 +95,8 @@ export function GiftStorefrontHero({
   eyebrow,
   imageUrl,
   accentWord,
+  mediaSide = 'right',
+  style,
 }: GiftStorefrontHeroProps) {
   const containerRef = useRef<HTMLElement>(null);
   const photoSrc = imageUrl?.trim() || DEFAULT_HERO_IMAGE;
@@ -135,18 +141,45 @@ export function GiftStorefrontHero({
   );
 
   return (
-    <section ref={containerRef} className="gift-hero-split relative overflow-x-clip">
+    <section
+      ref={containerRef}
+      className={`gift-hero-split relative overflow-x-clip ${
+        style?.pad === 'sm' ? 'is-pad-sm' : style?.pad === 'lg' ? 'is-pad-lg' : ''
+      }`}
+    >
       <div className="gift-hero-split__wash absolute inset-0" aria-hidden />
 
       <div className="gift-hero-split__grid relative z-10 mx-auto grid w-full gap-gs-3 lg:grid-cols-2 lg:items-stretch lg:gap-gs-8">
-        <div className="gift-hero-split__copy flex flex-col items-center justify-center text-center lg:items-start lg:text-left">
+        <div
+          className={`gift-hero-split__copy flex flex-col ${
+            style?.align === 'start'
+              ? 'is-align-start items-start text-left'
+              : style?.align === 'end'
+                ? 'is-align-end items-end text-right'
+                : style?.align === 'center'
+                  ? 'is-align-center items-center text-center'
+                  : 'items-center text-center lg:items-start lg:text-left'
+          } ${
+            style?.valign === 'start'
+              ? 'justify-start'
+              : style?.valign === 'end'
+                ? 'justify-end'
+                : 'justify-center'
+          } ${mediaSide === 'left' ? 'order-2' : 'order-1'}`}
+        >
           <p data-hero-anim="eyebrow" className="gift-hero-split__eyebrow gift-overline">
             {eyebrowText}
           </p>
 
           <h1
             data-hero-anim="headline"
-            className="gift-hero-split__headline gift-h1 mt-gs-2 max-w-3xl text-balance lg:mt-gs-3"
+            className={`gift-hero-split__headline gift-h1 mt-gs-2 max-w-3xl text-balance lg:mt-gs-3${
+              style?.headlineSize === 'h1'
+                ? ' is-size-h1'
+                : style?.headlineSize === 'h2'
+                  ? ' is-size-h2'
+                  : ''
+            }${style?.ink === 'blush' ? ' is-ink-blush' : style?.ink === 'muted' ? ' is-ink-muted' : ''}`}
           >
             <AccentHeadline text={headline} accentWord={accent} />
           </h1>
@@ -160,7 +193,17 @@ export function GiftStorefrontHero({
             </p>
           ) : null}
 
-          <div className="mt-gs-3 flex w-full max-w-md flex-row flex-wrap items-center justify-center gap-gs-2 sm:mt-gs-4 sm:max-w-none sm:w-auto sm:gap-gs-3 lg:justify-start">
+          <div
+            className={`mt-gs-3 flex w-full max-w-md flex-row flex-wrap items-center gap-gs-2 sm:mt-gs-4 sm:max-w-none sm:w-auto sm:gap-gs-3 ${
+              style?.align === 'start'
+                ? 'justify-start'
+                : style?.align === 'end'
+                  ? 'justify-end'
+                  : style?.align === 'center'
+                    ? 'justify-center'
+                    : 'justify-center lg:justify-start'
+            }`}
+          >
             {ctaLabel && ctaHref ? (
               <GiftResponsiveLink
                 data-hero-cta="primary"
@@ -207,17 +250,16 @@ export function GiftStorefrontHero({
           ) : null}
         </div>
 
-        <div className="gift-hero-split__media">
+        <div className={`gift-hero-split__media ${mediaSide === 'left' ? 'order-1' : 'order-2'}`}>
           <div className="gift-hero-split__frame relative">
-            <Image
+            <HeroMedia
               src={photoSrc}
               alt={headline}
-              fill
+              fallback={DEFAULT_HERO_IMAGE}
               priority
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className={`gift-hero-split__photo object-cover${photoReady ? ' gift-hero-split__photo--ready' : ''}`}
-              onLoad={markPhotoReady}
-              onLoadingComplete={markPhotoReady}
+              className={`gift-hero-split__photo${photoReady ? ' gift-hero-split__photo--ready' : ''}`}
+              onReady={markPhotoReady}
             />
           </div>
         </div>

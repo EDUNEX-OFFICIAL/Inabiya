@@ -61,6 +61,10 @@ export class ApiExceptionFilter implements ExceptionFilter {
       },
     };
 
+    if (res.headersSent) {
+      this.logger.error(`[${requestId}] response already sent; skip envelope`);
+      return;
+    }
     res.status(status).json(envelope);
   }
 }

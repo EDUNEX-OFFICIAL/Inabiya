@@ -1,10 +1,12 @@
-'use client';
-
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiUrl } from '@/lib/api-base';
+import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
+import { safeNextPath } from '@inabiya/validation';
+
+export const dynamic = 'force-dynamic';
 
 type MarketingPage = {
   id: string;
@@ -19,27 +21,40 @@ type MarketingPage = {
   }>;
 };
 
-export default function MarketingPagePreview({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const [page, setPage] = useState<MarketingPage | null>(null);
-  const [error, setError] = useState<string | null>(null);
+async function fetchPreview(id: string): Promise<{ page: MarketingPage } | { status: number }> {
+  const cookieHeader = cookies()
+    .getAll()
+    .map((c) => `${c.name}=${c.value}`)
+    .join('; ');
 
-  useEffect(() => {
-    if (!getStoredAccessToken()) {
-      router.replace(`/login?next=/pages/preview/${params.id}`);
-      return;
+  try {
+    const res = await fetch(apiUrl(`/admin/cms/pages/${encodeURIComponent(id)}/preview`), {
+      cache: 'no-store',
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+        [CSRF_HEADER]: CSRF_HEADER_VALUE,
+      },
+    });
+    if (!res.ok) return { status: res.status };
+    return { page: (await res.json()) as MarketingPage };
+  } catch {
+    return { status: 500 };
+  }
+}
+
+export default async function MarketingPagePreview({ params }: { params: { id: string } }) {
+  const next = safeNextPath(`/pages/preview/${params.id}`) ?? '/admin/cms/pages';
+  const result = await fetchPreview(params.id);
+
+  if ('status' in result) {
+    if (result.status === 401 || result.status === 403) {
+      redirect(`/login?next=${encodeURIComponent(next)}`);
     }
-    apiAuth<MarketingPage>(`/admin/cms/pages/${params.id}/preview`)
-      .then(setPage)
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Preview failed');
-      });
-  }, [params.id, router]);
-
-  if (error) {
     return (
       <main className="gift-page max-w-3xl">
-        <p className="text-body text-danger">{error}</p>
+        <p className="text-body text-danger">
+          {result.status === 404 ? 'Page not found' : 'Preview failed'}
+        </p>
         <Link href="/admin/cms/pages" className="mt-gs-4 inline-block text-body underline">
           ← Pages
         </Link>
@@ -47,9 +62,7 @@ export default function MarketingPagePreview({ params }: { params: { id: string 
     );
   }
 
-  if (!page) {
-    return <main className="gift-page max-w-3xl text-body opacity-70">Loading preview…</main>;
-  }
+  const { page } = result;
 
   return (
     <main className={page.slug === 'home' ? '' : 'gift-page max-w-3xl'}>

@@ -17,6 +17,7 @@ assert.ok(!supportNav.some((i) => i.id === 'products'));
 assert.ok(!supportNav.some((i) => i.id === 'collections'));
 assert.ok(COMMERCE_OPS_NAV.some((i) => i.id === 'collections'));
 assert.ok(!COMMERCE_OPS_NAV.some((i) => i.id === 'categories'));
+assert.ok(!COMMERCE_OPS_NAV.some((i) => i.id === 'merchandising'));
 assert.ok(!supportNav.some((i) => i.id === 'import'));
 assert.ok(!supportNav.some((i) => i.id === 'suppliers'));
 assert.ok(!supportNav.some((i) => i.id === 'purchase-orders'));
@@ -40,8 +41,16 @@ assert.equal(adminNav.length, filterNavForRoles(['SUPER_ADMIN']).length);
 
 assert.equal(canAccessCommerceOps(['WRITER']), false);
 assert.equal(canAccessCommerceOps(['SUPPORT']), true);
+assert.equal(canAccessCommerceOps(['CONTENT_ADMIN']), true);
 assert.equal(defaultOpsLanding(['SUPPORT']), '/admin/commerce/support');
 assert.equal(defaultOpsLanding(['FINANCE']), '/admin/commerce/reports');
+assert.equal(defaultOpsLanding(['CONTENT_ADMIN']), '/admin/cms/pages');
+
+const contentNav = filterNavForRoles(['CONTENT_ADMIN']);
+assert.ok(contentNav.some((i) => i.id === 'pages'));
+assert.ok(!contentNav.some((i) => i.id === 'orders'));
+assert.ok(!contentNav.some((i) => i.id === 'gift-chrome'));
+assert.ok(COMMERCE_OPS_NAV.some((i) => i.id === 'gift-chrome'));
 
 assert.equal(
   isNavItemActive('/admin/commerce', {
@@ -82,5 +91,14 @@ assert.equal(crumbs.at(-1)?.href, undefined);
 const dashCrumb = buildOpsBreadcrumbs('/admin/commerce');
 assert.equal(dashCrumb.length, 1);
 assert.equal(dashCrumb[0]?.label, 'Dashboard');
+
+const cmsList = buildOpsBreadcrumbs('/admin/cms/pages');
+assert.equal(cmsList.length, 1);
+assert.equal(cmsList[0]?.label, 'Pages');
+
+const cmsEdit = buildOpsBreadcrumbs('/admin/cms/pages/abc');
+assert.equal(cmsEdit[0]?.label, 'Commerce Ops');
+assert.equal(cmsEdit[1]?.label, 'Pages');
+assert.equal(cmsEdit.at(-1)?.label, 'Edit');
 
 console.log('commerce-ops-nav.check: ok');

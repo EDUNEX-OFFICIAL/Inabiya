@@ -1,8 +1,8 @@
 # CMS — Marketing Page Builder (Drag & Drop)
 
-Version: 1.1.0  
+Version: 1.1.1  
 Status: **11A–11D + Phase 12 TipTap/saleStrip/media shipped** (real S3 SDK still deferred)  
-Last Updated: 2026-07-22 (Phase 12 media library)
+Last Updated: 2026-08-15 (CMS SEO schema Auto/Manual)
 
 Client asked for **drag-and-drop page creation** in CMS. Product decision (**1B**): full **marketing pages** at `/pages/[slug]`, composed of ordered blocks — not TipTap-only articles, and not “homepage section reorder only” as the end state.
 
@@ -44,14 +44,14 @@ MarketingPage
   id, slug (unique), title
   status: DRAFT | PUBLISHED
   seoTitle?, seoDescription?, canonicalPath?, ogImageUrl?, robotsIndex
-  seoSchemaExtras?   # admin Schema.org presets + custom JSON-LD
+  seoSchemaExtras?   # Auto (system WebPage+FAQ) or Manual replace JSON-LD
   publishedAt?
   createdAt, updatedAt
   blocks: PageBlock[]
 
 PageBlock
   id, pageId
-  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | discoveryChips | buildYourBoxTeaser | articleTeasers | footer | saleStrip | faq | exclusiveOffers | testimonials | countdown
+  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | discoveryChips | buildYourBoxTeaser | articleTeasers | footer | saleStrip | faq | exclusiveOffers | testimonials | countdown | customSection
   sortOrder: Int
   props: Json   # Zod-validated per type
 ```
@@ -64,7 +64,7 @@ Money never lives in block props as floats; product prices always come from cata
 
 | Type | Props (sketch) | Notes |
 |---|---|---|
-| `hero` | `headline`, `subcopy?`, `ctaLabel?`, `ctaHref?`, `imageUrl?` | Soft Gift hero |
+| `customSection` | `layout?`, copy, media, `bg`, `width`, `minHeight`, `radius` + Style | Blank canvas. Layouts: `stack` (Blank) \| `split` \| `splitReverse` \| `two` \| `three` \| `bleed`. Gift tokens only. |
 | `richText` | `html` | Sanitise with same DOMPurify path as articles |
 | `image` | `url`, `alt`, `caption?` | MIME/size rules when media library exists |
 | `productGrid` | `source?`, `title?`, `productSlugs?`, `category?`, `occasion?`, `age?`, `recipient?`, `hamper?`, `newWithinDays?`, `limit?`, `seeAll*` | Live catalog resolve. `source`: `auto` \| `manual` \| `bestsellers` \| `editors` \| `new` \| `on_sale` |
@@ -84,16 +84,18 @@ Unknown `type` → fail validation on save; public renderer skips unknown types 
 
 ## 5. Admin UX
 
-1. **List** — `/admin/cms/pages` (draft/published, slug, updated)
-2. **Editor** — `/admin/cms/pages/[id]`
-   - Left: block palette
-   - Center: ordered blocks; reorder with **`@dnd-kit`**
-   - Right: props form for selected block
+1. **List** — `/admin/cms/pages` in Commerce Ops shell (search, status chips, duplicate/delete)
+2. **Editor** — `/admin/cms/pages/[id]` dedicated fullscreen builder (ops sidebar hidden)
+   - Left: Gutenberg-style inserter — **Custom** (Blank, columns, full bleed) then **Hero** presets plus other blocks, **icons**, drag onto canvas or click
+   - Center: block list + **live preview of the selected section** (unsaved; not full-page)
+   - Right: **Block** inspector (content + **Style**: align, vertical, headline size, ink color, space, full-hero overlay) or **Page SEO** tab
+   - Hero `layout` prop drives Soft Gift public render (legacy pages without `layout` keep storefront/panel)
    - **`productGrid`:** source dropdown, filters, published-product multi-select (manual)
    - **`discoveryChips`:** structured tile editor + `CmsMediaField` + occasion/age presets
-3. Actions: Save draft · Publish · Unpublish · Preview (draft token or internal preview)
+3. Actions: Save (⌘/Ctrl+S) · Publish · Unpublish · Preview
+4. Nav & footer chrome: `/admin/cms/gift-chrome`
 
-Dense **admin** shell — not Soft Gift chrome.
+Not a pixel WordPress/Elementor clone. Gutenberg-like focused editor + block inserter.
 
 ---
 
@@ -101,7 +103,7 @@ Dense **admin** shell — not Soft Gift chrome.
 
 - Route: App Router `/pages/[slug]` under Soft Gift `data-theme="gift"`
 - Unpublished / missing → **404**
-- SEO: `generateMetadata` from `seoTitle` / `seoDescription` / `canonicalPath` / `ogImageUrl` / `robotsIndex`; auto WebPage + FAQPage JSON-LD; optional admin `seoSchemaExtras` (presets + custom) merged into one `@graph`; `/sitemap.xml` + `/robots.txt`
+- SEO: `generateMetadata` from `seoTitle` / `seoDescription` / `canonicalPath` / `ogImageUrl` / `robotsIndex`; auto WebPage + FAQPage JSON-LD; admin Schema is Auto vs Manual `replace` (same as product edit); `/sitemap.xml` + `/robots.txt`
 - Renderer: map `type` → small presentational components (no admin DnD on storefront)
 
 ---

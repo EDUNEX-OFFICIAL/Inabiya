@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import {
   ArrowRight,
   Baby,
@@ -27,9 +27,13 @@ import {
 } from '@/lib/catalog-collections';
 import { sanitizeArticleHtml } from '@/lib/article-html';
 import { safeHrefOrHash } from '@inabiya/validation';
-import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
+import { CmsHeroByLayout, resolvePublicHeroLayout } from '@/components/cms/gift-hero-layouts';
+import { CustomSectionBlock } from '@/components/cms/custom-section-block';
+import { sectionShellClass } from '@/components/cms/section-style';
 import { FaqAccordion } from '@/components/gift/faq-accordion';
-import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
+import { collectCmsFaqJsonLd } from '@/lib/seo-json-ld/cms-faq';
+
+export { collectCmsFaqJsonLd } from '@/lib/seo-json-ld/cms-faq';
 import { jsonLdToScriptHtml } from '@/components/seo/json-ld-script';
 import { GiftHomeMotion } from '@/components/cms/gift-home-motion';
 import { HomeProductCard } from '@/components/cms/home-product-card';
@@ -319,23 +323,9 @@ function UspRow({
 }
 
 function HeroBlock({ props, layout }: { props: Record<string, unknown>; layout: 'page' | 'home' }) {
-  const storefront = props.variant === 'storefront' || layout === 'home';
-
-  if (storefront) {
-    return (
-      <GiftStorefrontHero
-        headline={String(props.headline ?? '')}
-        subcopy={props.subcopy ? String(props.subcopy) : undefined}
-        ctaLabel={props.ctaLabel ? String(props.ctaLabel) : undefined}
-        ctaHref={props.ctaHref ? String(props.ctaHref) : undefined}
-        ctaLabel2={props.ctaLabel2 ? String(props.ctaLabel2) : undefined}
-        ctaHref2={props.ctaHref2 ? String(props.ctaHref2) : undefined}
-        trustLine={props.trustLine ? String(props.trustLine) : undefined}
-        eyebrow={props.eyebrow ? String(props.eyebrow) : undefined}
-        imageUrl={props.imageUrl ? String(props.imageUrl) : undefined}
-        accentWord={props.accentWord ? String(props.accentWord) : undefined}
-      />
-    );
+  const resolved = resolvePublicHeroLayout(props, layout);
+  if (resolved !== 'legacyPanel') {
+    return <CmsHeroByLayout props={props} pageLayout={layout} />;
   }
 
   return (
@@ -1150,35 +1140,8 @@ function FaqBlock({ props, home }: { props: Record<string, unknown>; home?: bool
   );
 }
 
-function collectFaqJsonLd(blocks: CmsPageBlock[]): Record<string, unknown> | null {
-  const rows: Array<{ question: string; answerText: string }> = [];
-  for (const b of blocks) {
-    if (b.type !== 'faq') continue;
-    for (const item of parseFaqItems(b.props.items)) {
-      const text = item.answerHtml
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/gi, ' ')
-        .replace(/&amp;/gi, '&')
-        .replace(/&lt;/gi, '<')
-        .replace(/&gt;/gi, '>')
-        .replace(/&quot;/gi, '"')
-        .replace(/&#39;/gi, "'")
-        .replace(/\s+/g, ' ')
-        .trim();
-      if (!text) continue;
-      rows.push({ question: item.question, answerText: text });
-    }
-  }
-  return faqPageJsonLd(rows);
-}
-
-/** Exported for parent pages that merge FAQ into a single @graph script. */
-export function collectCmsFaqJsonLd(blocks: CmsPageBlock[]): Record<string, unknown> | null {
-  return collectFaqJsonLd(blocks);
-}
-
 function FaqJsonLd({ blocks }: { blocks: CmsPageBlock[] }) {
-  const data = collectFaqJsonLd(blocks);
+  const data = collectCmsFaqJsonLd(blocks);
   if (!data) return null;
   return (
     <script
@@ -1574,6 +1537,24 @@ function TestimonialsBlock({ props, home }: { props: Record<string, unknown>; ho
   return <section className="py-gs-4">{body}</section>;
 }
 
+function wrapStyle(props: Record<string, unknown>, node: ReactNode, key: string) {
+  const cls = sectionShellClass(props);
+  const headline =
+    typeof props.headlineSize === 'string' && props.headlineSize.trim()
+      ? props.headlineSize
+      : undefined;
+  if (!cls && !headline) return <Fragment key={key}>{node}</Fragment>;
+  return (
+    <div
+      key={key}
+      className={cls || undefined}
+      {...(headline ? { 'data-cms-headline': headline } : {})}
+    >
+      {node}
+    </div>
+  );
+}
+
 function renderRestBlock(
   b: CmsPageBlock,
   layout: 'page' | 'home',
@@ -1584,46 +1565,53 @@ function renderRestBlock(
     // Soft Gift layout owns global chrome footer — avoid double footers on home/CMS pages.
     return null;
   }
-  if (b.type === 'cta') return <CtaBlock key={b.id} props={b.props} home={home} />;
-  if (b.type === 'image') return <ImageBlock key={b.id} props={b.props} />;
+  if (b.type === 'cta') return wrapStyle(b.props, <CtaBlock props={b.props} home={home} />, b.id);
+  if (b.type === 'image') return wrapStyle(b.props, <ImageBlock props={b.props} />, b.id);
   if (b.type === 'spacer') return <SpacerBlock key={b.id} props={b.props} />;
   if (b.type === 'productGrid') {
     const tones = ['mint', 'sky'] as const;
     const bandTone = home ? tones[productBandIndex.current++ % 2] : undefined;
-    return <ProductGridBlock key={b.id} props={b.props} layout={layout} bandTone={bandTone} />;
+    return wrapStyle(
+      b.props,
+      <ProductGridBlock props={b.props} layout={layout} bandTone={bandTone} />,
+      b.id,
+    );
   }
   if (b.type === 'brandStrip') {
-    return <BrandStripBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <BrandStripBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'recipientSplit') {
-    return <RecipientSplitBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <RecipientSplitBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'discoveryChips') {
-    return <DiscoveryChipsBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <DiscoveryChipsBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'buildYourBoxTeaser') {
-    return <BuildYourBoxTeaserBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <BuildYourBoxTeaserBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'articleTeasers') {
-    return <ArticleTeasersBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <ArticleTeasersBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'saleStrip') {
-    return <SaleStripBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <SaleStripBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'countdown') {
-    return <CountdownBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <CountdownBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'exclusiveOffers') {
-    return <ExclusiveOffersBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <ExclusiveOffersBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'testimonials') {
-    return <TestimonialsBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <TestimonialsBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'faq') {
-    return <FaqBlock key={b.id} props={b.props} home={home} />;
+    return wrapStyle(b.props, <FaqBlock props={b.props} home={home} />, b.id);
   }
   if (b.type === 'richText') {
-    return <RichTextBlock key={b.id} html={String(b.props.html ?? '')} />;
+    return wrapStyle(b.props, <RichTextBlock html={String(b.props.html ?? '')} />, b.id);
+  }
+  if (b.type === 'customSection') {
+    return <CustomSectionBlock key={b.id} props={b.props} />;
   }
   return null;
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { apiAuth, apiAuthUpload } from '@/lib/auth-client';
+import { parseAmbientVideoUrl, youtubePosterUrl } from '@/lib/product-video';
 
 export type MediaAsset = {
   id: string;
@@ -24,6 +25,8 @@ type Props = {
   onChange: (url: string) => void;
   /** Restrict library/upload to images (CMS default). */
   imagesOnly?: boolean;
+  /** Inspector preview: treat YouTube / .mp4 as video, not a broken image. */
+  allowVideo?: boolean;
 };
 
 const CMS_IMAGE_ACCEPT =
@@ -273,10 +276,11 @@ export function MediaLibraryModal({
   );
 }
 
-export function CmsMediaField({ value, onChange, imagesOnly = true }: Props) {
+export function CmsMediaField({ value, onChange, imagesOnly = true, allowVideo = false }: Props) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const video = allowVideo ? parseAmbientVideoUrl(value) : null;
 
   async function onUpload(file: File | null) {
     if (!file) return;
@@ -299,9 +303,28 @@ export function CmsMediaField({ value, onChange, imagesOnly = true }: Props) {
         className="block w-full rounded border px-2 py-1 text-sm"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="/gift/media/…, /api/v1/media/…/content, or https://…"
+        placeholder={
+          allowVideo
+            ? 'YouTube, .mp4/.webm, or image URL'
+            : '/gift/media/…, /api/v1/media/…/content, or https://…'
+        }
       />
-      {value ? (
+      {value && video?.kind === 'youtube' ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={youtubePosterUrl(video.id)}
+          alt=""
+          className="h-20 max-w-full rounded border object-contain bg-black/[0.03]"
+        />
+      ) : value && video?.kind === 'direct' ? (
+        <video
+          src={video.url}
+          className="h-20 max-w-full rounded border bg-black/[0.03] object-contain"
+          muted
+          playsInline
+          preload="metadata"
+        />
+      ) : value ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={value}

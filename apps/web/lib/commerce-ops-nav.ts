@@ -10,7 +10,7 @@ export type OpsNavItem = {
   label: string;
   href: string;
   /** Roles that may see this item (SUPER_ADMIN always sees all). */
-  roles: Array<'COMMERCE_ADMIN' | 'SUPPORT' | 'FINANCE'>;
+  roles: Array<'COMMERCE_ADMIN' | 'SUPPORT' | 'FINANCE' | 'CONTENT_ADMIN'>;
   /** Match active state for nested routes */
   match?: 'exact' | 'prefix';
   /** Sidebar section */
@@ -101,14 +101,6 @@ export const COMMERCE_OPS_NAV: OpsNavItem[] = [
     section: 'growth',
   },
   {
-    id: 'merchandising',
-    label: 'Merchandising',
-    href: '/admin/commerce/merchandising',
-    roles: ['COMMERCE_ADMIN'],
-    match: 'prefix',
-    section: 'growth',
-  },
-  {
     id: 'reports',
     label: 'Reports',
     href: '/admin/commerce/reports',
@@ -158,8 +150,16 @@ export const COMMERCE_OPS_NAV: OpsNavItem[] = [
   },
   {
     id: 'pages',
-    label: 'CMS Pages',
+    label: 'Pages',
     href: '/admin/cms/pages',
+    roles: ['COMMERCE_ADMIN', 'CONTENT_ADMIN'],
+    match: 'prefix',
+    section: 'growth',
+  },
+  {
+    id: 'gift-chrome',
+    label: 'Nav & footer',
+    href: '/admin/cms/gift-chrome',
     roles: ['COMMERCE_ADMIN'],
     match: 'prefix',
     section: 'growth',
@@ -175,7 +175,7 @@ const SECTION_LABELS: Record<string, string> = {
 };
 
 export function canAccessCommerceOps(roles: string[]): boolean {
-  if (roles.includes('SUPER_ADMIN')) return true;
+  if (roles.includes('SUPER_ADMIN') || roles.includes('CONTENT_ADMIN')) return true;
   return OPS_SHELL_ROLES.some((r) => r !== 'SUPER_ADMIN' && roles.includes(r));
 }
 
@@ -215,8 +215,26 @@ export function isNavItemActive(pathname: string, item: OpsNavItem): boolean {
 
 export type BreadcrumbCrumb = { label: string; href?: string };
 
-/** Build breadcrumbs for commerce OPS routes. */
+/** Build breadcrumbs for commerce OPS + CMS routes. */
 export function buildOpsBreadcrumbs(pathname: string): BreadcrumbCrumb[] {
+  if (pathname.startsWith('/admin/cms')) {
+    const crumbs: BreadcrumbCrumb[] = [{ label: 'Commerce Ops', href: '/admin/commerce' }];
+    if (pathname.startsWith('/admin/cms/gift-chrome')) {
+      crumbs.push({ label: 'Nav & footer' });
+      return crumbs;
+    }
+    crumbs.push({ label: 'Pages', href: '/admin/cms/pages' });
+    if (pathname === '/admin/cms/pages') {
+      return [{ label: 'Pages' }];
+    }
+    if (pathname.endsWith('/new')) {
+      crumbs.push({ label: 'New' });
+      return crumbs;
+    }
+    crumbs.push({ label: 'Edit' });
+    return crumbs;
+  }
+
   const crumbs: BreadcrumbCrumb[] = [{ label: 'Commerce Ops', href: '/admin/commerce' }];
   if (pathname === '/admin/commerce') {
     return [{ label: 'Dashboard' }];
@@ -238,7 +256,6 @@ export function buildOpsBreadcrumbs(pathname: string): BreadcrumbCrumb[] {
     import: 'Import',
     customers: 'Customers',
     coupons: 'Promotions',
-    merchandising: 'Merchandising',
     reports: 'Reports',
     reviews: 'Reviews',
     returns: 'Returns',
@@ -265,6 +282,7 @@ export function defaultOpsLanding(roles: string[]): string {
   if (roles.includes('SUPER_ADMIN') || roles.includes('COMMERCE_ADMIN')) {
     return '/admin/commerce';
   }
+  if (roles.includes('CONTENT_ADMIN')) return '/admin/cms/pages';
   if (roles.includes('SUPPORT')) return '/admin/commerce/support';
   if (roles.includes('FINANCE')) return '/admin/commerce/reports';
   return '/admin/commerce';

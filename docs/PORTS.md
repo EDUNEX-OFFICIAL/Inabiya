@@ -1,6 +1,7 @@
 # Inabiya — Port allocation
 
-Canonical registry: [`/srv/scripts/PORT_REGISTRY.md`](/srv/scripts/PORT_REGISTRY.md)
+Canonical registry: [`/srv/scripts/PORT_REGISTRY.md`](/srv/scripts/PORT_REGISTRY.md)  
+VPS rules: [`/srv/VPS_MULTI_PROJECT_GUIDELINE.md`](/srv/VPS_MULTI_PROJECT_GUIDELINE.md)
 
 ## Reserved block (this VPS)
 
@@ -35,18 +36,16 @@ bash scripts/deploy-vps.sh
 ### B — Local dev (hot reload)
 
 ```bash
-cp .env.development.example .env
-docker compose up -d postgres redis   # 5433 / 6381 only
-# Browser API = same-origin `/api/v1` (do not set NEXT_PUBLIC_API_URL to :4101)
+docker compose up -d postgres redis   # 5433 / 6381 only (already up on VPS)
 pnpm dev
-# → 3101 / 4101 (prod containers can stay on 3001/4001)
+# → 3101 / 4101 — script forces these so Docker prod can stay on 3001/4001
+# Do not copy `.env.development.example` over VPS `.env` (prod APP_URL lives there)
 ```
 
 ### C — Dev without Docker prod conflict
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml stop api web worker
-cp .env.development.example .env
 pnpm dev
 ```
 

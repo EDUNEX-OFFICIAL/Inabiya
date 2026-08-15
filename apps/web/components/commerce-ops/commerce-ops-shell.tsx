@@ -23,11 +23,11 @@ import {
   Gift,
   Keyboard,
   LayoutDashboard,
-  LayoutGrid,
   LifeBuoy,
   LogOut,
   Menu,
   MessageSquareQuote,
+  Navigation,
   Package,
   PanelLeftClose,
   Percent,
@@ -73,7 +73,6 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   import: Upload,
   customers: Users,
   promotions: Percent,
-  merchandising: LayoutGrid,
   reports: BarChart3,
   reviews: MessageSquareQuote,
   returns: RotateCcw,
@@ -82,6 +81,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   search: Search,
   settings: Settings,
   pages: FileText,
+  'gift-chrome': Navigation,
 };
 
 function roleLabel(roles: string[]): string {
@@ -89,6 +89,7 @@ function roleLabel(roles: string[]): string {
   if (roles.includes('COMMERCE_ADMIN')) return 'Commerce admin';
   if (roles.includes('SUPPORT')) return 'Support';
   if (roles.includes('FINANCE')) return 'Finance';
+  if (roles.includes('CONTENT_ADMIN')) return 'Content admin';
   return roles[0] ?? '—';
 }
 
@@ -248,6 +249,7 @@ export function CommerceOpsShell({ children }: Props) {
           r: '/admin/commerce/reports',
           s: '/admin/commerce/settings',
           m: '/admin/commerce/import',
+          w: '/admin/cms/pages',
         };
         const allowed = new Set(navItems.map((item) => item.href));
         const href = fullMap[key];
@@ -316,8 +318,8 @@ export function CommerceOpsShell({ children }: Props) {
       <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col justify-center gap-3 px-4 py-8">
         <h1 className="font-display text-2xl">No commerce access</h1>
         <p className="text-sm opacity-80">
-          Your account does not have a Commerce Ops role (Commerce Admin, Support, Finance, or Super
-          Admin).
+          Your account does not have a Commerce Ops role (Commerce Admin, Content Admin, Support,
+          Finance, or Super Admin).
         </p>
         <Link href="/gift" className="clay-btn-secondary w-fit text-sm">
           Back to storefront
@@ -340,6 +342,8 @@ export function CommerceOpsShell({ children }: Props) {
       </div>
     );
   }
+
+  const opsLanding = defaultOpsLanding(user.roles);
 
   function NavLinks({
     items,
@@ -397,7 +401,7 @@ export function CommerceOpsShell({ children }: Props) {
         >
           <div className={`flex gap-2 ${collapsed ? 'flex-col items-center' : 'items-center'}`}>
             <Link
-              href="/admin/commerce"
+              href={opsLanding}
               className={`min-w-0 flex-1 ${collapsed ? 'flex justify-center' : ''}`}
               onClick={onNavigate}
               title={collapsed ? 'Inabiya Ops' : undefined}
@@ -764,6 +768,7 @@ export function CommerceOpsShell({ children }: Props) {
                 <kbd className="rounded border px-1 text-xs">g</kbd>
                 <kbd className="rounded border px-1 text-xs">s</kbd> settings ·{' '}
                 <kbd className="rounded border px-1 text-xs">m</kbd> import ·{' '}
+                <kbd className="rounded border px-1 text-xs">w</kbd> pages ·{' '}
                 <kbd className="rounded border px-1 text-xs">?</kbd> this help
               </li>
               <li>

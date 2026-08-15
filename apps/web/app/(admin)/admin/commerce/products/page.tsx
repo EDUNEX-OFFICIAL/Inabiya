@@ -516,12 +516,6 @@ function ProductsDeskInner() {
               <Link href="/admin/commerce/collections" className="clay-btn-ghost min-h-10 text-sm">
                 Collections
               </Link>
-              <Link
-                href="/admin/commerce/merchandising"
-                className="clay-btn-ghost min-h-10 text-sm"
-              >
-                Merch
-              </Link>
             </div>
             {canFinance ? (
               <Link href="/admin/commerce/products/new" className="clay-btn shrink-0 text-sm">

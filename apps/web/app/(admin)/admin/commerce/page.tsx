@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   AlertTriangle,
   CreditCard,
-  LayoutGrid,
+  FileText,
   Package,
   Plus,
   RefreshCw,
@@ -495,11 +495,7 @@ export default function CommerceAdminPage() {
                 <QuickAction href="/admin/commerce/coupons" label="Promotions" icon={Tag} />
               )}
               <QuickAction href="/admin/commerce/orders" label="Orders queue" icon={ShoppingBag} />
-              <QuickAction
-                href="/admin/commerce/merchandising"
-                label="Merchandising"
-                icon={LayoutGrid}
-              />
+              <QuickAction href="/admin/cms/pages" label="CMS pages" icon={FileText} />
             </div>
           </section>
 

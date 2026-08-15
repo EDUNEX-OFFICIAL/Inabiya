@@ -3,19 +3,22 @@
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
+import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
+import { slugifyTitle } from '@/components/cms/page-builder/cms-page-model';
 
 export default function AdminCmsNewPage() {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
+  const [slugTouched, setSlugTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!getStoredAccessToken()) {
-      router.replace('/login?next=/admin/cms/pages/new');
+      router.replace(loginUrl('/admin/cms/pages/new'));
       return;
     }
     setBusy(true);
@@ -31,7 +34,7 @@ export default function AdminCmsNewPage() {
               type: 'hero',
               props: {
                 headline: title || 'New page',
-                subcopy: 'Edit this page in the CMS.',
+                subcopy: '',
                 ctaLabel: 'Shop gifts',
                 ctaHref: '/gift',
               },
@@ -48,29 +51,18 @@ export default function AdminCmsNewPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-lg">
-      <Link href="/admin/cms/pages" className="text-sm underline opacity-70">
-        ← Pages
-      </Link>
-      <h1 className="text-2xl font-semibold mt-4">New marketing page</h1>
-      <form onSubmit={(e) => void onSubmit(e)} className="mt-6 space-y-3 text-sm">
+    <div className="mx-auto max-w-lg">
+      <OpsPageHeader title="New page" />
+      <form onSubmit={(e) => void onSubmit(e)} className="space-y-3 text-sm">
         <label className="block">
           Title
           <input
             required
-            className="mt-1 block w-full rounded border px-2 py-1"
+            className="clay-input mt-1 block w-full"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
-              if (!slug) {
-                setSlug(
-                  e.target.value
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/^-|-$/g, '')
-                    .slice(0, 80),
-                );
-              }
+              if (!slugTouched) setSlug(slugifyTitle(e.target.value));
             }}
           />
         </label>
@@ -79,20 +71,24 @@ export default function AdminCmsNewPage() {
           <input
             required
             pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-            className="mt-1 block w-full rounded border px-2 py-1"
+            className="clay-input mt-1 block w-full font-mono text-xs"
             value={slug}
-            onChange={(e) => setSlug(e.target.value)}
+            onChange={(e) => {
+              setSlugTouched(true);
+              setSlug(e.target.value);
+            }}
           />
         </label>
         {error ? <p className="text-red-600">{error}</p> : null}
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded bg-neutral-900 px-3 py-2 text-white disabled:opacity-50"
-        >
-          {busy ? 'Creating…' : 'Create'}
-        </button>
+        <div className="flex gap-2">
+          <button type="submit" disabled={busy} className="clay-btn text-sm disabled:opacity-50">
+            {busy ? 'Creating…' : 'Create'}
+          </button>
+          <Link href="/admin/cms/pages" className="clay-btn-ghost text-sm">
+            Cancel
+          </Link>
+        </div>
       </form>
-    </main>
+    </div>
   );
 }

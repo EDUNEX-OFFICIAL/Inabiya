@@ -3,7 +3,9 @@
  * Run: pnpm exec tsx scripts/smoke-product-video.ts
  */
 import {
+  parseAmbientVideoUrl,
   parseProductVideoUrl,
+  youtubeNocookieAmbientUrl,
   youtubeNocookieEmbedUrl,
   youtubePosterUrl,
 } from '../apps/web/lib/product-video.ts';
@@ -49,6 +51,21 @@ assert(
 assert(
   youtubePosterUrl('dQw4w9WgXcQ') === 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
   'poster URL unexpected',
+);
+
+const ambientYt = parseAmbientVideoUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+assert(ambientYt?.kind === 'youtube' && ambientYt.id === 'dQw4w9WgXcQ', 'ambient youtube failed');
+
+const ambientMp4 = parseAmbientVideoUrl('https://cdn.example.com/hero.mp4');
+assert(ambientMp4?.kind === 'direct', 'ambient mp4 failed');
+
+assert(parseAmbientVideoUrl('/gift/media/baby-soft-gift.jpg') == null, 'jpg must not be video');
+assert(parseAmbientVideoUrl('dQw4w9WgXcQ') == null, 'bare id must not be hero video');
+
+const ambientEmbed = youtubeNocookieAmbientUrl('dQw4w9WgXcQ');
+assert(
+  ambientEmbed.includes('mute=1') && ambientEmbed.includes('loop=1'),
+  'ambient embed URL unexpected',
 );
 
 console.log('smoke-product-video: PASS');

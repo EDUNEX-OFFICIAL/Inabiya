@@ -12,7 +12,6 @@ import {
   customerStatusBodySchema,
   customerCommunicationBodySchema,
   giftChromeBodySchema,
-  storefrontConfigBodySchema,
   type AdminAuditQuery,
   type AdminCouponsQuery,
   type AdminCustomersQuery,
@@ -120,25 +119,6 @@ export class OpsAdminController {
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'SUPPORT')
   search(@Query(new ZodValidationPipe(adminSearchQuerySchema)) query: { q: string }) {
     return this.dashboard.search(query.q);
-  }
-
-  @Get('storefront')
-  getStorefront() {
-    return this.storefront.getHomeConfig();
-  }
-
-  @Post('storefront')
-  setStorefront(
-    @Body(new ZodValidationPipe(storefrontConfigBodySchema))
-    body: {
-      featuredSlugs: string[];
-      heroTitle?: string;
-      heroSubtitle?: string;
-    },
-    @CurrentUser() user: { id: string },
-    @Req() req: AuthedRequest,
-  ) {
-    return this.storefront.setHomeConfig(body, user.id, String(req.id ?? ''));
   }
 
   /** Soft Gift nav + default footer chrome (CMS-controllable). */
@@ -249,16 +229,6 @@ export class OpsAdminController {
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN')
   listAudit(@Query(new ZodValidationPipe(adminAuditQuerySchema)) query: AdminAuditQuery) {
     return this.audit.list(query);
-  }
-}
-
-@Controller('catalog/home')
-export class StorefrontPublicController {
-  constructor(private readonly storefront: StorefrontConfigService) {}
-
-  @Get()
-  homeConfig() {
-    return this.storefront.getHomeConfig();
   }
 }
 

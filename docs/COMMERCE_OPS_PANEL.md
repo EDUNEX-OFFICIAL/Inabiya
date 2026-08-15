@@ -2,7 +2,7 @@
 
 Version: 2.0.0  
 Status: **OPS-0…9 shipped** — Phase 13 Commerce OPS Panel complete  
-Last Updated: 2026-07-29  
+Last Updated: 2026-08-15  
 Document Owner: Eng + Product
 
 **This doc is the engineering + UX contract** for elevating Commerce Admin from Phase 4 MVP to a professional operations console (Shopify Admin / BigCommerce / Amazon Seller–class). Implement **one OPS phase at a time**. Do not invent progress in Memory until code ships.
@@ -57,7 +57,7 @@ Phase 4 Commerce Operations Console MVP is **closed**. Do not rebuild from zero 
 | `/admin/commerce/products`, `/new`, `/[id]` | CRUD / publish |
 | `/admin/commerce/customers`, `/customers/[id]` | List + profile + suspend |
 | `/admin/commerce/coupons` | Create + list |
-| `/admin/commerce/merchandising` | Homepage curation MVP |
+| `/admin/cms/pages` | Homepage / storefront blocks (CMS) |
 | `/admin/commerce/reports` | Basic revenue reports |
 | `/admin/commerce/support` | Order lookup |
 | `/admin/commerce/search` | Global search MVP |
@@ -69,7 +69,7 @@ Phase 4 Commerce Operations Console MVP is **closed**. Do not rebuild from zero 
 
 - Dashboard KPIs (orders, revenue, AOV)
 - Order detail + timeline + notes; PAID → PROCESSING → SHIPPED → DELIVERED
-- Customer admin + coupons + merchandising + alerts + search
+- Customer admin + coupons + CMS homepage blocks + alerts + search
 - Cancel / refund trigger; bulk product edits; richer reports UI
 
 ### Gaps this journey closes
@@ -126,7 +126,7 @@ OPS-0 → OPS-1 → OPS-4 → OPS-3 → OPS-2 → OPS-5 → OPS-6 → OPS-7 → 
 | **OPS-1** | Command center | Dashboard 2.0 + alert queues | OPS-0 |
 | **OPS-4** | Order desk | Fulfillment case-file UX | OPS-0 (OPS-1 ideal) |
 | **OPS-3** | Inventory ops | Stock truth + ledger UX | OPS-0 |
-| **OPS-2** | Catalog desk | Power table + merchandising | OPS-0 |
+| **OPS-2** | Catalog desk | Power table + labels / collections | OPS-0 |
 | **OPS-5** | CRM & support | Customer 360 + support desk | OPS-4 |
 | **OPS-6** | Promotions | Rules engine deepen | OPS-2 |
 | **OPS-7** | Reports | Gallery + export | OPS-1 |

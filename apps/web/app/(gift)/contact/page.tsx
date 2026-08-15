@@ -1,12 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
+import { JsonLdScript } from '@/components/seo/json-ld-script';
+import { fetchPublishedCmsPage } from '@/lib/cms-marketing-page';
+import { marketingPageMetadata } from '@/lib/cms-seo';
+import { marketingPageMergedJsonLd } from '@/lib/seo-json-ld/cms-page';
+import { GIFT_CONTACT_SLUG } from '@inabiya/validation';
 
-export const metadata: Metadata = {
-  title: 'Contact Inabiya',
-  description: 'Reach Soft Gift support by email or WhatsApp.',
-};
+export const dynamic = 'force-dynamic';
 
-export default function ContactPage() {
+function ContactFallback() {
   return (
     <main className="gift-page max-w-3xl">
       <p className="gift-overline">Hello</p>
@@ -51,6 +54,30 @@ export default function ContactPage() {
           Back to gifts
         </Link>
       </p>
+    </main>
+  );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await fetchPublishedCmsPage(GIFT_CONTACT_SLUG);
+  if (!page) {
+    return {
+      title: 'Contact Inabiya',
+      description: 'Reach Soft Gift support by email or WhatsApp.',
+    };
+  }
+  return marketingPageMetadata(page);
+}
+
+export default async function ContactPage() {
+  const page = await fetchPublishedCmsPage(GIFT_CONTACT_SLUG);
+  if (!page?.blocks?.length) return <ContactFallback />;
+
+  const ld = marketingPageMergedJsonLd(page, page.blocks, page.seoSchemaExtras);
+  return (
+    <main className="gift-page max-w-3xl">
+      <JsonLdScript data={ld} />
+      <MarketingPageBlocks blocks={page.blocks} emitFaqJsonLd={false} />
     </main>
   );
 }

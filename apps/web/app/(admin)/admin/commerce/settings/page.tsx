@@ -546,8 +546,8 @@ function SettingsInner() {
               <h2 className="font-display text-lg leading-tight">Related</h2>
               <ul className="mt-2 flex flex-wrap gap-2">
                 <li>
-                  <Link href="/admin/commerce/merchandising" className="clay-chip text-xs">
-                    Merchandising
+                  <Link href="/admin/cms/pages" className="clay-chip text-xs">
+                    CMS pages
                   </Link>
                 </li>
                 <li>

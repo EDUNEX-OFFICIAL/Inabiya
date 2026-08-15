@@ -14,8 +14,8 @@ Follow `/srv/VPS_MULTI_PROJECT_GUIDELINE.md` + `/srv/scripts/PORT_REGISTRY.md`. 
 |---|---|---|
 | `127.0.0.1:3001` | `inabiya-web` | Docker prod |
 | `127.0.0.1:4001` | `inabiya-api` | Docker prod |
-| `127.0.0.1:3101` | Next | `pnpm dev:web` only |
-| `127.0.0.1:4101` | Nest | `pnpm dev:api` only |
+| `127.0.0.1:3101` | Next | `pnpm dev` / `pnpm dev:web` (`scripts/dev.sh`) |
+| `127.0.0.1:4101` | Nest | `pnpm dev` / `pnpm dev:api` (host only; not Docker) |
 | `127.0.0.1:5433` | Postgres | compose infra |
 | `127.0.0.1:6381` | Redis | compose infra |
 
@@ -31,7 +31,8 @@ Health: `http://127.0.0.1:4001/api/v1/health` (prod) or `:4101` (dev). API has *
 
 ## Don't
 
-- Run Docker prod **and** `pnpm dev` on the same 3001/4001 pair.
+- Run Docker prod **and** `pnpm dev` on the same 3001/4001 pair (`pnpm` is 3101/4101).
+- Docker-publish `3101`/`4101`, or point Caddy at host `pnpm` ports.
 - Point Caddy at `localhost:PORT` for another project’s container.
 - Flat shared LAN / revive ghost compose paths.
 - Publish app ports on all interfaces.

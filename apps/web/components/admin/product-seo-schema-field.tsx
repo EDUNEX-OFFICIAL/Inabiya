@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { seoSchemaEntrySchema, type SeoSchemaEntry } from '@inabiya/validation';
-import { mergeSeoJsonLd, type JsonLdNode } from '@/lib/seo-json-ld';
+import { mergeSeoJsonLdWithExtras, type JsonLdNode } from '@/lib/seo-json-ld';
 import { OpsIconLink } from '@/components/commerce-ops/ops-icon-action';
 
 type Mode = 'auto' | 'manual';
@@ -13,6 +13,12 @@ type Props = {
   onChange: (next: SeoSchemaEntry[]) => void;
   autoPreviewNodes?: Array<JsonLdNode | null | undefined>;
   publicUrl?: string | null;
+  /** Inspector-style chips; skip product-page chrome. */
+  embedded?: boolean;
+  autoLabel?: string;
+  manualLabel?: string;
+  emptyPreview?: string;
+  radioName?: string;
 };
 
 function newId(): string {
@@ -36,7 +42,7 @@ function docToText(doc: JsonLdNode | null): string {
 }
 
 /**
- * Product SEO schema: Auto (system Product + FAQ) or Manual (full JSON-LD replace).
+ * SEO schema: Auto (system JSON-LD) or Manual (full JSON-LD replace).
  * No “Add extra” presets — keep the admin surface simple.
  */
 export function ProductSeoSchemaField({
@@ -44,6 +50,11 @@ export function ProductSeoSchemaField({
   onChange,
   autoPreviewNodes = [],
   publicUrl,
+  embedded = false,
+  autoLabel = 'Auto from product fields',
+  manualLabel = 'Edit JSON yourself',
+  emptyPreview = 'Fill title, price, images & FAQs to preview',
+  radioName = 'product-schema-mode',
 }: Props) {
   const replace = findReplace(value);
   const initialMode: Mode = replace ? 'manual' : 'auto';
@@ -52,7 +63,12 @@ export function ProductSeoSchemaField({
   const [draftError, setDraftError] = useState<string | null>(null);
   const [replaceId] = useState(() => replace?.id ?? newId());
 
-  const autoDoc = useMemo(() => mergeSeoJsonLd(autoPreviewNodes), [autoPreviewNodes]);
+  const extrasForAuto = useMemo(() => value.filter((e) => e.mode !== 'replace'), [value]);
+  const autoDoc = useMemo(
+    () =>
+      mergeSeoJsonLdWithExtras(autoPreviewNodes, extrasForAuto.length ? extrasForAuto : undefined),
+    [autoPreviewNodes, extrasForAuto],
+  );
 
   function selectMode(next: Mode) {
     setDraftError(null);
@@ -98,6 +114,112 @@ export function ProductSeoSchemaField({
     ? `https://search.google.com/test/rich-results?url=${encodeURIComponent(publicUrl)}`
     : null;
 
+  const modeToggle = embedded ? (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex gap-0.5 rounded-lg bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] p-0.5">
+        <button
+          type="button"
+          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+            mode === 'auto'
+              ? 'bg-[var(--foreground)] text-[var(--background)]'
+              : 'hover:bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]'
+          }`}
+          onClick={() => selectMode('auto')}
+        >
+          {autoLabel}
+        </button>
+        <button
+          type="button"
+          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+            mode === 'manual'
+              ? 'bg-[var(--foreground)] text-[var(--background)]'
+              : 'hover:bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]'
+          }`}
+          onClick={() => selectMode('manual')}
+        >
+          {manualLabel}
+        </button>
+      </div>
+      {richResultsHref ? (
+        <OpsIconLink
+          href={richResultsHref}
+          label="Test in Google"
+          icon={ExternalLink}
+          target="_blank"
+        />
+      ) : null}
+    </div>
+  ) : (
+    <div className="flex flex-wrap gap-4 text-sm">
+      <label className="inline-flex items-center gap-2">
+        <input
+          type="radio"
+          name={radioName}
+          checked={mode === 'auto'}
+          onChange={() => selectMode('auto')}
+        />
+        {autoLabel}
+      </label>
+      <label className="inline-flex items-center gap-2">
+        <input
+          type="radio"
+          name={radioName}
+          checked={mode === 'manual'}
+          onChange={() => selectMode('manual')}
+        />
+        {manualLabel}
+      </label>
+    </div>
+  );
+
+  const preview = (
+    <>
+      {mode === 'auto' ? (
+        <pre
+          className={
+            embedded
+              ? 'max-h-[22rem] min-h-[14rem] overflow-auto rounded border bg-black/5 p-2 font-mono text-[10px] leading-relaxed'
+              : 'max-h-72 overflow-auto rounded border bg-black/5 p-2 font-mono text-[10px] leading-relaxed'
+          }
+        >
+          {autoDoc ? JSON.stringify(autoDoc, null, 2) : emptyPreview}
+        </pre>
+      ) : (
+        <div className="space-y-2">
+          {embedded ? null : (
+            <p className="text-[11px] opacity-55">
+              Advanced — invalid JSON can break Google rich results
+            </p>
+          )}
+          <textarea
+            className={
+              embedded
+                ? 'clay-input mt-0 block !min-h-[18rem] w-full resize-y font-mono text-[10px] leading-relaxed'
+                : 'block min-h-[220px] w-full resize-y rounded border px-2 py-1 font-mono text-[10px] leading-relaxed'
+            }
+            value={draft}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              commitManual(e.target.value, replaceId);
+            }}
+            spellCheck={false}
+            aria-label="Manual JSON-LD schema"
+          />
+          {draftError ? <p className="text-xs text-red-600">{draftError}</p> : null}
+        </div>
+      )}
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="space-y-2.5">
+        {modeToggle}
+        {preview}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3 rounded-lg border border-[color:var(--border-subtle)] p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -118,52 +240,8 @@ export function ProductSeoSchemaField({
           />
         ) : null}
       </div>
-
-      <div className="flex flex-wrap gap-4 text-sm">
-        <label className="inline-flex items-center gap-2">
-          <input
-            type="radio"
-            name="product-schema-mode"
-            checked={mode === 'auto'}
-            onChange={() => selectMode('auto')}
-          />
-          Auto from product fields
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input
-            type="radio"
-            name="product-schema-mode"
-            checked={mode === 'manual'}
-            onChange={() => selectMode('manual')}
-          />
-          Edit JSON yourself
-        </label>
-      </div>
-
-      {mode === 'auto' ? (
-        <pre className="max-h-72 overflow-auto rounded border bg-black/5 p-2 font-mono text-[10px] leading-relaxed">
-          {autoDoc
-            ? JSON.stringify(autoDoc, null, 2)
-            : 'Fill title, price, images & FAQs to preview'}
-        </pre>
-      ) : (
-        <div className="space-y-2">
-          <p className="text-[11px] opacity-55">
-            Advanced — invalid JSON can break Google rich results
-          </p>
-          <textarea
-            className="block w-full min-h-[220px] rounded border px-2 py-1 font-mono text-[10px] leading-relaxed"
-            value={draft}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              commitManual(e.target.value, replaceId);
-            }}
-            spellCheck={false}
-            aria-label="Manual JSON-LD schema"
-          />
-          {draftError ? <p className="text-xs text-red-600">{draftError}</p> : null}
-        </div>
-      )}
+      {modeToggle}
+      {preview}
     </div>
   );
 }

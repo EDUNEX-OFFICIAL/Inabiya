@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
+import { apiAuth, clearSession, type AuthUser } from '@/lib/auth-client';
 
 type Props = {
   children: ReactNode;
@@ -16,20 +16,34 @@ export function AdminGate({ children, allow, loginNext = '/admin/commerce' }: Pr
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
-    if (!getStoredAccessToken()) {
-      router.replace(`/login?next=${encodeURIComponent(loginNext)}`);
-      return;
-    }
+    let cancelled = false;
     const allowSet = new Set(allow);
-    apiAuth<AuthUser>('/auth/me')
+    const login = `/login?next=${encodeURIComponent(loginNext)}`;
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 8000);
+    const goLogin = () => {
+      if (cancelled) return;
+      clearSession();
+      router.replace(login);
+    };
+
+    apiAuth<AuthUser>('/auth/me', { signal: ac.signal })
       .then((u) => {
+        if (cancelled) return;
         if (u.roles.includes('SUPER_ADMIN') || u.roles.some((r) => allowSet.has(r))) {
           setOk(true);
           return;
         }
-        router.replace('/login?next=' + encodeURIComponent(loginNext));
+        goLogin();
       })
-      .catch(() => router.replace(`/login?next=${encodeURIComponent(loginNext)}`));
+      .catch(() => goLogin())
+      .finally(() => clearTimeout(timer));
+
+    return () => {
+      cancelled = true;
+      ac.abort();
+      clearTimeout(timer);
+    };
     // allow identity via joined string — avoid new-array identity loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allow.join('|'), loginNext, router]);
