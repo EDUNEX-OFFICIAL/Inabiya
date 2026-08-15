@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 15, 2026 (verify + push main → GHA deploy)
+Last Updated: August 15, 2026 (local deploy @ 2130574; push blocked)
 
 ---
 
@@ -141,7 +141,7 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Confirm GitHub **Build and deploy VPS** green after this push
+1. Re-auth GitHub on VPS (`gh auth login`) then `git push origin main` so remote matches `2130574`
 2. Hard-refresh storefront + `/admin/cms` (page builder, gift-chrome, about/contact)
 3. Resume OPS-10 after storefront QA
 4. **Deferred:** demo logins + real PSP (C1/C2)
@@ -1168,7 +1168,8 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 - **Override:** Phase 14; human: check build, clean, deploy; push only if Actions do not deploy alone.
 - Local verify: prisma generate+validate, lint (existing Next warnings only), Prettier `--write` (16 files), typecheck, unit smokes, `pnpm build` — **green**.
-- `deploy-vps.yml` already deploys on `push` to `main` → **push only, no local `deploy-vps.sh`** (avoids race with Actions `git reset --hard`).
+- Commit `2130574` on `main`. `deploy-vps.yml` would deploy on push, but **push failed** (invalid GitHub token / `gh auth`). Fallback: local `bash scripts/deploy-vps.sh web api` @ `2130574` — migrate none pending; smoke health/ready 200; api+web healthy; worker recreated.
+- **Blocked:** re-auth `gh` / remote token so `origin/main` can catch up; until then prod is ahead of GitHub.
 - Env/migration: none.
 
 ### Session — 2026-08-15 (gift-chrome copyright year picker)
