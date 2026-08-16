@@ -11,11 +11,15 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   "img-src 'self' data: https:",
   "media-src 'self' blob: https:",
-  "frame-src 'self' https://www.youtube-nocookie.com",
+  // Razorpay Checkout.js opens frames on api/checkout hosts
+  "frame-src 'self' https://www.youtube-nocookie.com https://api.razorpay.com https://checkout.razorpay.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
-  isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'",
+  isDev
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com"
+    : "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
+  "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
 ].join('; ');
@@ -35,11 +39,6 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: '/gift/box',
-        destination: '/gift/build-your-box',
-        permanent: true,
-      },
       // Legacy System A shell — real journal is Soft Gift /articles (editorial publishes here).
       {
         source: '/blog',

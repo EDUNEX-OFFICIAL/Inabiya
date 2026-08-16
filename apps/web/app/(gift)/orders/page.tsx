@@ -45,7 +45,7 @@ export default function OrdersPage() {
         {orders.length === 0 ? (
           <li className="checkout-section text-center">
             <p className="text-body opacity-80">No orders yet</p>
-            <Link href="/gift/products" className="clay-btn mt-gs-5 inline-flex">
+            <Link href="/products" className="clay-btn mt-gs-5 inline-flex">
               Browse gifts
             </Link>
           </li>

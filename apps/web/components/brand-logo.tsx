@@ -173,7 +173,7 @@ export function BrandLogo(props: BrandLogoProps) {
     );
 
   if (props.href === null) return inner;
-  const href = props.href ?? '/gift';
+  const href = props.href ?? '/';
   return (
     <Link href={href} className="inline-flex shrink-0 items-center" aria-label={label}>
       {inner}

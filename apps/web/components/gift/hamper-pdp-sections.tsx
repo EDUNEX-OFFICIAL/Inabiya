@@ -78,7 +78,7 @@ export function HamperActionBar({ product }: { product: CatalogProduct }) {
             Buy this hamper
           </a>
           <Link
-            href={`/gift/build-your-box${product.recipientTags?.[0] ? `?recipient=${product.recipientTags[0]}` : ''}`}
+            href={`/build-your-box${product.recipientTags?.[0] ? `?recipient=${product.recipientTags[0]}` : ''}`}
             className="clay-btn-secondary !min-h-0 !px-gs-4 !py-gs-2 text-body"
           >
             Create your own

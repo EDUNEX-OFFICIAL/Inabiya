@@ -37,18 +37,18 @@ export const DEFAULT_FOOTER_COLUMNS: GiftFooterColumn[] = [
   {
     title: 'Shop',
     links: [
-      { label: 'Build Your Box', href: '/gift/build-your-box' },
-      { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
-      { label: 'Shop by Age', href: '/gift/collections/newborn' },
-      { label: 'Corporate Gifting', href: '/gift/corporate' },
+      { label: 'Build Your Box', href: '/build-your-box' },
+      { label: 'Ready-Made Hampers', href: '/collections/ready-hampers' },
+      { label: 'Shop by Age', href: '/collections/newborn' },
+      { label: 'Corporate Gifting', href: '/corporate' },
     ],
   },
   {
     title: 'Help',
     links: [
-      { label: 'Shipping', href: '/gift#faq' },
-      { label: 'Returns', href: '/gift#faq' },
-      { label: 'FAQ', href: '/gift#faq' },
+      { label: 'Shipping', href: '/#faq' },
+      { label: 'Returns', href: '/#faq' },
+      { label: 'FAQ', href: '/#faq' },
       { label: 'WhatsApp', href: 'https://wa.me/919693940330' },
     ],
   },
@@ -65,7 +65,7 @@ export const DEFAULT_FOOTER_COLUMNS: GiftFooterColumn[] = [
 
 const DEFAULT_FOOTER = {
   brandName: 'Inabiya',
-  brandHref: '/gift',
+  brandHref: '/',
   tagline:
     'Thoughtfully personalised baby essentials & gifting for the tiny humans (and their moms) you love.',
   columns: DEFAULT_FOOTER_COLUMNS,

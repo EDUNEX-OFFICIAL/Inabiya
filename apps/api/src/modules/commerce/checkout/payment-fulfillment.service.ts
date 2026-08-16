@@ -7,6 +7,7 @@ import {
 import { CartStatus, OrderStatus, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { NotificationsQueueService } from '../../../infrastructure/notifications/notifications-queue.service';
+import { matchesRazorpaySignature } from '../../../infrastructure/payments/razorpay-signature';
 import { InventoryService } from '../inventory/inventory.service';
 import { CouponService } from '../promotions/coupon.service';
 import { giftLineFingerprint } from '../cart/gift-line-fingerprint';
@@ -28,6 +29,7 @@ export class PaymentFulfillmentService {
     eventId: string;
     paymentId: string;
     status: 'CAPTURED' | 'FAILED';
+    providerPaymentId?: string;
     payload?: unknown;
   }): Promise<{ duplicate: boolean; orderId: string }> {
     const existing = await this.prisma.paymentWebhookEvent.findUnique({
@@ -57,7 +59,11 @@ export class PaymentFulfillmentService {
       update: {},
     });
 
-    const orderId = await this.applyPaymentStatus(input.paymentId, input.status);
+    const orderId = await this.applyPaymentStatus(
+      input.paymentId,
+      input.status,
+      input.providerPaymentId,
+    );
 
     await this.prisma.paymentWebhookEvent.update({
       where: {
@@ -69,7 +75,11 @@ export class PaymentFulfillmentService {
     return { duplicate: false, orderId };
   }
 
-  async applyPaymentStatus(paymentId: string, status: 'CAPTURED' | 'FAILED'): Promise<string> {
+  async applyPaymentStatus(
+    paymentId: string,
+    status: 'CAPTURED' | 'FAILED',
+    providerPaymentId?: string,
+  ): Promise<string> {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
       include: {
@@ -103,7 +113,7 @@ export class PaymentFulfillmentService {
       await this.prisma.$transaction(async (tx) => {
         await tx.payment.update({
           where: { id: paymentId },
-          data: { status: PaymentStatus.CAPTURED },
+          data: { status: PaymentStatus.CAPTURED, providerPaymentId },
         });
         await tx.order.update({
           where: { id: payment.orderId },
@@ -183,6 +193,70 @@ export class PaymentFulfillmentService {
       paymentId,
       status: 'CAPTURED',
       payload: { source: 'mock_confirm', userId },
+    });
+    return { orderId: payment.orderId, orderNumber: payment.order.orderNumber };
+  }
+
+  async confirmRazorpayPayment(
+    paymentId: string,
+    userId: string,
+    input: {
+      razorpay_payment_id: string;
+      razorpay_order_id: string;
+      razorpay_signature: string;
+    },
+  ): Promise<{ orderId: string; orderNumber: string }> {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { order: true },
+    });
+    if (!payment) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Payment not found.' });
+    }
+    if (payment.order.userId !== userId) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'Payment does not belong to this user.',
+      });
+    }
+    const razorpayOrderId =
+      payment.metadata &&
+      typeof payment.metadata === 'object' &&
+      typeof (payment.metadata as { razorpayOrderId?: unknown }).razorpayOrderId === 'string'
+        ? (payment.metadata as { razorpayOrderId: string }).razorpayOrderId
+        : null;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim();
+    if (payment.provider !== 'razorpay' || !razorpayOrderId || !keySecret) {
+      throw new BadRequestException({
+        code: 'INVALID_PROVIDER',
+        message: 'Razorpay payment verification is unavailable.',
+      });
+    }
+    if (input.razorpay_order_id !== razorpayOrderId) {
+      throw new BadRequestException({
+        code: 'INVALID_PAYMENT',
+        message: 'Payment order does not match.',
+      });
+    }
+    if (
+      !matchesRazorpaySignature(
+        `${input.razorpay_order_id}|${input.razorpay_payment_id}`,
+        input.razorpay_signature,
+        keySecret,
+      )
+    ) {
+      throw new BadRequestException({
+        code: 'INVALID_PAYMENT_SIGNATURE',
+        message: 'Payment signature could not be verified.',
+      });
+    }
+    await this.processWebhook({
+      provider: 'razorpay',
+      eventId: `checkout-${input.razorpay_payment_id}`,
+      paymentId,
+      status: 'CAPTURED',
+      providerPaymentId: input.razorpay_payment_id,
+      payload: { source: 'razorpay_checkout', orderId: input.razorpay_order_id },
     });
     return { orderId: payment.orderId, orderNumber: payment.order.orderNumber };
   }

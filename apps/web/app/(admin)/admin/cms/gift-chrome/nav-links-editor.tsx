@@ -131,7 +131,7 @@ export function GiftNavLinksEditor({
   function addCollection() {
     const col = collections.find((c) => c.slug === pick);
     if (!col) return;
-    const href = `/gift/collections/${col.slug}`;
+    const href = `/collections/${col.slug}`;
     if (links.some((l) => l.href === href)) return;
     const next = [...links, { href, label: col.title, group: groupOptions[0] ?? '' }];
     onChange(next);
@@ -242,7 +242,7 @@ export function GiftNavLinksEditor({
                             className={`${INPUT} font-mono text-xs`}
                             value={row.href}
                             onChange={(e) => patch(i, { href: e.target.value })}
-                            placeholder="/gift/collections/…"
+                            placeholder="/collections/…"
                           />
                         </label>
                         <label className="block min-w-0 sm:col-span-2 sm:max-w-xs">

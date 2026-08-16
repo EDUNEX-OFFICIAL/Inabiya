@@ -91,7 +91,7 @@ export function CmsPageSeoForm({
             className={`${INSPECTOR_INPUT} font-mono text-xs`}
             value={canonicalPath}
             onChange={(e) => onCanonicalPath(e.target.value)}
-            placeholder="/gift"
+            placeholder="/"
           />
         </InspectorField>
         <div className="flex items-center justify-between gap-2">

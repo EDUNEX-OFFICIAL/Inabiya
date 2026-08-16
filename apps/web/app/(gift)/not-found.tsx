@@ -10,10 +10,10 @@ export default function GiftNotFound() {
         The page you wanted isn’t here — maybe it toddled off. Let’s find something lovely instead.
       </p>
       <div className="relative mt-gs-7 flex flex-wrap justify-center gap-gs-3">
-        <Link href="/gift" className="clay-btn">
+        <Link href="/" className="clay-btn">
           Soft Gift home
         </Link>
-        <Link href="/gift/products" className="clay-btn-secondary">
+        <Link href="/products" className="clay-btn-secondary">
           Browse gifts
         </Link>
       </div>

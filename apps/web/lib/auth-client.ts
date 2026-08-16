@@ -1,5 +1,5 @@
 import { apiUrl } from './api-base';
-import { safeNextPath } from '@inabiya/validation';
+import { portalLoginUrl } from './auth-portals';
 
 export type AuthUser = {
   id: string;
@@ -40,10 +40,9 @@ export function isUnauthorizedError(err: unknown): boolean {
   return err instanceof ApiClientError && err.status === 401;
 }
 
-/** Soft Gift / ops return path after login. */
+/** Soft Gift / ops return path after login (portal-aware). */
 export function loginUrl(nextPath: string): string {
-  const safe = safeNextPath(nextPath) ?? '/gift';
-  return `/login?next=${encodeURIComponent(safe)}`;
+  return portalLoginUrl(nextPath);
 }
 
 /** Cookie session: never a real JWT. Truthy when a cached user exists. */

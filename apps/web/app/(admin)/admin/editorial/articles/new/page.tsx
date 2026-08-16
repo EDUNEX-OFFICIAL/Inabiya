@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 
 type Writer = { id: string; email: string; displayName: string | null };
 
@@ -19,7 +19,7 @@ export default function NewArticlePage() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/admin/editorial/articles/new'));
       return;
     }
     apiAuth<Writer[]>('/editorial/writers')

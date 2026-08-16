@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { isProbablyHtml, normalizeArticleBody, sanitizeArticleHtml } from './html-sanitize';
 import { isSafeStorefrontHref, safeHrefOrHash, safeNextPath } from './safe-href';
 
-const stripped = sanitizeArticleHtml('<img/onerror=alert(1) src=/gift/x.jpg>');
+const stripped = sanitizeArticleHtml('<img/onerror=alert(1) src=/x.jpg>');
 assert.equal(stripped.includes('onerror'), false);
 assert.equal(stripped.includes('alert'), false);
 
@@ -19,18 +19,18 @@ assert.equal(/alert/i.test(entityJs), false);
 const protoRel = sanitizeArticleHtml('<a href="//evil.example/phish">x</a>');
 assert.equal(protoRel.includes('evil.example'), false);
 
-const okLink = sanitizeArticleHtml('<a href="/gift/products">Shop</a>');
-assert.match(okLink, /href="\/gift\/products"/);
+const okLink = sanitizeArticleHtml('<a href="/products">Shop</a>');
+assert.match(okLink, /href="\/products"/);
 
-assert.equal(isSafeStorefrontHref('/gift'), true);
-assert.equal(isSafeStorefrontHref('/gift#faq'), true);
+assert.equal(isSafeStorefrontHref('/'), true);
+assert.equal(isSafeStorefrontHref('/#faq'), true);
 assert.equal(isSafeStorefrontHref('https://wa.me/919693940330'), true);
 assert.equal(isSafeStorefrontHref('mailto:hello@inabiya.in'), true);
 assert.equal(isSafeStorefrontHref('javascript:alert(1)'), false);
 assert.equal(isSafeStorefrontHref('//evil.example'), false);
 assert.equal(safeHrefOrHash('javascript:alert(1)'), '#');
 
-assert.equal(safeNextPath('/gift/cart'), '/gift/cart');
+assert.equal(safeNextPath('/cart'), '/cart');
 assert.equal(safeNextPath('//evil.example'), null);
 assert.equal(safeNextPath('/\\evil.example'), null);
 assert.equal(safeNextPath('https://evil.example'), null);

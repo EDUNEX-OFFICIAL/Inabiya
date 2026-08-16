@@ -12,7 +12,7 @@ export type CollectionPageJsonLdInput = {
 /** Soft Gift collection PLP — CollectionPage + ItemList (auto, no admin extras). */
 export function collectionPageJsonLd(input: CollectionPageJsonLdInput): Record<string, unknown> {
   const origin = input.siteOrigin.replace(/\/$/, '');
-  const path = input.canonicalPath?.trim() || `/gift/collections/${input.slug}`;
+  const path = input.canonicalPath?.trim() || `/collections/${input.slug}`;
   const url = path.startsWith('http')
     ? path
     : `${origin}${path.startsWith('/') ? path : `/${path}`}`;
@@ -23,7 +23,7 @@ export function collectionPageJsonLd(input: CollectionPageJsonLdInput): Record<s
     : undefined;
 
   const itemListElement = input.products.map((p, i) => {
-    const productPath = `/gift/products/${p.slug}`;
+    const productPath = `/products/${p.slug}`;
     const productUrl = p.url?.startsWith('http') ? p.url : `${origin}${productPath}`;
     return {
       '@type': 'ListItem',

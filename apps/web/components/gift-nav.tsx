@@ -51,32 +51,32 @@ type GiftTopNavItem = {
 };
 
 const DEFAULT_SHOP_LINKS: MegaLink[] = [
-  { href: '/gift/build-your-box', label: 'Build Your Box', group: 'Shop' },
-  { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
-  { href: '/gift/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
-  { href: '/gift/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
-  { href: '/gift/collections/naming-ceremony', label: 'Naming ceremony gifts', group: 'Occasion' },
-  { href: '/gift/collections/first-birthday', label: 'First birthday gifts', group: 'Occasion' },
-  { href: '/gift/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
-  { href: '/gift/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
-  { href: '/gift/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
-  { href: '/gift/collections/on-sale', label: 'On sale', group: 'Curated' },
+  { href: '/build-your-box', label: 'Build Your Box', group: 'Shop' },
+  { href: '/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
+  { href: '/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
+  { href: '/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
+  { href: '/collections/naming-ceremony', label: 'Naming ceremony gifts', group: 'Occasion' },
+  { href: '/collections/first-birthday', label: 'First birthday gifts', group: 'Occasion' },
+  { href: '/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
+  { href: '/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
+  { href: '/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
+  { href: '/collections/on-sale', label: 'On sale', group: 'Curated' },
 ];
 
 const DEFAULT_FOR_WHOM_LINKS: MegaLink[] = [
-  { href: '/gift/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
-  { href: '/gift/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
-  { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom', group: 'For baby' },
-  { href: '/gift/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
-  { href: '/gift/collections/newborn', label: 'Newborn', group: 'By age' },
-  { href: '/gift/collections/infant', label: 'Infant', group: 'By age' },
-  { href: '/gift/collections/toddler', label: 'Toddler', group: 'By age' },
+  { href: '/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
+  { href: '/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
+  { href: '/collections/for-expecting-mom', label: 'Expecting Mom', group: 'For baby' },
+  { href: '/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
+  { href: '/collections/newborn', label: 'Newborn', group: 'By age' },
+  { href: '/collections/infant', label: 'Infant', group: 'By age' },
+  { href: '/collections/toddler', label: 'Toddler', group: 'By age' },
 ];
 
 const DEFAULT_SHOP_MEGA: MegaCopy = {
   headline: 'Build or pick a hamper',
   body: 'Guided boxes and ready-made packs — soft, safe, gift-ready.',
-  ctaHref: '/gift/build-your-box',
+  ctaHref: '/build-your-box',
   ctaLabel: 'Start building →',
   imageSrc: '/gift/nav/shop.svg',
 };
@@ -84,7 +84,7 @@ const DEFAULT_SHOP_MEGA: MegaCopy = {
 const DEFAULT_WHOM_MEGA: MegaCopy = {
   headline: 'Gifts by stage',
   body: 'Girl, boy, expecting mom — and newborn through toddler.',
-  ctaHref: '/gift/collections/newborn',
+  ctaHref: '/collections/newborn',
   ctaLabel: 'Shop newborn →',
   imageSrc: '/gift/nav/for-whom.svg',
 };
@@ -447,7 +447,7 @@ export function GiftNav() {
 
   function signOut() {
     clearSession();
-    window.location.href = '/gift';
+    window.location.href = '/';
   }
 
   function clearMegaTimers() {
@@ -591,12 +591,12 @@ export function GiftNav() {
       {/* Utilities */}
       <div className="flex shrink-0 items-center gap-gs-1 border-l border-border-subtle pl-gs-2 lg:pl-gs-3">
         {signedIn ? (
-          <IconLink href="/gift/wishlist" label="Wishlist" onClick={() => setMenuOpen(false)}>
+          <IconLink href="/wishlist" label="Wishlist" onClick={() => setMenuOpen(false)}>
             <Heart className="h-5 w-5" strokeWidth={1.75} />
           </IconLink>
         ) : null}
 
-        <IconLink href="/gift/cart" label="Cart" onClick={() => setMenuOpen(false)}>
+        <IconLink href="/cart" label="Cart" onClick={() => setMenuOpen(false)}>
           <ShoppingBag className="h-5 w-5" strokeWidth={1.75} />
           {cartCount > 0 ? (
             <span className="absolute right-gs-1 top-gs-1 flex h-4 min-w-4 items-center justify-center rounded-pill bg-primary px-gs-1 text-caption font-semibold text-primary-foreground">
@@ -666,7 +666,7 @@ export function GiftNav() {
             </>
           ) : (
             <Link
-              href="/login?next=/gift"
+              href="/login?next=/"
               className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-caption"
             >
               Sign in

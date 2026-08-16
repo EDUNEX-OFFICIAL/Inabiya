@@ -29,7 +29,7 @@ for ((r = 1; r <= ROUNDS; r++)); do
     hit "$API/catalog/products" &
     hit "$API/creator/marketplace" &
     hit "$API/articles" &
-    hit "$WEB/gift" &
+    hit "$WEB/" &
     hit "$WEB/creator" &
   done
   wait

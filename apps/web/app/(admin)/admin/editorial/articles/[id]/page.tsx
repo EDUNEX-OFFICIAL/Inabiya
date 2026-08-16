@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { apiUrl } from '@/lib/api-base';
 import { ArticleEditor } from '@/components/editorial/article-editor';
 import { CmsMediaField } from '@/components/cms/cms-media-field';
@@ -102,7 +102,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/admin/editorial'));
       return;
     }
     void load().catch(() => router.replace('/admin/editorial'));

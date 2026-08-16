@@ -16,7 +16,7 @@ assert.equal(legacy.title, 'Picks');
 
 // bestsellers
 const best = parseProductGridResolution(
-  { source: 'bestsellers', limit: 8, seeAllHref: '/gift/products' },
+  { source: 'bestsellers', limit: 8, seeAllHref: '/products' },
   now,
 );
 assert.equal(best.source, 'bestsellers');

@@ -107,7 +107,7 @@ export default function CollectionEditPage() {
             </Link>
             {form.slug ? (
               <Link
-                href={`/gift/collections/${form.slug}`}
+                href={`/collections/${form.slug}`}
                 target="_blank"
                 className="clay-btn-ghost inline-flex min-h-10 items-center gap-1.5 text-sm"
               >
@@ -323,7 +323,7 @@ export default function CollectionEditPage() {
                       Edit product
                     </Link>
                     <Link
-                      href={`/gift/products/${p.slug}`}
+                      href={`/products/${p.slug}`}
                       target="_blank"
                       className="opacity-70 underline-offset-2 hover:underline"
                     >

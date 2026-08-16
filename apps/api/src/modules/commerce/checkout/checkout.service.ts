@@ -188,9 +188,8 @@ export class CheckoutService {
     return {
       orderId: result.order.id,
       orderNumber: result.order.orderNumber,
-      paymentId: result.payment.id,
       totalPaise: result.order.totalPaise,
-      confirmUrl: intent.confirmUrl,
+      ...intent,
     };
   }
 }

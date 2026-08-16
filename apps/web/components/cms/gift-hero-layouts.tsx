@@ -19,7 +19,7 @@ import {
 
 const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.jpg';
 
-function href(raw: unknown, fallback = '/gift'): string {
+function href(raw: unknown, fallback = '/'): string {
   const s = typeof raw === 'string' && raw.trim() ? raw.trim() : fallback;
   return safeHrefOrHash(s);
 }

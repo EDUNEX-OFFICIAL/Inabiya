@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/creator';
 
 type BrandProfile = {
@@ -62,10 +62,10 @@ export default function BrandDashboardPage() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/creator/brand'));
       return;
     }
-    void load().catch(() => router.replace('/login'));
+    void load().catch(() => router.replace(loginUrl('/creator/brand')));
   }, [router]);
 
   async function saveProfile() {

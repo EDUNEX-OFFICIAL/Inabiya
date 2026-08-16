@@ -126,7 +126,7 @@ export function GiftSearch({
     if (q.length < MIN_Q) return;
     setOpenList(false);
     onNavigate?.();
-    router.push(`/gift/products?q=${encodeURIComponent(clampQuery(q))}`);
+    router.push(`/products?q=${encodeURIComponent(clampQuery(q))}`);
   }
 
   const showPanel = openList && (debounced.length >= MIN_Q || busy || error);
@@ -197,7 +197,7 @@ export function GiftSearch({
               {items.map((p) => (
                 <li key={p.id} role="option" aria-selected="false">
                   <Link
-                    href={`/gift/products/${p.slug}`}
+                    href={`/products/${p.slug}`}
                     className="flex items-baseline justify-between gap-gs-3 rounded-control px-gs-2 py-gs-2 hover:bg-surface-soft"
                     onClick={() => {
                       setOpenList(false);
@@ -215,7 +215,7 @@ export function GiftSearch({
           ) : null}
           {showSeeAll ? (
             <Link
-              href={`/gift/products?q=${encodeURIComponent(debounced)}`}
+              href={`/products?q=${encodeURIComponent(debounced)}`}
               className="mt-gs-1 block rounded-control px-gs-2 py-gs-2 text-body font-medium text-primary hover:bg-surface-soft"
               onClick={() => {
                 setOpenList(false);

@@ -109,9 +109,9 @@ function initialsOf(user: AuthUser): string {
   return base.slice(0, 2).toUpperCase();
 }
 
-function signOut() {
+function signOutTo(portalPath: string) {
   clearSession();
-  window.location.href = '/login';
+  window.location.href = loginUrl(portalPath);
 }
 
 export function CommerceOpsShell({ children }: Props) {
@@ -154,6 +154,10 @@ export function CommerceOpsShell({ children }: Props) {
     const cached = getStoredUser();
     if (cached) setUser(cached);
   }, []);
+
+  const signOut = useCallback(() => {
+    signOutTo(pathname.startsWith('/admin/cms') ? '/admin/cms/pages' : pathname);
+  }, [pathname]);
 
   useEffect(() => {
     refreshUser();
@@ -321,7 +325,7 @@ export function CommerceOpsShell({ children }: Props) {
           Your account does not have a Commerce Ops role (Commerce Admin, Content Admin, Support,
           Finance, or Super Admin).
         </p>
-        <Link href="/gift" className="clay-btn-secondary w-fit text-sm">
+        <Link href="/" className="clay-btn-secondary w-fit text-sm">
           Back to storefront
         </Link>
       </div>
@@ -457,7 +461,7 @@ export function CommerceOpsShell({ children }: Props) {
             </div>
           ))}
           <Link
-            href="/gift"
+            href="/"
             target="_blank"
             rel="noopener noreferrer"
             title={collapsed ? 'View storefront' : undefined}
@@ -645,7 +649,7 @@ export function CommerceOpsShell({ children }: Props) {
                       Keyboard shortcuts
                     </button>
                     <Link
-                      href="/gift"
+                      href="/"
                       target="_blank"
                       rel="noopener noreferrer"
                       role="menuitem"

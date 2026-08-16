@@ -24,8 +24,8 @@ function siteOrigin(): string {
 }
 
 export function defaultPathForCmsSlug(slug: string): string {
-  if (slug === GIFT_HOMEPAGE_SLUG) return '/gift';
-  if (slug === GIFT_CORPORATE_SLUG) return '/gift/corporate';
+  if (slug === GIFT_HOMEPAGE_SLUG) return '/';
+  if (slug === GIFT_CORPORATE_SLUG) return '/corporate';
   if (slug === GIFT_ABOUT_SLUG) return '/about';
   if (slug === GIFT_CONTACT_SLUG) return '/contact';
   if (slug === GIFT_PRIVACY_SLUG) return '/privacy-policy';

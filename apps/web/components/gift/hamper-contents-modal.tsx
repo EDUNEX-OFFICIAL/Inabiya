@@ -49,7 +49,7 @@ function HamperContentsModal({
   const [mounted, setMounted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const href = `/gift/products/${product.slug}`;
+  const href = `/products/${product.slug}`;
   const savings = hamperSavingsPaise ?? 0;
   const worth =
     contentsValuePaise != null && contentsValuePaise > product.fromPricePaise

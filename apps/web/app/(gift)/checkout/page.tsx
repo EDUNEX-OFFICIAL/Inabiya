@@ -34,6 +34,64 @@ type SavedAddress = {
 type Gate = 'checking' | 'need_login' | 'empty' | 'ready' | 'error';
 type ShippingMethod = 'STANDARD' | 'EXPRESS';
 
+type RazorpayCheckoutResult = {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+};
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: {
+      key: string;
+      amount: number;
+      currency: string;
+      name: string;
+      description: string;
+      order_id: string;
+      handler: (response: RazorpayCheckoutResult) => void;
+      modal: { ondismiss: () => void };
+    }) => { open: () => void };
+  }
+}
+
+function openRazorpayCheckout(input: {
+  keyId: string;
+  orderId: string;
+  amountPaise: number;
+}): Promise<RazorpayCheckoutResult> {
+  return new Promise((resolve, reject) => {
+    const open = () => {
+      if (!window.Razorpay) {
+        reject(new Error('Payment checkout could not be loaded.'));
+        return;
+      }
+      const checkout = new window.Razorpay({
+        key: input.keyId,
+        amount: input.amountPaise,
+        currency: 'INR',
+        name: 'Inabiya',
+        description: 'Order payment',
+        order_id: input.orderId,
+        handler: resolve,
+        modal: { ondismiss: () => reject(new Error('Payment was cancelled.')) },
+      });
+      checkout.open();
+    };
+
+    if (window.Razorpay) {
+      open();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = open;
+    script.onerror = () => reject(new Error('Payment checkout could not be loaded.'));
+    document.head.appendChild(script);
+  });
+}
+
 const FIELD_LABELS: Record<string, string> = {
   fullName: 'Full name',
   phone: 'Phone',
@@ -246,7 +304,10 @@ function CheckoutPageInner() {
         orderId: string;
         orderNumber: string;
         paymentId: string;
+        provider: string;
+        totalPaise: number;
         confirmUrl: string;
+        razorpay?: { keyId: string; orderId: string };
       }>('/checkout/place-order', {
         method: 'POST',
         authToken: getStoredAccessToken(),
@@ -259,7 +320,21 @@ function CheckoutPageInner() {
           buyNowItemId,
         },
       });
-      await apiAuth(`/checkout/payments/${result.paymentId}/confirm`, { method: 'POST' });
+      if (result.provider === 'razorpay' && result.razorpay) {
+        const response = await openRazorpayCheckout({
+          keyId: result.razorpay.keyId,
+          orderId: result.razorpay.orderId,
+          amountPaise: result.totalPaise,
+        });
+        await apiAuth(`/checkout/payments/${result.paymentId}/razorpay/verify`, {
+          method: 'POST',
+          json: response,
+        });
+      } else if (result.provider === 'mock') {
+        await apiAuth(`/checkout/payments/${result.paymentId}/confirm`, { method: 'POST' });
+      } else {
+        throw new Error('Payment provider is unavailable.');
+      }
       trackEvent('purchase', { orderId: result.orderId });
       router.push(`/orders/${result.orderId}?placed=1`);
     } catch (err) {
@@ -288,7 +363,7 @@ function CheckoutPageInner() {
             Create account
           </Link>
         </div>
-        <Link href="/gift/cart" className="mt-gs-5 inline-block gift-link text-body">
+        <Link href="/cart" className="mt-gs-5 inline-block gift-link text-body">
           ← Cart
         </Link>
       </main>
@@ -299,7 +374,7 @@ function CheckoutPageInner() {
     return (
       <main className="gift-page max-w-md">
         <h1 className="gift-h1">{buyNowVariantId ? 'Item not in cart' : 'Cart is empty'}</h1>
-        <Link href="/gift/products" className="clay-btn mt-gs-6 inline-flex w-full justify-center">
+        <Link href="/products" className="clay-btn mt-gs-6 inline-flex w-full justify-center">
           Browse gifts
         </Link>
       </main>
@@ -312,7 +387,7 @@ function CheckoutPageInner() {
         <h1 className="gift-h1">Checkout unavailable</h1>
         <p className="mt-gs-3 text-body text-danger">{error ?? 'Something went wrong.'}</p>
         <div className="mt-gs-6 flex gap-gs-4 text-body">
-          <Link href="/gift/cart" className="gift-link">
+          <Link href="/cart" className="gift-link">
             Cart
           </Link>
           <Link href={loginUrl(checkoutNext)} className="gift-link">
@@ -337,7 +412,7 @@ function CheckoutPageInner() {
         className="flex flex-wrap items-center gap-gs-2 text-caption"
         aria-label="Checkout progress"
       >
-        <Link href="/gift/cart" className="gift-link">
+        <Link href="/cart" className="gift-link">
           Cart
         </Link>
         <span className="opacity-40" aria-hidden>
@@ -598,7 +673,7 @@ function CheckoutPageInner() {
               ) : (
                 <p className="mt-gs-3 text-body opacity-70">No gift extras selected.</p>
               )}
-              <Link href="/gift/cart" className="gift-link mt-gs-3 inline-flex text-body">
+              <Link href="/cart" className="gift-link mt-gs-3 inline-flex text-body">
                 Review cart
               </Link>
             </section>
@@ -613,8 +688,16 @@ function CheckoutPageInner() {
                   aria-hidden
                 />
                 <span className="min-w-0 text-body">
-                  <span className="font-medium text-foreground">Mock payment</span>
-                  <span className="mt-gs-1 block opacity-70">No card is charged</span>
+                  <span className="font-medium text-foreground">
+                    {(process.env.NEXT_PUBLIC_PAYMENT_PROVIDER ?? 'mock') === 'razorpay'
+                      ? 'Online payment'
+                      : 'Mock payment'}
+                  </span>
+                  <span className="mt-gs-1 block opacity-70">
+                    {(process.env.NEXT_PUBLIC_PAYMENT_PROVIDER ?? 'mock') === 'razorpay'
+                      ? 'UPI, cards, netbanking'
+                      : 'No card is charged'}
+                  </span>
                 </span>
               </div>
               <p className="mt-gs-4 text-caption opacity-70">

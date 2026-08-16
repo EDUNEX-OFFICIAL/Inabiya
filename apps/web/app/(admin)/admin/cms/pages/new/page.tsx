@@ -36,7 +36,7 @@ export default function AdminCmsNewPage() {
                 headline: title || 'New page',
                 subcopy: '',
                 ctaLabel: 'Shop gifts',
-                ctaHref: '/gift',
+                ctaHref: '/',
               },
             },
           ],

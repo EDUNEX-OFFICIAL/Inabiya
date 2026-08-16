@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl, type AuthUser } from '@/lib/auth-client';
 import { apiUrl } from '@/lib/api-base';
 
 type Ready = {
@@ -26,7 +26,7 @@ export default function PlatformAdminPage() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login?next=/admin/platform');
+      router.replace(loginUrl('/admin/platform'));
       return;
     }
     apiAuth<AuthUser>('/auth/me')
@@ -46,7 +46,7 @@ export default function PlatformAdminPage() {
       .catch((e) => {
         setErr(String(e.message ?? e));
         if (String(e.message ?? e).includes('Admin')) {
-          router.replace('/login?next=/admin/platform');
+          router.replace(loginUrl('/admin/platform'));
         }
       });
   }, [router]);

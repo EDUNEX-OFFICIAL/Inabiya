@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 
 type PaymentRow = {
   id: string;
@@ -40,10 +40,10 @@ export default function WriterPaymentsPage() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/admin/editorial/payments'));
       return;
     }
-    void load().catch(() => router.replace('/login'));
+    void load().catch(() => router.replace(loginUrl('/admin/editorial/payments')));
   }, [router]);
 
   async function release(id: string) {

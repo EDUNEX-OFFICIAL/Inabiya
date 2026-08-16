@@ -32,7 +32,7 @@ const pages: Array<{
           subcopy:
             'Inabiya is built for new parents and the people who love them — curated baby-safe brands, personalised keepsakes, and ready-made hampers that arrive with care.',
           ctaLabel: 'Shop gifts',
-          ctaHref: '/gift',
+          ctaHref: '/',
           ctaLabel2: 'Contact us',
           ctaHref2: '/contact',
         },
@@ -73,7 +73,7 @@ const pages: Array<{
         type: 'richText',
         sortOrder: 1,
         props: {
-          html: '<p><strong>Email</strong> — <a href="mailto:hello@inabiya.in">hello@inabiya.in</a></p><p><strong>WhatsApp</strong> — <a href="https://wa.me/919693940330">+91 96939 40330</a></p><p><strong>Corporate gifting</strong> — <a href="/gift/corporate">Request a quote</a></p>',
+          html: '<p><strong>Email</strong> — <a href="mailto:hello@inabiya.in">hello@inabiya.in</a></p><p><strong>WhatsApp</strong> — <a href="https://wa.me/919693940330">+91 96939 40330</a></p><p><strong>Corporate gifting</strong> — <a href="/corporate">Request a quote</a></p>',
         },
       },
     ],

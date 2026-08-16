@@ -181,7 +181,7 @@ function OrderDetailView({ params }: { params: { id: string } }) {
       )}
 
       <div className="mt-gs-5 flex flex-wrap gap-gs-3">
-        <Link href="/gift/products" className="clay-btn">
+        <Link href="/products" className="clay-btn">
           Continue shopping
         </Link>
         {placed && invoiceAvailable ? (

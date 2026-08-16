@@ -80,7 +80,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     subcopy: '',
     eyebrow: '',
     ctaLabel: '',
-    ctaHref: '/gift',
+    ctaHref: '/',
     ctaLabel2: '',
     ctaHref2: '',
     trustLine: '',
@@ -109,7 +109,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     seeAllHref: '',
     seeAllLabel: 'See all',
   },
-  cta: { label: 'Shop', href: '/gift', variant: 'primary', title: '', body: '' },
+  cta: { label: 'Shop', href: '/', variant: 'primary', title: '', body: '' },
   spacer: { size: 'md' },
   brandStrip: {
     title: 'Trusted brands we stock',
@@ -122,7 +122,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     title: 'Shop by baby',
     subtitle: 'Curated palettes, unisex-safe products.',
     leftLabel: 'girl',
-    leftHref: '/gift/collections/for-baby-girl',
+    leftHref: '/collections/for-baby-girl',
     leftEyebrow: 'For the little',
     leftBlurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
     leftCta: 'Shop girl gifts →',
@@ -130,7 +130,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     leftImageUrl: '/gift/media/baby-girl-soft.jpg',
     leftImageAlt: 'Baby girl with soft toys',
     rightLabel: 'boy',
-    rightHref: '/gift/collections/for-baby-boy',
+    rightHref: '/collections/for-baby-boy',
     rightEyebrow: 'For the little',
     rightBlurb: 'Sky ribbons, soft brights, gender-neutral picks.',
     rightCta: 'Shop boy gifts →',
@@ -142,19 +142,19 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     overline: '',
     title: 'Shop by collection',
     subtitle: '',
-    seeAllHref: '/gift/products',
+    seeAllHref: '/products',
     seeAllLabel: 'See all',
     limit: '4',
     itemsSource: 'catalogCollections',
     items:
-      'Baby girl | /gift/collections/for-baby-girl | /gift/media/baby-clothes.jpg | Baby girl\nReady hampers | /gift/collections/ready-hampers | /gift/media/baby-cues.jpg | Hampers\nBirthday | /gift/collections/first-birthday | /gift/media/train-toy.jpg | Birthday\nMom | /gift/collections/for-expecting-mom | /gift/media/baby-mom.jpg | Mom',
+      'Baby girl | /collections/for-baby-girl | /gift/media/baby-clothes.jpg | Baby girl\nReady hampers | /collections/ready-hampers | /gift/media/baby-cues.jpg | Hampers\nBirthday | /collections/first-birthday | /gift/media/train-toy.jpg | Birthday\nMom | /collections/for-expecting-mom | /gift/media/baby-mom.jpg | Mom',
   },
   buildYourBoxTeaser: {
     overline: '6-step gift builder',
     title: 'Customise a box just for them.',
     body: 'Choose recipient, age, occasion, budget and collections — we curate a perfect box that never goes over budget.',
     ctaLabel: 'Build Your Box',
-    ctaHref: '/gift/build-your-box',
+    ctaHref: '/build-your-box',
     imageUrl: '',
     imageAlt: '',
     imageFit: 'contain',
@@ -178,7 +178,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
   saleStrip: {
     text: 'Free personalisation on gift boxes this week',
     ctaLabel: 'Shop →',
-    ctaHref: '/gift',
+    ctaHref: '/',
     tone: 'blush',
   },
   faq: {
@@ -226,7 +226,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
           subtitle: 'Welcome Baby',
           body: 'Celebrate every newborn with curated hampers, gift wrapping and a personalised message.',
           ctaLabel: 'Order Now',
-          ctaHref: '/gift/collections/ready-hampers',
+          ctaHref: '/collections/ready-hampers',
           tone: 'blush',
           icon: 'heart',
         },
@@ -236,7 +236,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
           subtitle: 'Corporate Gifting',
           body: 'Thoughtful welcome-baby gifts for your team with branded cards and PAN-India delivery.',
           ctaLabel: 'Get a Quote',
-          ctaHref: '/gift/corporate',
+          ctaHref: '/corporate',
           tone: 'sky',
           icon: 'briefcase',
         },
@@ -246,7 +246,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
           subtitle: 'Bulk & Event Gifting',
           body: 'Perfect for baby showers, naming ceremonies and celebrations with 20+ hampers.',
           ctaLabel: 'Enquire',
-          ctaHref: '/gift/corporate',
+          ctaHref: '/corporate',
           tone: 'lavender',
           icon: 'box',
         },
@@ -293,7 +293,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     title: 'Sale ends soon',
     expiredLabel: 'This offer has ended',
     ctaLabel: 'Shop now',
-    ctaHref: '/gift',
+    ctaHref: '/',
   },
   customSection: {
     layout: 'stack',
@@ -339,7 +339,7 @@ function nestCard(
   const label = props[`${prefix}Label`] || (prefix === 'left' ? 'girl' : 'boy');
   const href =
     props[`${prefix}Href`] ||
-    (prefix === 'left' ? '/gift/collections/for-baby-girl' : '/gift/collections/for-baby-boy');
+    (prefix === 'left' ? '/collections/for-baby-girl' : '/collections/for-baby-boy');
   const accentRaw = props[`${prefix}Accent`];
   const accent =
     accentRaw === 'pink' || accentRaw === 'sky' ? (accentRaw as 'pink' | 'sky') : undefined;
@@ -932,7 +932,7 @@ function payloadWithoutStyle(b: Block) {
     type: 'cta' as const,
     props: {
       label: b.props.label || 'Continue',
-      href: b.props.href || '/gift',
+      href: b.props.href || '/',
       ...(b.props.variant === 'secondary' ? { variant: 'secondary' as const } : {}),
       ...(b.props.title ? { title: b.props.title } : {}),
       ...(b.props.body ? { body: b.props.body } : {}),

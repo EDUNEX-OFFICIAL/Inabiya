@@ -26,9 +26,9 @@ export type GiftNavPreview = {
 };
 
 const FEATURED_HREFS = new Set([
-  '/gift/build-your-box',
-  '/gift/collections/ready-hampers',
-  '/gift/hampers',
+  '/build-your-box',
+  '/collections/ready-hampers',
+  '/hampers',
 ]);
 
 const OCCASION_SLUGS = new Set([
@@ -45,7 +45,7 @@ const AGE_SLUGS = new Set(['newborn', 'infant', 'toddler']);
 const BYB_PREVIEW: GiftNavPreview = {
   headline: 'Build Your Box',
   body: 'Pick who, age, and occasion — we curate a gift-ready box.',
-  ctaHref: '/gift/build-your-box',
+  ctaHref: '/build-your-box',
   ctaLabel: 'Start building',
   imageSrc: '/gift/media/baby-soft-gift.jpg',
 };
@@ -76,7 +76,7 @@ function hrefKey(href: string): string {
 }
 
 function slugOf(href: string): string | null {
-  if (href.includes('/gift/build-your-box')) return 'build-your-box';
+  if (href.includes('/build-your-box')) return 'build-your-box';
   return collectionSlugFromHref(href);
 }
 
@@ -180,7 +180,7 @@ export function findNavLink(groups: GiftNavGroup[], href: string): GiftNavLink |
 export function previewForNavLink(link: GiftNavLink, fallback: GiftNavPreview): GiftNavPreview {
   const slug = slugOf(link.href);
   const col = slug ? getGiftCollection(slug) : undefined;
-  const byb = link.href.includes('/gift/build-your-box');
+  const byb = link.href.includes('/build-your-box');
   const catalog: GiftNavPreview | null = byb
     ? BYB_PREVIEW
     : col

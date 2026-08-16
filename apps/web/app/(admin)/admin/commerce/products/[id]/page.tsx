@@ -680,7 +680,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             <OpsPageHeader
               title={title || product.title}
               description={
-                published ? `Live · /gift/products/${product.slug}` : `Draft · ${product.slug}`
+                published ? `Live · /products/${product.slug}` : `Draft · ${product.slug}`
               }
               actions={
                 <>
@@ -696,7 +696,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
                   {published ? (
                     <>
                       <OpsIconLink
-                        href={`/gift/products/${product.slug}`}
+                        href={`/products/${product.slug}`}
                         label="View product"
                         icon={ExternalLink}
                         variant="secondary"
@@ -1015,7 +1015,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
               className="clay-input font-mono text-sm"
               value={canonicalPath}
               onChange={(e) => setCanonicalPath(e.target.value)}
-              placeholder={`/gift/products/${product.slug}`}
+              placeholder={`/products/${product.slug}`}
             />
           </label>
           <label className="flex items-center gap-2">
@@ -1039,7 +1039,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             value={seoSchemaExtras}
             onChange={setSeoSchemaExtras}
             autoPreviewNodes={schemaAutoNodes}
-            publicUrl={product ? `${getSiteOrigin()}/gift/products/${product.slug}` : null}
+            publicUrl={product ? `${getSiteOrigin()}/products/${product.slug}` : null}
           />
         </Section>
 

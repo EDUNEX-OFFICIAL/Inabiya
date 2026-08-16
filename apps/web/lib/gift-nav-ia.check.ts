@@ -5,26 +5,26 @@ import assert from 'node:assert/strict';
 import { findNavLink, organizeGiftNav, previewForNavLink, splitNavColumns } from './gift-nav-ia';
 
 const shop = [
-  { href: '/gift/build-your-box', label: 'Build Your Box' },
-  { href: '/gift/collections/ready-hampers', label: 'Ready-made hampers' },
-  { href: '/gift/collections/baby-shower', label: 'Baby shower gifts' },
-  { href: '/gift/collections/welcome-baby', label: 'Welcome baby gifts' },
-  { href: '/gift/collections/naming-ceremony', label: 'Naming ceremony gifts' },
-  { href: '/gift/collections/first-birthday', label: 'First birthday gifts' },
-  { href: '/gift/collections/bestsellers', label: 'Best sellers' },
-  { href: '/gift/collections/editors-picks', label: "Editor's picks" },
-  { href: '/gift/collections/new-arrivals', label: 'New arrivals' },
-  { href: '/gift/collections/on-sale', label: 'On sale' },
+  { href: '/build-your-box', label: 'Build Your Box' },
+  { href: '/collections/ready-hampers', label: 'Ready-made hampers' },
+  { href: '/collections/baby-shower', label: 'Baby shower gifts' },
+  { href: '/collections/welcome-baby', label: 'Welcome baby gifts' },
+  { href: '/collections/naming-ceremony', label: 'Naming ceremony gifts' },
+  { href: '/collections/first-birthday', label: 'First birthday gifts' },
+  { href: '/collections/bestsellers', label: 'Best sellers' },
+  { href: '/collections/editors-picks', label: "Editor's picks" },
+  { href: '/collections/new-arrivals', label: 'New arrivals' },
+  { href: '/collections/on-sale', label: 'On sale' },
 ];
 
 const whom = [
-  { href: '/gift/collections/for-baby-girl', label: 'Baby Girl' },
-  { href: '/gift/collections/for-baby-boy', label: 'Baby Boy' },
-  { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom' },
-  { href: '/gift/collections/unisex-gifts', label: 'Unisex' },
-  { href: '/gift/collections/newborn', label: 'Newborn' },
-  { href: '/gift/collections/infant', label: 'Infant' },
-  { href: '/gift/collections/toddler', label: 'Toddler' },
+  { href: '/collections/for-baby-girl', label: 'Baby Girl' },
+  { href: '/collections/for-baby-boy', label: 'Baby Boy' },
+  { href: '/collections/for-expecting-mom', label: 'Expecting Mom' },
+  { href: '/collections/unisex-gifts', label: 'Unisex' },
+  { href: '/collections/newborn', label: 'Newborn' },
+  { href: '/collections/infant', label: 'Infant' },
+  { href: '/collections/toddler', label: 'Toddler' },
 ];
 
 const ia = organizeGiftNav(shop, whom);
@@ -39,8 +39,8 @@ assert.deepEqual(
 );
 
 const shopHrefs = ia.shop.flatMap((g) => g.links.map((l) => l.href));
-assert.ok(shopHrefs.includes('/gift/build-your-box'));
-assert.ok(shopHrefs.includes('/gift/collections/baby-shower'));
+assert.ok(shopHrefs.includes('/build-your-box'));
+assert.ok(shopHrefs.includes('/collections/baby-shower'));
 assert.ok(!shopHrefs.some((h) => h.includes('for-baby-girl')));
 assert.ok(!shopHrefs.some((h) => h.includes('/newborn')));
 
@@ -60,33 +60,33 @@ assert.deepEqual(
   ['occasion'],
 );
 
-const byb = findNavLink(ia.shop, '/gift/build-your-box');
+const byb = findNavLink(ia.shop, '/build-your-box');
 assert.ok(byb);
 const preview = previewForNavLink(byb, {
   headline: 'Fallback',
   body: 'x',
-  ctaHref: '/gift',
+  ctaHref: '/',
   ctaLabel: 'Go',
   imageSrc: '/gift/nav/shop.svg',
 });
 assert.equal(preview.headline, 'Build Your Box');
-assert.equal(preview.ctaHref, '/gift/build-your-box');
+assert.equal(preview.ctaHref, '/build-your-box');
 
-const shower = findNavLink(ia.shop, '/gift/collections/baby-shower');
+const shower = findNavLink(ia.shop, '/collections/baby-shower');
 assert.ok(shower);
 const showerPreview = previewForNavLink(shower, preview);
 assert.equal(showerPreview.headline, 'Baby shower gifts');
 assert.match(showerPreview.imageSrc, /gift\/media/);
 
 const bybQuery = organizeGiftNav(
-  [{ href: '/gift/build-your-box?recipient=girl', label: 'Build Your Box' }],
+  [{ href: '/build-your-box?recipient=girl', label: 'Build Your Box' }],
   [],
 );
 assert.equal(bybQuery.shop[0]?.id, 'shop');
 assert.ok(bybQuery.shop[0]?.links[0]?.href.includes('build-your-box'));
 
 const cmsPlaced = organizeGiftNav(
-  [{ href: '/gift/collections/for-baby-girl', label: 'Girls', group: 'Occasion' }],
+  [{ href: '/collections/for-baby-girl', label: 'Girls', group: 'Occasion' }],
   [],
 );
 assert.equal(cmsPlaced.shop[0]?.id, 'occasion');
@@ -94,8 +94,8 @@ assert.equal(cmsPlaced.shop[0]?.links[0]?.label, 'Girls');
 assert.equal(cmsPlaced.whom.length, 0);
 
 const cmsStay = organizeGiftNav(
-  [{ href: '/gift/collections/for-baby-girl', label: 'Gifts for baby girl' }],
-  [{ href: '/gift/collections/for-baby-girl', label: 'Baby Girl' }],
+  [{ href: '/collections/for-baby-girl', label: 'Gifts for baby girl' }],
+  [{ href: '/collections/for-baby-girl', label: 'Baby Girl' }],
 );
 assert.ok(cmsStay.shop.some((g) => g.links.some((l) => l.href.includes('for-baby-girl'))));
 assert.equal(
@@ -105,7 +105,7 @@ assert.equal(
 
 const cmsPreview = previewForNavLink(
   {
-    href: '/gift/collections/baby-shower',
+    href: '/collections/baby-shower',
     label: 'Shower',
     headline: 'CMS headline',
     body: 'CMS body',

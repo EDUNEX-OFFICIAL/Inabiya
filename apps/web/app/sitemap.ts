@@ -1,14 +1,22 @@
 import type { MetadataRoute } from 'next';
 import { apiUrl } from '@/lib/api-base';
 import { defaultPathForCmsSlug, getSiteOrigin } from '@/lib/cms-seo';
-import { allGiftCollectionSlugs } from '@/lib/gift-collections';
 import { GIFT_CORPORATE_SLUG, GIFT_HOMEPAGE_SLUG } from '@inabiya/validation';
 
 export const dynamic = 'force-dynamic';
 
 type CmsRow = { slug: string; updatedAt?: string; publishedAt?: string | null };
 type ArticleRow = { slug: string; publishedAt?: string | null };
-type ProductRow = { slug: string };
+type ProductRow = {
+  slug: string;
+  canonicalPath?: string | null;
+  robotsIndex?: boolean | null;
+};
+type CollectionRow = {
+  slug: string;
+  canonicalPath?: string | null;
+  robotsIndex?: boolean | null;
+};
 
 async function safeJson<T>(path: string): Promise<T | null> {
   try {
@@ -20,16 +28,28 @@ async function safeJson<T>(path: string): Promise<T | null> {
   }
 }
 
+function absoluteEntry(
+  origin: string,
+  pathOrUrl: string,
+  extra?: Partial<MetadataRoute.Sitemap[number]>,
+): MetadataRoute.Sitemap[number] {
+  const url = pathOrUrl.startsWith('http')
+    ? pathOrUrl
+    : `${origin}${pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`}`;
+  return { url, ...extra };
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = getSiteOrigin();
   const entries: MetadataRoute.Sitemap = [
     { url: `${origin}/`, changeFrequency: 'weekly', priority: 0.6 },
   ];
 
-  const [cmsPages, articles, products] = await Promise.all([
+  const [cmsPages, articles, products, collections] = await Promise.all([
     safeJson<CmsRow[]>('/cms/pages'),
     safeJson<ArticleRow[]>('/articles'),
     safeJson<ProductRow[]>('/catalog/products?sort=newest'),
+    safeJson<CollectionRow[]>('/catalog/collections'),
   ]);
 
   for (const row of cmsPages ?? []) {
@@ -55,25 +75,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const p of products ?? []) {
     if (!p?.slug) continue;
-    entries.push({
-      url: `${origin}/gift/products/${p.slug}`,
-      changeFrequency: 'weekly',
-      priority: 0.75,
-    });
+    if (p.robotsIndex === false) continue;
+    const path = p.canonicalPath?.trim() || `/products/${p.slug}`;
+    entries.push(
+      absoluteEntry(origin, path, {
+        changeFrequency: 'weekly',
+        priority: 0.75,
+      }),
+    );
   }
 
   entries.push({
-    url: `${origin}/gift/products`,
+    url: `${origin}/products`,
     changeFrequency: 'daily',
     priority: 0.85,
   });
 
-  for (const slug of allGiftCollectionSlugs()) {
-    entries.push({
-      url: `${origin}/gift/collections/${slug}`,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    });
+  for (const c of collections ?? []) {
+    if (!c?.slug) continue;
+    if (c.robotsIndex === false) continue;
+    const path = c.canonicalPath?.trim() || `/collections/${c.slug}`;
+    entries.push(
+      absoluteEntry(origin, path, {
+        changeFrequency: 'weekly',
+        priority: 0.8,
+      }),
+    );
   }
 
   return entries;

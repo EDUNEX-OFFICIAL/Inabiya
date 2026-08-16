@@ -293,7 +293,7 @@ export function BuildYourBoxWizard() {
     setError(null);
     try {
       await giftBoxApi(`/catalog/gift-boxes/${box.id}/move-to-cart`, { method: 'POST' });
-      router.push('/gift/cart');
+      router.push('/cart');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not move to cart');
     } finally {
@@ -327,7 +327,7 @@ export function BuildYourBoxWizard() {
 
   return (
     <main className="gift-page">
-      <Link href="/gift" className="gift-link text-body">
+      <Link href="/" className="gift-link text-body">
         ← Gift home
       </Link>
       <h1 className="gift-h1 mt-gs-4">Build Your Box</h1>
@@ -620,7 +620,7 @@ export function BuildYourBoxWizard() {
                         <span className="min-w-0 flex-1">
                           {i.productSlug ? (
                             <Link
-                              href={`/gift/products/${i.productSlug}`}
+                              href={`/products/${i.productSlug}`}
                               className="hover:text-primary"
                             >
                               {i.productTitle}
@@ -650,7 +650,7 @@ export function BuildYourBoxWizard() {
                   {suggestions.length === 0 ? (
                     <p className="text-body opacity-70">
                       {box.items.length === 0 ? 'No matches' : 'Nothing else fits'} —{' '}
-                      <Link href="/gift/products" className="underline">
+                      <Link href="/products" className="underline">
                         browse all
                       </Link>
                       .
@@ -669,7 +669,7 @@ export function BuildYourBoxWizard() {
                           ) : null}
                           <div className="p-gs-3">
                             <Link
-                              href={`/gift/products/${s.productSlug}`}
+                              href={`/products/${s.productSlug}`}
                               className="font-medium hover:text-primary"
                             >
                               {s.productTitle}
@@ -696,7 +696,7 @@ export function BuildYourBoxWizard() {
                     onClick={() => void moveToCart()}
                     idleLabel="Add box to cart"
                   />
-                  <Link href="/gift/products" className="clay-btn-secondary">
+                  <Link href="/products" className="clay-btn-secondary">
                     Browse more
                   </Link>
                   <button

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 
 type ArticleRow = {
   id: string;
@@ -18,12 +18,12 @@ export default function WriterDashboardPage() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/admin/editorial/writer'));
       return;
     }
     apiAuth<ArticleRow[]>('/editorial/articles?mine=1')
       .then(setRows)
-      .catch(() => router.replace('/login'));
+      .catch(() => router.replace(loginUrl('/admin/editorial/writer')));
   }, [router]);
 
   return (

@@ -97,8 +97,13 @@ assert.equal(cmsList.length, 1);
 assert.equal(cmsList[0]?.label, 'Pages');
 
 const cmsEdit = buildOpsBreadcrumbs('/admin/cms/pages/abc');
-assert.equal(cmsEdit[0]?.label, 'Commerce Ops');
+assert.equal(cmsEdit[0]?.label, 'Soft Gift CMS');
+assert.equal(cmsEdit[0]?.href, '/admin/cms/pages');
 assert.equal(cmsEdit[1]?.label, 'Pages');
 assert.equal(cmsEdit.at(-1)?.label, 'Edit');
+
+const cmsChrome = buildOpsBreadcrumbs('/admin/cms/gift-chrome');
+assert.equal(cmsChrome[0]?.label, 'Soft Gift CMS');
+assert.equal(cmsChrome.at(-1)?.label, 'Nav & footer');
 
 console.log('commerce-ops-nav.check: ok');

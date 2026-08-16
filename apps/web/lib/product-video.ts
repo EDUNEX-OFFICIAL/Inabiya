@@ -106,7 +106,7 @@ export function parseProductVideoUrl(raw: string | null | undefined): ProductVid
 
 /**
  * Hero / ambient media: YouTube URL or a real video file (.mp4/.webm/…).
- * Does not treat bare ids or `/gift/media` images as video.
+ * Does not treat bare ids or `/media` images as video.
  */
 export function parseAmbientVideoUrl(raw: string | null | undefined): ProductVideoSource | null {
   const trimmed = (raw ?? '').trim();

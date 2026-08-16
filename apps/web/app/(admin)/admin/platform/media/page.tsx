@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { apiAuth, apiAuthUpload, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
+import { apiAuth, apiAuthUpload, getStoredAccessToken, loginUrl, type AuthUser } from '@/lib/auth-client';
 
 type MediaAsset = {
   id: string;
@@ -30,7 +30,7 @@ export default function PlatformMediaPage() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login?next=/admin/platform/media');
+      router.replace(loginUrl('/admin/platform/media'));
       return;
     }
     apiAuth<AuthUser>('/auth/me')
@@ -45,7 +45,7 @@ export default function PlatformMediaPage() {
       .catch((e) => {
         setErr(String(e.message ?? e));
         if (String(e.message ?? e).includes('Admin')) {
-          router.replace('/login?next=/admin/platform/media');
+          router.replace(loginUrl('/admin/platform/media'));
         }
       });
   }, [router, load]);

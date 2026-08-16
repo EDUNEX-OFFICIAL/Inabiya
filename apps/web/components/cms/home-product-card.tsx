@@ -64,7 +64,7 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
         }`}
       >
         <ProductCardHero
-          href={`/gift/products/${product.slug}`}
+          href={`/products/${product.slug}`}
           sizes={
             featured
               ? '(max-width: 640px) 100vw, 55vw'
@@ -108,7 +108,7 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
               <span className="clay-chip w-fit text-caption">Ready-made hamper</span>
             ) : null}
             <Link
-              href={`/gift/products/${product.slug}`}
+              href={`/products/${product.slug}`}
               className={`line-clamp-2 font-medium leading-snug text-foreground transition-colors hover:text-primary ${
                 featured ? 'gift-h2' : ''
               }`}
@@ -149,7 +149,7 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
             }`}
           >
             <GiftResponsiveLink
-              href={`/gift/products/${product.slug}`}
+              href={`/products/${product.slug}`}
               label="View gift"
               icon={Gift}
               labelFrom={canQuickAdd ? 'container' : 'always'}

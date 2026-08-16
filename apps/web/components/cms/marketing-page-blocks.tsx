@@ -61,7 +61,7 @@ type Props = {
   emitFaqJsonLd?: boolean;
 };
 
-function cmsHref(raw: unknown, fallback = '/gift'): string {
+function cmsHref(raw: unknown, fallback = '/'): string {
   const s = typeof raw === 'string' && raw.trim() ? raw.trim() : fallback;
   return safeHrefOrHash(s);
 }
@@ -400,8 +400,8 @@ const CORPORATE_CTA_HIGHLIGHTS = [
 
 function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
   const secondary = props.variant === 'secondary';
-  const href = cmsHref(props.href, '/gift');
-  const isCorporate = String(props.href ?? '').includes('/gift/corporate');
+  const href = cmsHref(props.href, '/');
+  const isCorporate = String(props.href ?? '').includes('/corporate');
   const highlights = isCorporate ? CORPORATE_CTA_HIGHLIGHTS : [];
   const btnClass = secondary ? 'clay-btn-secondary' : 'clay-btn';
 
@@ -564,7 +564,7 @@ function ProductGridBlock({
             <li key={p.id} className="clay-card overflow-hidden">
               <ProductCardGallery media={p.media} title={p.title}>
                 <ProductCardHero
-                  href={`/gift/products/${p.slug}`}
+                  href={`/products/${p.slug}`}
                   sizes="(max-width: 640px) 100vw, 50vw"
                   className="h-44 w-full"
                 >
@@ -580,7 +580,7 @@ function ProductGridBlock({
                 </ProductCardHero>
                 <div className="flex flex-col gap-gs-1 p-gs-4">
                   <Link
-                    href={`/gift/products/${p.slug}`}
+                    href={`/products/${p.slug}`}
                     className="line-clamp-2 font-medium text-foreground hover:text-primary"
                   >
                     {p.title}
@@ -855,7 +855,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
             return (
               <Link
                 key={key}
-                href={cmsHref(card.href, '/gift/products')}
+                href={cmsHref(card.href, '/products')}
                 className={`gift-recipient-card group ${sky ? 'gift-recipient-card--sky' : 'gift-recipient-card--pink'}`}
                 data-testid={`recipient-${label || key}`}
               >
@@ -888,7 +888,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
           return (
             <Link
               key={key}
-              href={cmsHref(card.href, '/gift/products')}
+              href={cmsHref(card.href, '/products')}
               className={`${sky ? 'gift-panel-sky ' : ''}clay-panel block overflow-hidden p-gs-6 transition hover:-translate-y-px`}
             >
               <p className="gift-muted">{eyebrow}</p>
@@ -1266,7 +1266,7 @@ async function DiscoveryChipsBlock({
   const asCards = items.some((i) => i.imageUrl);
   const limit = parseHomeCollectionLimit(props.limit);
   const visible = asCards ? items.slice(0, limit) : items;
-  const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : '/gift/products';
+  const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : '/products';
   const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'See all';
   const showSeeAll = asCards && (items.length > visible.length || Boolean(props.seeAllHref));
 
@@ -1373,7 +1373,7 @@ function BuildYourBoxTeaserBlock({
   const title = String(props.title ?? 'Customise a box just for them.').trim();
   const body = props.body ? String(props.body) : null;
   const ctaLabel = String(props.ctaLabel ?? 'Build Your Box');
-  const ctaHref = String(props.ctaHref ?? '/gift/build-your-box');
+  const ctaHref = String(props.ctaHref ?? '/build-your-box');
   const overline = String(props.overline ?? '6-step gift builder');
   const steps = Array.isArray(props.steps)
     ? (props.steps as Array<{ title?: string; body?: string }>)

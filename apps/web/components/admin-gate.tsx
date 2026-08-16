@@ -1,24 +1,26 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiAuth, clearSession, type AuthUser } from '@/lib/auth-client';
+import { usePathname, useRouter } from 'next/navigation';
+import { apiAuth, clearSession, loginUrl, type AuthUser } from '@/lib/auth-client';
 
 type Props = {
   children: ReactNode;
   /** Any of these roles (or SUPER_ADMIN via API) may enter */
   allow: string[];
+  /** Fallback when pathname is missing (should be rare). */
   loginNext?: string;
 };
 
 export function AdminGate({ children, allow, loginNext = '/admin/commerce' }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const allowSet = new Set(allow);
-    const login = `/login?next=${encodeURIComponent(loginNext)}`;
+    const login = loginUrl(pathname || loginNext);
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), 8000);
     const goLogin = () => {
@@ -46,7 +48,7 @@ export function AdminGate({ children, allow, loginNext = '/admin/commerce' }: Pr
     };
     // allow identity via joined string — avoid new-array identity loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allow.join('|'), loginNext, router]);
+  }, [allow.join('|'), loginNext, router, pathname]);
 
   if (!ok) {
     return <main className="p-8 text-sm opacity-70">Checking access…</main>;

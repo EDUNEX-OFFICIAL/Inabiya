@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
 import { apiUrl } from '@/lib/api-base';
 import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
+import { portalLoginUrl } from '@/lib/auth-portals';
 import { safeNextPath } from '@inabiya/validation';
 
 export const dynamic = 'force-dynamic';
@@ -48,7 +49,7 @@ export default async function MarketingPagePreview({ params }: { params: { id: s
 
   if ('status' in result) {
     if (result.status === 401 || result.status === 403) {
-      redirect(`/login?next=${encodeURIComponent(next)}`);
+      redirect(portalLoginUrl(next));
     }
     return (
       <main className="gift-page max-w-3xl">
@@ -71,7 +72,7 @@ export default async function MarketingPagePreview({ params }: { params: { id: s
           ← Edit page
         </Link>
         <span className="opacity-70">
-          {page.slug === 'home' ? '/gift' : `/pages/${page.slug}`} · {page.status}
+          {page.slug === 'home' ? '/' : `/pages/${page.slug}`} · {page.status}
         </span>
       </div>
       <MarketingPageBlocks

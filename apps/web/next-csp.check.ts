@@ -9,5 +9,7 @@ assert.match(cfg, /object-src 'none'/);
 assert.match(cfg, /unsafe-eval/);
 assert.match(cfg, /isDev/);
 assert.match(cfg, /NODE_ENV !== 'production'/);
+assert.match(cfg, /checkout\.razorpay\.com/);
+assert.match(cfg, /connect-src/);
 
 console.log('next-csp.check: ok');

@@ -21,7 +21,7 @@ function str(props: Record<string, unknown>, key: string): string {
   return typeof v === 'string' ? v.trim() : '';
 }
 
-function href(raw: string, fallback = '/gift'): string {
+function href(raw: string, fallback = '/'): string {
   return safeHrefOrHash(raw.trim() || fallback);
 }
 

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, clearSession, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
+import { apiAuth, clearSession, getStoredAccessToken, loginUrl, type AuthUser } from '@/lib/auth-client';
 
 type ArticleRow = {
   id: string;
@@ -66,7 +66,7 @@ export default function EditorialAdminPage() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/admin/editorial'));
       return;
     }
     apiAuth<AuthUser>('/auth/me')
@@ -96,7 +96,7 @@ export default function EditorialAdminPage() {
         }
         await load(u, status, overdueOnly);
       })
-      .catch(() => router.replace('/login'));
+      .catch(() => router.replace(loginUrl('/admin/editorial')));
   }, [router, load, status, overdueOnly]);
 
   if (!user) {
@@ -119,7 +119,7 @@ export default function EditorialAdminPage() {
           className="rounded border px-3 py-1.5 text-sm"
           onClick={() => {
             clearSession();
-            window.location.href = '/login';
+            window.location.href = loginUrl('/admin/editorial');
           }}
         >
           Log out

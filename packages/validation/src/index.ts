@@ -1046,6 +1046,24 @@ export const mockPaymentWebhookBodySchema = z.object({
   status: z.enum(['CAPTURED', 'FAILED']),
 });
 
+export const razorpayPaymentVerifyBodySchema = z.object({
+  razorpay_payment_id: z.string().min(1).max(120),
+  razorpay_order_id: z.string().min(1).max(120),
+  razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/i),
+});
+
+export const razorpayWebhookBodySchema = z.object({
+  event: z.enum(['payment.captured', 'payment.failed']),
+  payload: z.object({
+    payment: z.object({
+      entity: z.object({
+        id: z.string().min(1).max(120),
+        notes: z.record(z.string()).optional(),
+      }).passthrough(),
+    }),
+  }),
+}).passthrough();
+
 export type AddressBody = z.infer<typeof addressBodySchema>;
 export type CheckoutPlaceOrderBody = z.infer<typeof checkoutPlaceOrderBodySchema>;
 

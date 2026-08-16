@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { ArticleBody } from '@/components/editorial/article-body';
 
 type Preview = { title: string; slug: string; body: string; status: string; internal: boolean };
@@ -14,7 +14,7 @@ export default function ArticlePreviewPage({ params }: { params: { id: string } 
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login');
+      router.replace(loginUrl('/admin/editorial'));
       return;
     }
     apiAuth<Preview>(`/editorial/articles/${params.id}/preview`)

@@ -46,7 +46,7 @@ Inabiya is one company, **three visual systems** (ecommerce, parenting journal, 
 
 | System | Codename | `data-theme` | Surfaces | Personality |
 |---|---|---|---|---|
-| **A** | Soft Gift | `gift` | Storefront `/gift`, marketing `/pages/*`, customer account, commerce CMS | Warm, nurturing, pastel, soft, safe |
+| **A** | Soft Gift | `gift` | Storefront `/`, marketing `/pages/*`, customer account, commerce CMS | Warm, nurturing, pastel, soft, safe |
 | **C** | Blog Creative | `blog` | Public `/articles`, `/specialists`, `/blog`, editorial CMS | Creative journal, paper/ink, trust-first longform |
 | **B** | Creator Collective | `creator` | Influencer campaign marketing, creator/brand dashboards, creator admin | Organic, earthy, luxurious, marketplace |
 
@@ -380,7 +380,7 @@ No abstract purple gradient heroes.
 
 ### 5.1 Personality
 
-Creative parenting journal · paper & ink · trust-first · longform readable · calm CTAs.  
+Creative parenting journal · paper & ink · trust-first · longform readable · calm CTAs.
 Not Soft Gift sales chrome; not Creator marketplace earthy.
 
 ### 5.2 Color tokens (primitives)
@@ -435,8 +435,8 @@ Soft daylight, documentary parenting, specialist portraits. Aspect 16:9 for arti
 
 ### 6.1 Personality
 
-Organic · earthy · luxurious · editorial.  
-Premium influencer marketplace for parenting brands.  
+Organic · earthy · luxurious · editorial.
+Premium influencer marketplace for parenting brands.
 Light mode preferred; dark mode = deep green editorial.
 
 ### 6.2 Color tokens (HSL)
@@ -627,8 +627,8 @@ Target: practical WCAG 2.2 AA for core flows.
 - No emoji-as-icon language
 - Indian parenting context: respectful, inclusive, non-judgmental
 
-Microcopy examples (A): “Add to box”, “Remaining budget”, “Personalise this gift”  
-Microcopy examples (C): “Read the guide”, “Meet our specialists”, “Subscribe to the journal”  
+Microcopy examples (A): “Add to box”, “Remaining budget”, “Personalise this gift”
+Microcopy examples (C): “Read the guide”, “Meet our specialists”, “Subscribe to the journal”
 Microcopy examples (B): “Submit proposal”, “Campaign marketplace”, “Deliverable approved”
 
 ---
@@ -637,8 +637,8 @@ Microcopy examples (B): “Submit proposal”, “Campaign marketplace”, “De
 
 Critical interactive nodes require `data-testid` kebab-case.
 
-Examples (A): `add-to-box-btn`, `summary-panel`, `budget-remaining`, `checkout-pay-btn`  
-Examples (C): `article-card`, `newsletter-subscribe-btn`, `specialist-profile`  
+Examples (A): `add-to-box-btn`, `summary-panel`, `budget-remaining`, `checkout-pay-btn`
+Examples (C): `article-card`, `newsletter-subscribe-btn`, `specialist-profile`
 Examples (B): `submit-proposal-btn`, `campaign-card`, `select-creator-btn`
 
 ---

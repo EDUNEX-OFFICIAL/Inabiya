@@ -218,15 +218,15 @@ export type BreadcrumbCrumb = { label: string; href?: string };
 /** Build breadcrumbs for commerce OPS + CMS routes. */
 export function buildOpsBreadcrumbs(pathname: string): BreadcrumbCrumb[] {
   if (pathname.startsWith('/admin/cms')) {
-    const crumbs: BreadcrumbCrumb[] = [{ label: 'Commerce Ops', href: '/admin/commerce' }];
+    const crumbs: BreadcrumbCrumb[] = [{ label: 'Soft Gift CMS', href: '/admin/cms/pages' }];
     if (pathname.startsWith('/admin/cms/gift-chrome')) {
       crumbs.push({ label: 'Nav & footer' });
       return crumbs;
     }
-    crumbs.push({ label: 'Pages', href: '/admin/cms/pages' });
     if (pathname === '/admin/cms/pages') {
       return [{ label: 'Pages' }];
     }
+    crumbs.push({ label: 'Pages', href: '/admin/cms/pages' });
     if (pathname.endsWith('/new')) {
       crumbs.push({ label: 'New' });
       return crumbs;

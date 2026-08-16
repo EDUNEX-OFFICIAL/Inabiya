@@ -15,6 +15,37 @@ import {
   readSeoSchemaExtras,
   seoSchemaExtrasWriteValue,
 } from '../../../common/seo-schema-extras';
+
+/** Hard-cut: strip storefront `/gift` URL prefix; keep static `/gift/media|nav|brands`. */
+function rewriteGiftRoutesInString(raw: string): string {
+  if (!raw.includes('/gift')) return raw;
+  const assets: string[] = [];
+  const protectedStr = raw.replace(
+    /\/gift\/(?:media|nav|brands)\/[^\s"'<]*|\/gift\/gifting-bg[^\s"'<]*/g,
+    (m) => {
+      assets.push(m);
+      return `__GIFT_ASSET_${assets.length - 1}__`;
+    },
+  );
+  const rewritten = protectedStr
+    .replace(/\/gift\//g, '/')
+    .replace(/\/gift(?=[?#"'<\s]|$)/g, '/');
+  return rewritten.replace(/__GIFT_ASSET_(\d+)__/g, (_, i) => assets[Number(i)]!);
+}
+
+function rewriteGiftRoutesInValue(value: unknown): unknown {
+  if (typeof value === 'string') return rewriteGiftRoutesInString(value);
+  if (Array.isArray(value)) return value.map((v) => rewriteGiftRoutesInValue(v));
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = rewriteGiftRoutesInValue(v);
+    }
+    return out;
+  }
+  return value;
+}
+
 type PageWithBlocks = {
   id: string;
   slug: string;
@@ -500,16 +531,18 @@ export class CmsPagesService {
         b.props && typeof b.props === 'object' && !Array.isArray(b.props)
           ? (b.props as Record<string, unknown>)
           : {};
-      let props: Record<string, unknown> = { ...raw };
+      let props: Record<string, unknown> = {
+        ...(rewriteGiftRoutesInValue(raw) as Record<string, unknown>),
+      };
       if (opts?.resolveLive) {
         if (b.type === 'productGrid') {
-          props = await this.resolveProductGridProps(raw);
+          props = await this.resolveProductGridProps(props);
         } else if (b.type === 'brandStrip') {
-          props = await this.resolveBrandStripProps(raw);
+          props = await this.resolveBrandStripProps(props);
         } else if (b.type === 'articleTeasers') {
-          props = await this.resolveArticleTeasersProps(raw);
+          props = await this.resolveArticleTeasersProps(props);
         } else if (b.type === 'hero') {
-          props = await this.resolveHeroProps(raw);
+          props = await this.resolveHeroProps(props);
         }
       }
       blocks.push({

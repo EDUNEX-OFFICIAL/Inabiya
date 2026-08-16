@@ -5,6 +5,40 @@ import { AuditService } from '../../audit/audit.service';
 
 const GIFT_CHROME_KEY = 'gift.chrome';
 
+/** Dev hard-cut: strip storefront `/gift` URL prefix from stored chrome hrefs (assets under `/gift/media|nav|brands` kept). */
+function rewriteGiftRouteHref(href: string | undefined | null): string | undefined {
+  if (href == null) return undefined;
+  const s = String(href);
+  if (
+    s.startsWith('/gift/media/') ||
+    s.startsWith('/gift/nav/') ||
+    s.startsWith('/gift/brands/') ||
+    s.startsWith('/gift/gifting-bg')
+  ) {
+    return s;
+  }
+  if (s === '/gift' || s.startsWith('/gift/') || s.startsWith('/gift?') || s.startsWith('/gift#')) {
+    return s.replace(/^\/gift/, '') || '/';
+  }
+  return s;
+}
+
+function rewriteChromeHrefs<T>(value: T): T {
+  if (value == null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) {
+    return value.map((v) => rewriteChromeHrefs(v)) as T;
+  }
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if ((k === 'href' || k === 'ctaHref' || k === 'imageSrc' || k === 'journalHref') && typeof v === 'string') {
+      out[k] = rewriteGiftRouteHref(v) ?? v;
+    } else {
+      out[k] = rewriteChromeHrefs(v);
+    }
+  }
+  return out as T;
+}
+
 /** Old seed was BYB + hampers only (no groups). Treat as unset so CMS defaults apply. */
 function isLegacySlimShop(links: GiftChromeBody['shopLinks']): boolean {
   if (!links?.length) return true;
@@ -14,7 +48,7 @@ function isLegacySlimShop(links: GiftChromeBody['shopLinks']): boolean {
     const p = String(l.href ?? '')
       .split(/[?#]/, 1)[0]
       ?.replace(/\/$/, '');
-    return p === '/gift/build-your-box' || p?.endsWith('/ready-hampers') || p?.endsWith('/hampers');
+    return p === '/build-your-box' || p?.endsWith('/ready-hampers') || p?.endsWith('/hampers');
   });
 }
 
@@ -26,29 +60,29 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
       label: 'Shop',
       type: 'mega',
       links: [
-        { href: '/gift/build-your-box', label: 'Build Your Box', group: 'Shop' },
-        { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
-        { href: '/gift/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
-        { href: '/gift/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
+        { href: '/build-your-box', label: 'Build Your Box', group: 'Shop' },
+        { href: '/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
+        { href: '/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
+        { href: '/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
         {
-          href: '/gift/collections/naming-ceremony',
+          href: '/collections/naming-ceremony',
           label: 'Naming ceremony gifts',
           group: 'Occasion',
         },
         {
-          href: '/gift/collections/first-birthday',
+          href: '/collections/first-birthday',
           label: 'First birthday gifts',
           group: 'Occasion',
         },
-        { href: '/gift/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
-        { href: '/gift/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
-        { href: '/gift/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
-        { href: '/gift/collections/on-sale', label: 'On sale', group: 'Curated' },
+        { href: '/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
+        { href: '/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
+        { href: '/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
+        { href: '/collections/on-sale', label: 'On sale', group: 'Curated' },
       ],
       mega: {
         headline: 'Shop the Soft Gift edit',
         body: 'Build a box or browse ready-made hampers — curated for new parents.',
-        ctaHref: '/gift/products',
+        ctaHref: '/products',
         ctaLabel: 'Browse all gifts',
         imageSrc: '/gift/nav/shop.svg',
       },
@@ -58,22 +92,22 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
       label: 'For Whom',
       type: 'mega',
       links: [
-        { href: '/gift/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
-        { href: '/gift/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
+        { href: '/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
+        { href: '/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
         {
-          href: '/gift/collections/for-expecting-mom',
+          href: '/collections/for-expecting-mom',
           label: 'Expecting Mom',
           group: 'For baby',
         },
-        { href: '/gift/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
-        { href: '/gift/collections/newborn', label: 'Newborn', group: 'By age' },
-        { href: '/gift/collections/infant', label: 'Infant', group: 'By age' },
-        { href: '/gift/collections/toddler', label: 'Toddler', group: 'By age' },
+        { href: '/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
+        { href: '/collections/newborn', label: 'Newborn', group: 'By age' },
+        { href: '/collections/infant', label: 'Infant', group: 'By age' },
+        { href: '/collections/toddler', label: 'Toddler', group: 'By age' },
       ],
       mega: {
         headline: 'Gifts by little one',
         body: 'Filter by recipient or age band — unisex-safe picks included.',
-        ctaHref: '/gift/products',
+        ctaHref: '/products',
         ctaLabel: 'Shop all',
         imageSrc: '/gift/nav/for-whom.svg',
       },
@@ -85,47 +119,47 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
   journalLabel: 'Journal',
   journalHref: '/articles',
   shopLinks: [
-    { href: '/gift/build-your-box', label: 'Build Your Box', group: 'Shop' },
-    { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
-    { href: '/gift/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
-    { href: '/gift/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
+    { href: '/build-your-box', label: 'Build Your Box', group: 'Shop' },
+    { href: '/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
+    { href: '/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
+    { href: '/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
     {
-      href: '/gift/collections/naming-ceremony',
+      href: '/collections/naming-ceremony',
       label: 'Naming ceremony gifts',
       group: 'Occasion',
     },
-    { href: '/gift/collections/first-birthday', label: 'First birthday gifts', group: 'Occasion' },
-    { href: '/gift/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
-    { href: '/gift/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
-    { href: '/gift/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
-    { href: '/gift/collections/on-sale', label: 'On sale', group: 'Curated' },
+    { href: '/collections/first-birthday', label: 'First birthday gifts', group: 'Occasion' },
+    { href: '/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
+    { href: '/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
+    { href: '/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
+    { href: '/collections/on-sale', label: 'On sale', group: 'Curated' },
   ],
   forWhomLinks: [
-    { href: '/gift/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
-    { href: '/gift/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
-    { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom', group: 'For baby' },
-    { href: '/gift/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
-    { href: '/gift/collections/newborn', label: 'Newborn', group: 'By age' },
-    { href: '/gift/collections/infant', label: 'Infant', group: 'By age' },
-    { href: '/gift/collections/toddler', label: 'Toddler', group: 'By age' },
+    { href: '/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
+    { href: '/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
+    { href: '/collections/for-expecting-mom', label: 'Expecting Mom', group: 'For baby' },
+    { href: '/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
+    { href: '/collections/newborn', label: 'Newborn', group: 'By age' },
+    { href: '/collections/infant', label: 'Infant', group: 'By age' },
+    { href: '/collections/toddler', label: 'Toddler', group: 'By age' },
   ],
   shopMega: {
     headline: 'Shop the Soft Gift edit',
     body: 'Build a box or browse ready-made hampers — curated for new parents.',
-    ctaHref: '/gift/products',
+    ctaHref: '/products',
     ctaLabel: 'Browse all gifts',
     imageSrc: '/gift/nav/shop.svg',
   },
   forWhomMega: {
     headline: 'Gifts by little one',
     body: 'Filter by recipient or age band — unisex-safe picks included.',
-    ctaHref: '/gift/products',
+    ctaHref: '/products',
     ctaLabel: 'Shop all',
     imageSrc: '/gift/nav/for-whom.svg',
   },
   footer: {
     brandName: 'Inabiya',
-    brandHref: '/gift',
+    brandHref: '/',
     tagline: 'Thoughtfully personalised baby essentials & gifting.',
     showNewsletter: true,
     copyright: '© {year} {brand}. Soft gifts for tiny humans.',
@@ -138,7 +172,7 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
       { label: '@inabiya', href: 'https://instagram.com/inabiya', network: 'instagram' },
     ],
     legalLinks: [
-      { label: 'Shipping', href: '/gift#faq' },
+      { label: 'Shipping', href: '/#faq' },
       { label: 'Contact', href: '/contact' },
     ],
     socialLinks: [
@@ -150,18 +184,18 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
       {
         title: 'Shop',
         links: [
-          { label: 'Build Your Box', href: '/gift/build-your-box' },
-          { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
-          { label: 'Shop by Age', href: '/gift/collections/newborn' },
-          { label: 'Corporate Gifting', href: '/gift/corporate' },
+          { label: 'Build Your Box', href: '/build-your-box' },
+          { label: 'Ready-Made Hampers', href: '/collections/ready-hampers' },
+          { label: 'Shop by Age', href: '/collections/newborn' },
+          { label: 'Corporate Gifting', href: '/corporate' },
         ],
       },
       {
         title: 'Help',
         links: [
-          { label: 'Shipping', href: '/gift#faq' },
-          { label: 'Returns', href: '/gift#faq' },
-          { label: 'FAQ', href: '/gift#faq' },
+          { label: 'Shipping', href: '/#faq' },
+          { label: 'Returns', href: '/#faq' },
+          { label: 'FAQ', href: '/#faq' },
           { label: 'WhatsApp', href: 'https://wa.me/919693940330' },
         ],
       },
@@ -191,7 +225,7 @@ export class StorefrontConfigService {
     });
     const stored =
       row?.value && typeof row.value === 'object' && !Array.isArray(row.value)
-        ? (row.value as GiftChromeBody)
+        ? rewriteChromeHrefs(row.value as GiftChromeBody)
         : {};
     return {
       navItems: stored.navItems?.length ? stored.navItems : DEFAULT_GIFT_CHROME.navItems,

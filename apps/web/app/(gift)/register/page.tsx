@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
+import { GiftAuthShell } from '@/components/auth/auth-visuals';
 import { apiAuth, storeSession, type AuthSession } from '@/lib/auth-client';
 import { mergeGuestCommerce } from '@/lib/merge-guest-commerce';
 import { safeNextPath } from '@inabiya/validation';
@@ -34,7 +35,7 @@ function RegisterForm() {
       });
       storeSession(session);
       await mergeGuestCommerce();
-      router.push(nextPath ?? '/gift');
+      router.push(nextPath ?? '/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Register failed');
     } finally {
@@ -43,16 +44,23 @@ function RegisterForm() {
   }
 
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
-      <div>
-        <h1 className="gift-h1">Create account</h1>
-        {nextPath ? null : (
-          <p className="mt-gs-2 text-body opacity-75">
-            Create your Inabiya account with email and password — save gifts and checkout faster.
-          </p>
-        )}
-      </div>
-      <form onSubmit={onSubmit} className="clay-panel flex flex-col gap-gs-3 p-gs-5 sm:p-gs-6">
+    <GiftAuthShell
+      overline="Soft Gift"
+      title="Create account"
+      description={nextPath ? undefined : 'Save gifts and checkout faster.'}
+      footer={
+        <p className="text-body opacity-75">
+          Already have an account?{' '}
+          <Link
+            className="font-medium text-primary underline"
+            href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : '/login'}
+          >
+            Sign in
+          </Link>
+        </p>
+      }
+    >
+      <form onSubmit={onSubmit} className="clay-panel auth-form-panel flex flex-col gap-gs-3 p-gs-5 sm:p-gs-6">
         <label className="flex flex-col gap-gs-1 text-body">
           Display name
           <input
@@ -87,7 +95,7 @@ function RegisterForm() {
             />
             <button
               type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-gs-1 opacity-60 hover:opacity-100"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-gs-1 opacity-60 hover:opacity-100 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               onClick={() => setShowPassword((v) => !v)}
             >
@@ -96,26 +104,17 @@ function RegisterForm() {
           </div>
         </label>
         {error ? <p className="text-body text-danger">{error}</p> : null}
-        <button type="submit" disabled={busy} className="clay-btn mt-gs-1 disabled:opacity-60">
+        <button type="submit" disabled={busy} className="clay-btn w-full mt-gs-1 disabled:opacity-60">
           {busy ? 'Creating…' : 'Register'}
         </button>
       </form>
-      <p className="text-body opacity-75">
-        Already have an account?{' '}
-        <Link
-          className="font-medium text-primary underline"
-          href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : '/login'}
-        >
-          Sign in
-        </Link>
-      </p>
-    </main>
+    </GiftAuthShell>
   );
 }
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<main className="p-gs-6 text-body opacity-70">Loading…</main>}>
+    <Suspense fallback={<main className="auth-shell auth-shell--gift p-gs-6 text-body opacity-70">Loading…</main>}>
       <RegisterForm />
     </Suspense>
   );

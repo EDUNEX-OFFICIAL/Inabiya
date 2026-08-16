@@ -17,25 +17,25 @@ type Props = {
 const OCCASION_PRESET: DiscoveryChipCard[] = [
   {
     label: 'Welcome baby',
-    href: '/gift/collections/welcome-baby',
+    href: '/collections/welcome-baby',
     imageUrl: '/gift/media/baby-boy-soft.jpg',
     imageAlt: 'Newborn welcome',
   },
   {
     label: 'Baby shower',
-    href: '/gift/collections/baby-shower',
+    href: '/collections/baby-shower',
     imageUrl: '/gift/media/baby-girl-soft.jpg',
     imageAlt: 'Baby shower gifts',
   },
   {
     label: 'Naming',
-    href: '/gift/collections/naming-ceremony',
+    href: '/collections/naming-ceremony',
     imageUrl: '/gift/media/personalised-name-blanket.webp',
     imageAlt: 'Naming ceremony',
   },
   {
     label: 'Birthday',
-    href: '/gift/collections/first-birthday',
+    href: '/collections/first-birthday',
     imageUrl: '/gift/media/train-toy.jpg',
     imageAlt: 'Birthday toys',
   },
@@ -44,19 +44,19 @@ const OCCASION_PRESET: DiscoveryChipCard[] = [
 const AGE_PRESET: DiscoveryChipCard[] = [
   {
     label: 'Newborn',
-    href: '/gift/collections/newborn',
+    href: '/collections/newborn',
     imageUrl: '/gift/media/baby-boy-soft.jpg',
     imageAlt: 'Newborn essentials',
   },
   {
     label: 'Infant',
-    href: '/gift/collections/infant',
+    href: '/collections/infant',
     imageUrl: '/gift/media/baby-girl-soft.jpg',
     imageAlt: 'Infant gifts',
   },
   {
     label: 'Toddler',
-    href: '/gift/collections/toddler',
+    href: '/collections/toddler',
     imageUrl: '/gift/media/train-toy.jpg',
     imageAlt: 'Toddler play',
   },
@@ -109,7 +109,7 @@ export function DiscoveryChipsBlockEditor({ props, onChange }: Props) {
   }
 
   function addCard() {
-    setItems([...items, { label: 'New tile', href: '/gift/products', imageUrl: '', imageAlt: '' }]);
+    setItems([...items, { label: 'New tile', href: '/products', imageUrl: '', imageAlt: '' }]);
   }
 
   function moveCard(index: number, dir: -1 | 1) {
@@ -201,7 +201,7 @@ export function DiscoveryChipsBlockEditor({ props, onChange }: Props) {
           onClick={() => {
             onChange('title', 'Shop by occasion');
             onChange('itemsSource', 'manual');
-            onChange('seeAllHref', '/gift/products');
+            onChange('seeAllHref', '/products');
             setItems(OCCASION_PRESET);
           }}
         >
@@ -213,7 +213,7 @@ export function DiscoveryChipsBlockEditor({ props, onChange }: Props) {
           onClick={() => {
             onChange('title', 'Shop by age');
             onChange('itemsSource', 'manual');
-            onChange('seeAllHref', '/gift/products');
+            onChange('seeAllHref', '/products');
             setItems(AGE_PRESET);
           }}
         >
@@ -225,7 +225,7 @@ export function DiscoveryChipsBlockEditor({ props, onChange }: Props) {
           onClick={() => {
             onChange('title', 'Shop by category');
             onChange('itemsSource', 'catalogCollections');
-            onChange('seeAllHref', '/gift/products');
+            onChange('seeAllHref', '/products');
           }}
         >
           Preset: catalog collections

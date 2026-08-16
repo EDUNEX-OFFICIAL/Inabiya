@@ -55,7 +55,7 @@ If any residual education vocabulary appears in older notes or transcripts, igno
 
 This document defines how Inabiya is engineered: bounded contexts, runtime topology, data ownership, APIs, events, security, scalability, and evolution strategy.
 
-`PRD.md` defines **what** the product must do.  
+`PRD.md` defines **what** the product must do.
 This document defines **how** those requirements are realized safely at scale.
 
 ### 1.2 Scope
@@ -214,8 +214,8 @@ Identity, Authorization, Media, Notifications, Search infra, Audit, Feature Flag
 
 **Business modules:**
 
-Commerce (catalog, inventory, cart, checkout, orders, promotions, customers ops)  
-Editorial (assignments, articles, review workflow, publishing, writer payments)  
+Commerce (catalog, inventory, cart, checkout, orders, promotions, customers ops)
+Editorial (assignments, articles, review workflow, publishing, writer payments)
 Creator (profiles, campaigns, proposals/bids, messaging, deliverables, campaign payments)
 
 Business modules **must not** reimplement platform primitives.
@@ -365,11 +365,11 @@ Do not dump business enums from all domains into shared kernel.
 
 ### 3.9 Domain events (canonical examples)
 
-`UserRegistered`  
-`OrderPlaced` `OrderPaid` `OrderCancelled` `OrderShipped` `OrderDelivered`  
-`InventoryReserved` `InventoryReleased` `InventoryLow`  
-`ArticleSubmitted` `ArticleSeoApproved` `ArticleMedicallyApproved` `ArticlePublished`  
-`WriterPaymentReleased`  
+`UserRegistered`
+`OrderPlaced` `OrderPaid` `OrderCancelled` `OrderShipped` `OrderDelivered`
+`InventoryReserved` `InventoryReleased` `InventoryLow`
+`ArticleSubmitted` `ArticleSeoApproved` `ArticleMedicallyApproved` `ArticlePublished`
+`WriterPaymentReleased`
 `CampaignPublished` `ProposalSubmitted` `CampaignAwarded` `DeliverableApproved` `CampaignPaymentReleased`
 
 Consumers must be idempotent (at-least-once).
@@ -504,8 +504,8 @@ Avoid duplicating domain logic in Next route handlers. If BFF aggregation is nee
 
 ### 5.5 Design system architecture
 
-Shared UI package/primitives consume CSS variables.  
-Theme tokens differ by `data-theme`.  
+Shared UI package/primitives consume CSS variables.
+Theme tokens differ by `data-theme`.
 Never hardcode System A pink into Creator routes.
 
 ---
@@ -516,8 +516,8 @@ Never hardcode System A pink into Creator routes.
 
 PostgreSQL is authoritative for transactional business state.
 
-Redis is **not** a source of truth.  
-Search indexes are rebuildable projections.  
+Redis is **not** a source of truth.
+Search indexes are rebuildable projections.
 Object storage holds bytes; DB holds metadata.
 
 ### 6.2 Prisma standards
@@ -532,23 +532,23 @@ Object storage holds bytes; DB holds metadata.
 
 ### 6.3 Schema ownership by context (illustrative)
 
-**Identity:** users, credentials, roles, permissions, sessions/refresh tokens  
-**Media:** media_assets, media_variants  
-**Audit:** audit_logs  
-**Catalog:** products, product_variants, categories, collections, product_media, personalization_options  
-**Inventory:** inventory_items, inventory_transactions, inventory_reservations  
-**Buying:** carts, cart_lines  
-**Orders:** orders, order_lines, order_status_history, payments, refunds, return_requests  
-**Promotions:** coupons, coupon_redemptions, promotion_rules  
-**Editorial:** assignments, articles, article_versions, article_reviews, publish_schedules  
-**Writer ledger:** writer_payment_entries  
+**Identity:** users, credentials, roles, permissions, sessions/refresh tokens
+**Media:** media_assets, media_variants
+**Audit:** audit_logs
+**Catalog:** products, product_variants, categories, collections, product_media, personalization_options
+**Inventory:** inventory_items, inventory_transactions, inventory_reservations
+**Buying:** carts, cart_lines
+**Orders:** orders, order_lines, order_status_history, payments, refunds, return_requests
+**Promotions:** coupons, coupon_redemptions, promotion_rules
+**Editorial:** assignments, articles, article_versions, article_reviews, publish_schedules
+**Writer ledger:** writer_payment_entries
 **Creator:** creator_profiles, brand_profiles, campaigns, proposals, messages, deliverables, campaign_payments, ratings
 
 Exact column design evolves via migrations; ownership does not.
 
 ### 6.4 Referential rules across contexts
 
-Prefer storing foreign IDs without cross-context JOINs in business services.  
+Prefer storing foreign IDs without cross-context JOINs in business services.
 Reporting may use carefully governed read models/views later — not as an excuse for write-time coupling.
 
 ### 6.5 Inventory consistency
@@ -763,7 +763,7 @@ Dedicated search engine (OpenSearch/Elastic/Meilisearch/Typesense) behind Search
 
 ### 13.1 Shared payment primitive + domain gates
 
-Platform payment adapter handles provider APIs.  
+Platform payment adapter handles provider APIs.
 Domains decide **when** money may capture/release:
 
 - Commerce: order payment lifecycle
@@ -932,9 +932,9 @@ Stateless api/web/worker replicas behind load balancer.
 
 ### 19.1 Failure isolation
 
-Payment provider down → controlled degrade, clear UX, no silent success  
-Redis down → platform remains correct on DB for critical paths  
-Search down → browse/category fallback  
+Payment provider down → controlled degrade, clear UX, no silent success
+Redis down → platform remains correct on DB for critical paths
+Search down → browse/category fallback
 Notification down → queue + retry
 
 ### 19.2 DR basics
@@ -1169,7 +1169,7 @@ Catalog ──► Inventory ──► Buying(Cart/Checkout) ──► Orders
 - Hand-picked — explicit product chips / joins (coupon COLLECTION scope)
 - Smart — conditions builder (`match` all/any + field/op/value); live catalog filter
 - Optional SEO fields (`seoTitle`, `seoDescription`, `canonicalPath`, `ogImageUrl`, `robotsIndex`)
-- Public PLP: `/gift/collections/:slug` (+ auto `CollectionPage` JSON-LD); admin: list + `/admin/commerce/collections/[id]`
+- Public PLP: `/collections/:slug` (+ auto `CollectionPage` JSON-LD); admin: list + `/admin/commerce/collections/[id]`
 
 **Variant/SKU** owns:
 
@@ -1406,7 +1406,7 @@ Not a global social graph in v1.
 
 ### 33.7 Frontend architecture note
 
-All Creator Collective UI under `data-theme="creator"` (System B).  
+All Creator Collective UI under `data-theme="creator"` (System B).
 No Soft Gift pink tokens.
 
 ---
@@ -1611,7 +1611,7 @@ Editorial/creator models follow same conventions with their own enums/relations 
 
 ### 37.3 Multi-module join prohibition
 
-Application services must not `include` arbitrary foreign-module graphs to “make UI easy.”  
+Application services must not `include` arbitrary foreign-module graphs to “make UI easy.”
 Compose via explicit query services or BFF aggregations that call owning modules.
 
 ---

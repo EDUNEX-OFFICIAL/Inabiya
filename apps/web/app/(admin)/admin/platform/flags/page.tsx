@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken, type AuthUser } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl, type AuthUser } from '@/lib/auth-client';
 
 type Flag = {
   id: string;
@@ -24,7 +24,7 @@ export default function PlatformFlagsPage() {
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
-      router.replace('/login?next=/admin/platform/flags');
+      router.replace(loginUrl('/admin/platform/flags'));
       return;
     }
     apiAuth<AuthUser>('/auth/me')
@@ -37,7 +37,7 @@ export default function PlatformFlagsPage() {
       .catch((e) => {
         setErr(String(e.message ?? e));
         if (String(e.message ?? e).includes('Super')) {
-          router.replace('/login?next=/admin/platform/flags');
+          router.replace(loginUrl('/admin/platform/flags'));
         }
       });
   }, [router, load]);

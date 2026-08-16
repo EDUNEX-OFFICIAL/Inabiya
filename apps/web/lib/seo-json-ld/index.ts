@@ -201,7 +201,7 @@ export type ProductJsonLdInput = {
 };
 
 export function productJsonLd(input: ProductJsonLdInput): JsonLdNode {
-  const path = input.canonicalPath?.trim() || `/gift/products/${input.slug}`;
+  const path = input.canonicalPath?.trim() || `/products/${input.slug}`;
   const url = path.startsWith('http')
     ? path
     : `${input.siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;

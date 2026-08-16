@@ -439,7 +439,7 @@ export default function CollectionsDeskPage() {
                               <span className="hidden sm:inline">Edit</span>
                             </Link>
                             <Link
-                              href={`/gift/collections/${c.slug}`}
+                              href={`/collections/${c.slug}`}
                               target="_blank"
                               className={opsRowActionClass}
                               aria-label={`View ${c.title} storefront`}
@@ -539,7 +539,7 @@ export default function CollectionsDeskPage() {
                     <Pencil className="h-4 w-4 opacity-70" aria-hidden />
                   </Link>
                   <Link
-                    href={`/gift/collections/${c.slug}`}
+                    href={`/collections/${c.slug}`}
                     target="_blank"
                     className={opsRowActionClass}
                     aria-label={`View ${c.title} storefront`}

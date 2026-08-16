@@ -73,7 +73,7 @@ function TrustChipLabel({ label }: { label: string }) {
   if (shipping) {
     return (
       <Link
-        href="/gift#faq"
+        href="/#faq"
         className="underline-offset-2 hover:underline"
         data-testid="hero-trust-shipping"
       >

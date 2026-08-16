@@ -42,7 +42,7 @@ function ContactFallback() {
         </li>
         <li className="clay-panel p-gs-5">
           <p className="font-semibold text-foreground">Corporate gifting</p>
-          <Link href="/gift/corporate" className="clay-btn-secondary mt-gs-3 inline-flex">
+          <Link href="/corporate" className="clay-btn-secondary mt-gs-3 inline-flex">
             Request a quote
           </Link>
         </li>
@@ -50,7 +50,7 @@ function ContactFallback() {
 
       <p className="mt-gs-7 text-body opacity-70">
         Prefer browsing first?{' '}
-        <Link href="/gift" className="gift-link">
+        <Link href="/" className="gift-link">
           Back to gifts
         </Link>
       </p>

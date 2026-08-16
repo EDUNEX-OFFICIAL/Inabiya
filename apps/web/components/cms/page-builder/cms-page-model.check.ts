@@ -22,7 +22,7 @@ const hero: Block = {
     ...EMPTY_PROPS.hero,
     headline: 'Little bundles of joy',
     ctaLabel: 'Build Your Box',
-    ctaHref: '/gift/build-your-box',
+    ctaHref: '/build-your-box',
     variant: 'storefront',
     layout: 'full',
   },
@@ -117,7 +117,7 @@ const testimonials: Block = {
     title: 'Loved by new parents across India',
     subtitle: 'Honest notes from recent gifts.',
     ctaLabel: 'Shop gifts',
-    ctaHref: '/gift/products',
+    ctaHref: '/products',
     itemsJson: JSON.stringify(testimonialQuotes),
   },
 };
@@ -130,7 +130,7 @@ const testimonialProps = testimonialPayload[0]?.props as {
 };
 assert.equal(testimonialProps.overline, 'Parent love');
 assert.equal(testimonialProps.ctaLabel, 'Shop gifts');
-assert.equal(testimonialProps.ctaHref, '/gift/products');
+assert.equal(testimonialProps.ctaHref, '/products');
 assert.equal(testimonialProps.items.length, 12);
 
 console.log('cms-page-model.check: ok');

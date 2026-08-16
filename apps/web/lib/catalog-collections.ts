@@ -71,32 +71,32 @@ export function collectionsToOptions(cols: CatalogCollection[]): CollectionOptio
 }
 
 export function collectionPlpHref(slug: string): string {
-  return `/gift/collections/${encodeURIComponent(slug)}`;
+  return `/collections/${encodeURIComponent(slug)}`;
 }
 
 export function isCollectionHref(href: string): boolean {
   try {
     const u = new URL(href, 'https://inabiya.local');
-    return u.pathname.startsWith('/gift/collections/');
+    return u.pathname.startsWith('/collections/');
   } catch {
-    return href.includes('/gift/collections/');
+    return href.includes('/collections/');
   }
 }
 
 export function collectionSlugFromHref(href: string): string | null {
   try {
     const u = new URL(href, 'https://inabiya.local');
-    const m = u.pathname.match(/^\/gift\/collections\/([^/]+)/);
+    const m = u.pathname.match(/^\/collections\/([^/]+)/);
     return m?.[1] ? decodeURIComponent(m[1]) : null;
   } catch {
-    const m = href.match(/\/gift\/collections\/([^/?#]+)/);
+    const m = href.match(/\/collections\/([^/?#]+)/);
     return m?.[1] ? decodeURIComponent(m[1]) : null;
   }
 }
 
 export const FIXED_SHOP_LINKS: Array<{ href: string; label: string }> = [
-  { href: '/gift/build-your-box', label: 'Build Your Box' },
-  { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers' },
+  { href: '/build-your-box', label: 'Build Your Box' },
+  { href: '/collections/ready-hampers', label: 'Ready-Made Hampers' },
 ];
 
 export function mergeShopLinksWithCollections(
@@ -105,7 +105,7 @@ export function mergeShopLinksWithCollections(
 ): Array<{ href: string; label: string }> {
   const base = authored?.length ? authored : FIXED_SHOP_LINKS;
   const nonAuto = base.filter(
-    (l) => !isCollectionHref(l.href) && !l.href.includes('/gift/products?category='),
+    (l) => !isCollectionHref(l.href) && !l.href.includes('/products?category='),
   );
   const collectionLinks = collections.map((c) => ({
     href: collectionPlpHref(c.slug),

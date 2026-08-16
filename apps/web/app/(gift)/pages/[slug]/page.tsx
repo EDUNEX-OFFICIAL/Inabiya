@@ -16,8 +16,8 @@ import { marketingPageMergedJsonLd } from '@/lib/seo-json-ld/cms-page';
 export const dynamic = 'force-dynamic';
 
 const DEDICATED_PATH: Record<string, string> = {
-  [GIFT_HOMEPAGE_SLUG]: '/gift',
-  [GIFT_CORPORATE_SLUG]: '/gift/corporate',
+  [GIFT_HOMEPAGE_SLUG]: '/',
+  [GIFT_CORPORATE_SLUG]: '/corporate',
   [GIFT_ABOUT_SLUG]: '/about',
   [GIFT_CONTACT_SLUG]: '/contact',
   [GIFT_PRIVACY_SLUG]: '/privacy-policy',

@@ -17,7 +17,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
             <Link href="/specialists" className="opacity-80 hover:text-primary hover:opacity-100">
               Specialists
             </Link>
-            <Link href="/gift" className="blog-btn-ghost !min-h-0 !px-gs-3 !py-gs-1 text-xs">
+            <Link href="/" className="blog-btn-ghost !min-h-0 !px-gs-3 !py-gs-1 text-xs">
               Shop gifts
             </Link>
           </nav>

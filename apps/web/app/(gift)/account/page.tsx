@@ -65,10 +65,10 @@ export default function AccountPage() {
         <Link className="clay-chip hover:text-primary" href="/orders">
           Orders
         </Link>
-        <Link className="clay-chip hover:text-primary" href="/gift/cart">
+        <Link className="clay-chip hover:text-primary" href="/cart">
           Cart
         </Link>
-        <Link className="clay-chip hover:text-primary" href="/gift">
+        <Link className="clay-chip hover:text-primary" href="/">
           Store
         </Link>
       </nav>

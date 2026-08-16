@@ -40,7 +40,7 @@ export function ProductCardWishlist({ variantId, productTitle, className }: Prop
     try {
       const result = await toggleWishlist(variantId);
       if (result === 'login') {
-        router.push(loginUrl(pathname || '/gift/products'));
+        router.push(loginUrl(pathname || '/products'));
       }
     } finally {
       setBusy(false);

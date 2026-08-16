@@ -41,17 +41,11 @@ export function GiftLayoutChrome({ children }: { children: ReactNode }) {
   const showChrome = !isAuthPage && !isInvoicePage && !isCheckoutPage;
 
   return (
-    <GiftLenis>
-      {isAuthPage ? (
-        <header className="py-gs-4">
-          <div className="mx-auto max-w-md px-[var(--gift-pad-x)]">
-            <BrandLogo href="/gift" size="md" priority />
-          </div>
-        </header>
-      ) : isInvoicePage ? null : isCheckoutPage ? (
+    <GiftLenis disabled={isAuthPage}>
+      {isAuthPage ? null : isInvoicePage ? null : isCheckoutPage ? (
         <header className="clay-nav relative sticky top-0 z-[var(--z-nav)] py-gs-3 print:hidden">
           <div className="gift-shell-width flex min-w-0 items-center justify-between gap-gs-3">
-            <BrandLogo kind="chrome" href="/gift" size="md" priority />
+            <BrandLogo kind="chrome" href="/" size="md" priority />
             <p className="flex items-center gap-gs-2 text-caption font-medium opacity-70">
               <CheckoutLockMark />
               Secure checkout
@@ -61,7 +55,7 @@ export function GiftLayoutChrome({ children }: { children: ReactNode }) {
       ) : (
         <header className="clay-nav relative sticky top-0 z-[var(--z-nav)] overflow-x-clip py-gs-3 sm:py-gs-4 print:hidden">
           <div className="gift-shell-width relative flex min-w-0 items-center justify-between gap-gs-3">
-            <BrandLogo kind="chrome" href="/gift" className="relative z-10" size="md" priority />
+            <BrandLogo kind="chrome" href="/" className="relative z-10" size="md" priority />
             <Suspense
               fallback={<nav className="flex min-w-0 flex-1 justify-end" aria-label="Gift shop" />}
             >

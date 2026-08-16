@@ -83,8 +83,8 @@ curl -fsS -X POST "$API/admin/commerce/gift-chrome" \
   -d '{"shopMega":{"headline":"Build or pick a hamper"}}' >/dev/null
 rm -f "$JAR"
 
-echo "== web gift =="
-HTML=$(curl -fsS "$WEB/gift")
+echo "== web storefront =="
+HTML=$(curl -fsS "$WEB/")
 echo "$HTML" | grep -q gift-brand-marquee && pass marquee || fail marquee
 echo "$HTML" | grep -q gift-usp__label && pass usp || fail usp
 COUNT=$(echo "$HTML" | grep -o '<footer ' | wc -l | tr -d ' ')
@@ -95,7 +95,7 @@ echo "$HTML" | grep -q '/gift/brands/mamaearth.svg' && pass brand-logo-src || fa
 CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$WEB/gift/brands/mamaearth.svg")
 [[ "$CODE" == "200" ]] && pass brand-logo-asset || fail "brand logo asset $CODE"
 
-CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$WEB/gift/corporate")
+CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$WEB/corporate")
 [[ "$CODE" == "200" ]] && pass corporate-page || fail "corporate-page $CODE"
 
 echo "== zod edge cases =="
@@ -109,7 +109,7 @@ function check(name, ok) {
 check('brandStrip empty brands', pageBlockInputSchema.safeParse({ type: 'brandStrip', props: { title: 'T', brands: [], showUsps: false } }).success);
 check('brand logo object', pageBlockInputSchema.safeParse({ type: 'brandStrip', props: { brands: [{ name: 'X', logoUrl: '/gift/brands/x.svg' }] } }).success);
 check('bad usp icon rejected', !pageBlockInputSchema.safeParse({ type: 'brandStrip', props: { usps: [{ label: 'A', icon: 'nope' }] } }).success);
-check('footer block', pageBlockInputSchema.safeParse({ type: 'footer', props: { brandName: 'Inabiya', columns: [{ title: 'Shop', links: [{ label: 'A', href: '/gift' }] }] } }).success);
+check('footer block', pageBlockInputSchema.safeParse({ type: 'footer', props: { brandName: 'Inabiya', columns: [{ title: 'Shop', links: [{ label: 'A', href: '/' }] }] } }).success);
 check('empty href chrome rejected', !giftChromeBodySchema.safeParse({ shopLinks: [{ label: 'x', href: '' }] }).success);
 check('hero trust+eyebrow', pageBlockInputSchema.safeParse({ type: 'hero', props: { headline: 'Hi', trustLine: 'A · B · C', eyebrow: 'Eyebrow' } }).success);
 check('recipient imageUrl', pageBlockInputSchema.safeParse({ type: 'recipientSplit', props: { left: { label: 'g', href: '/g', imageUrl: '/x.jpg' }, right: { label: 'b', href: '/b' } } }).success);

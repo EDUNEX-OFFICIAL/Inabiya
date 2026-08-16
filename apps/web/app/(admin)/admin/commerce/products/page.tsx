@@ -961,7 +961,7 @@ function ProductsDeskInner() {
                           )}
                           {p.status === 'PUBLISHED' ? (
                             <Link
-                              href={`/gift/products/${p.slug}`}
+                              href={`/products/${p.slug}`}
                               className={`${opsRowActionClass} ml-auto`}
                               target="_blank"
                               rel="noreferrer"
@@ -1141,7 +1141,7 @@ function ProductsDeskInner() {
                               )}
                               {p.status === 'PUBLISHED' ? (
                                 <Link
-                                  href={`/gift/products/${p.slug}`}
+                                  href={`/products/${p.slug}`}
                                   className={opsRowActionClass}
                                   target="_blank"
                                   rel="noreferrer"

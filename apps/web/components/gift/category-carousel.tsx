@@ -56,7 +56,7 @@ export const CAROUSEL_CARDS: CarouselCardData[] = [
     },
     gradient: 'linear-gradient(150deg,#FF6B9D 0%,#FFB5D0 55%,#FFE0EC 100%)',
     accent: '#7C1D3C',
-    href: '/gift/build-your-box',
+    href: '/build-your-box',
   },
   {
     id: 'keepsakes',
@@ -72,7 +72,7 @@ export const CAROUSEL_CARDS: CarouselCardData[] = [
     },
     gradient: 'linear-gradient(150deg,#E8D5F5 0%,#F5C8E4 55%,#FFE0EC 100%)',
     accent: '#5B21B6',
-    href: '/gift/build-your-box',
+    href: '/build-your-box',
   },
   {
     id: 'milestone-toys',
@@ -88,7 +88,7 @@ export const CAROUSEL_CARDS: CarouselCardData[] = [
     },
     gradient: 'linear-gradient(150deg,#B5EAD7 0%,#D9F5E9 55%,#E0F7EE 100%)',
     accent: '#0F5132',
-    href: '/gift/collections/bestsellers',
+    href: '/collections/bestsellers',
   },
   {
     id: 'first-year',
@@ -104,7 +104,7 @@ export const CAROUSEL_CARDS: CarouselCardData[] = [
     },
     gradient: 'linear-gradient(150deg,#7DD3FC 0%,#BAE6FD 55%,#E0F2FE 100%)',
     accent: '#0C4A6E',
-    href: '/gift/collections/newborn',
+    href: '/collections/newborn',
   },
   {
     id: 'ready-hampers',
@@ -120,7 +120,7 @@ export const CAROUSEL_CARDS: CarouselCardData[] = [
     },
     gradient: 'linear-gradient(150deg,#FFD166 0%,#FFE3A3 55%,#FFF4D6 100%)',
     accent: '#7C4A03',
-    href: '/gift/collections/ready-hampers',
+    href: '/collections/ready-hampers',
   },
   {
     id: 'corporate',
@@ -136,7 +136,7 @@ export const CAROUSEL_CARDS: CarouselCardData[] = [
     },
     gradient: 'linear-gradient(150deg,#C7D2FE 0%,#DDD6FE 55%,#EDE9FE 100%)',
     accent: '#3730A3',
-    href: '/gift/corporate',
+    href: '/corporate',
   },
 ];
 

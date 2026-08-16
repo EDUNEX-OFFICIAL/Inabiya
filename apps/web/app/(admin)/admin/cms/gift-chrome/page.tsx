@@ -71,39 +71,39 @@ const INPUT = 'clay-input mt-1 block w-full text-sm';
 const DEFAULT_SHOP_MEGA: Mega = {
   headline: 'Shop the Soft Gift edit',
   body: 'Build a box or browse ready-made hampers — curated for new parents.',
-  ctaHref: '/gift/products',
+  ctaHref: '/products',
   ctaLabel: 'Browse all gifts',
   imageSrc: '/gift/nav/shop.svg',
 };
 const DEFAULT_WHOM_MEGA: Mega = {
   headline: 'Gifts by little one',
   body: 'Filter by recipient or age band — unisex-safe picks included.',
-  ctaHref: '/gift/products',
+  ctaHref: '/products',
   ctaLabel: 'Shop all',
   imageSrc: '/gift/nav/for-whom.svg',
 };
 
 const DEFAULT_SHOP: NavLinkRow[] = [
-  { href: '/gift/build-your-box', label: 'Build Your Box', group: 'Shop' },
-  { href: '/gift/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
-  { href: '/gift/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
-  { href: '/gift/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
-  { href: '/gift/collections/naming-ceremony', label: 'Naming ceremony gifts', group: 'Occasion' },
-  { href: '/gift/collections/first-birthday', label: 'First birthday gifts', group: 'Occasion' },
-  { href: '/gift/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
-  { href: '/gift/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
-  { href: '/gift/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
-  { href: '/gift/collections/on-sale', label: 'On sale', group: 'Curated' },
+  { href: '/build-your-box', label: 'Build Your Box', group: 'Shop' },
+  { href: '/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
+  { href: '/collections/welcome-baby', label: 'Welcome baby gifts', group: 'Occasion' },
+  { href: '/collections/baby-shower', label: 'Baby shower gifts', group: 'Occasion' },
+  { href: '/collections/naming-ceremony', label: 'Naming ceremony gifts', group: 'Occasion' },
+  { href: '/collections/first-birthday', label: 'First birthday gifts', group: 'Occasion' },
+  { href: '/collections/bestsellers', label: 'Best sellers', group: 'Curated' },
+  { href: '/collections/editors-picks', label: "Editor's picks", group: 'Curated' },
+  { href: '/collections/new-arrivals', label: 'New arrivals', group: 'Curated' },
+  { href: '/collections/on-sale', label: 'On sale', group: 'Curated' },
 ];
 
 const DEFAULT_WHOM: NavLinkRow[] = [
-  { href: '/gift/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
-  { href: '/gift/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
-  { href: '/gift/collections/for-expecting-mom', label: 'Expecting Mom', group: 'For baby' },
-  { href: '/gift/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
-  { href: '/gift/collections/newborn', label: 'Newborn', group: 'By age' },
-  { href: '/gift/collections/infant', label: 'Infant', group: 'By age' },
-  { href: '/gift/collections/toddler', label: 'Toddler', group: 'By age' },
+  { href: '/collections/for-baby-girl', label: 'Baby Girl', group: 'For baby' },
+  { href: '/collections/for-baby-boy', label: 'Baby Boy', group: 'For baby' },
+  { href: '/collections/for-expecting-mom', label: 'Expecting Mom', group: 'For baby' },
+  { href: '/collections/unisex-gifts', label: 'Unisex', group: 'For baby' },
+  { href: '/collections/newborn', label: 'Newborn', group: 'By age' },
+  { href: '/collections/infant', label: 'Infant', group: 'By age' },
+  { href: '/collections/toddler', label: 'Toddler', group: 'By age' },
 ];
 
 const DEFAULT_NAV_ITEMS: TopNavItem[] = [
@@ -140,18 +140,18 @@ const DEFAULT_FOOTER_COLS: FooterColRow[] = [
   {
     title: 'Shop',
     links: [
-      { label: 'Build Your Box', href: '/gift/build-your-box' },
-      { label: 'Ready-Made Hampers', href: '/gift/collections/ready-hampers' },
-      { label: 'Shop by Age', href: '/gift/collections/newborn' },
-      { label: 'Corporate Gifting', href: '/gift/corporate' },
+      { label: 'Build Your Box', href: '/build-your-box' },
+      { label: 'Ready-Made Hampers', href: '/collections/ready-hampers' },
+      { label: 'Shop by Age', href: '/collections/newborn' },
+      { label: 'Corporate Gifting', href: '/corporate' },
     ],
   },
   {
     title: 'Help',
     links: [
-      { label: 'Shipping', href: '/gift#faq' },
-      { label: 'Returns', href: '/gift#faq' },
-      { label: 'FAQ', href: '/gift#faq' },
+      { label: 'Shipping', href: '/#faq' },
+      { label: 'Returns', href: '/#faq' },
+      { label: 'FAQ', href: '/#faq' },
       { label: 'WhatsApp', href: 'https://wa.me/919693940330' },
     ],
   },
@@ -289,7 +289,7 @@ export default function GiftChromeAdminPage() {
   const [shopMega, setShopMega] = useState<Mega>(DEFAULT_SHOP_MEGA);
   const [whomMega, setWhomMega] = useState<Mega>(DEFAULT_WHOM_MEGA);
   const [brandName, setBrandName] = useState('Inabiya');
-  const [brandHref, setBrandHref] = useState('/gift');
+  const [brandHref, setBrandHref] = useState('/');
   const [tagline, setTagline] = useState('');
   const [copyrightParts, setCopyrightParts] = useState<CopyrightParts>(() =>
     parseCopyrightTpl(undefined),
@@ -363,7 +363,7 @@ export default function GiftChromeAdminPage() {
           imageSrc: c.forWhomMega?.imageSrc || DEFAULT_WHOM_MEGA.imageSrc,
         });
         setBrandName(c.footer?.brandName ?? 'Inabiya');
-        setBrandHref(c.footer?.brandHref?.trim() || '/gift');
+        setBrandHref(c.footer?.brandHref?.trim() || '/');
         setTagline(c.footer?.tagline ?? '');
         setCopyrightParts(parseCopyrightTpl(c.footer?.copyright));
         setFooterColumns(c.footer?.columns?.length ? c.footer.columns : DEFAULT_FOOTER_COLS);
@@ -412,7 +412,7 @@ export default function GiftChromeAdminPage() {
           forWhomMega: whomMega,
           footer: {
             brandName,
-            brandHref: brandHref.trim() || '/gift',
+            brandHref: brandHref.trim() || '/',
             tagline,
             copyright: composeCopyrightTpl(copyrightParts),
             showNewsletter,
@@ -450,7 +450,7 @@ export default function GiftChromeAdminPage() {
         actions={
           <>
             <Link
-              href="/gift"
+              href="/"
               target="_blank"
               rel="noreferrer"
               className="clay-btn-ghost hidden min-h-10 items-center gap-1.5 text-sm sm:inline-flex"

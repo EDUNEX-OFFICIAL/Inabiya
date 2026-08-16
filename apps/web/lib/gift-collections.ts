@@ -363,7 +363,7 @@ export function collectionHref(
     if (v) qs.set(k, v);
   }
   const q = qs.toString();
-  return q ? `/gift/collections/${slug}?${q}` : `/gift/collections/${slug}`;
+  return q ? `/collections/${slug}?${q}` : `/collections/${slug}`;
 }
 
 /** Active refine count for badge — excludes sort. */
@@ -431,7 +431,7 @@ export function bybHrefForCollection(collection: GiftCollection): string {
   if (collection.baseFilters.age) qs.set('age', collection.baseFilters.age);
   if (collection.baseFilters.occasion) qs.set('occasion', collection.baseFilters.occasion);
   const q = qs.toString();
-  return q ? `/gift/build-your-box?${q}` : '/gift/build-your-box';
+  return q ? `/build-your-box?${q}` : '/build-your-box';
 }
 
 export function collectionBreadcrumb(collection: GiftCollection): {
@@ -440,13 +440,13 @@ export function collectionBreadcrumb(collection: GiftCollection): {
 } {
   const over = collection.overline.toLowerCase();
   if (over.includes('occasion')) {
-    return { parentLabel: 'Shop by occasion', parentHref: '/gift/collections/welcome-baby' };
+    return { parentLabel: 'Shop by occasion', parentHref: '/collections/welcome-baby' };
   }
   if (over.includes('age')) {
-    return { parentLabel: 'Shop by age', parentHref: '/gift/collections/newborn' };
+    return { parentLabel: 'Shop by age', parentHref: '/collections/newborn' };
   }
   if (over.includes('curated')) {
-    return { parentLabel: 'Shop', parentHref: '/gift/products' };
+    return { parentLabel: 'Shop', parentHref: '/products' };
   }
-  return { parentLabel: 'Shop by baby', parentHref: '/gift/collections/for-baby-girl' };
+  return { parentLabel: 'Shop by baby', parentHref: '/collections/for-baby-girl' };
 }

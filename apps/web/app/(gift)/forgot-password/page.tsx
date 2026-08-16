@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
+import { GiftAuthShell } from '@/components/auth/auth-visuals';
 import { apiUrl } from '@/lib/api-base';
 import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
 
@@ -39,14 +40,22 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
-      <div>
-        <h1 className="gift-h1">Forgot password</h1>
-        <p className="gift-muted mt-gs-2">
-          Enter your email and we will send a reset link if an account exists for that address.
+    <GiftAuthShell
+      overline="Soft Gift"
+      title="Forgot password"
+      description="Enter your email — we send a reset link if the account exists."
+      footer={
+        <p className="text-body opacity-75">
+          <Link href="/login" className="font-medium text-primary underline">
+            ← Back to sign in
+          </Link>
         </p>
-      </div>
-      <form onSubmit={(e) => void onSubmit(e)} className="clay-panel flex flex-col gap-gs-4 p-gs-5">
+      }
+    >
+      <form
+        onSubmit={(e) => void onSubmit(e)}
+        className="clay-panel auth-form-panel flex flex-col gap-gs-4 p-gs-5"
+      >
         <label className="flex flex-col gap-gs-1 text-body">
           Email
           <input
@@ -64,15 +73,10 @@ export default function ForgotPasswordPage() {
             {msg}
           </p>
         ) : null}
-        <button type="submit" disabled={busy} className="clay-btn disabled:opacity-60">
+        <button type="submit" disabled={busy} className="clay-btn w-full disabled:opacity-60">
           {busy ? 'Sending…' : 'Send reset link'}
         </button>
       </form>
-      <p className="text-body opacity-75">
-        <Link href="/login" className="font-medium text-primary underline">
-          ← Back to sign in
-        </Link>
-      </p>
-    </main>
+    </GiftAuthShell>
   );
 }

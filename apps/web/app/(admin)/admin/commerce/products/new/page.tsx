@@ -348,7 +348,7 @@ export default function NewProductPage() {
                 className="clay-input font-mono text-sm"
                 value={canonicalPath}
                 onChange={(e) => setCanonicalPath(e.target.value)}
-                placeholder={slug ? `/gift/products/${slug}` : '/gift/products/…'}
+                placeholder={slug ? `/products/${slug}` : '/products/…'}
               />
             </label>
             <label className="flex items-center gap-2 text-sm">

@@ -12,15 +12,15 @@ import {
   resolveCatalogCollectionChips,
 } from './catalog-collections';
 
-assert.equal(collectionPlpHref('for-baby-girl'), '/gift/collections/for-baby-girl');
-assert.ok(isCollectionHref('/gift/collections/newborn'));
-assert.equal(collectionSlugFromHref('/gift/collections/ready-hampers'), 'ready-hampers');
+assert.equal(collectionPlpHref('for-baby-girl'), '/collections/for-baby-girl');
+assert.ok(isCollectionHref('/collections/newborn'));
+assert.equal(collectionSlugFromHref('/collections/ready-hampers'), 'ready-hampers');
 
 const merged = mergeShopLinksWithCollections(
-  [{ href: '/gift/products?category=toys', label: 'Toys' }],
+  [{ href: '/products?category=toys', label: 'Toys' }],
   [{ slug: 'bestsellers', title: 'Best sellers' }],
 );
-assert.ok(merged.some((l) => l.href.includes('/gift/collections/bestsellers')));
+assert.ok(merged.some((l) => l.href.includes('/collections/bestsellers')));
 assert.ok(!merged.some((l) => l.href.includes('category=')));
 
 const chips = resolveCatalogCollectionChips(
@@ -29,7 +29,7 @@ const chips = resolveCatalogCollectionChips(
     { slug: 'newborn', title: 'Newborn essentials', sortOrder: 9, description: 'First weeks.' },
     { slug: 'for-baby-girl', title: 'Gifts for baby girl', sortOrder: 1 },
   ],
-  [{ href: '/gift/collections/newborn', imageUrl: '/x.jpg', imageAlt: 'N' }],
+  [{ href: '/collections/newborn', imageUrl: '/x.jpg', imageAlt: 'N' }],
 );
 assert.equal(chips[0]?.label, 'Gifts for baby girl');
 assert.equal(chips[1]?.imageUrl, '/x.jpg');

@@ -3,6 +3,10 @@ export type PaymentIntent = {
   provider: string;
   amountPaise: number;
   confirmUrl: string;
+  razorpay?: {
+    keyId: string;
+    orderId: string;
+  };
 };
 
 export type PaymentRefund = {

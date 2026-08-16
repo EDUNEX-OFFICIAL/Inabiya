@@ -30,7 +30,7 @@ export default async function ArticlesIndexPage({
           <p className="blog-muted mt-gs-4 max-w-xl text-base sm:text-lg">
             Trusted guidance for early parenthood — education first, calm creative editorial.
           </p>
-          <Link href="/gift" className="blog-btn-secondary mt-gs-6 inline-flex">
+          <Link href="/" className="blog-btn-secondary mt-gs-6 inline-flex">
             Shop gifts
           </Link>
         </div>

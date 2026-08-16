@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { GiftAuthShell } from '@/components/auth/auth-visuals';
 import { apiUrl } from '@/lib/api-base';
 import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
 
@@ -49,11 +50,18 @@ function ResetPasswordForm() {
   }
 
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-gs-5 px-gs-4 py-gs-7 sm:px-gs-6">
-      <div>
-        <h1 className="gift-h1">Choose a new password</h1>
-        <p className="gift-muted mt-gs-2">Use at least 8 characters.</p>
-      </div>
+    <GiftAuthShell
+      overline="Soft Gift"
+      title="Choose a new password"
+      description="Use at least 8 characters."
+      footer={
+        <p className="text-body opacity-75">
+          <Link href="/login" className="font-medium text-primary underline">
+            ← Back to sign in
+          </Link>
+        </p>
+      }
+    >
       {!token ? (
         <p className="gift-banner gift-banner--danger">
           Missing or invalid reset link.{' '}
@@ -65,7 +73,7 @@ function ResetPasswordForm() {
       ) : (
         <form
           onSubmit={(e) => void onSubmit(e)}
-          className="clay-panel flex flex-col gap-gs-4 p-gs-5"
+          className="clay-panel auth-form-panel flex flex-col gap-gs-4 p-gs-5"
         >
           <label className="flex flex-col gap-gs-1 text-body">
             New password
@@ -92,23 +100,18 @@ function ResetPasswordForm() {
             />
           </label>
           {error ? <p className="text-body text-danger">{error}</p> : null}
-          <button type="submit" disabled={busy} className="clay-btn disabled:opacity-60">
+          <button type="submit" disabled={busy} className="clay-btn w-full disabled:opacity-60">
             {busy ? 'Saving…' : 'Update password'}
           </button>
         </form>
       )}
-      <p className="text-body opacity-75">
-        <Link href="/login" className="font-medium text-primary underline">
-          ← Back to sign in
-        </Link>
-      </p>
-    </main>
+    </GiftAuthShell>
   );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<main className="p-gs-6 text-body opacity-70">Loading…</main>}>
+    <Suspense fallback={<main className="auth-shell auth-shell--gift p-gs-6 text-body opacity-70">Loading…</main>}>
       <ResetPasswordForm />
     </Suspense>
   );

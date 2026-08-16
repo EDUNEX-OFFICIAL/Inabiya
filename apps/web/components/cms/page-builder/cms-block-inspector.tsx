@@ -173,7 +173,7 @@ function PropField({
                     : fieldKey === 'itemsJson'
                       ? '[{"quote":"…","author":"…","role":"…","rating":5}] or FAQ [{question,answerHtml}]'
                       : fieldKey === 'cardsJson'
-                        ? '[{"tag":"…","title":"Save 10%","ctaLabel":"…","ctaHref":"/gift","tone":"blush"}]'
+                        ? '[{"tag":"…","title":"Save 10%","ctaLabel":"…","ctaHref":"/","tone":"blush"}]'
                         : undefined
         }
       />

@@ -17,7 +17,7 @@ const page = collectionPageJsonLd({
 });
 
 assert.equal(page['@type'], 'CollectionPage');
-assert.equal(page.url, 'https://inabiya.edunexservices.in/gift/collections/for-baby-girl');
+assert.equal(page.url, 'https://inabiya.edunexservices.in/collections/for-baby-girl');
 const main = page.mainEntity as {
   '@type': string;
   numberOfItems: number;

@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 16, 2026 (collection filter Apply)
+Last Updated: August 16, 2026 (invoice visual polish)
 
 ---
 
@@ -141,10 +141,10 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Re-auth GitHub on VPS (`gh auth login`) then `git push origin main` so remote matches `2130574`
-2. Hard-refresh `/gift/collections/bestsellers` — sidebar scroll + sort listbox
-3. Resume OPS-10 after storefront QA
-4. **Deferred:** demo logins + real PSP (C1/C2)
+1. Smoke redesigned portal logins (`/login`, `/admin/*/login`, `/creator/login`) desktop + mobile
+2. Re-auth GitHub on VPS (`gh auth login`) then `git push origin main` so remote matches
+3. Resume OPS-10 after portal/storefront smoke
+4. **Deferred:** demo logins hardening + real PSP (C1/C2)
 5. Optional: CSP nonce instead of `script-src 'unsafe-inline'`
 
 
@@ -170,7 +170,7 @@ Phase 10 Soft Gift nav — **Closed**. Phase 11 page builder — **CLOSED** (11A
 | Q5 | Single deployable vs separate web/api deploys day one? | **Resolved — compose: web+api+worker** | Eng Lead | Done 2026-07-20 |
 | Q6 | Commerce admin visual = Soft Gift dense confirmed? | **Resolved — gift+compact semantic remap (neutral canvas, pink accents)** | Design | Done 2026-08-11 |
 | Q7 | Launch package = Commerce only, or Commerce+Editorial? | **Resolved — VPS-local = Commerce+Editorial+Creator MVP; public DNS deferred** | Product/Eng | Done 2026-07-20 |
-| Q8 | Third-party auth (Google etc.) day one? | **Resolved — No; email/password only for easy testing** | Eng | Done 2026-07-20 |
+| Q8 | Third-party auth (Google etc.) day one? | **Resolved — No; email/password only** (Google OAuth added 2026-08-16 then **removed** same day — billing friction) | Eng | Done |
 | Q9 | Return window (days after delivery)? | **Resolved — default 14, admin-customisable via `policy.return_window_days`** | Product | Done 2026-07-20 |
 
 Resolve → move to Decisions Log → remove from this table.
@@ -178,6 +178,26 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-16 — Theme-native portal login redesign (human)
+
+- **Override:** Phase 14; human: redesign all login portals with their own theme (creative free hand).
+- Shared `PortalLoginForm` + `auth-shell` recipes: Soft Gift customer/ops (clay), Editorial (blog-*), Creator (creator-*). Two-column visual + form on desktop; no `data-theme="admin"`; auth chrome hidden on gift/creator login routes.
+
+### 2026-08-16 — Remove Google OAuth (human)
+
+- **Override:** Phase 14; human: Google Cloud billing/pay wall — remove Google OAuth entirely.
+- Reverted API routes, UI buttons, `OAuthIdentity` (drop migration `20260816183000_drop_oauth_identity`), env keys. Auth = email/password JWT only again.
+
+### 2026-08-16 — Root storefront + dedicated login portals (human)
+
+- **Override:** Phase 14 Procurement in progress; human: Soft Gift storefront on `/` (not `/gift`); dedicated nested login per platform; no legacy `/gift` redirects (dev hard cut).
+- Customer `/login`; Commerce `/admin/commerce/login`; CMS `/admin/cms/login`; Editorial `/admin/editorial/login`; Creator `/creator/login`; Platform `/admin/platform/login`. Same Nest auth API + portal role gates.
+- Root directory link list removed.
+
+### 2026-08-16 — Google OAuth + account linking (human)
+
+- **Override:** Phase 14; add Google OAuth (Inabiya IdP + linking). **Superseded same day** — removed (billing friction); see “Remove Google OAuth”.
 
 ### 2026-08-16 — Gift homepage BYB band = pastel wash (human)
 
@@ -1075,7 +1095,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ### Explicitly deferred (P2)
 
-- [x] Third-party / social IdP — **not now**
+- [x] Third-party / social IdP — **not now** (Google OAuth briefly added then removed 2026-08-16)
 - [ ] Real SMTP / SES / Resend
 - [ ] Real S3 / MinIO SDK
 
@@ -1177,6 +1197,62 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-16 (invoice visual polish)
+
+- **Override:** Phase 14; human requested a better customer invoice design.
+- Widened the Soft Gift invoice sheet; strengthened invoice/status/meta hierarchy; added icon actions, responsive item cards, a clearer totals panel, and compact contact footer.
+- Print CSS now targets A4 with controlled margins, exact Soft Gift colors, desktop item table, and page-break protection. Env/migration: none.
+- Check: web typecheck + edited-file lint clean.
+- **Live:** `deploy-vps.sh web` @ `a2458c1` — health/ready 200; web healthy. Hard-refresh invoice page.
+
+### Session — 2026-08-16 (auth login QA polish)
+
+- **Override:** Phase 14; human: cross-check design/responsiveness/optimisation.
+- Fixes: mobile brand strip (not blank); `100dvh` + safe-area; form-card hover lift killed; decorative `aria-hidden` + error `role=alert`/`aria-invalid`; password toggle hit target; Lenis disabled on gift auth; creator layout back to server + `CreatorChrome`.
+- Check: `auth-portals.check.ts` + web test/typecheck.
+
+### Session — 2026-08-16 (portal login redesign)
+
+- **Override:** Phase 14; human: redesign all portal logins with native themes.
+- Shipped: `PortalLoginForm` theme recipes (clay / blog / creator); `auth-visuals` + `auth-shell` CSS; customer register/forgot/reset on Soft Gift auth shell; Commerce/CMS/Platform ops visuals; Editorial blog; Creator studio entry; hide gift/creator chrome on auth pages.
+- Check: `auth-portals.check.ts` (variant/recipe assertions) + web `pnpm test` + typecheck. Env/migration: none.
+
+### Session — 2026-08-16 (Razorpay CSP + checkout label)
+
+- **Override:** Phase 14; checkout still showed Mock + “Payment checkout could not be loaded”.
+- Root cause: CSP `script-src` blocked `checkout.razorpay.com`; UI label was hardcoded Mock.
+- Fix: allow Razorpay script/frame/connect in CSP; `NEXT_PUBLIC_PAYMENT_PROVIDER` for Online payment label (build arg); rebuild web.
+- Check: `next-csp.check`; web rebuild/redeploy.
+
+### Session — 2026-08-16 (Razorpay test mode)
+
+- **Override:** Phase 14; human selected Razorpay test mode before project completion.
+- Added Razorpay adapter/order creation, Checkout.js launch, server-side callback signature verification, signed webhook ingestion and idempotent fulfillment; mock remains the default.
+- Env keys: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`; keys are not stored in this file. Configure the Razorpay test webhook at `/api/v1/webhooks/payments/razorpay`.
+- Check: validation build; API and web typecheck; API signature check.
+
+### Session — 2026-08-16 (remove Google OAuth)
+
+- **Override:** Phase 14; human: Google Cloud pay/billing — remove Google OAuth.
+- Removed Nest `/auth/google/*`, link policy, login/register Google UI, done page, `GOOGLE_*` from `.env`/examples; drop migration `20260816183000_drop_oauth_identity`. Email/password JWT only.
+- Check: API `pnpm test` + api/web typecheck.
+
+### Session — 2026-08-16 (portal audit follow-up)
+
+- **Override:** Phase 14; follow-up from storefront/portal deep audit.
+- Fixed: AdminGate uses pathname-aware `loginUrl` (not hardcoded commerce); CMS preview → CMS portal; ops/editorial logout → portal login; CMS portal allows COMMERCE_ADMIN (API-aligned); CMS breadcrumbs Soft Gift CMS; sync-cms `/gift` hrefs; collection breadcrumb JSON-LD `/`; sitemap from live collections + `robotsIndex`/`canonicalPath`; CMS block read-time `/gift` rewrite; `/creator/login` robots disallow.
+- Check: web `pnpm test` + web/api typecheck.
+
+### Session — 2026-08-16 (root storefront + portal logins)
+
+- **Override:** Phase 14; human: storefront at `/`; nested portal logins; no `/gift` redirects.
+- Shipped: `(gift)/gift/*` → `(gift)/*`; deleted root directory page; portal-aware `loginUrl` + role-gated login pages (`/login`, `/admin/commerce|cms|editorial|platform/login`, `/creator/login`); `/gift` href hard-cut (static `/gift/media|nav|brands` kept); chrome read normalizes old `/gift` route hrefs. Env/migration: none (re-seed optional for clean CMS blocks).
+- Check: `auth-portals.check.ts` + web `pnpm test` + typecheck. Resume OPS-10 after smoke.
+
+### Session — 2026-08-16 (Google OAuth)
+
+- **Override:** Phase 14; Google OAuth shipped then **removed same day** (billing). See “remove Google OAuth” session.
 
 ### Session — 2026-08-16 (collection filter Apply)
 

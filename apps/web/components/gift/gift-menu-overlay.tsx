@@ -40,9 +40,9 @@ const PHOTO_POOL = [
 const TONES: TileTone[] = ['blush', 'sky', 'mint', 'lavender', 'soft'];
 
 const FEATURED_SHOP = new Set([
-  '/gift/build-your-box',
-  '/gift/collections/ready-hampers',
-  '/gift/hampers',
+  '/build-your-box',
+  '/collections/ready-hampers',
+  '/hampers',
 ]);
 
 function hashPick(s: string, n: number) {
@@ -52,7 +52,7 @@ function hashPick(s: string, n: number) {
 }
 
 function collectionSlug(href: string): string | null {
-  const m = href.match(/\/gift\/collections\/([^/?#]+)/);
+  const m = href.match(/\/collections\/([^/?#]+)/);
   return m?.[1] ?? null;
 }
 
@@ -80,7 +80,7 @@ const MENU_PHOTO: Record<string, TileLook> = {
 function lookFor(link: GiftNavLink): TileLook {
   const href = link.href;
   const label = link.label;
-  if (href.includes('/gift/build-your-box')) {
+  if (href.includes('/build-your-box')) {
     const base = MENU_PHOTO['build-your-box']!;
     return link.imageSrc ? { ...base, src: link.imageSrc } : base;
   }
@@ -459,7 +459,7 @@ export function GiftMenuOverlay({
             </>
           ) : (
             <Link
-              href="/login?next=/gift"
+              href="/login?next=/"
               className="clay-btn w-full justify-center"
               onClick={onClose}
             >

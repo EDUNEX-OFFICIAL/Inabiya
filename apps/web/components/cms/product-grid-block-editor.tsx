@@ -251,7 +251,7 @@ export function ProductGridBlockEditor({ props, onChange }: Props) {
           className="mt-1 block w-full rounded border px-2 py-1 font-mono text-xs"
           value={props.seeAllHref ?? ''}
           onChange={(e) => onChange('seeAllHref', e.target.value)}
-          placeholder="/gift/products"
+          placeholder="/products"
         />
       </label>
       <label className="block">

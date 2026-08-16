@@ -24,7 +24,7 @@ function AboutFallback() {
         thoughtful, and India-ready.
       </p>
       <div className="mt-gs-7 flex flex-wrap gap-gs-3">
-        <Link href="/gift" className="clay-btn">
+        <Link href="/" className="clay-btn">
           Shop gifts
         </Link>
         <Link href="/contact" className="clay-btn-secondary">

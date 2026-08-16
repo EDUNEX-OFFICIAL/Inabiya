@@ -49,7 +49,7 @@ export function ClayProductCard({
   const itemCount = product.hamperItemCount ?? hamperItems.reduce((s, i) => s + i.qty, 0);
   const brands = product.brandNames?.length ? product.brandNames : collectBrandNames(product);
   const labels = overlayLabels(product);
-  const href = `/gift/products/${product.slug}`;
+  const href = `/products/${product.slug}`;
   const ctaLabel = isHamper ? `Gift this · ${formatInr(product.fromPricePaise)}` : 'View details';
 
   async function quickAdd(e: MouseEvent) {

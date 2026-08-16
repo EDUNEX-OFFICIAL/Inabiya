@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiAuth, getStoredAccessToken } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { apiUrl } from '@/lib/api-base';
 import { formatInr } from '@/lib/creator';
 
@@ -37,7 +37,7 @@ export default function CampaignPublicPage({ params }: { params: { slug: string 
 
   async function propose() {
     if (!getStoredAccessToken()) {
-      router.push('/login');
+      router.push(loginUrl('/creator'));
       return;
     }
     if (!campaign) return;
