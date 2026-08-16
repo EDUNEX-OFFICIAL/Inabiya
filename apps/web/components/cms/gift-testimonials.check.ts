@@ -30,10 +30,7 @@ assert.match(
   /prefers-reduced-motion:\s*reduce[\s\S]*gift-testimonial-card--loop[\s\S]*display:\s*none/,
 );
 assert.doesNotMatch(slice, /#e8a317|#fff5f8|#f1faf5|#f1f7fb|#ffffff\b/);
-assert.doesNotMatch(
-  slice,
-  /font-size:\s*(1\.05rem|0\.875rem|0\.75rem|3\.25rem)/,
-);
+assert.doesNotMatch(slice, /font-size:\s*(1\.05rem|0\.875rem|0\.75rem|3\.25rem)/);
 assert.match(slice, /gift-testimonial-card__stars[\s\S]*color:\s*var\(--inabiya-yellow\)/);
 assert.match(slice, /gift-testimonial-card__quote[\s\S]*font-size:\s*var\(--text-body\)/);
 assert.match(slice, /gift-testimonial-card__author \{[\s\S]*font-size:\s*var\(--text-body\)/);

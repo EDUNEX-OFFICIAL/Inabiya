@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
 

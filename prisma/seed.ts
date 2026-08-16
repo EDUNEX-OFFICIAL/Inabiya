@@ -1596,8 +1596,7 @@ async function main() {
           },
           {
             question: 'Can I send gifts for a team?',
-            answerHtml:
-              '<p>Yes. Corporate and bulk orders start from Corporate gifting.</p>',
+            answerHtml: '<p>Yes. Corporate and bulk orders start from Corporate gifting.</p>',
           },
         ],
       },

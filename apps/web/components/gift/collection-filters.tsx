@@ -227,7 +227,10 @@ function DesktopSidebar({ collection, refine }: Props) {
   };
 
   return (
-    <aside className="hidden w-56 shrink-0 self-start md:block lg:w-64" aria-label="Collection filters">
+    <aside
+      className="hidden w-56 shrink-0 self-start md:block lg:w-64"
+      aria-label="Collection filters"
+    >
       <div className="sticky top-[calc(var(--gift-sticky-offset)+0.75rem)] flex max-h-[calc(100dvh-var(--gift-sticky-offset)-1.5rem)] flex-col overflow-hidden">
         <p className="gift-overline mb-gs-3 shrink-0">Filters</p>
         <div

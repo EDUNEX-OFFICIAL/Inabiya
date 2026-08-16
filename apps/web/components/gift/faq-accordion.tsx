@@ -54,11 +54,7 @@ export function FaqAccordion({
   ) : null;
 
   const list = (
-    <div
-      className={
-        home ? 'gift-faq__list' : title ? 'mt-gs-4 space-y-gs-3' : 'space-y-gs-3'
-      }
-    >
+    <div className={home ? 'gift-faq__list' : title ? 'mt-gs-4 space-y-gs-3' : 'space-y-gs-3'}>
       {items.map((item, i) => {
         const open = openIndex === i;
         const panelId = `${uid}-panel-${i}`;
@@ -108,13 +104,7 @@ export function FaqAccordion({
   return (
     <section
       id={id}
-      className={
-        className !== undefined
-          ? className
-          : home
-            ? 'gift-faq'
-            : 'max-w-3xl py-gs-2'
-      }
+      className={className !== undefined ? className : home ? 'gift-faq' : 'max-w-3xl py-gs-2'}
     >
       {heading}
       {list}
