@@ -91,17 +91,26 @@ export class CartService {
     private readonly coupons: CouponService,
   ) {}
 
-  private resolveGiftExtras(rawOptions: unknown, input?: GiftExtrasInput): GiftExtrasSnapshot | undefined {
+  private resolveGiftExtras(
+    rawOptions: unknown,
+    input?: GiftExtrasInput,
+  ): GiftExtrasSnapshot | undefined {
     if (!input) return undefined;
     const options = readGiftOptions(rawOptions);
     const out: GiftExtrasSnapshot = {};
     const note = input.note?.trim();
     if (note) {
       if (!options.note) {
-        throw new BadRequestException({ code: 'GIFT_NOTE_UNAVAILABLE', message: 'Gift notes are not available for this product.' });
+        throw new BadRequestException({
+          code: 'GIFT_NOTE_UNAVAILABLE',
+          message: 'Gift notes are not available for this product.',
+        });
       }
       if (note.length > options.note.maxLength) {
-        throw new BadRequestException({ code: 'GIFT_NOTE_TOO_LONG', message: `Gift note must be ${options.note.maxLength} characters or less.` });
+        throw new BadRequestException({
+          code: 'GIFT_NOTE_TOO_LONG',
+          message: `Gift note must be ${options.note.maxLength} characters or less.`,
+        });
       }
       out.note = { label: options.note.label, value: note, pricePaise: options.note.pricePaise };
     }
@@ -113,7 +122,10 @@ export class CartService {
       if (!id) continue;
       const choice = choices.find((candidate) => candidate.id === id);
       if (!choice) {
-        throw new BadRequestException({ code: 'INVALID_GIFT_OPTION', message: 'Selected gift option is no longer available.' });
+        throw new BadRequestException({
+          code: 'INVALID_GIFT_OPTION',
+          message: 'Selected gift option is no longer available.',
+        });
       }
       if (key === 'wrapId') out.wrap = choice;
       else out.ribbon = choice;
@@ -212,13 +224,18 @@ export class CartService {
       const fingerprint = giftLineFingerprint(personalization, giftExtras);
       const existing = existingItems.find(
         (item) =>
-          giftLineFingerprint(item.personalization, item.giftExtras as GiftExtrasSnapshot | null) ===
-          fingerprint,
+          giftLineFingerprint(
+            item.personalization,
+            item.giftExtras as GiftExtrasSnapshot | null,
+          ) === fingerprint,
       );
       if (existing) {
         const updated = await tx.cartItem.update({
           where: { id: existing.id },
-          data: { quantity: { increment: input.quantity }, extrasPaise: { increment: extrasPaise } },
+          data: {
+            quantity: { increment: input.quantity },
+            extrasPaise: { increment: extrasPaise },
+          },
         });
         addedItemId = updated.id;
       } else {
@@ -236,7 +253,10 @@ export class CartService {
       }
     });
 
-    return { ...(await this.getOrCreate(userId, cartDto.guestToken ?? guestToken)), lastItemId: addedItemId };
+    return {
+      ...(await this.getOrCreate(userId, cartDto.guestToken ?? guestToken)),
+      lastItemId: addedItemId,
+    };
   }
 
   async updateItem(

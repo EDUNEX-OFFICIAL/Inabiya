@@ -30,8 +30,12 @@ export function giftLineFingerprint(
 
 export function giftExtrasUnitPaise(extras: GiftExtrasSnapshotLike | null | undefined): number {
   if (!extras) return 0;
-  const note = Number.isInteger(extras.note?.pricePaise) ? Math.max(0, extras.note!.pricePaise!) : 0;
-  const wrap = Number.isInteger(extras.wrap?.pricePaise) ? Math.max(0, extras.wrap!.pricePaise!) : 0;
+  const note = Number.isInteger(extras.note?.pricePaise)
+    ? Math.max(0, extras.note!.pricePaise!)
+    : 0;
+  const wrap = Number.isInteger(extras.wrap?.pricePaise)
+    ? Math.max(0, extras.wrap!.pricePaise!)
+    : 0;
   const ribbon = Number.isInteger(extras.ribbon?.pricePaise)
     ? Math.max(0, extras.ribbon!.pricePaise!)
     : 0;

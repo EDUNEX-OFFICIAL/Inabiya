@@ -201,17 +201,61 @@ export default function NewProductPage() {
           <section className="clay-panel space-y-3 p-4">
             <h2 className="text-xs font-medium uppercase tracking-wide opacity-70">Gift extras</h2>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={giftNoteEnabled} onChange={(e) => setGiftNoteEnabled(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={giftNoteEnabled}
+                onChange={(e) => setGiftNoteEnabled(e.target.checked)}
+              />
               Offer a gift note
             </label>
             {giftNoteEnabled ? (
-              <label className="block text-sm">Gift note price (₹)<input className="clay-input" inputMode="decimal" value={giftNotePrice} onChange={(e) => setGiftNotePrice(e.target.value)} /></label>
+              <label className="block text-sm">
+                Gift note price (₹)
+                <input
+                  className="clay-input"
+                  inputMode="decimal"
+                  value={giftNotePrice}
+                  onChange={(e) => setGiftNotePrice(e.target.value)}
+                />
+              </label>
             ) : null}
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block text-sm">Wrap option<input className="clay-input" value={wrapLabel} onChange={(e) => setWrapLabel(e.target.value)} placeholder="e.g. Signature wrap" /></label>
-              <label className="block text-sm">Wrap price (₹)<input className="clay-input" inputMode="decimal" value={wrapPrice} onChange={(e) => setWrapPrice(e.target.value)} /></label>
-              <label className="block text-sm">Ribbon option<input className="clay-input" value={ribbonLabel} onChange={(e) => setRibbonLabel(e.target.value)} placeholder="e.g. Blush pink" /></label>
-              <label className="block text-sm">Ribbon price (₹)<input className="clay-input" inputMode="decimal" value={ribbonPrice} onChange={(e) => setRibbonPrice(e.target.value)} /></label>
+              <label className="block text-sm">
+                Wrap option
+                <input
+                  className="clay-input"
+                  value={wrapLabel}
+                  onChange={(e) => setWrapLabel(e.target.value)}
+                  placeholder="e.g. Signature wrap"
+                />
+              </label>
+              <label className="block text-sm">
+                Wrap price (₹)
+                <input
+                  className="clay-input"
+                  inputMode="decimal"
+                  value={wrapPrice}
+                  onChange={(e) => setWrapPrice(e.target.value)}
+                />
+              </label>
+              <label className="block text-sm">
+                Ribbon option
+                <input
+                  className="clay-input"
+                  value={ribbonLabel}
+                  onChange={(e) => setRibbonLabel(e.target.value)}
+                  placeholder="e.g. Blush pink"
+                />
+              </label>
+              <label className="block text-sm">
+                Ribbon price (₹)
+                <input
+                  className="clay-input"
+                  inputMode="decimal"
+                  value={ribbonPrice}
+                  onChange={(e) => setRibbonPrice(e.target.value)}
+                />
+              </label>
             </div>
           </section>
 

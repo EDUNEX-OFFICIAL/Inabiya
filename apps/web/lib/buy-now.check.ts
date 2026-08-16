@@ -12,13 +12,17 @@ assert.equal(parseBuyNowVariantId(` ${id} `), id);
 assert.equal(parseBuyNowVariantId('nope'), undefined);
 assert.equal(parseBuyNowVariantId(''), undefined);
 assert.equal(buyNowCheckoutPath(id), `/checkout?buyNow=${id}`);
-assert.equal(
-  buyNowCheckoutPath(id, itemId),
-  `/checkout?buyNow=${id}&buyNowItem=${itemId}`,
+assert.equal(buyNowCheckoutPath(id, itemId), `/checkout?buyNow=${id}&buyNowItem=${itemId}`);
+assert.deepEqual(
+  buyNowCartItems(
+    [
+      { id: 'a', variantId: id },
+      { id: 'b', variantId: 'other' },
+    ],
+    id,
+  ),
+  [{ id: 'a', variantId: id }],
 );
-assert.deepEqual(buyNowCartItems([{ id: 'a', variantId: id }, { id: 'b', variantId: 'other' }], id), [
-  { id: 'a', variantId: id },
-]);
 assert.deepEqual(
   buyNowCartItems(
     [

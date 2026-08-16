@@ -567,17 +567,30 @@ function CheckoutPageInner() {
               <h2 id="checkout-gift" className="gift-h2">
                 Gift
               </h2>
-              {displayCart.items.some((item) => item.giftExtras?.note || item.giftExtras?.wrap || item.giftExtras?.ribbon) ? (
+              {displayCart.items.some(
+                (item) => item.giftExtras?.note || item.giftExtras?.wrap || item.giftExtras?.ribbon,
+              ) ? (
                 <ul className="mt-gs-4 space-y-gs-3 text-body">
                   {displayCart.items.map((item) => {
                     const extras = item.giftExtras;
                     if (!extras?.note && !extras?.wrap && !extras?.ribbon) return null;
                     return (
-                      <li key={item.id} className="rounded-control border border-border-subtle px-gs-3 py-gs-2">
+                      <li
+                        key={item.id}
+                        className="rounded-control border border-border-subtle px-gs-3 py-gs-2"
+                      >
                         <p className="font-medium">{item.productTitle}</p>
-                        {extras.note ? <p className="mt-gs-1 opacity-75">{extras.note.label}: {extras.note.value}</p> : null}
-                        {extras.wrap ? <p className="mt-gs-1 opacity-75">Wrap: {extras.wrap.label}</p> : null}
-                        {extras.ribbon ? <p className="mt-gs-1 opacity-75">Ribbon: {extras.ribbon.label}</p> : null}
+                        {extras.note ? (
+                          <p className="mt-gs-1 opacity-75">
+                            {extras.note.label}: {extras.note.value}
+                          </p>
+                        ) : null}
+                        {extras.wrap ? (
+                          <p className="mt-gs-1 opacity-75">Wrap: {extras.wrap.label}</p>
+                        ) : null}
+                        {extras.ribbon ? (
+                          <p className="mt-gs-1 opacity-75">Ribbon: {extras.ribbon.label}</p>
+                        ) : null}
                       </li>
                     );
                   })}

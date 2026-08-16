@@ -313,9 +313,21 @@ function OrderDetailView({ params }: { params: { id: string } }) {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium leading-snug">{item.title}</p>
                   <p className="mt-gs-1 opacity-70">{item.label}</p>
-                  {item.giftExtras?.note ? <p className="mt-gs-1 text-caption opacity-70">{item.giftExtras.note.label}: {item.giftExtras.note.value}</p> : null}
-                  {item.giftExtras?.wrap ? <p className="mt-gs-1 text-caption opacity-70">Wrap: {item.giftExtras.wrap.label}</p> : null}
-                  {item.giftExtras?.ribbon ? <p className="mt-gs-1 text-caption opacity-70">Ribbon: {item.giftExtras.ribbon.label}</p> : null}
+                  {item.giftExtras?.note ? (
+                    <p className="mt-gs-1 text-caption opacity-70">
+                      {item.giftExtras.note.label}: {item.giftExtras.note.value}
+                    </p>
+                  ) : null}
+                  {item.giftExtras?.wrap ? (
+                    <p className="mt-gs-1 text-caption opacity-70">
+                      Wrap: {item.giftExtras.wrap.label}
+                    </p>
+                  ) : null}
+                  {item.giftExtras?.ribbon ? (
+                    <p className="mt-gs-1 text-caption opacity-70">
+                      Ribbon: {item.giftExtras.ribbon.label}
+                    </p>
+                  ) : null}
                 </div>
                 <p className="shrink-0 font-medium">{formatInr(item.lineTotalPaise)}</p>
               </li>

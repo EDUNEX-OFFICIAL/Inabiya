@@ -11,7 +11,9 @@ export type CatalogPersonalizationOpt = {
 
 function selectChoices(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
-  return raw.filter((v): v is string => typeof v === 'string' && v.trim().length > 0).map((v) => v.trim());
+  return raw
+    .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+    .map((v) => v.trim());
 }
 
 /** Validate shopper personalization against product catalog options. */

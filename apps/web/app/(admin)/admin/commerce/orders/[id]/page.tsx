@@ -513,7 +513,9 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                         </p>
                       ) : null}
                       {(i.extrasPaise ?? 0) > 0 ? (
-                        <p className="mt-1 font-medium">Extras total: {formatInr(i.extrasPaise!)}</p>
+                        <p className="mt-1 font-medium">
+                          Extras total: {formatInr(i.extrasPaise!)}
+                        </p>
                       ) : null}
                     </div>
                   ) : null}

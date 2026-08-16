@@ -495,8 +495,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     }
     if (
       personalization.some(
-        (row) =>
-          row.maxLength != null && (!Number.isInteger(row.maxLength) || row.maxLength <= 0),
+        (row) => row.maxLength != null && (!Number.isInteger(row.maxLength) || row.maxLength <= 0),
       )
     ) {
       setError('Personalization max length must be a whole number');
@@ -1277,7 +1276,10 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
         <Section id="personalization" title="Personalization">
           <ul className="space-y-3">
             {personalizationRows.map((row, i) => (
-              <li key={`pers-${i}`} className="grid gap-2 rounded-md border border-[var(--border-subtle)] p-3 sm:grid-cols-2">
+              <li
+                key={`pers-${i}`}
+                className="grid gap-2 rounded-md border border-[var(--border-subtle)] p-3 sm:grid-cols-2"
+              >
                 <label className="block text-xs">
                   Key
                   <input
@@ -1426,7 +1428,9 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
               className="clay-input mt-1 min-h-48 font-mono text-xs"
               value={giftOptionsJson}
               onChange={(e) => setGiftOptionsJson(e.target.value)}
-              placeholder={'{"note":{"enabled":true,"label":"Gift note","maxLength":300,"pricePaise":0},"wrap":[{"id":"signature-wrap","label":"Signature wrap","pricePaise":9900}],"ribbon":[{"id":"blush","label":"Blush pink","pricePaise":0}]}'}
+              placeholder={
+                '{"note":{"enabled":true,"label":"Gift note","maxLength":300,"pricePaise":0},"wrap":[{"id":"signature-wrap","label":"Signature wrap","pricePaise":9900}],"ribbon":[{"id":"blush","label":"Blush pink","pricePaise":0}]}'
+              }
             />
           </label>
         </Section>

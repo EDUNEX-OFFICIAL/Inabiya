@@ -124,7 +124,12 @@ export const productMediaInputSchema = z.object({
 const emptySeoToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
 
 const giftChoiceSchema = z.object({
-  id: z.string().trim().min(1).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9-]*[a-z0-9])?$/),
+  id: z
+    .string()
+    .trim()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9-]*[a-z0-9])?$/),
   label: z.string().trim().min(1).max(80),
   pricePaise: z.number().int().min(0).max(1_000_000).default(0),
 });

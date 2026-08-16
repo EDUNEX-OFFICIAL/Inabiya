@@ -619,11 +619,16 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 return (
                   <label key={kind} className="mt-gs-3 block text-body">
                     {kind === 'wrap' ? 'Wrap' : 'Ribbon'}
-                    <select className="clay-input mt-gs-1" value={selected} onChange={(e) => setSelected(e.target.value)}>
+                    <select
+                      className="clay-input mt-gs-1"
+                      value={selected}
+                      onChange={(e) => setSelected(e.target.value)}
+                    >
                       <option value="">No {kind}</option>
                       {choices.map((choice) => (
                         <option key={choice.id} value={choice.id}>
-                          {choice.label}{choice.pricePaise ? ` · ${formatInr(choice.pricePaise)}` : ' · Free'}
+                          {choice.label}
+                          {choice.pricePaise ? ` · ${formatInr(choice.pricePaise)}` : ' · Free'}
                         </option>
                       ))}
                     </select>
