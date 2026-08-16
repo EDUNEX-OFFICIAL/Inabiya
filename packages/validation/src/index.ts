@@ -1052,17 +1052,21 @@ export const razorpayPaymentVerifyBodySchema = z.object({
   razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/i),
 });
 
-export const razorpayWebhookBodySchema = z.object({
-  event: z.enum(['payment.captured', 'payment.failed']),
-  payload: z.object({
-    payment: z.object({
-      entity: z.object({
-        id: z.string().min(1).max(120),
-        notes: z.record(z.string()).optional(),
-      }).passthrough(),
+export const razorpayWebhookBodySchema = z
+  .object({
+    event: z.enum(['payment.captured', 'payment.failed']),
+    payload: z.object({
+      payment: z.object({
+        entity: z
+          .object({
+            id: z.string().min(1).max(120),
+            notes: z.record(z.string()).optional(),
+          })
+          .passthrough(),
+      }),
     }),
-  }),
-}).passthrough();
+  })
+  .passthrough();
 
 export type AddressBody = z.infer<typeof addressBodySchema>;
 export type CheckoutPlaceOrderBody = z.infer<typeof checkoutPlaceOrderBodySchema>;
@@ -1270,6 +1274,29 @@ export const pdpTrustCueSchema = z.object({
 
 export const pdpTrustCuesSchema = z.array(pdpTrustCueSchema).min(1).max(6);
 
+export const invoiceLegalProfileSchema = z.object({
+  legalName: z.string().trim().min(1).max(160),
+  addressLine1: z.string().trim().min(1).max(160),
+  addressLine2: z.string().trim().max(160).optional(),
+  city: z.string().trim().min(1).max(80),
+  state: z.string().trim().min(1).max(80),
+  stateCode: z
+    .string()
+    .trim()
+    .regex(/^\d{2}$/),
+  postalCode: z.string().trim().min(4).max(12),
+  gstin: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[0-9A-Z]{15}$/),
+  email: z.string().trim().email().max(160),
+  defaultHsn: z
+    .string()
+    .trim()
+    .regex(/^\d{4,8}$/),
+});
+
 export const commercePolicyBodySchema = z
   .object({
     returnWindowDays: z.number().int().min(1).max(365).optional(),
@@ -1277,6 +1304,7 @@ export const commercePolicyBodySchema = z
     shippingDisplayCopy: z.string().trim().min(1).max(500).optional(),
     dashboardAlertPrefs: dashboardAlertPrefsSchema.optional(),
     trustCues: pdpTrustCuesSchema.optional(),
+    invoiceLegalProfile: invoiceLegalProfileSchema.optional(),
   })
   .superRefine((v, ctx) => {
     if (
@@ -1284,7 +1312,8 @@ export const commercePolicyBodySchema = z
       v.lowStockThreshold == null &&
       v.shippingDisplayCopy == null &&
       v.dashboardAlertPrefs == null &&
-      v.trustCues == null
+      v.trustCues == null &&
+      v.invoiceLegalProfile == null
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -1308,6 +1337,7 @@ export const adminAuditQuerySchema = z.object({
 export type CommercePolicyBody = z.infer<typeof commercePolicyBodySchema>;
 export type DashboardAlertPrefs = z.infer<typeof dashboardAlertPrefsSchema>;
 export type PdpTrustCue = z.infer<typeof pdpTrustCueSchema>;
+export type InvoiceLegalProfile = z.infer<typeof invoiceLegalProfileSchema>;
 export type AdminAuditQuery = z.infer<typeof adminAuditQuerySchema>;
 
 export type CreateReturnBody = z.infer<typeof createReturnBodySchema>;

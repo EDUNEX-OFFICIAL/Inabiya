@@ -22,6 +22,20 @@ type Policy = {
     lowStock: boolean;
   };
   trustCues: TrustCueRow[];
+  invoiceLegalProfile: InvoiceLegalProfile;
+};
+
+type InvoiceLegalProfile = {
+  legalName: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  stateCode: string;
+  postalCode: string;
+  gstin: string;
+  email: string;
+  defaultHsn: string;
 };
 
 type TrustCueRow = {
@@ -86,6 +100,18 @@ const DEFAULT_TRUST_CUES: TrustCueRow[] = [
   },
 ];
 
+const DEFAULT_INVOICE_LEGAL_PROFILE: InvoiceLegalProfile = {
+  legalName: 'Inabiya Gifts Private Limited (Demo)',
+  addressLine1: 'Unit 101, Demo Business Centre',
+  city: 'New Delhi',
+  state: 'Delhi',
+  stateCode: '07',
+  postalCode: '110001',
+  gstin: '07AAAAA0000A1Z5',
+  email: 'hello@inabiya.in',
+  defaultHsn: '9999',
+};
+
 const TRUST_ICON_OPTIONS: Array<{ value: TrustCueRow['icon']; label: string }> = [
   { value: 'lock', label: 'Lock' },
   { value: 'returns', label: 'Returns' },
@@ -103,6 +129,9 @@ function SettingsInner() {
   const [shippingCopy, setShippingCopy] = useState('');
   const [alertPrefs, setAlertPrefs] = useState(DEFAULT_ALERT_PREFS);
   const [trustCues, setTrustCues] = useState<TrustCueRow[]>(DEFAULT_TRUST_CUES);
+  const [legalProfile, setLegalProfile] = useState<InvoiceLegalProfile>(
+    DEFAULT_INVOICE_LEGAL_PROFILE,
+  );
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -129,6 +158,7 @@ function SettingsInner() {
           ? p.trustCues.map((c) => ({ ...c }))
           : DEFAULT_TRUST_CUES.map((c) => ({ ...c })),
       );
+      setLegalProfile(p.invoiceLegalProfile ?? DEFAULT_INVOICE_LEGAL_PROFILE);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load policy');
     } finally {
@@ -192,6 +222,40 @@ function SettingsInner() {
       setPolicy(updated);
       setAlertPrefs(updated.dashboardAlertPrefs ?? DEFAULT_ALERT_PREFS);
       setMsg('Policy saved');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onSaveLegalProfile(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    setMsg(null);
+    try {
+      const updated = await apiAuth<Policy>('/admin/commerce/policy', {
+        method: 'POST',
+        json: {
+          invoiceLegalProfile: {
+            ...legalProfile,
+            legalName: legalProfile.legalName.trim(),
+            addressLine1: legalProfile.addressLine1.trim(),
+            addressLine2: legalProfile.addressLine2?.trim() || undefined,
+            city: legalProfile.city.trim(),
+            state: legalProfile.state.trim(),
+            stateCode: legalProfile.stateCode.trim(),
+            postalCode: legalProfile.postalCode.trim(),
+            gstin: legalProfile.gstin.trim().toUpperCase(),
+            email: legalProfile.email.trim(),
+            defaultHsn: legalProfile.defaultHsn.trim(),
+          },
+        },
+      });
+      setPolicy(updated);
+      setLegalProfile(updated.invoiceLegalProfile);
+      setMsg('Invoice legal details saved');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -326,6 +390,49 @@ function SettingsInner() {
                 disabled={busy}
               >
                 Save policy
+              </button>
+            </form>
+
+            <form
+              onSubmit={(e) => void onSaveLegalProfile(e)}
+              className="clay-panel space-y-3 p-4 text-sm"
+            >
+              <h2 className="font-display text-lg leading-tight">Invoice legal details</h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    ['legalName', 'Legal business name'],
+                    ['gstin', 'GSTIN'],
+                    ['defaultHsn', 'Default HSN'],
+                    ['email', 'Invoice email'],
+                    ['addressLine1', 'Address line 1'],
+                    ['addressLine2', 'Address line 2'],
+                    ['city', 'City'],
+                    ['state', 'State'],
+                    ['stateCode', 'State code'],
+                    ['postalCode', 'PIN code'],
+                  ] as Array<[keyof InvoiceLegalProfile, string]>
+                ).map(([key, label]) => (
+                  <label key={key} className="block text-xs">
+                    {label}
+                    <input
+                      className="clay-input mt-1 block min-h-10 w-full text-sm"
+                      value={legalProfile[key] ?? ''}
+                      maxLength={key === 'legalName' ? 160 : 80}
+                      onChange={(e) =>
+                        setLegalProfile((current) => ({ ...current, [key]: e.target.value }))
+                      }
+                      required={key !== 'addressLine2'}
+                    />
+                  </label>
+                ))}
+              </div>
+              <button
+                type="submit"
+                className="clay-btn text-sm disabled:opacity-50"
+                disabled={busy}
+              >
+                Save legal details
               </button>
             </form>
 

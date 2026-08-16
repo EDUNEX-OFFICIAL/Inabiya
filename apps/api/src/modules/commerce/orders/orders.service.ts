@@ -4,6 +4,11 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { PaymentsService } from '../../../infrastructure/payments/payments.service';
 import { AuditService } from '../../audit/audit.service';
 import {
+  asInvoiceLegalProfile,
+  DEFAULT_INVOICE_LEGAL_PROFILE,
+  INVOICE_LEGAL_PROFILE_KEY,
+} from '../ops/commerce-policy.service';
+import {
   asInvoiceAddress,
   isInvoiceEligible,
   renderInvoicePdf,
@@ -171,6 +176,9 @@ export class OrdersService {
     const payment = order.payments.find(
       (p) => p.status === PaymentStatus.CAPTURED || p.status === PaymentStatus.REFUNDED,
     );
+    const legalSetting = await this.prisma.commerceSetting.findUnique({
+      where: { key: INVOICE_LEGAL_PROFILE_KEY },
+    });
     const input: InvoiceInput = {
       invoiceNumber: `INV-${order.orderNumber}`,
       orderNumber: order.orderNumber,
@@ -198,6 +206,7 @@ export class OrdersService {
       couponCode: order.couponCode,
       paymentProvider: payment?.provider ?? order.payments[0]?.provider ?? null,
       paymentStatus: payment?.status ?? order.payments[0]?.status ?? null,
+      legalProfile: asInvoiceLegalProfile(legalSetting?.value ?? DEFAULT_INVOICE_LEGAL_PROFILE),
     };
 
     // Idempotent create — concurrent first reads may race; unique orderId wins.
@@ -777,5 +786,6 @@ function deserializeInvoiceSnapshot(raw: unknown, fallbackNumber: string): Invoi
     couponCode: typeof o.couponCode === 'string' ? o.couponCode : null,
     paymentProvider: typeof o.paymentProvider === 'string' ? o.paymentProvider : null,
     paymentStatus: typeof o.paymentStatus === 'string' ? o.paymentStatus : null,
+    legalProfile: asInvoiceLegalProfile(o.legalProfile ?? DEFAULT_INVOICE_LEGAL_PROFILE),
   };
 }

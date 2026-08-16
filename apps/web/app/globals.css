@@ -5915,3 +5915,578 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
     display: none !important;
   }
 }
+
+/* Commerce Ops packing slip — print-only document */
+[data-theme='gift'][data-density='compact'] .packing-slip {
+  color: var(--foreground, #2d2430);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__accent {
+  height: 0.35rem;
+  margin: 0 0 1rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--primary, #ff6b9d),
+    var(--inabiya-yellow, #f5c542),
+    var(--inabiya-mint, #7dcea0)
+  );
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-subtle, #eee6ea);
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__tagline {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  opacity: 0.55;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__title-block {
+  text-align: right;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__title {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--primary, #ff6b9d);
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__order-number {
+  margin-top: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__printed {
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  opacity: 0.55;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle, #eee6ea);
+  border-radius: 0.65rem;
+  background: var(--border-subtle, #eee6ea);
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__meta > div {
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  background: #fff;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__meta dt {
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__meta dd {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__parties {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__party {
+  min-height: 6.5rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--border-subtle, #eee6ea);
+  border-radius: 0.65rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__party--ship {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--primary, #ff6b9d) 10%, transparent),
+      transparent 55%
+    ),
+    var(--surface-soft, #faf6f8);
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__party h2 {
+  margin: 0 0 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary, #ff6b9d);
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__party p {
+  margin: 0;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__party-name {
+  font-weight: 600;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__tracking {
+  margin-top: 0.55rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed var(--border-subtle, #eee6ea);
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__items {
+  width: 100%;
+  margin-top: 1.15rem;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__items th {
+  padding: 0.55rem 0.5rem;
+  border-top: 1px solid var(--border-subtle, #eee6ea);
+  border-bottom: 1px solid var(--border-subtle, #eee6ea);
+  background: var(--surface-soft, #faf6f8);
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__items td {
+  padding: 0.7rem 0.5rem;
+  border-bottom: 1px solid var(--border-subtle, #eee6ea);
+  vertical-align: top;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__col-qty {
+  width: 3rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__col-sku {
+  width: 7rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__col-check {
+  width: 2.25rem;
+  text-align: center;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__check-box {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid color-mix(in srgb, var(--foreground, #2d2430) 35%, transparent);
+  border-radius: 0.2rem;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__item-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__item-title span {
+  font-weight: 400;
+  opacity: 0.55;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__item-notes {
+  margin: 0.35rem 0 0;
+  padding-left: 1rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  opacity: 0.75;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__gift {
+  margin-top: 1rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--primary, #ff6b9d) 25%, transparent);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--primary, #ff6b9d) 7%, transparent);
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__gift-flag {
+  margin: 0 0 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary, #ff6b9d);
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__gift h2 {
+  margin: 0 0 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__gift p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__footer {
+  margin-top: 1.25rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-subtle, #eee6ea);
+  font-size: 0.72rem;
+  opacity: 0.5;
+}
+
+@media print {
+  html.ops-shell-lock,
+  html.ops-shell-lock body {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  [data-theme='gift'][data-density='compact'] .ops-shell,
+  [data-theme='gift'][data-density='compact'] .ops-main-scroll {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  [data-theme='gift'][data-density='compact'] .ops-aside,
+  [data-theme='gift'][data-density='compact'] .ops-shell > div > header {
+    display: none !important;
+  }
+
+  [data-theme='gift'][data-density='compact'] .packing-slip {
+    display: block !important;
+  }
+
+  [data-theme='gift'][data-density='compact'] .packing-slip__parties,
+  [data-theme='gift'][data-density='compact'] .packing-slip__items tr,
+  [data-theme='gift'][data-density='compact'] .packing-slip__gift {
+    break-inside: avoid;
+  }
+
+  [data-theme='gift'][data-density='compact'] .print\:hidden {
+    display: none !important;
+  }
+}
+
+/* Plain statutory sample invoice — replace demo fiscal data before production use. */
+[data-theme='gift'] .invoice-legal {
+  color: #111;
+  border: 1px solid #111;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+[data-theme='gift'] .invoice-sample-banner {
+  margin: 0;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid #111;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+[data-theme='gift'] .invoice-legal__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  padding: 0.8rem;
+  border-bottom: 1px solid #111;
+}
+
+[data-theme='gift'] .invoice-legal__header p {
+  margin: 0;
+}
+
+[data-theme='gift'] .invoice-legal__supplier {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+[data-theme='gift'] .invoice-legal__title {
+  min-width: 11rem;
+  text-align: right;
+}
+
+[data-theme='gift'] .invoice-legal__title h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+[data-theme='gift'] .invoice-legal__title p {
+  font-size: 0.7rem;
+}
+
+[data-theme='gift'] .invoice-legal__meta,
+[data-theme='gift'] .invoice-legal__items {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+[data-theme='gift'] .invoice-legal__meta th,
+[data-theme='gift'] .invoice-legal__meta td {
+  width: 25%;
+  padding: 0.42rem 0.55rem;
+  border-right: 1px solid #111;
+  border-bottom: 1px solid #111;
+  text-align: left;
+  vertical-align: top;
+}
+
+[data-theme='gift'] .invoice-legal__meta th {
+  font-weight: 700;
+}
+
+[data-theme='gift'] .invoice-legal__meta td:last-child {
+  border-right: 0;
+}
+
+[data-theme='gift'] .invoice-legal__parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid #111;
+}
+
+[data-theme='gift'] .invoice-legal__parties section {
+  min-height: 8rem;
+  padding: 0.65rem 0.75rem;
+}
+
+[data-theme='gift'] .invoice-legal__parties section:first-child {
+  border-right: 1px solid #111;
+}
+
+[data-theme='gift'] .invoice-legal__parties h2 {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+[data-theme='gift'] .invoice-legal__parties p {
+  margin: 0;
+}
+
+[data-theme='gift'] .invoice-legal__table-wrap {
+  overflow-x: auto;
+}
+
+[data-theme='gift'] .invoice-legal__items {
+  min-width: 680px;
+}
+
+[data-theme='gift'] .invoice-legal__items th,
+[data-theme='gift'] .invoice-legal__items td {
+  padding: 0.48rem 0.4rem;
+  border-right: 1px solid #111;
+  border-bottom: 1px solid #111;
+  text-align: left;
+  vertical-align: top;
+}
+
+[data-theme='gift'] .invoice-legal__items th {
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+[data-theme='gift'] .invoice-legal__items th:last-child,
+[data-theme='gift'] .invoice-legal__items td:last-child {
+  border-right: 0;
+}
+
+[data-theme='gift'] .invoice-legal .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+[data-theme='gift'] .invoice-legal__summary {
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid #111;
+}
+
+[data-theme='gift'] .invoice-legal__summary table {
+  width: min(100%, 22rem);
+  border-collapse: collapse;
+  border-left: 1px solid #111;
+}
+
+[data-theme='gift'] .invoice-legal__summary th,
+[data-theme='gift'] .invoice-legal__summary td {
+  padding: 0.35rem 0.55rem;
+  text-align: right;
+}
+
+[data-theme='gift'] .invoice-legal__summary th {
+  font-weight: 400;
+}
+
+[data-theme='gift'] .invoice-legal__grand th,
+[data-theme='gift'] .invoice-legal__grand td {
+  border-top: 1px solid #111;
+  font-weight: 700;
+}
+
+[data-theme='gift'] .invoice-legal__declaration {
+  display: grid;
+  grid-template-columns: 1fr 17rem;
+  min-height: 7rem;
+  border-bottom: 1px solid #111;
+}
+
+[data-theme='gift'] .invoice-legal__declaration > div {
+  padding: 0.65rem 0.75rem;
+}
+
+[data-theme='gift'] .invoice-legal__signature {
+  border-left: 1px solid #111;
+  text-align: center;
+}
+
+[data-theme='gift'] .invoice-legal__signature div {
+  height: 2.8rem;
+}
+
+[data-theme='gift'] .invoice-legal__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.68rem;
+}
+
+/* Packing slip is an internal fulfilment document, not a tax invoice. */
+[data-theme='gift'][data-density='compact'] .packing-slip {
+  color: #111;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__accent {
+  display: none;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__header,
+[data-theme='gift'][data-density='compact'] .packing-slip__meta,
+[data-theme='gift'][data-density='compact'] .packing-slip__parties,
+[data-theme='gift'][data-density='compact'] .packing-slip__items,
+[data-theme='gift'][data-density='compact'] .packing-slip__gift,
+[data-theme='gift'][data-density='compact'] .packing-slip__footer {
+  border-color: #111;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__title,
+[data-theme='gift'][data-density='compact'] .packing-slip__party h2,
+[data-theme='gift'][data-density='compact'] .packing-slip__gift-flag {
+  color: #111;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__document-type {
+  margin: 0.2rem 0 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__meta,
+[data-theme='gift'][data-density='compact'] .packing-slip__party,
+[data-theme='gift'][data-density='compact'] .packing-slip__gift {
+  border-radius: 0;
+  background: #fff;
+}
+
+[data-theme='gift'][data-density='compact'] .packing-slip__meta > div,
+[data-theme='gift'][data-density='compact'] .packing-slip__items th {
+  background: #fff;
+}
+
+@media (max-width: 639px) {
+  [data-theme='gift'] .invoice-legal__header,
+  [data-theme='gift'] .invoice-legal__parties,
+  [data-theme='gift'] .invoice-legal__declaration {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='gift'] .invoice-legal__title {
+    text-align: left;
+  }
+
+  [data-theme='gift'] .invoice-legal__parties section:first-child,
+  [data-theme='gift'] .invoice-legal__signature {
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 1px solid #111;
+  }
+}
+
+@media print {
+  [data-theme='gift'] .invoice-legal {
+    border: 1px solid #000 !important;
+    font-size: 9pt;
+  }
+
+  [data-theme='gift'] .invoice-legal__table-wrap {
+    overflow: visible;
+  }
+
+  [data-theme='gift'] .invoice-legal__items {
+    min-width: 0;
+  }
+
+  [data-theme='gift'] .invoice-legal__header,
+  [data-theme='gift'] .invoice-legal__parties,
+  [data-theme='gift'] .invoice-legal__declaration {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  [data-theme='gift'] .invoice-legal__declaration {
+    grid-template-columns: 1fr 17rem;
+  }
+
+  [data-theme='gift'] .invoice-legal__items tr,
+  [data-theme='gift'] .invoice-legal__parties,
+  [data-theme='gift'] .invoice-legal__summary,
+  [data-theme='gift'] .invoice-legal__declaration {
+    break-inside: avoid;
+  }
+}

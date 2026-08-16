@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import type { InvoiceLegalProfile } from '@inabiya/validation';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 
@@ -8,6 +9,7 @@ const LOW_STOCK_KEY = 'policy.low_stock_threshold';
 const SHIPPING_COPY_KEY = 'policy.shipping_display_copy';
 const ALERT_PREFS_KEY = 'policy.dashboard_alert_prefs';
 const TRUST_CUES_KEY = 'pdp.trust_cues';
+export const INVOICE_LEGAL_PROFILE_KEY = 'invoice.legal_profile';
 
 export const DEFAULT_RETURN_WINDOW_DAYS = 14;
 export const DEFAULT_LOW_STOCK_THRESHOLD = 5;
@@ -48,6 +50,18 @@ export const DEFAULT_TRUST_CUES: PdpTrustCue[] = [
   },
 ];
 
+export const DEFAULT_INVOICE_LEGAL_PROFILE: InvoiceLegalProfile = {
+  legalName: 'Inabiya Gifts Private Limited (Demo)',
+  addressLine1: 'Unit 101, Demo Business Centre',
+  city: 'New Delhi',
+  state: 'Delhi',
+  stateCode: '07',
+  postalCode: '110001',
+  gstin: '07AAAAA0000A1Z5',
+  email: 'hello@inabiya.in',
+  defaultHsn: '9999',
+};
+
 export type ReturnPolicy = {
   windowDays: number;
 };
@@ -66,6 +80,7 @@ export type CommercePolicy = {
   shippingDisplayCopy: string;
   dashboardAlertPrefs: DashboardAlertPrefs;
   trustCues: PdpTrustCue[];
+  invoiceLegalProfile: InvoiceLegalProfile;
 };
 
 function asPositiveInt(raw: unknown, fallback: number, min: number, max: number): number {
@@ -119,6 +134,43 @@ function asTrustCues(raw: unknown): PdpTrustCue[] {
   return parsed.length > 0 ? parsed : DEFAULT_TRUST_CUES.map((c) => ({ ...c }));
 }
 
+export function asInvoiceLegalProfile(raw: unknown): InvoiceLegalProfile {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ...DEFAULT_INVOICE_LEGAL_PROFILE };
+  }
+  const o = raw as Record<string, unknown>;
+  const str = (key: string, fallback = '') =>
+    typeof o[key] === 'string' ? o[key].trim() : fallback;
+  const stateCode = str('stateCode');
+  const gstin = str('gstin').toUpperCase();
+  const defaultHsn = str('defaultHsn');
+  if (
+    !str('legalName') ||
+    !str('addressLine1') ||
+    !str('city') ||
+    !str('state') ||
+    !/^\d{2}$/.test(stateCode) ||
+    !str('postalCode') ||
+    !/^[0-9A-Z]{15}$/.test(gstin) ||
+    !str('email') ||
+    !/^\d{4,8}$/.test(defaultHsn)
+  ) {
+    return { ...DEFAULT_INVOICE_LEGAL_PROFILE };
+  }
+  return {
+    legalName: str('legalName'),
+    addressLine1: str('addressLine1'),
+    ...(str('addressLine2') ? { addressLine2: str('addressLine2') } : {}),
+    city: str('city'),
+    state: str('state'),
+    stateCode,
+    postalCode: str('postalCode'),
+    gstin,
+    email: str('email'),
+    defaultHsn,
+  };
+}
+
 @Injectable()
 export class CommercePolicyService {
   constructor(
@@ -146,6 +198,7 @@ export class CommercePolicyService {
             SHIPPING_COPY_KEY,
             ALERT_PREFS_KEY,
             TRUST_CUES_KEY,
+            INVOICE_LEGAL_PROFILE_KEY,
           ],
         },
       },
@@ -167,6 +220,7 @@ export class CommercePolicyService {
       shippingDisplayCopy: asString(map.get(SHIPPING_COPY_KEY), DEFAULT_SHIPPING_DISPLAY_COPY),
       dashboardAlertPrefs: asAlertPrefs(map.get(ALERT_PREFS_KEY)),
       trustCues: asTrustCues(map.get(TRUST_CUES_KEY)),
+      invoiceLegalProfile: asInvoiceLegalProfile(map.get(INVOICE_LEGAL_PROFILE_KEY)),
     };
   }
 
@@ -195,6 +249,7 @@ export class CommercePolicyService {
       shippingDisplayCopy?: string;
       dashboardAlertPrefs?: DashboardAlertPrefs;
       trustCues?: PdpTrustCue[];
+      invoiceLegalProfile?: InvoiceLegalProfile;
     },
     actorId?: string,
     requestId?: string,
@@ -204,7 +259,8 @@ export class CommercePolicyService {
       input.lowStockThreshold == null &&
       input.shippingDisplayCopy == null &&
       input.dashboardAlertPrefs == null &&
-      input.trustCues == null
+      input.trustCues == null &&
+      input.invoiceLegalProfile == null
     ) {
       throw new BadRequestException({
         code: 'EMPTY_POLICY',
@@ -217,6 +273,7 @@ export class CommercePolicyService {
       ...before,
       dashboardAlertPrefs: { ...before.dashboardAlertPrefs },
       trustCues: before.trustCues.map((c) => ({ ...c })),
+      invoiceLegalProfile: { ...before.invoiceLegalProfile },
     };
 
     if (input.returnWindowDays != null) {
@@ -291,6 +348,20 @@ export class CommercePolicyService {
         },
         update: {
           value: next.trustCues as unknown as Prisma.InputJsonValue,
+        },
+      });
+    }
+
+    if (input.invoiceLegalProfile != null) {
+      next.invoiceLegalProfile = asInvoiceLegalProfile(input.invoiceLegalProfile);
+      await this.prisma.commerceSetting.upsert({
+        where: { key: INVOICE_LEGAL_PROFILE_KEY },
+        create: {
+          key: INVOICE_LEGAL_PROFILE_KEY,
+          value: next.invoiceLegalProfile as unknown as Prisma.InputJsonValue,
+        },
+        update: {
+          value: next.invoiceLegalProfile as unknown as Prisma.InputJsonValue,
         },
       });
     }

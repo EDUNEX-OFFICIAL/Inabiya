@@ -1,5 +1,11 @@
 import assert from 'node:assert/strict';
-import { isInvoiceEligible, toInvoicePreviewDto, type InvoiceInput } from './order-invoice';
+import {
+  isInvoiceEligible,
+  sampleInvoiceNumber,
+  toInvoicePreviewDto,
+  type InvoiceInput,
+} from './order-invoice';
+import { DEFAULT_INVOICE_LEGAL_PROFILE } from '../ops/commerce-policy.service';
 
 const sample: InvoiceInput = {
   invoiceNumber: 'INV-TEST-1',
@@ -30,6 +36,7 @@ const sample: InvoiceInput = {
   couponCode: null,
   paymentProvider: 'mock',
   paymentStatus: 'CAPTURED',
+  legalProfile: DEFAULT_INVOICE_LEGAL_PROFILE,
 };
 
 assert.equal(
@@ -41,4 +48,6 @@ const dto = toInvoicePreviewDto(sample);
 assert.equal(dto.invoiceNumber, 'INV-TEST-1');
 assert.equal(dto.totalPaise, 129900);
 assert.equal(typeof dto.issuedAt, 'string');
+assert.equal(sampleInvoiceNumber('INB-MSVTZMUO-FX6N'), 'SMP/26/TZMUOFX6N');
+assert.ok(sampleInvoiceNumber('INB-MSVTZMUO-FX6N').length <= 16);
 console.log('order-invoice check ok');

@@ -518,9 +518,9 @@ export function CommerceOpsShell({ children }: Props) {
   }
 
   return (
-    <div className="ops-shell flex h-[100dvh] max-h-[100dvh] overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+    <div className="ops-shell flex h-[100dvh] max-h-[100dvh] overflow-hidden bg-[var(--background)] text-[var(--foreground)] print:h-auto print:max-h-none print:overflow-visible">
       <aside
-        className={`ops-aside hidden h-full shrink-0 overflow-hidden border-r border-[var(--border-subtle)] bg-[var(--surface)] md:flex md:flex-col ${
+        className={`ops-aside hidden h-full shrink-0 overflow-hidden border-r border-[var(--border-subtle)] bg-[var(--surface)] print:hidden md:flex md:flex-col ${
           sidebarCollapsed ? 'ops-aside--collapsed' : 'ops-aside--expanded'
         }`}
       >
@@ -528,7 +528,7 @@ export function CommerceOpsShell({ children }: Props) {
       </aside>
 
       {mobileNav ? (
-        <div className="fixed inset-0 z-40 md:hidden" role="presentation">
+        <div className="fixed inset-0 z-40 print:hidden md:hidden" role="presentation">
           <button
             type="button"
             className="absolute inset-0 bg-black/40"
@@ -541,8 +541,8 @@ export function CommerceOpsShell({ children }: Props) {
         </div>
       ) : null}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="z-30 shrink-0 border-b border-[var(--border-subtle)] bg-[var(--surface)]/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
+        <header className="z-30 shrink-0 border-b border-[var(--border-subtle)] bg-[var(--surface)]/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm print:hidden">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-3 py-2 sm:px-4">
             <div className="flex min-w-0 items-center gap-2">
               {/* Plain button — clay-btn-ghost forces display:inline-flex and breaks md:hidden */}
@@ -675,13 +675,13 @@ export function CommerceOpsShell({ children }: Props) {
           </div>
         </header>
 
-        <main className="ops-main-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-5 sm:py-5">
+        <main className="ops-main-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] print:overflow-visible print:p-0 sm:px-5 sm:py-5">
           {children}
         </main>
       </div>
 
       {paletteOpen ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-start sm:p-4 sm:pt-[12vh]">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 print:hidden sm:items-start sm:p-4 sm:pt-[12vh]">
           <div
             role="dialog"
             aria-modal="true"
@@ -743,7 +743,7 @@ export function CommerceOpsShell({ children }: Props) {
       ) : null}
 
       {helpOpen ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-start sm:p-4 sm:pt-[12vh]">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 print:hidden sm:items-start sm:p-4 sm:pt-[12vh]">
           <div
             role="dialog"
             aria-modal="true"

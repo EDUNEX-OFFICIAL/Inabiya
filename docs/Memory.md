@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 16, 2026 (invoice visual polish)
+Last Updated: August 16, 2026 (invoice legal profile settings)
 
 ---
 
@@ -1197,6 +1197,30 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-16 (invoice legal profile settings)
+
+- **Override:** Phase 14; human requested editable legal data for invoice issuance.
+- Commerce Ops → Settings now saves legal business name, address, state/code, GSTIN, email, and default HSN through Zod-validated, Commerce Admin/Super Admin-only policy API with audit logging.
+- New invoice snapshots retain the legal profile used at issuance; historic snapshots retain their original/demo profile for consistency. Env/migration: none.
+- Check: validation build, API/web typecheck, invoice helper check.
+
+### Session — 2026-08-16 (plain statutory sample documents)
+
+- **Override:** Phase 14; human requested legal-style documents with temporary demo fiscal data and no decorative design.
+- Customer browser invoice + downloaded PDF now use a plain black/white Rule 46-style structure: supplier/GSTIN, ≤16-char sample invoice number, recipient/ship-to, HSN/unit/quantity/value, place of supply, tax split, reverse charge, declaration/signatory.
+- Demo fiscal fields are visibly marked **SAMPLE — NOT VALID FOR TAX OR ACCOUNTING**; they must be replaced by verified legal supplier, HSN and tax configuration before real issuance.
+- Packing slip is plain black/white and explicitly **NOT A TAX INVOICE**; ops chrome stays hidden in print.
+- Check: API/web typecheck, invoice helper check, edited-file lint, `git diff --check`. Env/migration: none.
+- **Live:** `deploy-vps.sh web api` — no pending migrations; health/ready 200.
+
+### Session — 2026-08-16 (packing slip print polish)
+
+- **Override:** Phase 14; human: Commerce Ops order Print packing slip was bare + leaked ops chrome (nav/search/SA).
+- Redesigned print-only packing slip (brand, meta, ship/customer, qty/SKU/check table, gift extras + personalization).
+- Ops shell: hide aside/header/overlays on print; unlock scroll height for print. Env/migration: none.
+- Check: web typecheck.
+- **Live:** `deploy-vps.sh web` — health/ready OK. Hard-refresh order detail → Print.
 
 ### Session — 2026-08-16 (push pending local work)
 

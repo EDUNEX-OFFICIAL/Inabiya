@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Printer, RefreshCw } from 'lucide-react';
+import { BrandLogo } from '@/components/brand-logo';
 import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { formatInr } from '@/lib/catalog';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
@@ -155,10 +156,29 @@ function paymentTone(status: string): string {
 }
 
 function shippingMethodLabel(method: string): string {
-  if (method === 'STANDARD') return 'Standard';
-  if (method === 'EXPRESS') return 'Express';
-  return method;
+  const map: Record<string, string> = {
+    STANDARD: 'Standard delivery',
+    EXPRESS: 'Express delivery',
+    PRIORITY: 'Priority delivery',
+  };
+  return map[method] ?? method.replaceAll('_', ' ');
 }
+
+function formatPersonalization(value: unknown): string[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+  return Object.entries(value as Record<string, unknown>)
+    .filter(([, v]) => v != null && String(v).trim() !== '')
+    .map(([k, v]) => `${k}: ${String(v)}`);
+}
+
+const PACKING_DATE_FMT: Intl.DateTimeFormatOptions = {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+};
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
@@ -387,26 +407,130 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
         </div>
       </div>
 
-      {/* Print packing summary */}
-      <section className="mb-4 hidden print:block">
-        <h1 className="text-xl font-bold">Packing slip — {order.orderNumber}</h1>
-        <p className="text-sm">{new Date().toLocaleString()}</p>
-        <div className="mt-3 text-sm">
-          <p className="font-medium">Ship to</p>
-          {formatAddress(order.shippingAddress).map((l) => (
-            <p key={l}>{l}</p>
-          ))}
+      {/* Print packing slip — screen-hidden, print-only */}
+      <section className="packing-slip mb-4 hidden print:block">
+        <div className="packing-slip__accent" aria-hidden />
+        <header className="packing-slip__header">
+          <div>
+            <BrandLogo href={null} size="md" />
+            <p className="packing-slip__tagline">Thoughtfully personalised baby gifts</p>
+          </div>
+          <div className="packing-slip__title-block">
+            <h1 className="packing-slip__title">Packing slip</h1>
+            <p className="packing-slip__document-type">NOT A TAX INVOICE</p>
+            <p className="packing-slip__order-number">{order.orderNumber}</p>
+            <p className="packing-slip__printed">
+              Printed {new Date().toLocaleString('en-IN', PACKING_DATE_FMT)}
+            </p>
+          </div>
+        </header>
+
+        <dl className="packing-slip__meta">
+          <div>
+            <dt>Status</dt>
+            <dd>{statusLabel(order.status)}</dd>
+          </div>
+          <div>
+            <dt>Placed</dt>
+            <dd>{new Date(order.createdAt).toLocaleString('en-IN', PACKING_DATE_FMT)}</dd>
+          </div>
+          <div>
+            <dt>Shipping</dt>
+            <dd>{shippingMethodLabel(order.shippingMethod)}</dd>
+          </div>
+          <div>
+            <dt>Items</dt>
+            <dd>
+              {order.items.reduce((n, i) => n + i.quantity, 0)} pcs · {order.items.length}{' '}
+              {order.items.length === 1 ? 'line' : 'lines'}
+            </dd>
+          </div>
+        </dl>
+
+        <div className="packing-slip__parties">
+          <div className="packing-slip__party packing-slip__party--ship">
+            <h2>Ship to</h2>
+            {formatAddress(order.shippingAddress).map((l) => (
+              <p key={l}>{l}</p>
+            ))}
+          </div>
+          <div className="packing-slip__party">
+            <h2>Customer</h2>
+            <p className="packing-slip__party-name">
+              {order.customer.displayName?.trim() || order.customer.email}
+            </p>
+            {order.customer.displayName?.trim() ? <p>{order.customer.email}</p> : null}
+            {order.carrier || order.trackingNumber ? (
+              <div className="packing-slip__tracking">
+                {order.carrier ? <p>Carrier: {order.carrier}</p> : null}
+                {order.trackingNumber ? <p>Tracking: {order.trackingNumber}</p> : null}
+              </div>
+            ) : null}
+          </div>
         </div>
-        <ul className="mt-3 text-sm">
-          {order.items.map((i) => (
-            <li key={i.id}>
-              {i.quantity}× {i.title} ({i.label}) — {i.sku}
-            </li>
-          ))}
-        </ul>
-        {order.giftMessage ? (
-          <p className="mt-2 text-sm">Gift message: {order.giftMessage}</p>
+
+        <table className="packing-slip__items">
+          <thead>
+            <tr>
+              <th className="packing-slip__col-qty">Qty</th>
+              <th>Item</th>
+              <th className="packing-slip__col-sku">SKU</th>
+              <th className="packing-slip__col-check">✓</th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.items.map((i) => {
+              const personalization = formatPersonalization(i.personalization);
+              const extras = [
+                i.giftExtras?.note
+                  ? `${i.giftExtras.note.label}: ${i.giftExtras.note.value}`
+                  : null,
+                i.giftExtras?.wrap ? `Wrap: ${i.giftExtras.wrap.label}` : null,
+                i.giftExtras?.ribbon ? `Ribbon: ${i.giftExtras.ribbon.label}` : null,
+              ].filter(Boolean) as string[];
+              return (
+                <tr key={i.id}>
+                  <td className="packing-slip__col-qty">{i.quantity}</td>
+                  <td>
+                    <p className="packing-slip__item-title">
+                      {i.title} <span>({i.label})</span>
+                    </p>
+                    {personalization.length || extras.length ? (
+                      <ul className="packing-slip__item-notes">
+                        {personalization.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                        {extras.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </td>
+                  <td className="packing-slip__col-sku">{i.sku}</td>
+                  <td className="packing-slip__col-check">
+                    <span className="packing-slip__check-box" aria-hidden />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {order.giftMessage || order.giftWrap ? (
+          <div className="packing-slip__gift">
+            {order.giftWrap ? <p className="packing-slip__gift-flag">Gift wrap</p> : null}
+            {order.giftMessage ? (
+              <>
+                <h2>Gift message</h2>
+                <p>{order.giftMessage}</p>
+              </>
+            ) : null}
+          </div>
         ) : null}
+
+        <footer className="packing-slip__footer">
+          <p>Internal fulfilment document · No commercial or tax value</p>
+        </footer>
       </section>
 
       {error ? (

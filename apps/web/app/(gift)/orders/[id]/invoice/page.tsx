@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Download, LoaderCircle, Printer } from 'lucide-react';
-import { BrandLogo } from '@/components/brand-logo';
 import { apiAuth, apiAuthDownload, getStoredAccessToken } from '@/lib/auth-client';
 import { formatInr } from '@/lib/cart-client';
 
@@ -45,6 +44,18 @@ type Invoice = {
   couponCode: string | null;
   paymentProvider: string | null;
   paymentStatus: string | null;
+  legalProfile: {
+    legalName: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    stateCode: string;
+    postalCode: string;
+    gstin: string;
+    email: string;
+    defaultHsn: string;
+  };
 };
 
 const DATE_FMT: Intl.DateTimeFormatOptions = {
@@ -55,6 +66,13 @@ const DATE_FMT: Intl.DateTimeFormatOptions = {
   minute: '2-digit',
   hour12: true,
 };
+
+function sampleInvoiceNumber(orderNumber: string): string {
+  return `SMP/26/${orderNumber
+    .replace(/[^A-Z0-9]/gi, '')
+    .slice(-9)
+    .toUpperCase()}`;
+}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString('en-IN', DATE_FMT);
@@ -144,6 +162,17 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
   const shipLines = formatAddress(invoice.shippingAddress);
   const billLines = formatAddress(bill);
   const statusLabel = invoice.status.replaceAll('_', ' ');
+  const supplier = invoice.legalProfile;
+  const placeOfSupply = bill?.state
+    ? `${bill.state}${bill.postalCode ? ` (${bill.postalCode})` : ''}`
+    : 'Not provided';
+  const taxablePaise = Math.max(0, invoice.subtotalPaise - invoice.discountPaise);
+  const taxRate = taxablePaise > 0 ? (invoice.taxPaise / taxablePaise) * 100 : 0;
+  const intraState = bill?.state?.trim().toLowerCase() === supplier.state.toLowerCase();
+  const cgstPaise = intraState ? Math.round(invoice.taxPaise / 2) : 0;
+  const sgstPaise = intraState ? invoice.taxPaise - cgstPaise : 0;
+  const igstPaise = intraState ? 0 : invoice.taxPaise;
+  const displayInvoiceNumber = sampleInvoiceNumber(invoice.orderNumber);
 
   return (
     <main className="invoice-sheet mx-auto max-w-[920px] px-gs-3 py-gs-4 sm:px-gs-6 sm:py-gs-8">
@@ -181,214 +210,174 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
       </div>
       {error ? <p className="mb-gs-3 text-body text-danger print:hidden">{error}</p> : null}
 
-      <article className="invoice-doc overflow-hidden rounded-clay border border-border-subtle bg-white shadow-sm">
-        <div className="h-2 bg-gradient-to-r from-primary via-[var(--inabiya-yellow)] to-[var(--inabiya-mint)] print:h-1" />
-        <div className="p-gs-5 sm:p-gs-8">
-          {/* Header */}
-          <header className="flex items-start justify-between gap-gs-4">
-            <div>
-              <BrandLogo href={null} size="lg" />
-              <p className="mt-gs-1 text-caption opacity-60">
-                Thoughtfully personalised baby gifts
-              </p>
-            </div>
-            <div className="text-right">
-              <h1 className="font-display text-[clamp(1.35rem,4vw,2rem)] font-semibold leading-tight">
-                Tax invoice
-              </h1>
-              <p className="mt-gs-1 font-mono text-caption opacity-65">{invoice.invoiceNumber}</p>
-              <p className="mt-gs-2 inline-flex items-center gap-gs-1 rounded-pill bg-primary/10 px-gs-3 py-gs-1 text-caption font-semibold uppercase tracking-wide text-primary">
-                <span aria-hidden="true" className="size-1.5 rounded-full bg-primary" />
-                {statusLabel}
-              </p>
-            </div>
-          </header>
-
-          {/* Meta */}
-          <dl className="invoice-meta mt-gs-6 grid grid-cols-2 gap-px overflow-hidden rounded-control border border-border-subtle bg-border-subtle text-body sm:grid-cols-4">
-            <div>
-              <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">
-                Order
-              </dt>
-              <dd className="mt-gs-1 font-medium">{invoice.orderNumber}</dd>
-            </div>
-            <div>
-              <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">
-                Issued
-              </dt>
-              <dd className="mt-gs-1">{formatDate(invoice.issuedAt)}</dd>
-            </div>
-            <div>
-              <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">
-                Paid
-              </dt>
-              <dd className="mt-gs-1">{invoice.paidAt ? formatDate(invoice.paidAt) : '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-caption font-semibold uppercase tracking-wide opacity-50">
-                Payment
-              </dt>
-              <dd className="mt-gs-1">
-                {paymentLabel(invoice.paymentProvider, invoice.paymentStatus)}
-              </dd>
-            </div>
-          </dl>
-
-          {/* Parties */}
-          <div className="mt-gs-6 grid gap-gs-3 sm:grid-cols-3">
-            <section className="invoice-party invoice-party--customer rounded-control border border-border-subtle bg-surface-soft p-gs-4 text-body">
-              <h2 className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">
-                Bill to
-              </h2>
-              <p className="mt-gs-2 font-medium">{invoice.customerName ?? invoice.customerEmail}</p>
-              {invoice.customerName ? (
-                <p className="mt-gs-1 break-all text-caption opacity-70">{invoice.customerEmail}</p>
-              ) : null}
-            </section>
-            <section className="invoice-party rounded-control border border-border-subtle p-gs-4 text-body">
-              <h2 className="text-caption font-semibold uppercase tracking-[0.08em] opacity-50">
-                Ship to
-              </h2>
-              <div className="mt-gs-2 space-y-gs-1 text-caption leading-relaxed opacity-90">
-                {shipLines.map((l, i) => (
-                  <p key={i} className={i === 0 ? 'font-medium text-body' : undefined}>
-                    {l}
-                  </p>
-                ))}
-              </div>
-              <p className="mt-gs-2 text-caption opacity-55">
-                {shippingLabel(invoice.shippingMethod)}
-              </p>
-            </section>
-            <section className="invoice-party rounded-control border border-border-subtle p-gs-4 text-body">
-              <h2 className="text-caption font-semibold uppercase tracking-[0.08em] opacity-50">
-                Billing
-              </h2>
-              <div className="mt-gs-2 space-y-gs-1 text-caption leading-relaxed opacity-90">
-                {billLines.map((l, i) => (
-                  <p key={i} className={i === 0 ? 'font-medium text-body' : undefined}>
-                    {l}
-                  </p>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          {/* Line items table */}
-          <div className="mt-gs-7">
-            <div className="mb-gs-3 flex items-end justify-between">
-              <h2 className="font-display text-xl font-semibold">Order items</h2>
-              <p className="text-caption opacity-55">
-                {invoice.items.length} {invoice.items.length === 1 ? 'item' : 'items'}
-              </p>
-            </div>
-            <table className="invoice-items-table hidden w-full border-collapse text-body sm:table">
-              <thead>
-                <tr className="border-y border-border-subtle bg-surface-soft text-left text-caption font-semibold uppercase tracking-wide">
-                  <th className="px-gs-3 py-gs-2 font-semibold">Item</th>
-                  <th className="w-14 px-gs-2 py-gs-2 text-center font-semibold">Qty</th>
-                  <th className="w-24 px-gs-2 py-gs-2 text-right font-semibold">Price</th>
-                  <th className="w-28 px-gs-3 py-gs-2 text-right font-semibold">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.items.map((item, i) => (
-                  <tr key={i} className="border-b border-border-subtle align-top">
-                    <td className="px-gs-3 py-gs-3">
-                      <p className="font-medium">
-                        {item.title} <span className="font-normal opacity-60">({item.label})</span>
-                      </p>
-                      <p className="mt-gs-1 font-mono text-caption opacity-45">SKU {item.sku}</p>
-                    </td>
-                    <td className="py-3 px-gs-2 text-center tabular-nums">{item.quantity}</td>
-                    <td className="py-3 px-gs-2 text-right tabular-nums whitespace-nowrap">
-                      {formatInr(item.unitPricePaise)}
-                    </td>
-                    <td className="px-gs-3 py-gs-3 text-right font-semibold tabular-nums whitespace-nowrap">
-                      {formatInr(item.lineTotalPaise)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="invoice-items-mobile divide-y divide-border-subtle rounded-control border border-border-subtle sm:hidden">
-              {invoice.items.map((item, i) => (
-                <div key={i} className="p-gs-3">
-                  <div className="flex items-start justify-between gap-gs-3">
-                    <div className="min-w-0">
-                      <p className="font-medium">{item.title}</p>
-                      <p className="mt-gs-1 text-caption opacity-60">{item.label}</p>
-                    </div>
-                    <p className="shrink-0 font-semibold tabular-nums">
-                      {formatInr(item.lineTotalPaise)}
-                    </p>
-                  </div>
-                  <div className="mt-gs-3 flex items-center justify-between text-caption opacity-60">
-                    <span className="font-mono">SKU {item.sku}</span>
-                    <span>
-                      {item.quantity} × {formatInr(item.unitPricePaise)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Totals */}
-          <div className="mt-gs-4 flex justify-end">
-            <table className="invoice-totals w-full rounded-control bg-surface-soft px-gs-4 py-gs-3 text-body sm:max-w-[300px]">
-              <tbody>
-                <tr>
-                  <td className="px-gs-4 pt-gs-3 opacity-70">Subtotal</td>
-                  <td className="px-gs-4 pt-gs-3 text-right tabular-nums">
-                    {formatInr(invoice.subtotalPaise)}
-                  </td>
-                </tr>
-                {invoice.discountPaise > 0 ? (
-                  <tr>
-                    <td className="px-gs-4 py-gs-1 opacity-70">
-                      Discount{invoice.couponCode ? ` (${invoice.couponCode})` : ''}
-                    </td>
-                    <td className="px-gs-4 py-gs-1 text-right tabular-nums">
-                      −{formatInr(invoice.discountPaise)}
-                    </td>
-                  </tr>
-                ) : null}
-                <tr>
-                  <td className="px-gs-4 py-gs-1 opacity-70">Shipping</td>
-                  <td className="px-gs-4 py-gs-1 text-right tabular-nums">
-                    {formatInr(invoice.shippingPaise)}
-                  </td>
-                </tr>
-                {invoice.taxPaise > 0 ? (
-                  <tr>
-                    <td className="px-gs-4 py-gs-1 opacity-70">Tax</td>
-                    <td className="px-gs-4 py-gs-1 text-right tabular-nums">
-                      {formatInr(invoice.taxPaise)}
-                    </td>
-                  </tr>
-                ) : null}
-                <tr className="border-t-2 border-border-strong">
-                  <td className="px-gs-4 pb-gs-3 pt-gs-3 text-body font-semibold">Total paid</td>
-                  <td className="px-gs-4 pb-gs-3 pt-gs-3 text-right text-lg font-semibold tabular-nums text-primary">
-                    {formatInr(invoice.totalPaise)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <footer className="mt-gs-8 flex flex-col gap-gs-2 border-t border-border-subtle pt-gs-4 text-caption opacity-55 sm:flex-row sm:items-end sm:justify-between">
-            <p className="max-w-md">
-              This is a computer-generated tax invoice and payment receipt for your Inabiya order.
+      <article className="invoice-doc invoice-legal bg-white">
+        <p className="invoice-sample-banner">SAMPLE — NOT VALID FOR TAX OR ACCOUNTING</p>
+        <header className="invoice-legal__header">
+          <div>
+            <p className="invoice-legal__supplier">{supplier.legalName}</p>
+            <p>
+              {[
+                supplier.addressLine1,
+                supplier.addressLine2,
+                supplier.city,
+                supplier.state,
+                supplier.postalCode,
+              ]
+                .filter(Boolean)
+                .join(', ')}
             </p>
-            <p className="shrink-0">
-              <a href="mailto:hello@inabiya.in" className="underline underline-offset-2">
-                hello@inabiya.in
-              </a>
+            <p>GSTIN: {supplier.gstin}</p>
+            <p>
+              State: {supplier.state} ({supplier.stateCode})
             </p>
-          </footer>
+          </div>
+          <div className="invoice-legal__title">
+            <h1>TAX INVOICE</h1>
+            <p>Original for recipient</p>
+          </div>
+        </header>
+
+        <table className="invoice-legal__meta">
+          <tbody>
+            <tr>
+              <th>Invoice No.</th>
+              <td>{displayInvoiceNumber}</td>
+              <th>Invoice Date</th>
+              <td>{formatDate(invoice.issuedAt)}</td>
+            </tr>
+            <tr>
+              <th>Order No.</th>
+              <td>{invoice.orderNumber}</td>
+              <th>Payment</th>
+              <td>{paymentLabel(invoice.paymentProvider, invoice.paymentStatus)}</td>
+            </tr>
+            <tr>
+              <th>Place of Supply</th>
+              <td>{placeOfSupply}</td>
+              <th>Reverse Charge</th>
+              <td>No</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="invoice-legal__parties">
+          <section>
+            <h2>Bill To</h2>
+            <p className="font-semibold">{invoice.customerName ?? invoice.customerEmail}</p>
+            {billLines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+            <p>GSTIN/UIN: URP</p>
+          </section>
+          <section>
+            <h2>Ship To</h2>
+            {shipLines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+            <p>Delivery: {shippingLabel(invoice.shippingMethod)}</p>
+          </section>
         </div>
+
+        <div className="invoice-legal__table-wrap">
+          <table className="invoice-legal__items">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Description of goods</th>
+                <th>HSN</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th className="num">Rate</th>
+                <th className="num">Taxable value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.items.map((item, i) => (
+                <tr key={`${item.sku}-${i}`}>
+                  <td>{i + 1}</td>
+                  <td>
+                    <strong>{item.title}</strong>
+                    <br />
+                    {item.label} · SKU {item.sku}
+                  </td>
+                  <td>{supplier.defaultHsn}</td>
+                  <td>{item.quantity}</td>
+                  <td>PCS</td>
+                  <td className="num">{formatInr(item.unitPricePaise)}</td>
+                  <td className="num">{formatInr(item.lineTotalPaise)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="invoice-legal__summary">
+          <table>
+            <tbody>
+              <tr>
+                <th>Subtotal</th>
+                <td>{formatInr(invoice.subtotalPaise)}</td>
+              </tr>
+              {invoice.discountPaise > 0 ? (
+                <tr>
+                  <th>Discount{invoice.couponCode ? ` (${invoice.couponCode})` : ''}</th>
+                  <td>−{formatInr(invoice.discountPaise)}</td>
+                </tr>
+              ) : null}
+              <tr>
+                <th>Taxable value</th>
+                <td>{formatInr(taxablePaise)}</td>
+              </tr>
+              {intraState ? (
+                <>
+                  <tr>
+                    <th>CGST @ {(taxRate / 2).toFixed(2)}%</th>
+                    <td>{formatInr(cgstPaise)}</td>
+                  </tr>
+                  <tr>
+                    <th>SGST @ {(taxRate / 2).toFixed(2)}%</th>
+                    <td>{formatInr(sgstPaise)}</td>
+                  </tr>
+                </>
+              ) : (
+                <tr>
+                  <th>IGST @ {taxRate.toFixed(2)}%</th>
+                  <td>{formatInr(igstPaise)}</td>
+                </tr>
+              )}
+              <tr>
+                <th>Shipping</th>
+                <td>{formatInr(invoice.shippingPaise)}</td>
+              </tr>
+              <tr className="invoice-legal__grand">
+                <th>Invoice Total</th>
+                <td>{formatInr(invoice.totalPaise)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="invoice-legal__declaration">
+          <div>
+            <p>
+              Declaration: The particulars shown above are true and correct for this sample
+              document. Tax is not payable under reverse charge.
+            </p>
+            <p className="mt-2">Status: {statusLabel}</p>
+          </div>
+          <div className="invoice-legal__signature">
+            <p>For {supplier.legalName}</p>
+            <div />
+            <p>Authorised Signatory</p>
+          </div>
+        </div>
+
+        <footer className="invoice-legal__footer">
+          <p>
+            This is sample data only. Replace supplier, GSTIN, HSN and tax configuration before use.
+          </p>
+          <p>{supplier.email}</p>
+        </footer>
       </article>
     </main>
   );
