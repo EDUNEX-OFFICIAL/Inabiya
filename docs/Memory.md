@@ -1198,6 +1198,11 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-08-16 (push pending local work)
+
+- Committed + pushed `d41f7e6` to `origin/main`: root storefront, portal logins, Razorpay test checkout, invoice polish, OAuth drop migrations.
+- Fixed stale embedded GitHub token in `origin` URL via `gh auth setup-git`.
+
 ### Session — 2026-08-16 (invoice visual polish)
 
 - **Override:** Phase 14; human requested a better customer invoice design.
