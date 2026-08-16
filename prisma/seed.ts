@@ -1462,6 +1462,8 @@ async function main() {
         overline: 'Parent love',
         title: 'Loved by new parents across India',
         subtitle: 'Honest notes from recent gifts — personal, on-budget, and actually useful.',
+        ctaLabel: 'Shop gifts',
+        ctaHref: '/gift/products',
         items: [
           {
             quote:
@@ -1469,6 +1471,7 @@ async function main() {
             author: 'Anaya',
             role: 'Bengaluru',
             rating: 5,
+            dated: '2026-07-18',
           },
           {
             quote:
@@ -1476,12 +1479,79 @@ async function main() {
             author: 'Rohan',
             role: 'HR Lead',
             rating: 5,
+            dated: '2026-07-04',
           },
           {
             quote: 'Loved that the builder respected my ₹1,499 budget. No upsell tricks.',
             author: 'Kavya',
             role: 'Mumbai',
             rating: 5,
+            dated: '2026-06-22',
+          },
+          {
+            quote: 'The hamper arrived looking like it was wrapped by someone who actually cared.',
+            author: 'Meera',
+            role: 'Pune',
+            rating: 5,
+            dated: '2026-06-11',
+          },
+          {
+            quote:
+              'Picked a newborn box in ten minutes. My cousin said it felt expensive without being flashy.',
+            author: 'Arjun',
+            role: 'Delhi',
+            rating: 5,
+            dated: '2026-05-28',
+          },
+          {
+            quote: 'Loved the mint-and-blush palette. It didn’t look like a generic hamper.',
+            author: 'Nisha',
+            role: 'Hyderabad',
+            rating: 5,
+            dated: '2026-05-14',
+          },
+          {
+            quote:
+              'Corporate gifting that still felt personal. We sent twenty boxes; every parent messaged us.',
+            author: 'Vikram',
+            role: 'Chennai',
+            rating: 5,
+            dated: '2026-04-30',
+          },
+          {
+            quote: 'Build-your-box stayed inside my budget and still looked like a hug.',
+            author: 'Diya',
+            role: 'Kochi',
+            rating: 5,
+            dated: '2026-04-12',
+          },
+          {
+            quote: 'The wrap, the note, the timing — it felt like we were in the room with them.',
+            author: 'Priya',
+            role: 'Ahmedabad',
+            rating: 5,
+            dated: '2026-03-26',
+          },
+          {
+            quote: 'Reordered for my niece in one tap. Same care, no second-guessing the extras.',
+            author: 'Sameer',
+            role: 'Jaipur',
+            rating: 5,
+            dated: '2026-03-08',
+          },
+          {
+            quote: 'Finally a gift that didn’t look like a catalogue dump. Soft, useful, loved.',
+            author: 'Tara',
+            role: 'Kolkata',
+            rating: 5,
+            dated: '2026-02-19',
+          },
+          {
+            quote: 'HR asked for twenty welcome-baby boxes. Every parent sent a photo back.',
+            author: 'Ishaan',
+            role: 'Lucknow',
+            rating: 5,
+            dated: '2026-02-03',
           },
         ],
       },
@@ -1502,6 +1572,7 @@ async function main() {
       type: 'faq',
       sortOrder: 19,
       props: {
+        overline: 'Help',
         title: 'Frequently asked questions',
         items: [
           {
@@ -1518,6 +1589,15 @@ async function main() {
             question: 'What is your return window?',
             answerHtml:
               '<p>Returns open for 14 days after delivery. Personalised items may have limited return eligibility.</p>',
+          },
+          {
+            question: 'Do you deliver across India?',
+            answerHtml: '<p>Yes. Delivery timing is confirmed at checkout for your pincode.</p>',
+          },
+          {
+            question: 'Can I send gifts for a team?',
+            answerHtml:
+              '<p>Yes. Corporate and bulk orders start from Corporate gifting.</p>',
           },
         ],
       },

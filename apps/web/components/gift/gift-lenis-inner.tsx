@@ -33,6 +33,8 @@ export function GiftLenisInner({ children }: { children: ReactNode }) {
         duration: 1.05,
         smoothWheel: true,
         touchMultiplier: 1.1,
+        // Filter sidebars, search lists, mega menus — native overflow must win.
+        allowNestedScroll: true,
       }}
     >
       <GiftLenisScrollSync />

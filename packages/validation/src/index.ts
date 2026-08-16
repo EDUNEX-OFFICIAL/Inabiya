@@ -1833,12 +1833,16 @@ const testimonialItemSchema = z.object({
   author: z.string().min(1).max(80),
   role: z.string().max(120).optional(),
   rating: z.number().int().min(1).max(5).optional(),
+  dated: z.string().max(40).optional(),
 });
 
 const testimonialsPropsSchema = z.object({
+  overline: z.string().max(80).optional(),
   title: z.string().max(160).optional(),
   subtitle: z.string().max(300).optional(),
-  items: z.array(testimonialItemSchema).min(1).max(6),
+  ctaLabel: z.string().max(80).optional(),
+  ctaHref: optionalSafeStorefrontHrefSchema,
+  items: z.array(testimonialItemSchema).min(1).max(12),
 });
 
 const countdownPropsSchema = z.object({

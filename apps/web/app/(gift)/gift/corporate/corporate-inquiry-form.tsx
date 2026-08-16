@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { apiUrl } from '@/lib/api-base';
 import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
+import { GiftSelect } from '@/components/gift/gift-select';
 
 export function CorporateInquiryForm() {
   const [type, setType] = useState<'corporate' | 'bulk'>('corporate');
@@ -65,17 +66,19 @@ export function CorporateInquiryForm() {
       onSubmit={(e) => void onSubmit(e)}
       className="clay-panel mt-gs-6 space-y-gs-3 p-gs-5 text-body sm:p-gs-6"
     >
-      <label className="block">
+      <div className="block">
         Type
-        <select
-          className="clay-input"
+        <GiftSelect
+          className="mt-gs-1"
+          ariaLabel="Inquiry type"
           value={type}
-          onChange={(e) => setType(e.target.value as 'corporate' | 'bulk')}
-        >
-          <option value="corporate">Corporate</option>
-          <option value="bulk">Bulk / event</option>
-        </select>
-      </label>
+          options={[
+            { value: 'corporate', label: 'Corporate' },
+            { value: 'bulk', label: 'Bulk / event' },
+          ]}
+          onChange={(v) => setType(v as 'corporate' | 'bulk')}
+        />
+      </div>
       <label className="block">
         Full name
         <input

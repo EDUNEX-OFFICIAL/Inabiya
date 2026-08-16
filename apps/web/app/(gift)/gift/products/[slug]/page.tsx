@@ -21,6 +21,7 @@ import { giftBoxApi } from '@/lib/gift-box-client';
 import { formatInr, type CatalogProduct } from '@/lib/catalog';
 import { trackEvent } from '@/lib/analytics';
 import { apiUrl } from '@/lib/api-base';
+import { GiftSelect } from '@/components/gift/gift-select';
 import { TrackView } from '@/components/track-view';
 import { ClayProductCard } from '@/components/gift/clay-product-card';
 import { PdpGallery } from '@/components/gift/pdp-gallery';
@@ -76,20 +77,6 @@ type ReviewList = {
     authorName: string;
     verifiedPurchase: boolean;
     createdAt: string;
-  }>;
-};
-
-type RecentReviews = {
-  count: number;
-  reviews: Array<{
-    id: string;
-    rating: number;
-    headline: string | null;
-    body: string;
-    authorName: string;
-    verifiedPurchase: boolean;
-    productTitle: string;
-    productSlug: string;
   }>;
 };
 
@@ -617,22 +604,25 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 const selected = kind === 'wrap' ? wrapId : ribbonId;
                 const setSelected = kind === 'wrap' ? setWrapId : setRibbonId;
                 return (
-                  <label key={kind} className="mt-gs-3 block text-body">
+                  <div key={kind} className="mt-gs-3 block text-body">
                     {kind === 'wrap' ? 'Wrap' : 'Ribbon'}
-                    <select
-                      className="clay-input mt-gs-1"
+                    <GiftSelect
+                      className="mt-gs-1"
+                      ariaLabel={kind === 'wrap' ? 'Wrap' : 'Ribbon'}
                       value={selected}
-                      onChange={(e) => setSelected(e.target.value)}
-                    >
-                      <option value="">No {kind}</option>
-                      {choices.map((choice) => (
-                        <option key={choice.id} value={choice.id}>
-                          {choice.label}
-                          {choice.pricePaise ? ` · ${formatInr(choice.pricePaise)}` : ' · Free'}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      placeholder={`No ${kind}`}
+                      options={[
+                        { value: '', label: `No ${kind}` },
+                        ...choices.map((choice) => ({
+                          value: choice.id,
+                          label: choice.pricePaise
+                            ? `${choice.label} · ${formatInr(choice.pricePaise)}`
+                            : `${choice.label} · Free`,
+                        })),
+                      ]}
+                      onChange={setSelected}
+                    />
+                  </div>
                 );
               })}
             </fieldset>
@@ -860,26 +850,25 @@ function PersonalizationField({
 }) {
   const choices = selectOptions(opt.options);
   const isSelect = opt.type === 'SELECT' && choices.length > 0;
+  const Field = isSelect ? 'div' : 'label';
   return (
-    <label className="mt-gs-3 block text-body first:mt-0">
+    <Field className="mt-gs-3 block text-body first:mt-0">
       <span className="font-medium">
         {opt.label}
         {opt.required ? <span className="text-primary"> *</span> : null}
       </span>
       {isSelect ? (
-        <select
-          className="clay-input mt-gs-1"
+        <GiftSelect
+          className="mt-gs-1"
+          ariaLabel={opt.label}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-required={opt.required}
-        >
-          <option value="">{opt.required ? 'Select…' : 'Optional'}</option>
-          {choices.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+          placeholder={opt.required ? 'Select…' : 'Optional'}
+          options={[
+            { value: '', label: opt.required ? 'Select…' : 'Optional' },
+            ...choices.map((c) => ({ value: c, label: c })),
+          ]}
+          onChange={onChange}
+        />
       ) : (
         <input
           className="clay-input mt-gs-1"
@@ -895,7 +884,7 @@ function PersonalizationField({
           Up to {opt.maxLength} characters
         </span>
       ) : null}
-    </label>
+    </Field>
   );
 }
 
@@ -1168,7 +1157,6 @@ function ReviewsSection({
   onSummaryChange: (s: Pick<ReviewList, 'averageRating' | 'count'>) => void;
 }) {
   const [data, setData] = useState<ReviewList | null>(initial);
-  const [storeWide, setStoreWide] = useState<RecentReviews | null>(null);
   const [rating, setRating] = useState(5);
   const [headline, setHeadline] = useState('');
   const [body, setBody] = useState('');
@@ -1181,25 +1169,6 @@ function ReviewsSection({
     setFormOpen(false);
     setFormMsg(null);
   }, [initial, slug]);
-
-  useEffect(() => {
-    if (!data || data.count > 0) {
-      setStoreWide(null);
-      return;
-    }
-    let cancelled = false;
-    fetch(apiUrl('/catalog/reviews/recent'))
-      .then((r) => (r.ok ? r.json() : { count: 0, reviews: [] }))
-      .then((payload: RecentReviews) => {
-        if (!cancelled) setStoreWide(payload);
-      })
-      .catch(() => {
-        if (!cancelled) setStoreWide({ count: 0, reviews: [] });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [data]);
 
   async function submitReview() {
     if (!getStoredAccessToken()) {
@@ -1233,7 +1202,6 @@ function ReviewsSection({
 
   const count = data?.count ?? 0;
   const avg = data?.averageRating;
-  const showStoreWide = count === 0 && (storeWide?.reviews.length ?? 0) > 0;
 
   return (
     <section id="reviews" className="max-w-3xl scroll-mt-24">
@@ -1276,53 +1244,25 @@ function ReviewsSection({
         </ul>
       ) : null}
 
-      {showStoreWide ? (
-        <div className="mt-gs-5">
-          <h3 className="text-body font-medium">What parents say about Inabiya gifts</h3>
-          <ul className="mt-gs-3 space-y-gs-3">
-            {storeWide!.reviews.map((r) => (
-              <li key={r.id} className="clay-card p-gs-4 text-body">
-                <p className="font-medium">
-                  <span aria-label={`${r.rating} out of 5 stars`}>{'★'.repeat(r.rating)}</span>
-                  <span className="opacity-30" aria-hidden>
-                    {'★'.repeat(5 - r.rating)}
-                  </span>
-                  {r.headline ? <span className="ml-gs-2">— {r.headline}</span> : null}
-                </p>
-                <p className="mt-gs-2 break-words opacity-80">{r.body}</p>
-                <p className="mt-gs-2 text-caption opacity-60">
-                  {r.authorName}
-                  {' · '}
-                  <Link href={`/gift/products/${r.productSlug}`} className="gift-link">
-                    {r.productTitle}
-                  </Link>
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
       {formOpen ? (
         <div className="clay-panel mt-gs-6 p-gs-5">
           <h3 className="text-body font-medium">Write a review</h3>
           <p className="mt-gs-1 text-caption opacity-60">
             Verified purchasers only. Reviews go to moderation first.
           </p>
-          <label className="mt-gs-3 block text-body">
+          <div className="mt-gs-3 block text-body">
             Rating
-            <select
-              className="clay-input"
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-            >
-              {[5, 4, 3, 2, 1].map((n) => (
-                <option key={n} value={n}>
-                  {n} stars
-                </option>
-              ))}
-            </select>
-          </label>
+            <GiftSelect
+              className="mt-gs-1"
+              ariaLabel="Rating"
+              value={String(rating)}
+              options={[5, 4, 3, 2, 1].map((n) => ({
+                value: String(n),
+                label: `${n} stars`,
+              }))}
+              onChange={(v) => setRating(Number(v))}
+            />
+          </div>
           <label className="mt-gs-2 block text-body">
             Headline
             <input

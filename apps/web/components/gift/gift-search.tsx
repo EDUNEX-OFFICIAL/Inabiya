@@ -193,7 +193,7 @@ export function GiftSearch({
             <p className="gift-muted break-all px-gs-2 py-gs-2">No gifts match “{debounced}”.</p>
           ) : null}
           {items.length > 0 ? (
-            <ul className="max-h-72 overflow-y-auto">
+            <ul className="gift-nested-scroll max-h-72 overflow-y-auto overscroll-contain">
               {items.map((p) => (
                 <li key={p.id} role="option" aria-selected="false">
                   <Link

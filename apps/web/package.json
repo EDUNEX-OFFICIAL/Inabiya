@@ -8,7 +8,7 @@
     "start": "next start -p ${WEB_PORT:-3001}",
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx lib/commerce-ops-nav.check.ts && tsx next-csp.check.ts && tsx components/cms/page-builder/cms-page-model.check.ts && tsx lib/seo-json-ld/cms-faq.check.ts && tsx components/cms/page-builder/cms-panel-resize.check.ts && tsx lib/buy-now.check.ts"
+    "test": "tsx lib/commerce-ops-nav.check.ts && tsx next-csp.check.ts && tsx components/cms/page-builder/cms-page-model.check.ts && tsx lib/seo-json-ld/cms-faq.check.ts && tsx components/cms/page-builder/cms-panel-resize.check.ts && tsx lib/buy-now.check.ts && tsx components/cms/gift-testimonials.check.ts && tsx components/gift/faq-accordion.check.ts && tsx components/gift/collection-plp.check.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -182,6 +182,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     tone: 'blush',
   },
   faq: {
+    overline: 'Help',
     title: 'Frequently asked questions',
     itemsJson: JSON.stringify(
       [
@@ -199,6 +200,15 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
           question: 'What is your return window?',
           answerHtml:
             '<p>Returns open for 14 days after delivery. Personalised items may have limited return eligibility.</p>',
+        },
+        {
+          question: 'Do you deliver across India?',
+          answerHtml: '<p>Yes. Delivery timing is confirmed at checkout for your pincode.</p>',
+        },
+        {
+          question: 'Can I send gifts for a team?',
+          answerHtml:
+            '<p>Yes. Corporate and bulk orders start from Corporate gifting.</p>',
         },
       ],
       null,
@@ -247,8 +257,11 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     ),
   },
   testimonials: {
+    overline: 'Parent love',
     title: 'Loved by new parents across India',
     subtitle: '',
+    ctaLabel: '',
+    ctaHref: '',
     itemsJson: JSON.stringify(
       [
         {
@@ -256,6 +269,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
           author: 'Anaya',
           role: 'Bengaluru',
           rating: 5,
+          dated: '2026-07-18',
         },
         {
           quote:
@@ -768,6 +782,7 @@ function payloadWithoutStyle(b: Block) {
     return {
       type: 'faq' as const,
       props: {
+        ...(b.props.overline ? { overline: b.props.overline } : {}),
         ...(b.props.title ? { title: b.props.title } : {}),
         items,
       },
@@ -828,6 +843,7 @@ function payloadWithoutStyle(b: Block) {
       .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
       .map((row) => {
         const ratingNum = Number(row.rating);
+        const dated = String(row.dated ?? row.date ?? '').trim();
         return {
           quote: String(row.quote ?? '').trim(),
           author: String(row.author ?? '').trim(),
@@ -835,18 +851,22 @@ function payloadWithoutStyle(b: Block) {
           ...(Number.isFinite(ratingNum) && ratingNum >= 1 && ratingNum <= 5
             ? { rating: Math.round(ratingNum) }
             : {}),
+          ...(dated ? { dated } : {}),
         };
       })
       .filter((row) => row.quote && row.author)
-      .slice(0, 6);
+      .slice(0, 12);
     if (items.length === 0) {
       throw new Error('Testimonials needs at least one quote.');
     }
     return {
       type: 'testimonials' as const,
       props: {
+        ...(b.props.overline ? { overline: b.props.overline } : {}),
         ...(b.props.title ? { title: b.props.title } : {}),
         ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
+        ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
+        ...(b.props.ctaHref ? { ctaHref: b.props.ctaHref } : {}),
         items,
       },
     };

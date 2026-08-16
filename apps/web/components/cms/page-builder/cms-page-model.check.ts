@@ -62,6 +62,17 @@ const faq: Block = {
 };
 assert.throws(() => toPayload([faq]), /FAQ items JSON is invalid/);
 
+const faqOk = toPayload([
+  {
+    clientId: 'b-faq',
+    type: 'faq',
+    props: { ...EMPTY_PROPS.faq, overline: 'Help' },
+  },
+]);
+const faqProps = faqOk[0]?.props as { overline?: string; items: unknown[] };
+assert.equal(faqProps.overline, 'Help');
+assert.equal(faqProps.items.length, 5);
+
 const preview = blockToCmsPreview(hero);
 assert.equal(preview.ok, true);
 if (preview.ok) {
@@ -90,5 +101,36 @@ assert.equal(blockSummary(blank), 'Blank');
 
 const badPreview = blockToCmsPreview(faq);
 assert.equal(badPreview.ok, false);
+
+const testimonialQuotes = Array.from({ length: 14 }, (_, i) => ({
+  quote: `Quote ${i + 1} from a parent about their Inabiya gift.`,
+  author: `Author ${i + 1}`,
+  role: 'Bengaluru',
+  rating: 5,
+}));
+const testimonials: Block = {
+  clientId: 'b-t',
+  type: 'testimonials',
+  props: {
+    ...EMPTY_PROPS.testimonials,
+    overline: 'Parent love',
+    title: 'Loved by new parents across India',
+    subtitle: 'Honest notes from recent gifts.',
+    ctaLabel: 'Shop gifts',
+    ctaHref: '/gift/products',
+    itemsJson: JSON.stringify(testimonialQuotes),
+  },
+};
+const testimonialPayload = toPayload([testimonials]);
+const testimonialProps = testimonialPayload[0]?.props as {
+  overline?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  items: unknown[];
+};
+assert.equal(testimonialProps.overline, 'Parent love');
+assert.equal(testimonialProps.ctaLabel, 'Shop gifts');
+assert.equal(testimonialProps.ctaHref, '/gift/products');
+assert.equal(testimonialProps.items.length, 12);
 
 console.log('cms-page-model.check: ok');

@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 16, 2026 (commerce ops personalization editor deployed)
+Last Updated: August 16, 2026 (collection filter Apply)
 
 ---
 
@@ -142,7 +142,7 @@ Q4 (Architecture rewrite) → **Resolved**
 ## 4. Next actions (max 5 — keep fresh)
 
 1. Re-auth GitHub on VPS (`gh auth login`) then `git push origin main` so remote matches `2130574`
-2. Hard-refresh storefront + `/admin/cms` (page builder, gift-chrome, about/contact)
+2. Hard-refresh `/gift/collections/bestsellers` — sidebar scroll + sort listbox
 3. Resume OPS-10 after storefront QA
 4. **Deferred:** demo logins + real PSP (C1/C2)
 5. Optional: CSP nonce instead of `script-src 'unsafe-inline'`
@@ -178,6 +178,20 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-16 — Gift homepage BYB band = pastel wash (human)
+
+- **Override:** Phase 14; human: improve `/gift` 6-step gift builder section color/design.
+- Inverted pink→cyan white-on-gradient dropped. Soft Gift blush/lavender/sky wash, heading-dark copy, white step cards, pink `clay-btn`.
+
+### 2026-08-16 — Gift homepage FAQ = split accordion (human)
+
+- **Override:** Phase 14; human: improve `/gift` FAQ. Split overline/title + accordion (mint band), matching testimonials/corporate CTA. PDP stays stacked.
+
+### 2026-08-16 — Gift homepage testimonials = split marquee (human)
+
+- **Override:** Phase 14; human: `/gift` testimonials like a two-column vertical carousel (different speeds), adapted to Soft Gift.
+- Layout not a ShowTrackr clone. CTA optional (`ctaLabel` + `ctaHref`); seed uses Shop gifts. No public testimonials listing.
 
 ### 2026-08-15 — CMS page schema = product Auto/Manual (human)
 
@@ -1163,6 +1177,66 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-16 (collection filter Apply)
+
+- **Override:** Phase 14 Procurement in progress; human: facet click must not apply until Apply.
+- Desktop sidebar now drafts locally (same as mobile sheet); sticky Clear + Apply. Sort / toolbar chips still commit immediately. Env/migration: none.
+- Check: `collection-plp.check.ts`.
+
+### Session — 2026-08-16 (sort dropdown z-index)
+
+- **Override:** Phase 14 Procurement in progress; human: sort menu sits under product-card wishlist heart.
+- GiftSelect listbox now portals to `document.body` at `--z-overlay` (above card hover stacking / heart `z-10`). Toolbar raised to the same token. Env/migration: none.
+- Check: `collection-plp.check.ts` (createPortal + `--z-overlay`).
+
+### Session — 2026-08-16 (collection PLP filters + sort)
+
+- **Override:** Phase 14 Procurement in progress; human: collection sidebar not scrolling; sort looks like default HTML; fix similar gift selects.
+- Root: Lenis `smoothWheel` stole nested `overflow-y-auto`; global `*::-webkit-scrollbar` painted a non-working pink bar; `<details open={}>` snapped filter groups shut on re-render.
+- Fix: `allowNestedScroll` + `data-lenis-prevent` / `gift-facet-scroll` on filter column; uncontrolled `defaultOpen`; `GiftSelect` listbox for sort, PDP wrap/ribbon/personalization/rating, corporate type. Env/migration: none.
+- Check: `collection-plp.check.ts`.
+
+### Session — 2026-08-16 (BYB homepage band color)
+
+- **Override:** Phase 14 Procurement in progress; human: improve Soft Gift `/gift` 6-step gift builder color/design.
+- Replaced loud inverted pink→cyan glass banner with token pastel wash (blush → soft → sky), dark type, white clay step cards, pink primary CTA (`clay-btn`), clay-chip trust labels. Step icon wells rotate blush/mint/lavender/yellow/sky.
+- Files: `globals.css`, `marketing-page-blocks.tsx`. Env/migration: none.
+
+### Session — 2026-08-16 (testimonial card tokens)
+
+- **Override:** Phase 14 Procurement in progress; human: drop hardcoded testimonial text size/color.
+- Card type now uses `--text-body` / `--text-caption` / `--text-display` + `--weight-*`. Stars `--inabiya-yellow`; pink/mint/sky washes `color-mix` of `--inabiya-soft|mint|sky` → `--inabiya-white`.
+- Check: `gift-testimonials.check.ts` (no leftover card hex / raw rem type). Env/migration: none.
+
+### Session — 2026-08-16 (gift homepage FAQ split)
+
+- **Override:** Phase 14 Procurement in progress; human: improve Soft Gift `/gift` homepage FAQ (narrow left column, empty right).
+- Homepage FAQ is now a split band (mint): overline + `gift-h1` on `<h2>` left, accordion right (full remaining width). PDP accordion stays stacked. Circular +/× control; open row tint; hover/focus border.
+- CMS: optional `overline` (default Help). Seed + palette: two extra items (pan-India delivery, team gifting).
+- Check: `faq-accordion.check.ts`. Env/migration: none. Live home FAQ patched: overline Help + 5 items.
+
+### Session — 2026-08-16 (gift homepage dual-speed testimonials)
+
+- **Override:** Phase 14 Procurement in progress; human: Soft Gift `/gift` homepage testimonials should match a split copy + dual-column vertical marquee (one column faster), Soft Gift tokens — not a dark clone.
+- `TestimonialsBlock`: left overline/title/subtitle + optional `clay-btn`; right two JS marquees — **left slow 16px/s, right fast 24px/s**. Lead card moves to the end when it leaves (no CSS `-50%` snap). Cards: stars + date on top, quote, author row with divider. Pause on hover/focus. Below 480px one column; under 4 quotes stay a static grid.
+- Left copy bumped to `gift-h1` visual on an **`<h2>`** (not page H1). Desktop size stepped back from `--text-display-lg` to `--text-display` so it is large but not display-hero.
+- Zod/CMS: `overline`, `ctaLabel`, `ctaHref`; items max 12 with optional `dated`. CTA Shop gifts → `/gift/products`.
+- Live check: Docker web was stale (05:57 UTC, no date UI). CMS items still lack `dated`; renderer falls back to seed author dates. Redeployed `inabiya-web:400103a`; `/gift` now SSR `18 Jul 2026` stamps.
+- Check: `gift-testimonials.check.ts`. Env/migration: none. Live home testimonials JSON patched 3 → 12.
+
+### Session — 2026-08-16 (homepage corporate CTA visual)
+
+- **Override:** Phase 14; human: homepage “Corporate & bulk gifting” CTA felt empty on the right.
+- Split the home titled CTA into copy + visual: gift-box illustration, soft blob, three chips (volume pricing / branded cards / PAN-India). Same clay-panel; no extra help copy.
+- Files: `marketing-page-blocks.tsx`, `globals.css`. Env/migration: none.
+
+### Session — 2026-08-16 (PDP reviews product-scoped)
+
+- **Override:** Phase 14; human: one customer review appearing on all product pages.
+- Confirmed: `ProductReview.productId` + `GET /catalog/products/:slug/reviews` already filter by product. Bug was PDP empty-state fallback `GET /catalog/reviews/recent` (store-wide social proof) rendering other products’ reviews on every PDP with 0 own reviews.
+- Removed store-wide fallback from Soft Gift PDP Reviews section. Removed unused `listRecentApproved` / `GET /catalog/reviews/recent`. Empty PDP now shows only the empty copy, not another product’s review.
+- Env/migration: none.
 
 ### Session — 2026-08-16 (commerce ops personalization editor)
 

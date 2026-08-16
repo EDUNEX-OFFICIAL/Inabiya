@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  Star,
   Truck,
   UserRound,
   Wallet,
@@ -37,6 +36,8 @@ export { collectCmsFaqJsonLd } from '@/lib/seo-json-ld/cms-faq';
 import { jsonLdToScriptHtml } from '@/components/seo/json-ld-script';
 import { GiftHomeMotion } from '@/components/cms/gift-home-motion';
 import { HomeProductCard } from '@/components/cms/home-product-card';
+import { TestimonialCard, resolveTestimonialDated } from '@/components/cms/gift-testimonial-card';
+import { GiftTestimonialMarquee } from '@/components/cms/gift-testimonial-marquee';
 import { ProductCardMeta } from '@/components/gift/product-card-meta';
 import { ProductCardWishlist } from '@/components/gift/product-card-wishlist';
 import { HamperContentsTrigger } from '@/components/gift/hamper-contents-modal';
@@ -391,28 +392,65 @@ function HeroBlock({ props, layout }: { props: Record<string, unknown>; layout: 
   );
 }
 
+const CORPORATE_CTA_HIGHLIGHTS = [
+  { label: 'Volume pricing', Icon: Briefcase },
+  { label: 'Branded cards', Icon: Sparkles },
+  { label: 'PAN-India', Icon: Truck },
+] as const;
+
 function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
   const secondary = props.variant === 'secondary';
-  const inner = props.title ? (
+  const href = cmsHref(props.href, '/gift');
+  const isCorporate = String(props.href ?? '').includes('/gift/corporate');
+  const highlights = isCorporate ? CORPORATE_CTA_HIGHLIGHTS : [];
+  const btnClass = secondary ? 'clay-btn-secondary' : 'clay-btn';
+
+  const copy = props.title ? (
     <>
-      <h2 className="gift-h2">{String(props.title)}</h2>
+      {home && isCorporate ? <p className="gift-overline">Teams · events</p> : null}
+      <h2 className={`gift-h2 ${home && isCorporate ? 'mt-gs-2' : ''}`}>{String(props.title)}</h2>
       {props.body ? <p className="gift-muted mt-gs-3 max-w-prose">{String(props.body)}</p> : null}
-      <Link
-        href={cmsHref(props.href, '/gift')}
-        className={`mt-gs-6 ${secondary ? 'clay-btn-secondary' : 'clay-btn'}`}
-      >
+      <Link href={href} className={`mt-gs-6 inline-flex items-center gap-gs-2 ${btnClass}`}>
         {String(props.label ?? 'Continue')}
+        <ArrowRight className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
       </Link>
     </>
   ) : (
     <div className="flex justify-center py-gs-2">
-      <Link
-        href={cmsHref(props.href, '/gift')}
-        className={secondary ? 'clay-btn-secondary' : 'clay-btn'}
-      >
+      <Link href={href} className={btnClass}>
         {String(props.label ?? 'Continue')}
       </Link>
     </div>
+  );
+
+  const visual =
+    home && props.title ? (
+      <div className="gift-cta-split__stage">
+        <div className="gift-cta-split__blob" aria-hidden />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/gift/media/gift-box.svg" alt="" className="gift-cta-split__photo" />
+        {highlights.length ? (
+          <ul className="gift-cta-split__chips">
+            {highlights.map(({ label, Icon }) => (
+              <li key={label} className="gift-cta-split__chip">
+                <span className="gift-cta-split__chip-icon" aria-hidden>
+                  <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                </span>
+                {label}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    ) : null;
+
+  const inner = visual ? (
+    <div className="gift-cta-split">
+      <div className="gift-cta-split__copy">{copy}</div>
+      {visual}
+    </div>
+  ) : (
+    copy
   );
 
   if (home) {
@@ -1147,13 +1185,15 @@ function FaqAnswer({ html }: { html: string }) {
 function FaqBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
   const title =
     String(props.title ?? 'Frequently asked questions').trim() || 'Frequently asked questions';
+  const overline = String(props.overline ?? '').trim() || (home ? 'Help' : '');
   const items = parseFaqItems(props.items);
   if (items.length === 0) return null;
 
-  return (
+  const accordion = (
     <FaqAccordion
       id="faq"
       title={title}
+      overline={overline || undefined}
       home={home}
       items={items.map((item) => ({
         question: item.question,
@@ -1161,6 +1201,15 @@ function FaqBlock({ props, home }: { props: Record<string, unknown>; home?: bool
       }))}
     />
   );
+
+  if (home) {
+    return (
+      <GiftBand tone="mint" toys={false}>
+        {accordion}
+      </GiftBand>
+    );
+  }
+  return accordion;
 }
 
 function FaqJsonLd({ blocks }: { blocks: CmsPageBlock[] }) {
@@ -1347,7 +1396,7 @@ function BuildYourBoxTeaserBlock({
           {body ? <p className="gift-byb-banner__body">{body}</p> : null}
           <Link
             href={cmsHref(ctaHref)}
-            className="gift-byb-banner__cta inline-flex items-center gap-gs-2"
+            className="gift-byb-banner__cta clay-btn inline-flex items-center gap-gs-2"
             data-testid="byb-cta"
           >
             <Gift className="h-4 w-4" strokeWidth={1.75} aria-hidden />
@@ -1355,9 +1404,9 @@ function BuildYourBoxTeaserBlock({
             <ArrowRight className="h-4 w-4" strokeWidth={1.75} aria-hidden />
           </Link>
           <ul className="gift-byb-banner__trust list-none">
-            <li>Budget-first</li>
-            <li>Age-appropriate</li>
-            <li>Personalised</li>
+            <li className="clay-chip">Budget-first</li>
+            <li className="clay-chip">Age-appropriate</li>
+            <li className="clay-chip">Personalised</li>
           </ul>
         </div>
         {steps.length ? (
@@ -1371,7 +1420,7 @@ function BuildYourBoxTeaserBlock({
                       {i + 1}
                     </span>
                     <span className="gift-byb-steps__icon" aria-hidden>
-                      <StepIcon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                      <StepIcon className="h-4 w-4" strokeWidth={1.85} />
                     </span>
                   </div>
                   <div>
@@ -1483,71 +1532,74 @@ function TestimonialsBlock({ props, home }: { props: Record<string, unknown>; ho
           role: row.role ? String(row.role) : '',
           rating:
             typeof row.rating === 'number' && row.rating >= 1 && row.rating <= 5 ? row.rating : 5,
+          dated: resolveTestimonialDated(
+            String(row.author ?? ''),
+            String(row.dated ?? row.date ?? ''),
+          ),
         }))
         .filter((row) => row.quote && row.author)
-        .slice(0, 6)
+        .slice(0, 12)
+        .map((row, idx) => ({ ...row, idx }))
     : [];
   if (!items.length) return null;
 
-  const tones = ['pink', 'mint', 'sky'] as const;
+  const overline = props.overline ? String(props.overline) : 'Parent love';
+  const title = props.title ? String(props.title) : 'Loved by new parents across India';
+  const subtitle = props.subtitle
+    ? String(props.subtitle)
+    : 'Honest notes from recent gifts — personal, on-budget, and actually useful.';
+  const ctaLabel = typeof props.ctaLabel === 'string' ? props.ctaLabel.trim() : '';
+  const ctaHref = typeof props.ctaHref === 'string' ? props.ctaHref.trim() : '';
+  const useMarquee = items.length >= 4;
+  const leftCol = items.filter((_, i) => i % 2 === 0);
+  const rightCol = items.filter((_, i) => i % 2 === 1);
+
+  const copy = (
+    <div className="gift-testimonials__copy">
+      {overline ? <p className="gift-overline">{overline}</p> : null}
+      {title ? (
+        <h2 className={`gift-h1 ${overline ? 'mt-gs-3' : ''} leading-tight`}>{title}</h2>
+      ) : null}
+      {subtitle ? <p className="gift-body mt-gs-3">{subtitle}</p> : null}
+      {ctaLabel && ctaHref ? (
+        <Link href={cmsHref(ctaHref)} className="clay-btn mt-gs-5 inline-flex">
+          {ctaLabel}
+        </Link>
+      ) : null}
+    </div>
+  );
 
   const body = (
-    <>
-      <GiftSectionHeader
-        overline={props.overline ? String(props.overline) : 'Parent love'}
-        title={props.title ? String(props.title) : 'Loved by new parents across India'}
-        subtitle={
-          props.subtitle
-            ? String(props.subtitle)
-            : 'Honest notes from recent gifts — personal, on-budget, and actually useful.'
-        }
-      />
-      <ul className="gift-testimonials-grid list-none">
-        {items.map((item, idx) => {
-          const tone = tones[idx % tones.length] ?? 'pink';
-          const initials = item.author
-            .split(/\s+/)
-            .map((w) => w[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase();
-          return (
-            <li
-              key={`${item.author}-${item.quote.slice(0, 24)}`}
-              className={
-                {
-                  pink: 'gift-testimonial-card gift-testimonial-card--pink',
-                  mint: 'gift-testimonial-card gift-testimonial-card--mint',
-                  sky: 'gift-testimonial-card gift-testimonial-card--sky',
-                }[tone]
-              }
-            >
-              <span className="gift-testimonial-card__mark" aria-hidden>
-                “
-              </span>
-              <div
-                className="gift-testimonial-card__stars"
-                aria-label={`${item.rating} out of 5 stars`}
-              >
-                {Array.from({ length: item.rating }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" aria-hidden />
-                ))}
-              </div>
-              <p className="gift-testimonial-card__quote">{item.quote}</p>
-              <div className="gift-testimonial-card__author-row">
-                <span className="gift-testimonial-card__avatar" aria-hidden>
-                  {initials}
-                </span>
-                <div>
-                  <p className="gift-testimonial-card__author">{item.author}</p>
-                  {item.role ? <p className="gift-testimonial-card__role">{item.role}</p> : null}
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </>
+    <div
+      className={useMarquee ? 'gift-testimonials' : 'gift-testimonials gift-testimonials--static'}
+    >
+      {copy}
+      {useMarquee ? (
+        <div className="gift-testimonials__stage">
+          <div
+            className="gift-testimonials__viewport gift-testimonials__viewport--desktop"
+            tabIndex={0}
+            aria-label="Parent testimonials"
+          >
+            <GiftTestimonialMarquee items={leftCol} speed="slow" />
+            <GiftTestimonialMarquee items={rightCol} speed="fast" />
+          </div>
+          <div
+            className="gift-testimonials__viewport gift-testimonials__viewport--mobile"
+            tabIndex={0}
+            aria-label="Parent testimonials"
+          >
+            <GiftTestimonialMarquee items={items} speed="fast" />
+          </div>
+        </div>
+      ) : (
+        <ul className="gift-testimonials-grid list-none">
+          {items.map((item) => (
+            <TestimonialCard key={`${item.author}-${item.quote.slice(0, 24)}`} item={item} />
+          ))}
+        </ul>
+      )}
+    </div>
   );
 
   if (home) {

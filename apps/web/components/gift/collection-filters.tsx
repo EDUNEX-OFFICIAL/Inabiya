@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   useCallback,
@@ -10,7 +9,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
-import { ChevronDown, SlidersHorizontal, X } from 'lucide-react';
+import { Check, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
 import {
   COLLECTION_AGES,
   COLLECTION_BUDGETS,
@@ -30,6 +29,12 @@ type Props = {
 
 function toggleValue(current: string | undefined, next: string): string | undefined {
   return current === next ? undefined : next;
+}
+
+function facetKey(r: CollectionRefine): string {
+  return [r.age, r.maxPricePaise, r.occasion, r.recipient, r.hamper, r.onSale]
+    .map((v) => v ?? '')
+    .join('\0');
 }
 
 function FacetOption({
@@ -55,12 +60,12 @@ function FacetOption({
       <span
         className={
           active
-            ? 'flex size-4 shrink-0 items-center justify-center rounded border border-primary bg-primary text-caption text-primary-foreground'
-            : 'size-4 shrink-0 rounded border border-foreground/25 bg-transparent'
+            ? 'flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-primary bg-primary text-primary-foreground'
+            : 'size-4 shrink-0 rounded-[4px] border border-foreground/20 bg-[var(--background)]'
         }
         aria-hidden
       >
-        {active ? '✓' : null}
+        {active ? <Check className="size-3" strokeWidth={3} /> : null}
       </span>
       {label}
     </button>
@@ -76,9 +81,14 @@ function AccordionGroup({
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <details className="group border-b border-foreground/8 pb-gs-3" open={defaultOpen}>
-      <summary className="flex cursor-pointer list-none items-center justify-between py-gs-2 text-caption font-semibold uppercase tracking-wide text-foreground/50 [&::-webkit-details-marker]:hidden">
+    <details
+      className="group border-b border-foreground/8 pb-gs-3"
+      open={open}
+      onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
+    >
+      <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between py-gs-2 text-caption font-semibold uppercase tracking-wide text-foreground/50 [&::-webkit-details-marker]:hidden">
         {title}
         <ChevronDown className="size-4 opacity-50 transition group-open:rotate-180" aria-hidden />
       </summary>
@@ -135,7 +145,7 @@ function FacetEditor({
       ) : null}
 
       {!hide.has('occasion') ? (
-        <AccordionGroup title="Occasion">
+        <AccordionGroup title="Occasion" defaultOpen={Boolean(value.occasion)}>
           {COLLECTION_OCCASIONS.map((o) => (
             <FacetOption
               key={o.value}
@@ -148,7 +158,7 @@ function FacetEditor({
       ) : null}
 
       {!hide.has('recipient') ? (
-        <AccordionGroup title="Recipient">
+        <AccordionGroup title="Recipient" defaultOpen={Boolean(value.recipient)}>
           {COLLECTION_RECIPIENTS.map((r) => (
             <FacetOption
               key={r.value}
@@ -161,7 +171,7 @@ function FacetEditor({
       ) : null}
 
       {!hide.has('hamper') ? (
-        <AccordionGroup title="Type">
+        <AccordionGroup title="Type" defaultOpen={value.hamper === '1'}>
           <FacetOption
             label="Ready hampers"
             active={value.hamper === '1'}
@@ -171,7 +181,7 @@ function FacetEditor({
       ) : null}
 
       {!hide.has('onSale') ? (
-        <AccordionGroup title="Offers">
+        <AccordionGroup title="Offers" defaultOpen={value.onSale === '1'}>
           <FacetOption
             label="On sale"
             active={value.onSale === '1'}
@@ -183,37 +193,71 @@ function FacetEditor({
   );
 }
 
-/** Desktop sidebar — apply immediately via navigation. */
+/** Desktop sidebar — draft locally, commit on Apply. */
 function DesktopSidebar({ collection, refine }: Props) {
   const router = useRouter();
-  const activeCount = countActiveRefines(collection, refine);
+  const [draft, setDraft] = useState<CollectionRefine>(refine);
+  const appliedKey = facetKey(refine);
+  const dirty = facetKey(draft) !== appliedKey;
+  const draftCount = countActiveRefines(collection, draft);
 
-  const apply = (next: CollectionRefine) => {
-    router.push(collectionHref(collection.slug, refineParamsForUrl(collection, next)));
+  useEffect(() => {
+    setDraft({ ...refine, sort: refine.sort });
+  }, [
+    refine.age,
+    refine.maxPricePaise,
+    refine.occasion,
+    refine.recipient,
+    refine.hamper,
+    refine.onSale,
+    refine.sort,
+  ]);
+
+  const applyDraft = () => {
+    router.push(
+      collectionHref(
+        collection.slug,
+        refineParamsForUrl(collection, { ...draft, sort: refine.sort }),
+      ),
+    );
+  };
+
+  const clearDraft = () => {
+    setDraft({ sort: refine.sort });
   };
 
   return (
-    <aside className="hidden w-56 shrink-0 md:block lg:w-64" aria-label="Collection filters">
-      <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-gs-6 pr-gs-1">
-        <p className="gift-overline mb-gs-3">Filters</p>
-        <FacetEditor
-          collection={collection}
-          value={refine}
-          onChange={(next) => apply({ ...next, sort: refine.sort })}
-        />
-        {activeCount > 0 ? (
-          <div className="sticky bottom-0 mt-gs-4 border-t border-foreground/8 bg-[var(--background)] pt-gs-3">
-            <Link
-              href={collectionHref(
-                collection.slug,
-                refineParamsForUrl(collection, { sort: refine.sort }),
-              )}
-              className="gift-link text-body"
-            >
-              Clear filters
-            </Link>
-          </div>
-        ) : null}
+    <aside className="hidden w-56 shrink-0 self-start md:block lg:w-64" aria-label="Collection filters">
+      <div className="sticky top-[calc(var(--gift-sticky-offset)+0.75rem)] flex max-h-[calc(100dvh-var(--gift-sticky-offset)-1.5rem)] flex-col overflow-hidden">
+        <p className="gift-overline mb-gs-3 shrink-0">Filters</p>
+        <div
+          className="gift-facet-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain pr-gs-1"
+          data-lenis-prevent
+        >
+          <FacetEditor
+            collection={collection}
+            value={draft}
+            onChange={(next) => setDraft({ ...next, sort: refine.sort })}
+          />
+        </div>
+        <div className="mt-gs-3 flex shrink-0 gap-gs-2 border-t border-foreground/8 bg-[var(--background)] pt-gs-3">
+          <button
+            type="button"
+            className="clay-btn-secondary flex-1 justify-center !min-h-0 !px-gs-2 !py-gs-2 text-body"
+            disabled={draftCount === 0}
+            onClick={clearDraft}
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            className="clay-btn flex-1 justify-center !min-h-0 !px-gs-2 !py-gs-2 text-body"
+            disabled={!dirty}
+            onClick={applyDraft}
+          >
+            Apply
+          </button>
+        </div>
       </div>
     </aside>
   );
@@ -344,7 +388,10 @@ function MobileFilters({ collection, refine }: Props) {
                 <X className="size-5" />
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-gs-5 py-gs-4">
+            <div
+              className="gift-facet-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-gs-5 py-gs-4"
+              data-lenis-prevent
+            >
               <FacetEditor collection={collection} value={draft} onChange={setDraft} />
             </div>
             <div className="flex shrink-0 gap-gs-3 border-t border-foreground/8 px-gs-5 py-gs-4">
@@ -356,7 +403,7 @@ function MobileFilters({ collection, refine }: Props) {
                 Clear
               </button>
               <button type="button" className="clay-btn flex-1 justify-center" onClick={applyDraft}>
-                Show results
+                Apply
               </button>
             </div>
           </div>

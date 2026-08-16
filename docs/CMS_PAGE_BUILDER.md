@@ -74,7 +74,7 @@ Money never lives in block props as floats; product prices always come from cata
 | `countdown` | `endsAt`, `title?`, `expiredLabel?`, `ctaLabel?`, `ctaHref?` | Soft Gift offer timer (dev leftovers Wave 4) |
 | `faq` | `title?`, `items[{ question, answerHtml }]` | Accordion + FAQPage JSON-LD |
 | `exclusiveOffers` | `overline?`, `title?`, `subtitle?`, `cards[{ tag, title, subtitle?, body?, ctaLabel, ctaHref, tone?, icon? }]` | 3 gradient offer cards |
-| `testimonials` | `title?`, `subtitle?`, `items[{ quote, author, role?, rating? }]` | Quote cards with stars |
+| `testimonials` | `overline?`, `title?`, `subtitle?`, `ctaLabel?`, `ctaHref?`, `items[{ quote, author, role?, rating?, dated? }]` (max 12) | Split copy + dual-speed vertical quote marquee (static grid if < 4 quotes) |
 | `discoveryChips` | `title?`, `items[{ label, href, imageUrl?, imageAlt? }]`, `seeAll*` | Category / occasion / age image tiles; admin card editor + presets |
 | `cta` | `label`, `href`, `variant?`, `title?`, `body?` | Corporate / promo band on Soft Gift home |
 

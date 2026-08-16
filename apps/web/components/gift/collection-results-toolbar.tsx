@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
+import { GiftSelect } from '@/components/gift/gift-select';
 import {
   COLLECTION_SORTS,
   collectionHref,
@@ -28,7 +29,7 @@ export function CollectionResultsToolbar({ collection, refine, productCount }: P
   );
 
   return (
-    <div className="mb-gs-4 space-y-gs-3">
+    <div className="relative z-[var(--z-overlay)] mb-gs-4 space-y-gs-3">
       <div className="flex flex-wrap items-center justify-between gap-gs-3">
         <p className="text-body font-medium text-foreground/75" aria-live="polite">
           {productCount === 0
@@ -38,16 +39,16 @@ export function CollectionResultsToolbar({ collection, refine, productCount }: P
             <span className="font-normal text-foreground/45"> · filtered</span>
           ) : null}
         </p>
-        <label className="flex items-center gap-gs-2 text-body">
-          <span className="sr-only sm:not-sr-only sm:text-caption sm:font-medium sm:uppercase sm:tracking-wide sm:opacity-55">
+        <div className="flex items-center gap-gs-2">
+          <span className="hidden text-caption font-medium uppercase tracking-wide text-foreground/55 sm:inline">
             Sort
           </span>
-          <select
-            className="rounded-pill border border-foreground/12 bg-[var(--background)] px-gs-3 py-gs-2 text-body outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          <GiftSelect
+            variant="pill"
+            ariaLabel="Sort products"
             value={currentSort}
-            aria-label="Sort products"
-            onChange={(e) => {
-              const sort = e.target.value;
+            options={COLLECTION_SORTS}
+            onChange={(sort) => {
               router.push(
                 collectionHref(
                   collection.slug,
@@ -55,14 +56,8 @@ export function CollectionResultsToolbar({ collection, refine, productCount }: P
                 ),
               );
             }}
-          >
-            {COLLECTION_SORTS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
+          />
+        </div>
       </div>
 
       {chips.length > 0 ? (
