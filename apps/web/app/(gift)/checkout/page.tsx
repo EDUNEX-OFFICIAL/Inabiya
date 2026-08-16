@@ -79,7 +79,10 @@ function CheckoutPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const buyNowVariantId = parseBuyNowVariantId(searchParams.get('buyNow'));
-  const checkoutNext = buyNowVariantId ? `/checkout?buyNow=${buyNowVariantId}` : '/checkout';
+  const buyNowItemId = parseBuyNowVariantId(searchParams.get('buyNowItem'));
+  const checkoutNext = buyNowVariantId
+    ? `/checkout?buyNow=${buyNowVariantId}${buyNowItemId ? `&buyNowItem=${buyNowItemId}` : ''}`
+    : '/checkout';
   const shipGroupId = useId();
   const addrGroupId = useId();
   const [gate, setGate] = useState<Gate>('checking');
@@ -89,8 +92,6 @@ function CheckoutPageInner() {
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [addressMode, setAddressMode] = useState<'saved' | 'new'>('new');
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('STANDARD');
-  const [giftMessage, setGiftMessage] = useState('');
-  const [giftWrap, setGiftWrap] = useState(false);
   const [saveAddress, setSaveAddress] = useState(true);
   const [couponDraft, setCouponDraft] = useState('');
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -102,7 +103,7 @@ function CheckoutPageInner() {
   const preview = quotes?.[shippingMethod] ?? null;
 
   async function loadQuotes(token: string, couponCode?: string | null) {
-    const extra = buyNowVariantId ? { buyNowVariantId } : {};
+    const extra = buyNowVariantId ? { buyNowVariantId, buyNowItemId } : {};
     const [standard, express] = await Promise.all([
       cartApi<Preview>('/checkout/preview', {
         method: 'POST',
@@ -147,7 +148,7 @@ function CheckoutPageInner() {
             postalCode: def.postalCode,
           });
         }
-        if (!buyNowCartItems(c.items, buyNowVariantId).length) {
+        if (!buyNowCartItems(c.items, buyNowVariantId, buyNowItemId).length) {
           setGate('empty');
           return;
         }
@@ -158,7 +159,7 @@ function CheckoutPageInner() {
         setError(e instanceof Error ? e.message : 'Could not load checkout');
         setGate('error');
       });
-  }, [buyNowVariantId]);
+  }, [buyNowItemId, buyNowVariantId]);
 
   function applySavedAddress(id: string) {
     setSelectedAddressId(id);
@@ -252,11 +253,10 @@ function CheckoutPageInner() {
         json: {
           shippingMethod,
           shippingAddress: { ...form, country: 'IN' },
-          giftMessage: giftMessage.trim() || undefined,
-          giftWrap,
           couponCode: cart?.couponCode ?? undefined,
           saveAddress: addressMode === 'new' && saveAddress,
           buyNowVariantId,
+          buyNowItemId,
         },
       });
       await apiAuth(`/checkout/payments/${result.paymentId}/confirm`, { method: 'POST' });
@@ -325,7 +325,7 @@ function CheckoutPageInner() {
 
   const displayCart = {
     ...cart,
-    items: buyNowCartItems(cart.items, buyNowVariantId),
+    items: buyNowCartItems(cart.items, buyNowVariantId, buyNowItemId),
   };
   const itemCount = displayCart.items.reduce((n, i) => n + i.quantity, 0);
   const payLabel = busy ? 'Placing order…' : `Pay ${formatInr(preview.totalPaise)}`;
@@ -567,27 +567,27 @@ function CheckoutPageInner() {
               <h2 id="checkout-gift" className="gift-h2">
                 Gift
               </h2>
-              <label className="mt-gs-4 flex items-center gap-gs-3 text-body">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-[var(--primary)]"
-                  checked={giftWrap}
-                  onChange={(e) => setGiftWrap(e.target.checked)}
-                />
-                Gift wrap
-              </label>
-              <label className="mt-gs-3 block text-body">
-                Gift message
-                <textarea
-                  className={inputClass}
-                  rows={2}
-                  maxLength={500}
-                  name="gift-message"
-                  placeholder="Happy birthday"
-                  value={giftMessage}
-                  onChange={(e) => setGiftMessage(e.target.value)}
-                />
-              </label>
+              {displayCart.items.some((item) => item.giftExtras?.note || item.giftExtras?.wrap || item.giftExtras?.ribbon) ? (
+                <ul className="mt-gs-4 space-y-gs-3 text-body">
+                  {displayCart.items.map((item) => {
+                    const extras = item.giftExtras;
+                    if (!extras?.note && !extras?.wrap && !extras?.ribbon) return null;
+                    return (
+                      <li key={item.id} className="rounded-control border border-border-subtle px-gs-3 py-gs-2">
+                        <p className="font-medium">{item.productTitle}</p>
+                        {extras.note ? <p className="mt-gs-1 opacity-75">{extras.note.label}: {extras.note.value}</p> : null}
+                        {extras.wrap ? <p className="mt-gs-1 opacity-75">Wrap: {extras.wrap.label}</p> : null}
+                        {extras.ribbon ? <p className="mt-gs-1 opacity-75">Ribbon: {extras.ribbon.label}</p> : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="mt-gs-3 text-body opacity-70">No gift extras selected.</p>
+              )}
+              <Link href="/gift/cart" className="gift-link mt-gs-3 inline-flex text-body">
+                Review cart
+              </Link>
             </section>
 
             <section className="checkout-section" aria-labelledby="checkout-pay">

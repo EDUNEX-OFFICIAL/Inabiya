@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 15, 2026 (local deploy @ 2130574; push blocked)
+Last Updated: August 16, 2026 (commerce ops personalization editor deployed)
 
 ---
 
@@ -1163,6 +1163,30 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-16 (commerce ops personalization editor)
+
+- **Override:** Phase 14; human: Baby name personalization existed on products but was not visible/editable in Commerce Ops.
+- Confirmed 18 seeded products still have `babyName` in DB + storefront API. Gap was product edit UI + PATCH update (create-only).
+- Added Personalization section on product edit (view/add/remove, including quick “Add Baby name”), `updateProductBodySchema.personalization`, and catalog `updateProduct` replace of `personalizationOpts`. Redeployed web+api; smoke healthy.
+- Review follow-up ([Review personalization ops fix](d1edc215-860b-4332-abde-c2fbcd8fb9ed)): SELECT/options + unique keys on create; FINANCE can PATCH products; cart validates personalization against catalog; incomplete-row save blocked; SELECT maxLength stripped / options deduped.
+
+### Session — 2026-08-16 (deploy gift extras)
+
+- **Override:** Phase 14; human: deploy gift-extras changes.
+- Local `bash scripts/deploy-vps.sh web api` @ working tree (HEAD label `5e621f4`). Migration `20260816103000_product_gift_extras` applied. Smoke health/ready 200; api+web healthy.
+- Changes still uncommitted on disk (not pushed). GitHub push remains blocked until `gh auth` is fixed.
+
+### Session — 2026-08-16 (per-product gift extras)
+
+- **Override:** Active Phase 14 Procurement; human requested product-level gift note, wrap, and ribbon support across PDP, cart, checkout, and Commerce Ops.
+- Added product-configured gift options (integer paise), server-side option resolution/pricing, cart/order line snapshots, and a migration allowing the same variant as separately configured gift lines.
+- PDP selects line extras; cart/checkout/order/admin show per-line fulfillment choices. New-product desk supports the initial note/wrap/ribbon setup; product edit persists the validated configuration.
+- Fixed USP default/seed capitalization: `Gift note`, `Ribbon & wrap`, `Tested`, `Thoughtful`. Existing published CMS blocks may still need a CMS save/update to replace independently authored 8-card copy.
+- Migration: `20260816103000_product_gift_extras` **not applied**. Verify: Prisma generate, validation build, API+web typecheck, workspace lint green (pre-existing web warnings only).
+- Cross-check follow-up: fixed Buy now to target the exact new cart line (`buyNowItemId`) and quantity updates now consider sibling lines of the same variant. Full test suite, Prisma validation, typechecks, and lint passed.
+- Review follow-up ([Review commerce gift flow](a3b15029-7a26-4c43-9585-b7654cb7a135) / [Review gift UI admin](0a2b7f6e-df96-4526-8538-18f4306bf96f)): customer order DTO now returns `giftExtras`; stable cart fingerprints; failed Buy now restores lines into existing carts; Prisma index declared; unique wrap/ribbon ids; USP body capitalization; babyName restored on create; cart/checkout copy + extras money display; fingerprint + buy-now checks added.
+- Follow-up: apply migration in target DB and smoke separate same-variant gift lines, including legacy Buy now URLs.
 
 ### Session — 2026-08-15 (verify clean + push for GHA deploy)
 

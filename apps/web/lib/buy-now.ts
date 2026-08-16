@@ -6,14 +6,18 @@ export function parseBuyNowVariantId(raw: string | null | undefined): string | u
   return v;
 }
 
-export function buyNowCheckoutPath(variantId: string): string {
-  return `/checkout?buyNow=${encodeURIComponent(variantId)}`;
+export function buyNowCheckoutPath(variantId: string, itemId?: string): string {
+  const params = new URLSearchParams({ buyNow: variantId });
+  if (itemId) params.set('buyNowItem', itemId);
+  return `/checkout?${params.toString()}`;
 }
 
-export function buyNowCartItems<T extends { variantId: string }>(
+export function buyNowCartItems<T extends { variantId: string; id?: string }>(
   items: T[],
   buyNowVariantId: string | undefined,
+  buyNowItemId?: string,
 ): T[] {
+  if (buyNowItemId) return items.filter((i) => i.id === buyNowItemId);
   if (!buyNowVariantId) return items;
   return items.filter((i) => i.variantId === buyNowVariantId);
 }

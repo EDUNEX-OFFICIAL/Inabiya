@@ -5,6 +5,61 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CouponService } from '../promotions/coupon.service';
 import { shippingPaise } from '../commerce-pricing';
 import { selectBuyNowItems } from './buy-now-slice';
+import { assertCartPersonalization } from './assert-cart-personalization';
+import { giftExtrasUnitPaise, giftLineFingerprint } from './gift-line-fingerprint';
+
+type GiftExtrasInput = { note?: string; wrapId?: string; ribbonId?: string };
+type GiftExtrasSnapshot = {
+  note?: { label: string; value: string; pricePaise: number };
+  wrap?: { id: string; label: string; pricePaise: number };
+  ribbon?: { id: string; label: string; pricePaise: number };
+};
+
+function readGiftOptions(raw: unknown) {
+  const root =
+    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const choices = (value: unknown) =>
+    Array.isArray(value)
+      ? value.flatMap((item) => {
+          if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
+          const choice = item as Record<string, unknown>;
+          const pricePaise =
+            typeof choice.pricePaise === 'number' && Number.isInteger(choice.pricePaise)
+              ? Math.max(0, choice.pricePaise)
+              : null;
+          return typeof choice.id === 'string' &&
+            typeof choice.label === 'string' &&
+            pricePaise != null
+            ? [{ id: choice.id, label: choice.label, pricePaise }]
+            : [];
+        })
+      : [];
+  const note =
+    root.note && typeof root.note === 'object' && !Array.isArray(root.note)
+      ? (root.note as Record<string, unknown>)
+      : undefined;
+  const notePrice =
+    typeof note?.pricePaise === 'number' && Number.isInteger(note.pricePaise)
+      ? Math.max(0, note.pricePaise)
+      : null;
+  return {
+    note:
+      note?.enabled === true &&
+      typeof note.label === 'string' &&
+      typeof note.maxLength === 'number' &&
+      Number.isInteger(note.maxLength) &&
+      note.maxLength > 0 &&
+      notePrice != null
+        ? {
+            label: note.label,
+            maxLength: note.maxLength,
+            pricePaise: notePrice,
+          }
+        : undefined,
+    wrap: choices(root.wrap),
+    ribbon: choices(root.ribbon),
+  };
+}
 
 const cartInclude = {
   items: {
@@ -35,6 +90,40 @@ export class CartService {
     private readonly prisma: PrismaService,
     private readonly coupons: CouponService,
   ) {}
+
+  private resolveGiftExtras(rawOptions: unknown, input?: GiftExtrasInput): GiftExtrasSnapshot | undefined {
+    if (!input) return undefined;
+    const options = readGiftOptions(rawOptions);
+    const out: GiftExtrasSnapshot = {};
+    const note = input.note?.trim();
+    if (note) {
+      if (!options.note) {
+        throw new BadRequestException({ code: 'GIFT_NOTE_UNAVAILABLE', message: 'Gift notes are not available for this product.' });
+      }
+      if (note.length > options.note.maxLength) {
+        throw new BadRequestException({ code: 'GIFT_NOTE_TOO_LONG', message: `Gift note must be ${options.note.maxLength} characters or less.` });
+      }
+      out.note = { label: options.note.label, value: note, pricePaise: options.note.pricePaise };
+    }
+    for (const [key, choices] of [
+      ['wrapId', options.wrap],
+      ['ribbonId', options.ribbon],
+    ] as const) {
+      const id = input[key];
+      if (!id) continue;
+      const choice = choices.find((candidate) => candidate.id === id);
+      if (!choice) {
+        throw new BadRequestException({ code: 'INVALID_GIFT_OPTION', message: 'Selected gift option is no longer available.' });
+      }
+      if (key === 'wrapId') out.wrap = choice;
+      else out.ribbon = choice;
+    }
+    return Object.keys(out).length ? out : undefined;
+  }
+
+  private giftExtrasPaise(extras: GiftExtrasSnapshot | null | undefined, quantity: number) {
+    return giftExtrasUnitPaise(extras) * quantity;
+  }
 
   async getOrCreate(userId?: string, guestToken?: string) {
     if (userId) {
@@ -70,17 +159,26 @@ export class CartService {
   async addItem(
     userId: string | undefined,
     guestToken: string | undefined,
-    input: { variantId: string; quantity: number; personalization?: Record<string, string> },
+    input: {
+      variantId: string;
+      quantity: number;
+      personalization?: Record<string, string>;
+      giftExtras?: GiftExtrasInput;
+    },
   ) {
     const cartDto = await this.getOrCreate(userId, guestToken);
     const cart = await this.prisma.cart.findUniqueOrThrow({
       where: { id: cartDto.id },
     });
 
+    let addedItemId = '';
     await this.prisma.$transaction(async (tx) => {
       const variant = await tx.productVariant.findUnique({
         where: { id: input.variantId },
-        include: { product: true, inventory: true },
+        include: {
+          product: { include: { personalizationOpts: true } },
+          inventory: true,
+        },
       });
       if (!variant || variant.product.status !== ProductStatus.PUBLISHED) {
         throw new BadRequestException({
@@ -88,6 +186,10 @@ export class CartService {
           message: 'Product is not available.',
         });
       }
+      const personalization = assertCartPersonalization(
+        variant.product.personalizationOpts,
+        input.personalization,
+      );
       await tx.$executeRaw`
         SELECT id FROM inventory_items WHERE variant_id = ${input.variantId}::uuid FOR UPDATE
       `;
@@ -95,33 +197,46 @@ export class CartService {
         where: { variantId: input.variantId },
       });
       const available = (inv?.onHand ?? 0) - (inv?.reserved ?? 0);
-      const existing = await tx.cartItem.findUnique({
-        where: { cartId_variantId: { cartId: cart.id, variantId: input.variantId } },
+      const existingItems = await tx.cartItem.findMany({
+        where: { cartId: cart.id, variantId: input.variantId },
       });
-      const nextQty = (existing?.quantity ?? 0) + input.quantity;
+      const nextQty = existingItems.reduce((sum, item) => sum + item.quantity, 0) + input.quantity;
       if (available < nextQty) {
         throw new BadRequestException({
           code: 'INSUFFICIENT_STOCK',
           message: 'Not enough stock.',
         });
       }
-
-      await tx.cartItem.upsert({
-        where: { cartId_variantId: { cartId: cart.id, variantId: input.variantId } },
-        create: {
-          cartId: cart.id,
-          variantId: input.variantId,
-          quantity: input.quantity,
-          personalization: input.personalization ?? undefined,
-        },
-        update: {
-          quantity: { increment: input.quantity },
-          personalization: input.personalization ?? undefined,
-        },
-      });
+      const giftExtras = this.resolveGiftExtras(variant.product.giftOptions, input.giftExtras);
+      const extrasPaise = this.giftExtrasPaise(giftExtras, input.quantity);
+      const fingerprint = giftLineFingerprint(personalization, giftExtras);
+      const existing = existingItems.find(
+        (item) =>
+          giftLineFingerprint(item.personalization, item.giftExtras as GiftExtrasSnapshot | null) ===
+          fingerprint,
+      );
+      if (existing) {
+        const updated = await tx.cartItem.update({
+          where: { id: existing.id },
+          data: { quantity: { increment: input.quantity }, extrasPaise: { increment: extrasPaise } },
+        });
+        addedItemId = updated.id;
+      } else {
+        const created = await tx.cartItem.create({
+          data: {
+            cartId: cart.id,
+            variantId: input.variantId,
+            quantity: input.quantity,
+            personalization: personalization ?? undefined,
+            giftExtras: giftExtras ?? undefined,
+            extrasPaise,
+          },
+        });
+        addedItemId = created.id;
+      }
     });
 
-    return this.getOrCreate(userId, cartDto.guestToken ?? guestToken);
+    return { ...(await this.getOrCreate(userId, cartDto.guestToken ?? guestToken)), lastItemId: addedItemId };
   }
 
   async updateItem(
@@ -140,7 +255,15 @@ export class CartService {
     }
     const available =
       (item.variant.inventory?.onHand ?? 0) - (item.variant.inventory?.reserved ?? 0);
-    if (available < quantity) {
+    const siblingQuantity = await this.prisma.cartItem.aggregate({
+      where: {
+        cartId: cartDto.id,
+        variantId: item.variantId,
+        id: { not: itemId },
+      },
+      _sum: { quantity: true },
+    });
+    if (available < quantity + (siblingQuantity._sum.quantity ?? 0)) {
       throw new BadRequestException({
         code: 'INSUFFICIENT_STOCK',
         message: 'Not enough stock.',
@@ -148,7 +271,10 @@ export class CartService {
     }
     await this.prisma.cartItem.update({
       where: { id: itemId },
-      data: { quantity },
+      data: {
+        quantity,
+        extrasPaise: this.giftExtrasPaise(item.giftExtras as GiftExtrasSnapshot | null, quantity),
+      },
     });
     return this.getOrCreate(userId, cartDto.guestToken ?? guestToken);
   }
@@ -207,18 +333,40 @@ export class CartService {
     }
 
     for (const item of guestCart.items) {
-      await this.prisma.cartItem.upsert({
-        where: {
-          cartId_variantId: { cartId: userCart.id, variantId: item.variantId },
-        },
-        create: {
-          cartId: userCart.id,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          personalization: item.personalization ?? undefined,
-        },
-        update: { quantity: { increment: item.quantity } },
+      const sameVariant = await this.prisma.cartItem.findMany({
+        where: { cartId: userCart.id, variantId: item.variantId },
       });
+      const fingerprint = giftLineFingerprint(
+        item.personalization,
+        item.giftExtras as GiftExtrasSnapshot | null,
+      );
+      const existing = sameVariant.find(
+        (candidate) =>
+          giftLineFingerprint(
+            candidate.personalization,
+            candidate.giftExtras as GiftExtrasSnapshot | null,
+          ) === fingerprint,
+      );
+      if (existing) {
+        await this.prisma.cartItem.update({
+          where: { id: existing.id },
+          data: {
+            quantity: { increment: item.quantity },
+            extrasPaise: { increment: item.extrasPaise },
+          },
+        });
+      } else {
+        await this.prisma.cartItem.create({
+          data: {
+            cartId: userCart.id,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            personalization: item.personalization ?? undefined,
+            giftExtras: item.giftExtras ?? undefined,
+            extrasPaise: item.extrasPaise,
+          },
+        });
+      }
     }
 
     await this.prisma.cart.update({
@@ -232,7 +380,7 @@ export class CartService {
   async totals(
     cartId: string,
     shippingMethod: 'STANDARD' | 'EXPRESS',
-    opts?: { buyNowVariantId?: string },
+    opts?: { buyNowVariantId?: string; buyNowItemId?: string },
   ) {
     const cart = await this.prisma.cart.findUniqueOrThrow({
       where: { id: cartId },
@@ -253,7 +401,7 @@ export class CartService {
     }
 
     const mapped = this.mapCart(cart, cart.guestToken ?? undefined);
-    const items = selectBuyNowItems(mapped.items, opts.buyNowVariantId);
+    const items = selectBuyNowItems(mapped.items, opts.buyNowVariantId, opts.buyNowItemId);
     if (items.length === 0) {
       throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });
     }
@@ -348,6 +496,8 @@ export class CartService {
         id: string;
         quantity: number;
         personalization: unknown;
+        giftExtras: unknown;
+        extrasPaise: number;
         variant: {
           id: string;
           sku: string;
@@ -383,9 +533,11 @@ export class CartService {
           label: i.variant.label,
           quantity: i.quantity,
           unitPricePaise: i.variant.pricePaise,
-          lineTotalPaise: i.variant.pricePaise * i.quantity,
+          extrasPaise: i.extrasPaise,
+          lineTotalPaise: i.variant.pricePaise * i.quantity + i.extrasPaise,
           available,
           personalization: i.personalization,
+          giftExtras: i.giftExtras,
         };
       });
     const subtotalPaise = items.reduce((s, i) => s + i.lineTotalPaise, 0);

@@ -59,6 +59,11 @@ export type CatalogProduct = {
   faqItems?: Array<{ question: string; answerText: string }> | null;
   seoSections?: Array<{ heading: string; bodyText: string }> | null;
   seoSchemaExtras?: import('@inabiya/validation').SeoSchemaEntry[] | null;
+  giftOptions?: {
+    note?: { enabled: boolean; label: string; maxLength: number; pricePaise: number };
+    wrap?: Array<{ id: string; label: string; pricePaise: number }>;
+    ribbon?: Array<{ id: string; label: string; pricePaise: number }>;
+  } | null;
   hamperItems?: CatalogHamperItem[];
   hamperItemCount?: number;
   contentsValuePaise?: number;

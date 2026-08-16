@@ -39,10 +39,11 @@ export class CheckoutService {
       shippingMethod: 'STANDARD' | 'EXPRESS';
       couponCode?: string;
       buyNowVariantId?: string;
+      buyNowItemId?: string;
     },
   ) {
     const cartDto = await this.cart.getOrCreate(userId, guestToken);
-    const items = selectBuyNowItems(cartDto.items, input.buyNowVariantId);
+    const items = selectBuyNowItems(cartDto.items, input.buyNowVariantId, input.buyNowItemId);
     if (items.length === 0) {
       throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });
     }
@@ -51,6 +52,7 @@ export class CheckoutService {
     }
     return this.cart.totals(cartDto.id, input.shippingMethod, {
       buyNowVariantId: input.buyNowVariantId,
+      buyNowItemId: input.buyNowItemId,
     });
   }
 
@@ -63,7 +65,7 @@ export class CheckoutService {
     await this.customers.assertActiveForCheckout(userId);
 
     const cartDto = await this.cart.getOrCreate(userId, guestToken);
-    const items = selectBuyNowItems(cartDto.items, body.buyNowVariantId);
+    const items = selectBuyNowItems(cartDto.items, body.buyNowVariantId, body.buyNowItemId);
     if (items.length === 0) {
       throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });
     }
@@ -75,6 +77,7 @@ export class CheckoutService {
 
     const totals = await this.cart.totals(cartDto.id, body.shippingMethod, {
       buyNowVariantId: body.buyNowVariantId,
+      buyNowItemId: body.buyNowItemId,
     });
     const reserveItems = items.map((i) => ({
       variantId: i.variantId,
@@ -125,6 +128,8 @@ export class CheckoutService {
               quantity: item.quantity,
               lineTotalPaise: item.lineTotalPaise,
               personalization: item.personalization ?? undefined,
+              giftExtras: item.giftExtras ?? undefined,
+              extrasPaise: item.extrasPaise,
             })),
           },
         },
@@ -141,9 +146,11 @@ export class CheckoutService {
         },
       });
 
-      if (body.buyNowVariantId) {
+      if (body.buyNowItemId || body.buyNowVariantId) {
         await tx.cartItem.deleteMany({
-          where: { cartId: cartDto.id, variantId: body.buyNowVariantId },
+          where: body.buyNowItemId
+            ? { id: body.buyNowItemId, cartId: cartDto.id }
+            : { cartId: cartDto.id, variantId: body.buyNowVariantId },
         });
         const remaining = await tx.cartItem.count({ where: { cartId: cartDto.id } });
         if (convertCartAfterBuyNow(remaining)) {

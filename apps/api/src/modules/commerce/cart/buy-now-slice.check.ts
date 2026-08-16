@@ -6,12 +6,20 @@ import assert from 'node:assert/strict';
 import { convertCartAfterBuyNow, selectBuyNowItems } from './buy-now-slice';
 
 const cart = [
-  { variantId: 'aaa', quantity: 2 },
-  { variantId: 'bbb', quantity: 1 },
+  { id: 'line-1', variantId: 'aaa', quantity: 2 },
+  { id: 'line-2', variantId: 'aaa', quantity: 1 },
+  { id: 'line-3', variantId: 'bbb', quantity: 1 },
 ];
 
 assert.deepEqual(selectBuyNowItems(cart, undefined), cart);
-assert.deepEqual(selectBuyNowItems(cart, 'bbb'), [{ variantId: 'bbb', quantity: 1 }]);
+assert.deepEqual(selectBuyNowItems(cart, 'bbb'), [{ id: 'line-3', variantId: 'bbb', quantity: 1 }]);
+assert.deepEqual(selectBuyNowItems(cart, 'aaa'), [
+  { id: 'line-1', variantId: 'aaa', quantity: 2 },
+  { id: 'line-2', variantId: 'aaa', quantity: 1 },
+]);
+assert.deepEqual(selectBuyNowItems(cart, 'aaa', 'line-2'), [
+  { id: 'line-2', variantId: 'aaa', quantity: 1 },
+]);
 assert.deepEqual(selectBuyNowItems(cart, 'zzz'), []);
 assert.equal(convertCartAfterBuyNow(0), true);
 assert.equal(convertCartAfterBuyNow(1), false);

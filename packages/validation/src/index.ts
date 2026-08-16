@@ -123,6 +123,112 @@ export const productMediaInputSchema = z.object({
 
 const emptySeoToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
 
+const giftChoiceSchema = z.object({
+  id: z.string().trim().min(1).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9-]*[a-z0-9])?$/),
+  label: z.string().trim().min(1).max(80),
+  pricePaise: z.number().int().min(0).max(1_000_000).default(0),
+});
+
+const personalizationOptionSchema = z
+  .object({
+    key: z
+      .string()
+      .trim()
+      .min(1)
+      .max(64)
+      .regex(/^[a-z][a-zA-Z0-9_]*$/, 'key must be camelCase / alphanumeric'),
+    label: z.string().trim().min(1).max(120),
+    type: z.enum(['TEXT', 'SELECT']).optional(),
+    maxLength: z.number().int().positive().max(500).optional(),
+    options: z.array(z.string().trim().min(1).max(80)).max(40).optional(),
+    required: z.boolean().optional(),
+  })
+  .superRefine((value, ctx) => {
+    const type = value.type ?? 'TEXT';
+    if (type === 'SELECT') {
+      if (!(value.options?.length ?? 0)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'SELECT personalization needs at least one option',
+          path: ['options'],
+        });
+      } else {
+        const seen = new Set<string>();
+        for (const opt of value.options ?? []) {
+          const key = opt.toLowerCase();
+          if (seen.has(key)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Duplicate option: ${opt}`,
+              path: ['options'],
+            });
+            return;
+          }
+          seen.add(key);
+        }
+      }
+      if (value.maxLength != null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'SELECT personalization cannot set maxLength',
+          path: ['maxLength'],
+        });
+      }
+    }
+  });
+
+const personalizationOptionsArraySchema = z
+  .array(personalizationOptionSchema)
+  .max(20)
+  .superRefine((rows, ctx) => {
+    const seen = new Set<string>();
+    for (const row of rows) {
+      if (seen.has(row.key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate personalization key: ${row.key}`,
+          path: [],
+        });
+        return;
+      }
+      seen.add(row.key);
+    }
+  });
+
+const productGiftOptionsSchema = z
+  .object({
+    note: z
+      .object({
+        enabled: z.boolean(),
+        label: z.string().trim().min(1).max(80).default('Gift note'),
+        maxLength: z.number().int().min(1).max(500).default(300),
+        pricePaise: z.number().int().min(0).max(1_000_000).default(0),
+      })
+      .optional(),
+    wrap: z.array(giftChoiceSchema).max(12).optional(),
+    ribbon: z.array(giftChoiceSchema).max(12).optional(),
+  })
+  .superRefine((value, ctx) => {
+    for (const key of ['wrap', 'ribbon'] as const) {
+      const list = value[key] ?? [];
+      const seen = new Set<string>();
+      for (const choice of list) {
+        if (seen.has(choice.id)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Duplicate ${key} option id: ${choice.id}`,
+            path: [key],
+          });
+          return;
+        }
+        seen.add(choice.id);
+      }
+    }
+  });
+
+export type ProductGiftOptions = z.infer<typeof productGiftOptionsSchema>;
+export { productGiftOptionsSchema, personalizationOptionSchema };
+
 /** Phase 2 — catalog admin + storefront queries */
 export const createProductBodySchema = z.object({
   slug: z
@@ -161,18 +267,8 @@ export const createProductBodySchema = z.object({
   canonicalPath: z.preprocess(emptySeoToNull, z.string().max(300).nullable().optional()),
   ogImageUrl: z.preprocess(emptySeoToNull, productAssetUrlSchema.nullable().optional()),
   robotsIndex: z.boolean().optional(),
-  personalization: z
-    .array(
-      z.object({
-        key: z.string().min(1).max(64),
-        label: z.string().min(1).max(120),
-        type: z.enum(['TEXT', 'SELECT']).optional(),
-        maxLength: z.number().int().positive().optional(),
-        options: z.array(z.string()).optional(),
-        required: z.boolean().optional(),
-      }),
-    )
-    .optional(),
+  personalization: personalizationOptionsArraySchema.optional(),
+  giftOptions: productGiftOptionsSchema.optional(),
 });
 
 export const productFaqItemSchema = z.object({
@@ -556,6 +652,10 @@ export const updateProductBodySchema = z.object({
   hamperItems: z.array(productHamperItemSchema).max(40).nullable().optional(),
   /** Replace media gallery when provided. */
   media: z.array(productMediaInputSchema).max(24).optional(),
+  /** Replace personalization options when provided (empty array clears). */
+  personalization: personalizationOptionsArraySchema.optional(),
+  /** Replace product-level note, wrap, and ribbon choices when provided. */
+  giftOptions: productGiftOptionsSchema.nullable().optional(),
 });
 
 export const updateInventoryBodySchema = z.object({
@@ -897,6 +997,13 @@ export const cartAddItemBodySchema = z.object({
     .record(z.string().max(80), z.string().max(200))
     .refine((obj) => Object.keys(obj).length <= 20, { message: 'Too many personalization fields' })
     .optional(),
+  giftExtras: z
+    .object({
+      note: z.string().trim().max(500).optional(),
+      wrapId: z.string().max(64).optional(),
+      ribbonId: z.string().max(64).optional(),
+    })
+    .optional(),
 });
 
 export const cartUpdateItemBodySchema = z.object({
@@ -912,6 +1019,8 @@ export const checkoutPreviewBodySchema = z.object({
   couponCode: z.string().max(40).optional(),
   /** When set, preview/pay only this variant; other cart lines stay. */
   buyNowVariantId: z.string().uuid().optional(),
+  /** Preferred precise Buy now line; variant id remains supported for legacy URLs. */
+  buyNowItemId: z.string().uuid().optional(),
 });
 
 export const checkoutPlaceOrderBodySchema = z.object({
@@ -923,6 +1032,7 @@ export const checkoutPlaceOrderBodySchema = z.object({
   couponCode: z.string().max(40).optional(),
   saveAddress: z.boolean().optional(),
   buyNowVariantId: z.string().uuid().optional(),
+  buyNowItemId: z.string().uuid().optional(),
 });
 
 export const mockPaymentWebhookBodySchema = z.object({

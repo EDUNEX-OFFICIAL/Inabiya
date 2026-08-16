@@ -39,6 +39,14 @@ const STOREFRONT_LABELS: Array<{ code: ManualStorefrontLabel; label: string }> =
 ];
 
 type FaqRow = { question: string; answerText: string };
+type PersonalizationRow = {
+  key: string;
+  label: string;
+  type: 'TEXT' | 'SELECT';
+  maxLength: string;
+  optionsText: string;
+  required: boolean;
+};
 type HamperRow = {
   title: string;
   blurb: string;
@@ -148,6 +156,8 @@ const NAV = [
   { id: 'details', label: 'Details' },
   { id: 'media', label: 'Media' },
   { id: 'pricing', label: 'Pricing' },
+  { id: 'personalization', label: 'Personalization' },
+  { id: 'gift-extras', label: 'Gift extras' },
   { id: 'discovery', label: 'Discovery' },
   { id: 'seo', label: 'SEO' },
 ] as const;
@@ -185,27 +195,47 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
   const [hamperRows, setHamperRows] = useState<HamperRow[]>([]);
   const [stock, setStock] = useState<Record<string, string>>({});
   const [mrpRupees, setMrpRupees] = useState<Record<string, string>>({});
+  const [personalizationRows, setPersonalizationRows] = useState<PersonalizationRow[]>([]);
+  const [giftOptionsJson, setGiftOptionsJson] = useState('');
   const canFinance = canMutateCommerceFinance(getStoredUser()?.roles ?? []);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const personalizationForPreview = useMemo(
+    () =>
+      personalizationRows
+        .filter((row) => row.key.trim() && row.label.trim())
+        .map((row) => ({
+          key: row.key.trim(),
+          label: row.label.trim(),
+          type: row.type,
+          maxLength: row.maxLength ? Number(row.maxLength) : null,
+          options: row.optionsText
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
+          required: row.required,
+        })),
+    [personalizationRows],
+  );
+
   const defaultFaqPreview = useMemo(() => {
     if (!product) return [];
     return buildProductFaqItems({
       faqItems: null,
-      personalization: product.personalization ?? [],
+      personalization: personalizationForPreview,
       isReadyMadeHamper,
       description: description || product.description,
     });
-  }, [product, isReadyMadeHamper, description]);
+  }, [product, isReadyMadeHamper, description, personalizationForPreview]);
 
   const schemaAutoNodes = useMemo(() => {
     if (!product) return [];
     const filledFaqs = faqs.filter((f) => f.question.trim() && f.answerText.trim());
     const faqSource = buildProductFaqItems({
       faqItems: faqMode === 'manual' && filledFaqs.length ? filledFaqs : null,
-      personalization: product.personalization ?? [],
+      personalization: personalizationForPreview,
       isReadyMadeHamper,
       description: description || product.description,
     });
@@ -235,6 +265,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     faqMode,
     isReadyMadeHamper,
     description,
+    personalizationForPreview,
     stock,
     gallery,
     seoTitle,
@@ -261,6 +292,18 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     setOgImageUrl(p.ogImageUrl ?? '');
     setRobotsIndex(p.robotsIndex !== false);
     setSeoSchemaExtras((p.seoSchemaExtras ?? []).filter((e) => e.mode === 'replace').slice(0, 1));
+    setPersonalizationRows(
+      (p.personalization ?? []).map((opt) => ({
+        key: opt.key,
+        label: opt.label,
+        type: opt.type === 'SELECT' ? 'SELECT' : 'TEXT',
+        maxLength: opt.maxLength != null ? String(opt.maxLength) : '',
+        optionsText: Array.isArray(opt.options)
+          ? opt.options.filter((v): v is string => typeof v === 'string').join(', ')
+          : '',
+        required: Boolean(opt.required),
+      })),
+    );
     const media = p.media ?? [];
     const video = media.find((m) => m.kind === 'VIDEO');
     setGallery(
@@ -312,6 +355,7 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
     }
     setStock(s);
     setMrpRupees(m);
+    setGiftOptionsJson(p.giftOptions ? JSON.stringify(p.giftOptions, null, 2) : '');
   }
 
   useEffect(() => {
@@ -393,6 +437,81 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
       unitPricePaise: number;
       sortOrder: number;
     }> | null = null;
+    let giftOptions: unknown = undefined;
+    if (giftOptionsJson.trim()) {
+      try {
+        giftOptions = JSON.parse(giftOptionsJson);
+      } catch {
+        setError('Gift extras configuration must be valid JSON');
+        setSaving(false);
+        return;
+      }
+    } else if (product?.giftOptions) {
+      giftOptions = null;
+    }
+
+    const incomplete = personalizationRows.find(
+      (row) =>
+        (row.key.trim() && !row.label.trim()) ||
+        (!row.key.trim() && row.label.trim()) ||
+        (!row.key.trim() && !row.label.trim() && row.optionsText.trim()),
+    );
+    if (incomplete) {
+      setError('Each personalization row needs both key and label');
+      setSaving(false);
+      return;
+    }
+
+    const personalization = personalizationRows
+      .map((row) => {
+        const options =
+          row.type === 'SELECT'
+            ? [
+                ...new Set(
+                  row.optionsText
+                    .split(',')
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                ),
+              ]
+            : undefined;
+        return {
+          key: row.key.trim(),
+          label: row.label.trim(),
+          type: row.type,
+          maxLength:
+            row.type === 'TEXT' && row.maxLength.trim() ? Number(row.maxLength) : undefined,
+          options,
+          required: row.required,
+        };
+      })
+      .filter((row) => row.key && row.label);
+
+    const keys = personalization.map((row) => row.key);
+    if (new Set(keys).size !== keys.length) {
+      setError('Personalization keys must be unique');
+      setSaving(false);
+      return;
+    }
+    if (
+      personalization.some(
+        (row) =>
+          row.maxLength != null && (!Number.isInteger(row.maxLength) || row.maxLength <= 0),
+      )
+    ) {
+      setError('Personalization max length must be a whole number');
+      setSaving(false);
+      return;
+    }
+    if (
+      personalization.some(
+        (row) => row.type === 'SELECT' && !(row.options && row.options.length > 0),
+      )
+    ) {
+      setError('Select options need at least one choice');
+      setSaving(false);
+      return;
+    }
 
     if (isReadyMadeHamper) {
       hamperItems = hamperRows
@@ -430,6 +549,8 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
           seoSections,
           seoSchemaExtras: seoSchemaExtras.length ? seoSchemaExtras : null,
           hamperItems,
+          personalization,
+          ...(giftOptions !== undefined ? { giftOptions } : {}),
           media,
         },
       });
@@ -1152,6 +1273,163 @@ export default function AdminProductEditPage({ params }: { params: { id: string 
             />
           </Section>
         ) : null}
+
+        <Section id="personalization" title="Personalization">
+          <ul className="space-y-3">
+            {personalizationRows.map((row, i) => (
+              <li key={`pers-${i}`} className="grid gap-2 rounded-md border border-[var(--border-subtle)] p-3 sm:grid-cols-2">
+                <label className="block text-xs">
+                  Key
+                  <input
+                    className="clay-input font-mono text-sm"
+                    value={row.key}
+                    onChange={(e) =>
+                      setPersonalizationRows((rows) =>
+                        rows.map((r, j) => (j === i ? { ...r, key: e.target.value } : r)),
+                      )
+                    }
+                    placeholder="babyName"
+                  />
+                </label>
+                <label className="block text-xs">
+                  Label
+                  <input
+                    className="clay-input text-sm"
+                    value={row.label}
+                    onChange={(e) =>
+                      setPersonalizationRows((rows) =>
+                        rows.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)),
+                      )
+                    }
+                    placeholder="Baby name"
+                  />
+                </label>
+                <label className="block text-xs">
+                  Type
+                  <select
+                    className="clay-input text-sm"
+                    value={row.type}
+                    onChange={(e) =>
+                      setPersonalizationRows((rows) =>
+                        rows.map((r, j) =>
+                          j === i
+                            ? { ...r, type: e.target.value === 'SELECT' ? 'SELECT' : 'TEXT' }
+                            : r,
+                        ),
+                      )
+                    }
+                  >
+                    <option value="TEXT">Text</option>
+                    <option value="SELECT">Select</option>
+                  </select>
+                </label>
+                <label className="block text-xs">
+                  Max length
+                  <input
+                    className="clay-input text-sm"
+                    inputMode="numeric"
+                    value={row.maxLength}
+                    onChange={(e) =>
+                      setPersonalizationRows((rows) =>
+                        rows.map((r, j) => (j === i ? { ...r, maxLength: e.target.value } : r)),
+                      )
+                    }
+                    placeholder="24"
+                    disabled={row.type !== 'TEXT'}
+                  />
+                </label>
+                {row.type === 'SELECT' ? (
+                  <label className="block text-xs sm:col-span-2">
+                    Options (comma-separated)
+                    <input
+                      className="clay-input text-sm"
+                      value={row.optionsText}
+                      onChange={(e) =>
+                        setPersonalizationRows((rows) =>
+                          rows.map((r, j) => (j === i ? { ...r, optionsText: e.target.value } : r)),
+                        )
+                      }
+                      placeholder="Pink, Blue, Cream"
+                    />
+                  </label>
+                ) : null}
+                <label className="flex items-center gap-2 text-xs sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={row.required}
+                    onChange={(e) =>
+                      setPersonalizationRows((rows) =>
+                        rows.map((r, j) => (j === i ? { ...r, required: e.target.checked } : r)),
+                      )
+                    }
+                  />
+                  Required on storefront
+                </label>
+                <div className="sm:col-span-2">
+                  <OpsIconButton
+                    label="Remove option"
+                    icon={Trash2}
+                    className="text-[var(--danger)]"
+                    onClick={() => setPersonalizationRows((rows) => rows.filter((_, j) => j !== i))}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <OpsIconButton
+              label="Add option"
+              icon={Plus}
+              variant="secondary"
+              onClick={() =>
+                setPersonalizationRows((rows) => [
+                  ...rows,
+                  {
+                    key: '',
+                    label: '',
+                    type: 'TEXT',
+                    maxLength: '24',
+                    optionsText: '',
+                    required: false,
+                  },
+                ])
+              }
+            />
+            {!personalizationRows.some((r) => r.key === 'babyName') ? (
+              <button
+                type="button"
+                className="clay-btn-ghost text-sm"
+                onClick={() =>
+                  setPersonalizationRows((rows) => [
+                    ...rows,
+                    {
+                      key: 'babyName',
+                      label: 'Baby name',
+                      type: 'TEXT',
+                      maxLength: '24',
+                      optionsText: '',
+                      required: false,
+                    },
+                  ])
+                }
+              >
+                Add Baby name
+              </button>
+            ) : null}
+          </div>
+        </Section>
+
+        <Section id="gift-extras" title="Gift extras">
+          <label className="block text-xs">
+            Product gift configuration
+            <textarea
+              className="clay-input mt-1 min-h-48 font-mono text-xs"
+              value={giftOptionsJson}
+              onChange={(e) => setGiftOptionsJson(e.target.value)}
+              placeholder={'{"note":{"enabled":true,"label":"Gift note","maxLength":300,"pricePaise":0},"wrap":[{"id":"signature-wrap","label":"Signature wrap","pricePaise":9900}],"ribbon":[{"id":"blush","label":"Blush pink","pricePaise":0}]}'}
+            />
+          </label>
+        </Section>
 
         {/* Sticky save */}
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 md:left-56 lg:left-60">

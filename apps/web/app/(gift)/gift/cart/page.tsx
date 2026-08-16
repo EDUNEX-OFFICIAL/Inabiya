@@ -129,7 +129,18 @@ export default function CartPage() {
                     </Link>
                     <p className="mt-gs-1 text-body opacity-70">
                       {item.label} · {formatInr(item.unitPricePaise)}
+                      {(item.extrasPaise ?? 0) > 0 ? ` + extras ${formatInr(item.extrasPaise!)}` : ''}
                     </p>
+                    {item.giftExtras?.note || item.giftExtras?.wrap || item.giftExtras?.ribbon ? (
+                      <div className="mt-gs-2 text-caption opacity-75">
+                        {item.giftExtras.note ? <p>{item.giftExtras.note.label}: {item.giftExtras.note.value}</p> : null}
+                        {item.giftExtras.wrap ? <p>Wrap: {item.giftExtras.wrap.label}</p> : null}
+                        {item.giftExtras.ribbon ? <p>Ribbon: {item.giftExtras.ribbon.label}</p> : null}
+                        <Link href={`/gift/products/${item.productSlug}`} className="gift-link">
+                          Change on product page
+                        </Link>
+                      </div>
+                    ) : null}
                     <div className="mt-gs-3 flex flex-wrap items-center gap-gs-3">
                       <div className="flex h-10 items-center rounded-control border border-border-subtle">
                         <button

@@ -115,6 +115,8 @@ export class OrdersService {
         unitPricePaise: item.unitPricePaise,
         lineTotalPaise: item.lineTotalPaise,
         personalization: item.personalization,
+        giftExtras: item.giftExtras,
+        extrasPaise: item.extrasPaise,
         imageUrl: item.variant.product.media[0]?.url ?? null,
       })),
     };
@@ -698,6 +700,8 @@ export class OrdersService {
       unitPricePaise: number;
       lineTotalPaise: number;
       personalization: unknown;
+      giftExtras?: unknown;
+      extrasPaise?: number;
     }>;
     payments: Array<{ id: string; status: string; amountPaise: number; provider: string }>;
     statusHistory: Array<{ status: OrderStatus; note: string | null; createdAt: Date }>;

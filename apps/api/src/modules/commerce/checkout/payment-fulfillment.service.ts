@@ -9,6 +9,7 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { NotificationsQueueService } from '../../../infrastructure/notifications/notifications-queue.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { CouponService } from '../promotions/coupon.service';
+import { giftLineFingerprint } from '../cart/gift-line-fingerprint';
 
 /** Pending payment older than this is auto-failed (release stock + restore cart). */
 const PENDING_TTL_MS = 30 * 60 * 1000;
@@ -226,7 +227,6 @@ export class PaymentFulfillmentService {
       where: { userId: order.userId, status: CartStatus.ACTIVE },
       include: { items: true },
     });
-    if (existing && existing.items.length > 0) return;
 
     const cart =
       existing ??
@@ -236,23 +236,52 @@ export class PaymentFulfillmentService {
           couponCode: order.couponCode,
           status: CartStatus.ACTIVE,
         },
+        include: { items: true },
       }));
 
     for (const item of order.items) {
-      await this.prisma.cartItem.upsert({
-        where: {
-          cartId_variantId: { cartId: cart.id, variantId: item.variantId },
-        },
-        create: {
-          cartId: cart.id,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          personalization: item.personalization ?? undefined,
-        },
-        update: { quantity: item.quantity },
-      });
+      const fingerprint = giftLineFingerprint(
+        item.personalization,
+        item.giftExtras as {
+          note?: { value?: string };
+          wrap?: { id?: string };
+          ribbon?: { id?: string };
+        } | null,
+      );
+      const match = cart.items.find(
+        (candidate) =>
+          candidate.variantId === item.variantId &&
+          giftLineFingerprint(
+            candidate.personalization,
+            candidate.giftExtras as {
+              note?: { value?: string };
+              wrap?: { id?: string };
+              ribbon?: { id?: string };
+            } | null,
+          ) === fingerprint,
+      );
+      if (match) {
+        await this.prisma.cartItem.update({
+          where: { id: match.id },
+          data: {
+            quantity: { increment: item.quantity },
+            extrasPaise: { increment: item.extrasPaise },
+          },
+        });
+      } else {
+        await this.prisma.cartItem.create({
+          data: {
+            cartId: cart.id,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            personalization: item.personalization ?? undefined,
+            giftExtras: item.giftExtras ?? undefined,
+            extrasPaise: item.extrasPaise,
+          },
+        });
+      }
     }
-    if (order.couponCode) {
+    if (order.couponCode && !cart.couponCode) {
       await this.prisma.cart.update({
         where: { id: cart.id },
         data: { couponCode: order.couponCode },

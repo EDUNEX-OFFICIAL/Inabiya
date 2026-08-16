@@ -249,7 +249,7 @@ const DEFAULT_USP_ITEMS = [
   {
     icon: 'gift' as const,
     label: 'Personalised gifts',
-    body: 'Baby name, gift note, ribbon & wrap.',
+    body: 'Baby name, Gift note, Ribbon & wrap.',
   },
   {
     icon: 'package' as const,
@@ -264,11 +264,32 @@ const DEFAULT_USP_ITEMS = [
   {
     icon: 'shield' as const,
     label: 'Trusted quality',
-    body: 'Baby-safe, tested, thoughtful.',
+    body: 'Baby-safe, Tested, Thoughtful.',
   },
 ];
 
 const USP_CARD_TONES = ['pink', 'mint', 'sky', 'lavender'] as const;
+
+function normalizeUspBody(body: string): string {
+  return body
+    .replace(/\bgift note\b/gi, 'Gift note')
+    .replace(/\bribbon\s*&\s*wrap\b/gi, 'Ribbon & wrap')
+    .replace(/\bthoughtfull\b/gi, 'Thoughtful')
+    .replace(/\btested\b/gi, 'Tested')
+    .replace(/\bthoughtful\b/gi, 'Thoughtful');
+}
+
+function normalizeUspLabel(label: string): string {
+  const clean = label.trim().replace(/[.]+$/, '');
+  const fixes: Record<string, string> = {
+    'gift note': 'Gift note',
+    'ribbon & wrap': 'Ribbon & wrap',
+    tested: 'Tested',
+    thoughtfull: 'Thoughtful',
+    thoughtful: 'Thoughtful',
+  };
+  return fixes[clean.toLowerCase()] ?? clean;
+}
 
 function UspRow({
   items,
@@ -280,8 +301,10 @@ function UspRow({
       ? items
           .filter((i) => i.label.trim())
           .map((i, idx) => ({
-            label: i.label.trim(),
-            body: i.body?.trim() || DEFAULT_USP_ITEMS[idx % DEFAULT_USP_ITEMS.length]?.body || '',
+            label: normalizeUspLabel(i.label),
+            body: normalizeUspBody(
+              i.body?.trim() || DEFAULT_USP_ITEMS[idx % DEFAULT_USP_ITEMS.length]?.body || '',
+            ),
             icon: (i.icon ??
               DEFAULT_USP_ITEMS[idx % DEFAULT_USP_ITEMS.length]?.icon ??
               'heart') as keyof typeof USP_ICON_MAP,

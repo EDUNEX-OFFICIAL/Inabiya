@@ -849,6 +849,15 @@ export class CatalogService {
 
   async createProduct(body: CreateProductBody, actorId: string, requestId?: string) {
     const collectionIds = await this.resolveCollectionIds(body.collectionSlugs ?? []);
+    if (body.personalization?.length) {
+      const keys = body.personalization.map((o) => o.key);
+      if (new Set(keys).size !== keys.length) {
+        throw new BadRequestException({
+          code: 'DUPLICATE_PERSONALIZATION_KEY',
+          message: 'Personalization keys must be unique on a product.',
+        });
+      }
+    }
 
     const product = await this.prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
@@ -863,6 +872,7 @@ export class CatalogService {
           isReadyMadeHamper: body.isReadyMadeHamper ?? false,
           brandName: body.brandName,
           storefrontLabels: body.storefrontLabels ?? [],
+          ...(body.giftOptions !== undefined ? { giftOptions: body.giftOptions } : {}),
           ...(body.seoTitle !== undefined ? { seoTitle: body.seoTitle } : {}),
           ...(body.seoDescription !== undefined ? { seoDescription: body.seoDescription } : {}),
           ...(body.canonicalPath !== undefined ? { canonicalPath: body.canonicalPath } : {}),
@@ -1109,6 +1119,30 @@ export class CatalogService {
           });
         }
       }
+      if (body.personalization !== undefined) {
+        await tx.personalizationOption.deleteMany({ where: { productId: id } });
+        if (body.personalization.length) {
+          const keys = body.personalization.map((o) => o.key);
+          if (new Set(keys).size !== keys.length) {
+            throw new BadRequestException({
+              code: 'DUPLICATE_PERSONALIZATION_KEY',
+              message: 'Personalization keys must be unique on a product.',
+            });
+          }
+          await tx.personalizationOption.createMany({
+            data: body.personalization.map((o, i) => ({
+              productId: id,
+              key: o.key,
+              label: o.label,
+              type: o.type ?? 'TEXT',
+              maxLength: o.maxLength ?? null,
+              options: o.options ?? undefined,
+              required: o.required ?? false,
+              sortOrder: i,
+            })),
+          });
+        }
+      }
       return tx.product.update({
         where: { id },
         data: {
@@ -1123,6 +1157,9 @@ export class CatalogService {
           ...(body.brandName !== undefined ? { brandName: body.brandName } : {}),
           ...(body.storefrontLabels !== undefined
             ? { storefrontLabels: body.storefrontLabels }
+            : {}),
+          ...(body.giftOptions !== undefined
+            ? { giftOptions: body.giftOptions === null ? Prisma.DbNull : body.giftOptions }
             : {}),
           ...(body.seoTitle !== undefined ? { seoTitle: body.seoTitle } : {}),
           ...(body.seoDescription !== undefined ? { seoDescription: body.seoDescription } : {}),
@@ -1454,6 +1491,7 @@ export class CatalogService {
       faqItems: parseProductFaqItems(product.faqItems),
       seoSections: parseProductSeoSections(product.seoSections),
       seoSchemaExtras: readSeoSchemaExtras(product.seoSchemaExtras),
+      giftOptions: product.giftOptions,
       hamperItems,
       hamperItemCount,
       contentsValuePaise,

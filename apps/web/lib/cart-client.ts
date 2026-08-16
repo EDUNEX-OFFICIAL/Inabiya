@@ -22,6 +22,7 @@ export type CartDto = {
   subtotalPaise: number;
   discountPaise?: number;
   totalPaise?: number;
+  lastItemId?: string;
   items: Array<{
     id: string;
     variantId: string;
@@ -32,8 +33,15 @@ export type CartDto = {
     label: string;
     quantity: number;
     unitPricePaise: number;
+    extrasPaise?: number;
     lineTotalPaise: number;
     available: number;
+    personalization?: unknown;
+    giftExtras?: {
+      note?: { label: string; value: string; pricePaise: number };
+      wrap?: { id: string; label: string; pricePaise: number };
+      ribbon?: { id: string; label: string; pricePaise: number };
+    } | null;
   }>;
 };
 

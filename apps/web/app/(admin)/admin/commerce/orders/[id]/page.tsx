@@ -45,6 +45,12 @@ type OrderDetail = {
     unitPricePaise: number;
     lineTotalPaise: number;
     personalization: unknown;
+    giftExtras?: {
+      note?: { label: string; value: string; pricePaise?: number };
+      wrap?: { label: string; pricePaise?: number };
+      ribbon?: { label: string; pricePaise?: number };
+    } | null;
+    extrasPaise?: number;
   }>;
   statusHistory: Array<{ status: string; note: string | null; createdAt: string }>;
   paymentVerification: Array<{
@@ -479,6 +485,37 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                     <pre className="col-span-2 mt-1.5 overflow-x-auto rounded-md bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)] p-2 text-[11px]">
                       {JSON.stringify(i.personalization, null, 2)}
                     </pre>
+                  ) : null}
+                  {i.giftExtras?.note || i.giftExtras?.wrap || i.giftExtras?.ribbon ? (
+                    <div className="col-span-2 mt-1.5 rounded-md bg-[color-mix(in_srgb,var(--primary)_7%,transparent)] p-2 text-[11px]">
+                      {i.giftExtras.note ? (
+                        <p>
+                          {i.giftExtras.note.label}: {i.giftExtras.note.value}
+                          {i.giftExtras.note.pricePaise
+                            ? ` · ${formatInr(i.giftExtras.note.pricePaise)}`
+                            : ''}
+                        </p>
+                      ) : null}
+                      {i.giftExtras.wrap ? (
+                        <p>
+                          Wrap: {i.giftExtras.wrap.label}
+                          {i.giftExtras.wrap.pricePaise
+                            ? ` · ${formatInr(i.giftExtras.wrap.pricePaise)}`
+                            : ''}
+                        </p>
+                      ) : null}
+                      {i.giftExtras.ribbon ? (
+                        <p>
+                          Ribbon: {i.giftExtras.ribbon.label}
+                          {i.giftExtras.ribbon.pricePaise
+                            ? ` · ${formatInr(i.giftExtras.ribbon.pricePaise)}`
+                            : ''}
+                        </p>
+                      ) : null}
+                      {(i.extrasPaise ?? 0) > 0 ? (
+                        <p className="mt-1 font-medium">Extras total: {formatInr(i.extrasPaise!)}</p>
+                      ) : null}
+                    </div>
                   ) : null}
                 </li>
               ))}

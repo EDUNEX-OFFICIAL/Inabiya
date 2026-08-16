@@ -1164,7 +1164,7 @@ async function main() {
           {
             icon: 'gift',
             label: 'Personalised gifts',
-            body: 'Baby name, gift note, ribbon & wrap.',
+            body: 'Baby name, Gift note, Ribbon & wrap.',
           },
           {
             icon: 'package',
@@ -1179,7 +1179,7 @@ async function main() {
           {
             icon: 'shield',
             label: 'Trusted quality',
-            body: 'Baby-safe, tested, thoughtful.',
+            body: 'Baby-safe, Tested, Thoughtful.',
           },
         ],
       },

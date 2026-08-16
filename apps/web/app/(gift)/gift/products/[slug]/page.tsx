@@ -15,7 +15,7 @@ import {
 } from 'lucide-animated';
 import { useOnceIcon } from '@/components/gift/use-once-icon';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
-import { cartApi } from '@/lib/cart-client';
+import { cartApi, type CartDto } from '@/lib/cart-client';
 import { buyNowCheckoutPath } from '@/lib/buy-now';
 import { giftBoxApi } from '@/lib/gift-box-client';
 import { formatInr, type CatalogProduct } from '@/lib/catalog';
@@ -106,6 +106,9 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   const [variantId, setVariantId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [personalization, setPersonalization] = useState<Record<string, string>>({});
+  const [giftNote, setGiftNote] = useState('');
+  const [wrapId, setWrapId] = useState('');
+  const [ribbonId, setRibbonId] = useState('');
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +133,9 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     setError(null);
     setMessage(null);
     setPersonalization({});
+    setGiftNote('');
+    setWrapId('');
+    setRibbonId('');
     setPersonalizeOpen(false);
     setQuantity(1);
     setVariantId('');
@@ -203,8 +209,22 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     return out;
   }
 
+  function giftExtrasPayload() {
+    const out: { note?: string; wrapId?: string; ribbonId?: string } = {};
+    if (giftNote.trim()) out.note = giftNote.trim();
+    if (wrapId) out.wrapId = wrapId;
+    if (ribbonId) out.ribbonId = ribbonId;
+    return out;
+  }
+
   function buyLine():
-    | { ok: true; variantId: string; quantity: number; personalization: Record<string, string> }
+    | {
+        ok: true;
+        variantId: string;
+        quantity: number;
+        personalization: Record<string, string>;
+        giftExtras: { note?: string; wrapId?: string; ribbonId?: string };
+      }
     | { ok: false } {
     if (!product || !variant || variant.available <= 0) return { ok: false };
     const payload = personalizationPayload();
@@ -218,7 +238,13 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       setPersonalizeOpen(true);
       return { ok: false };
     }
-    return { ok: true, variantId: variant.id, quantity, personalization: payload };
+    return {
+      ok: true,
+      variantId: variant.id,
+      quantity,
+      personalization: payload,
+      giftExtras: giftExtrasPayload(),
+    };
   }
 
   async function addToCart() {
@@ -234,6 +260,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           variantId: line.variantId,
           quantity: line.quantity,
           personalization: line.personalization,
+          giftExtras: line.giftExtras,
         },
       });
       trackEvent('add_to_cart', { productId: product.id });
@@ -251,17 +278,18 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     setBusyBuy(true);
     setError(null);
     try {
-      await cartApi('/cart/items', {
+      const cart = await cartApi<CartDto>('/cart/items', {
         method: 'POST',
         authToken: getStoredAccessToken(),
         json: {
           variantId: line.variantId,
           quantity: line.quantity,
           personalization: line.personalization,
+          giftExtras: line.giftExtras,
         },
       });
       trackEvent('add_to_cart', { productId: product.id });
-      const next = buyNowCheckoutPath(line.variantId);
+      const next = buyNowCheckoutPath(line.variantId, cart.lastItemId);
       if (!getStoredAccessToken()) {
         router.push(loginUrl(next));
         return;
@@ -561,6 +589,48 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 </div>
               ) : null}
             </div>
+          ) : null}
+
+          {product.giftOptions?.note?.enabled ||
+          product.giftOptions?.wrap?.length ||
+          product.giftOptions?.ribbon?.length ? (
+            <fieldset className="mt-gs-4 rounded-clay border border-border-subtle bg-white/70 px-gs-4 py-gs-3">
+              <legend className="px-gs-1 text-body font-medium">Gift extras</legend>
+              {product.giftOptions.note?.enabled ? (
+                <label className="mt-gs-2 block text-body">
+                  {product.giftOptions.note.label}
+                  {product.giftOptions.note.pricePaise
+                    ? ` · ${formatInr(product.giftOptions.note.pricePaise)}`
+                    : ' · Free'}
+                  <textarea
+                    className="clay-input mt-gs-1"
+                    rows={2}
+                    maxLength={product.giftOptions.note.maxLength}
+                    value={giftNote}
+                    onChange={(e) => setGiftNote(e.target.value)}
+                  />
+                </label>
+              ) : null}
+              {(['wrap', 'ribbon'] as const).map((kind) => {
+                const choices = product.giftOptions?.[kind] ?? [];
+                if (!choices.length) return null;
+                const selected = kind === 'wrap' ? wrapId : ribbonId;
+                const setSelected = kind === 'wrap' ? setWrapId : setRibbonId;
+                return (
+                  <label key={kind} className="mt-gs-3 block text-body">
+                    {kind === 'wrap' ? 'Wrap' : 'Ribbon'}
+                    <select className="clay-input mt-gs-1" value={selected} onChange={(e) => setSelected(e.target.value)}>
+                      <option value="">No {kind}</option>
+                      {choices.map((choice) => (
+                        <option key={choice.id} value={choice.id}>
+                          {choice.label}{choice.pricePaise ? ` · ${formatInr(choice.pricePaise)}` : ' · Free'}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                );
+              })}
+            </fieldset>
           ) : null}
 
           {inStock ? (

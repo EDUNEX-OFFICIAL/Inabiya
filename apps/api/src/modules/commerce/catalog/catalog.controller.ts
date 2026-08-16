@@ -135,6 +135,7 @@ export class CatalogAdminController {
   }
 
   @Patch('products/:id')
+  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
   updateProduct(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateProductBodySchema))

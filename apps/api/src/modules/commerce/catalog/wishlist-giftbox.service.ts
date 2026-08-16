@@ -3,6 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma, ProductStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
+import { assertCartPersonalization } from '../cart/assert-cart-personalization';
 import { giftBoxAccessWhere, giftBoxOwnerWhere, type GiftBoxActor } from './gift-box-owner';
 import { buildGiftBoxProductWhere, REC_FILTER_TIERS } from './gift-box-recommendations';
 
@@ -317,7 +318,10 @@ export class GiftBoxService {
 
     const variant = await this.prisma.productVariant.findUnique({
       where: { id: input.variantId },
-      include: { product: true, inventory: true },
+      include: {
+        product: { include: { personalizationOpts: true } },
+        inventory: true,
+      },
     });
     if (
       !variant ||
@@ -329,6 +333,10 @@ export class GiftBoxService {
         message: 'Variant is not eligible for gift box.',
       });
     }
+    const personalization = assertCartPersonalization(
+      variant.product.personalizationOpts,
+      input.personalization,
+    );
     const available = (variant.inventory?.onHand ?? 0) - (variant.inventory?.reserved ?? 0);
     if (available < input.quantity) {
       throw new BadRequestException({
@@ -353,7 +361,7 @@ export class GiftBoxService {
         giftBoxId: boxId,
         variantId: input.variantId,
         quantity: input.quantity,
-        personalization: input.personalization,
+        personalization: personalization ?? undefined,
       },
     });
 
