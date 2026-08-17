@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 16, 2026 (invoice legal profile settings)
+Last Updated: August 17, 2026 (carousel pagination tuck)
 
 ---
 
@@ -1197,6 +1197,18 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-17 (carousel pagination tuck)
+
+- **Override:** Phase 14; human: pagination still too low under Explore cards.
+- Controls `-mt-12` into the centre smile pocket (~16px under Learn More). Stage extra 64 (matches ±2 hang). `z-10` so arrows stay tappable.
+- Next: hard-refresh `/gift` Explore — dots/arrows should sit just under the centre card.
+
+### Session — 2026-08-17 (carousel card gap + pagination)
+
+- **Override:** Phase 14; human: desktop card-to-card distance 50% down, mobile in proportion; pagination not sitting too far below.
+- Step `0.67*w` (min 190, max 350) — halves the air vs `0.76` / max 400. Smile `y*16` (was 28); stage extra 72 (was 112); controls `mt-gs-2` (was `mt-gs-4`).
+- Next: hard-refresh `/gift` Explore — desktop ~50px between tiles, pagination tucked under the fan.
 
 ### Session — 2026-08-16 (invoice legal profile settings)
 

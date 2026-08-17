@@ -150,7 +150,7 @@ function arcTransform(offset: number, step: number) {
     return { x: 0, y: 0, rotateZ: 0, rotateY: 0, scale: 0.94, opacity: 0, hidden: true, abs };
   }
   const x = offset * step;
-  const y = abs * abs * 28;
+  const y = abs * abs * 16;
   const rotateZ = offset * 8;
   const rotateY = offset * -10;
   const scale = Math.max(1 - abs * 0.06, 0.86);
@@ -158,8 +158,9 @@ function arcTransform(offset: number, step: number) {
   return { x, y, rotateZ, rotateY, scale, opacity, hidden: false, abs };
 }
 
+/** Centre-to-centre. Air between tiles is ~half of the previous 0.76 / max-400 fan. */
 function stepForWidth(w: number) {
-  return Math.max(210, Math.min(w * 0.76, 400));
+  return Math.max(190, Math.min(w * 0.67, 350));
 }
 
 /** GSAP layer: t=0 is behind the centre card, t=1 is the seated arc slot. */
@@ -690,8 +691,8 @@ export function CategoryCarousel() {
     heightsRef.current[id] = h;
     const vals = Object.values(heightsRef.current);
     if (!vals.length) return;
-    // Wider fan needs room under the smile.
-    const max = Math.max(...vals) + 112;
+    // Smile hang at ±2 is 64px; pagination pulls up into the centre pocket.
+    const max = Math.max(...vals) + 64;
     setStageH((prev) => (Math.abs(prev - max) > 1 ? max : prev));
   }, []);
 
@@ -881,7 +882,7 @@ export function CategoryCarousel() {
 
         <div
           data-carousel-controls=""
-          className="relative mx-auto mt-gs-4 flex max-w-xs items-center justify-center gap-gs-4"
+          className="relative z-10 mx-auto -mt-12 flex max-w-xs items-center justify-center gap-gs-4"
           data-testid="carousel-controls"
         >
           <button
