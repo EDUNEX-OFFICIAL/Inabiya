@@ -29,7 +29,8 @@ export class MediaVariantsQueueService {
     const existing = await queue.getJob(jobId);
     if (existing) {
       const state = await existing.getState();
-      if (state === 'waiting' || state === 'active' || state === 'delayed' || state === 'paused') {
+      // BullMQ JobState has no `paused`; skip any in-flight job, re-queue only finished/failed.
+      if (state !== 'completed' && state !== 'failed') {
         return;
       }
       await existing.remove();
