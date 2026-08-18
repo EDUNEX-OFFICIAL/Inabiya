@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 18, 2026 (footer EDUNEX heart credit)
+Last Updated: August 18, 2026 (cookie banner card)
 
 ---
 
@@ -1280,6 +1280,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-18 (professional cookie banner)
+
+- **Override:** Phase 14; human: cookie consent like big-company CMPs.
+- Card (not full-bleed bar): title, one legal line + Privacy `/privacy-policy`, Reject / Accept all. Gift `rounded-clay shadow-clay`; blog `shadow-brand`. Desktop bottom-left so WhatsApp stays clear. No preference center.
+- **Live:** human asked make live — commit + `deploy-vps.sh web`.
 
 ### Session — 2026-08-18 (footer EDUNEX heart credit)
 

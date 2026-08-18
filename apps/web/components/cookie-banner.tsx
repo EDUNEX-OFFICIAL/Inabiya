@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import {
   applyConsentUpdate,
@@ -8,6 +9,7 @@ import {
   writeConsentCookie,
   type ConsentChoice,
 } from '@/lib/consent';
+import { cn } from '@/lib/utils';
 
 export function CookieBanner({
   enabled,
@@ -34,32 +36,49 @@ export function CookieBanner({
 
   if (!enabled || !ready || choice) return null;
 
-  const acceptClass = theme === 'blog' ? 'blog-btn min-h-10 text-sm' : 'clay-btn min-h-10 text-sm';
-  const rejectClass =
-    theme === 'blog'
-      ? 'blog-btn-secondary min-h-10 text-sm'
-      : 'clay-btn-secondary min-h-10 text-sm';
+  const isGift = theme === 'gift';
+  const acceptClass = isGift
+    ? 'clay-btn min-h-10 flex-1 text-sm'
+    : 'blog-btn min-h-10 flex-1 text-sm';
+  const rejectClass = isGift
+    ? 'clay-btn-secondary min-h-10 flex-1 text-sm'
+    : 'blog-btn-secondary min-h-10 flex-1 text-sm';
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] p-gs-3 print:hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] p-gs-3 pb-[max(var(--space-3),env(safe-area-inset-bottom))] print:hidden sm:inset-x-auto sm:bottom-gs-6 sm:left-gs-6 sm:right-auto sm:max-w-sm sm:p-0"
       role="region"
-      aria-label="Cookies"
+      aria-labelledby="inabiya-cookie-title"
     >
       <div
-        className={
-          theme === 'gift'
-            ? 'pointer-events-auto mx-auto flex max-w-page flex-col gap-gs-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface)] p-gs-4 shadow-clay sm:flex-row sm:items-center sm:justify-between'
-            : 'pointer-events-auto mx-auto flex max-w-page flex-col gap-gs-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface)] p-gs-4 sm:flex-row sm:items-center sm:justify-between'
-        }
+        className={cn(
+          'pointer-events-auto mx-auto flex w-full max-w-sm flex-col gap-gs-4 border border-[var(--border-subtle)] bg-[var(--surface)] p-gs-5 sm:mx-0',
+          isGift ? 'rounded-clay shadow-clay' : 'rounded-[var(--radius-lg)] shadow-brand',
+        )}
       >
-        <p className="text-body">Cookies for analytics and ads.</p>
-        <div className="flex flex-wrap gap-gs-2">
+        <div>
+          <h2
+            id="inabiya-cookie-title"
+            className="font-display text-h2 font-semibold tracking-tight"
+          >
+            Cookies
+          </h2>
+          <p className={cn('mt-gs-2 text-body', isGift ? 'gift-muted' : 'opacity-80')}>
+            We use them for analytics and ads.{' '}
+            <Link
+              href="/privacy-policy"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Privacy
+            </Link>
+          </p>
+        </div>
+        <div className="flex gap-gs-2">
           <button type="button" className={rejectClass} onClick={() => decide('necessary')}>
             Reject
           </button>
           <button type="button" className={acceptClass} onClick={() => decide('all')}>
-            Accept
+            Accept all
           </button>
         </div>
       </div>
