@@ -7,8 +7,6 @@ import { PortalLoginForm } from '@/components/auth/portal-login-form';
 import { GiftCustomerVisual } from '@/components/auth/auth-visuals';
 import { safeNextPath } from '@inabiya/validation';
 
-const CUSTOMER_DEMOS = [{ email: 'customer@test.inabiya', note: 'Customer' }] as const;
-
 function CustomerLogin() {
   const searchParams = useSearchParams();
   const nextPath = safeNextPath(searchParams.get('next'));
@@ -21,7 +19,6 @@ function CustomerLogin() {
       title="Welcome back"
       description={nextPath ? undefined : 'Save wishlists, track orders, checkout faster.'}
       visual={<GiftCustomerVisual />}
-      demos={CUSTOMER_DEMOS}
       footer={
         <>
           <p className="text-body opacity-75">

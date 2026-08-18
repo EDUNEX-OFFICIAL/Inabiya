@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 18, 2026 (storefront PageSpeed Easy→Hard)
+Last Updated: August 18, 2026 (login demo shortcuts removed)
 
 ---
 
@@ -143,9 +143,9 @@ Q4 (Architecture rewrite) → **Resolved**
 
 1. Human: re-run PSI mobile on `/` + one PLP + one PDP (API quota 429 here; do not treat local LH 12.8 as PSI 13.4)
 2. Confirm Cloudflare Web Analytics stays **off** for `inabiya.edunexservices.in` (beacon not in repo; CSP still blocks it)
-3. Resume OPS-10 Procurement after that PSI smoke
+3. Resume OPS-10 Procurement
 4. CMS palette: do **not** place WhatsApp on live home
-5. **Deferred:** CDN + real PSP (C1/C2); PLP/PDP muted/strikethrough contrast + canonical if chasing a11y/SEO 100 off-home
+5. **Deferred:** CDN + real PSP (C2 mock pay); PLP/PDP muted/strikethrough contrast + canonical if chasing a11y/SEO 100 off-home
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -178,6 +178,12 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-18 — Remove login credential shortcuts (human override)
+
+- **Override:** Phase 14; human: strip one-click demo accounts from every login page.
+- No `demos` / `DEMO_PASSWORD` / `NEXT_PUBLIC_SHOW_DEMO_LOGINS` on storefront or portal logins. Seed users stay in `prisma/seed.ts` only — not in UI.
+- Closes deferred C1 (public demo fill panel).
 
 ### 2026-08-18 — Soft Gift PageSpeed Easy→Hard (human override)
 
@@ -1254,6 +1260,13 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-08-18 (login demo shortcuts removed)
+
+- **Override:** Phase 14; human: remove credential shortcuts from all login pages.
+- Removed demo fill panels from `/login`, commerce/cms/editorial/platform portal logins, `/creator/login`. Dropped `NEXT_PUBLIC_SHOW_DEMO_LOGINS` from Dockerfile/compose/`.env.example`.
+- Check: `auth-portals.check` asserts no `DEMO_PASSWORD` / `@test.inabiya` on login pages.
+- Env: `NEXT_PUBLIC_SHOW_DEMO_LOGINS` gone. Migration: none. Passwords not logged here.
+
 ### Session — 2026-08-18 (storefront PageSpeed Easy→Hard)
 
 - **Override:** Phase 14; human: Soft Gift PSI Easy → Hard (home + PLP + PDP). Baseline PSI `72zlyhea6j` mobile 70/93/92/100/50.
@@ -1796,7 +1809,7 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 - **Override:** Phase 14; human: note demo login + payment remaining to implement; list other issues.
 - Code/config audit of `/gift` + `/admin/commerce` (no live exploits, no `.env` dump). Admin APIs Jwt+Roles+Zod; no customer IDOR on orders/invoices/addresses.
-- **Deferred (remaining):** C1 demo/seed logins on public `/login` (prod compose default `NEXT_PUBLIC_SHOW_DEMO_LOGINS=1`); C2 mock payments + checkout auto-confirm (`checkout/page.tsx` → `…/payments/:id/confirm`). Q2 still Razorpay later.
+- **Deferred (remaining):** C1 **closed 2026-08-18** (demo fill panels removed). C2 mock payments + checkout auto-confirm (`checkout/page.tsx` → `…/payments/:id/confirm`). Q2 still Razorpay later.
 - **Still open (not demo/pay):** H1 regex HTML XSS; H2 JWTs in localStorage; H3 XFF rate-limit bypass; H4 no CSP; H5 inventory oversell race; H6 chrome/footer unrestricted hrefs; M1 JSON-LD `</script>`; M2 inquiry+newsletter unthrottled; M3 MIME trust + stub signed URLs; M4 coupon maxUses TOCTOU; M5 JWT roles not re-read; M6 gift-chrome/PII audit gaps; M7 CORS localhost; M8 COOKIE_SECURE/CSRF; M9 no admin mutation rate limit; M10 COMMERCE_ADMIN finance levers.
 - Canvas: Cursor canvases `gift-commerce-security-audit.canvas.tsx`. Env/migration: none.
 

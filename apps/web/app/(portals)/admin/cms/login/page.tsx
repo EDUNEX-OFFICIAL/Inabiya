@@ -4,12 +4,6 @@ import { Suspense } from 'react';
 import { PortalLoginForm } from '@/components/auth/portal-login-form';
 import { GiftOpsVisual } from '@/components/auth/auth-visuals';
 
-const DEMOS = [
-  { email: 'content@test.inabiya', note: 'Content admin' },
-  { email: 'commerce@test.inabiya', note: 'Commerce admin' },
-  { email: 'super@test.inabiya', note: 'Super admin' },
-] as const;
-
 function Form() {
   return (
     <PortalLoginForm
@@ -25,7 +19,6 @@ function Form() {
           chips={['Pages', 'Blocks', 'Collections', 'Preview']}
         />
       }
-      demos={DEMOS}
     />
   );
 }

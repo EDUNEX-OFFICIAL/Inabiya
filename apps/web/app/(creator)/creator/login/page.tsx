@@ -4,12 +4,6 @@ import { Suspense } from 'react';
 import { PortalLoginForm } from '@/components/auth/portal-login-form';
 import { CreatorCollectiveVisual } from '@/components/auth/auth-visuals';
 
-const DEMOS = [
-  { email: 'creator@test.inabiya', note: 'Creator' },
-  { email: 'brand@test.inabiya', note: 'Brand' },
-  { email: 'super@test.inabiya', note: 'Super admin' },
-] as const;
-
 function Form() {
   return (
     <PortalLoginForm
@@ -19,7 +13,6 @@ function Form() {
       title="Enter the studio"
       description="Campaigns, proposals & deliverables."
       visual={<CreatorCollectiveVisual />}
-      demos={DEMOS}
     />
   );
 }

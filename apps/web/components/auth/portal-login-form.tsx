@@ -14,26 +14,13 @@ import {
 import { mergeGuestCommerce } from '@/lib/merge-guest-commerce';
 import { safeNextPath } from '@inabiya/validation';
 
-export const DEMO_PASSWORD = 'Password123!';
-
-export type PortalDemoUser = {
-  email: string;
-  note: string;
-};
-
 export type PortalLoginVariant = 'gift' | 'ops' | 'blog' | 'creator';
-
-const SHOW_DEMO_LOGINS =
-  process.env.NODE_ENV === 'development' ||
-  process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === '1' ||
-  process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === 'true';
 
 type Props = {
   portalId: AuthPortalId;
   title: string;
   overline?: string;
   description?: string;
-  demos?: readonly PortalDemoUser[];
   /** Soft Gift customer / ops / Blog / Creator */
   variant?: PortalLoginVariant;
   /** Decorative left/top panel content */
@@ -54,9 +41,6 @@ function recipeClasses(variant: PortalLoginVariant) {
       input: 'blog-input',
       btn: 'blog-btn w-full',
       label: 'blog-body',
-      demo: 'blog-card space-y-3 p-4',
-      demoBtn:
-        'flex w-full flex-col items-start rounded-md border border-border bg-background px-3 py-2 text-left transition hover:border-primary hover:bg-primary/5 min-h-[48px]',
     };
   }
   if (variant === 'creator') {
@@ -69,9 +53,6 @@ function recipeClasses(variant: PortalLoginVariant) {
       input: 'creator-input',
       btn: 'creator-btn w-full',
       label: 'creator-body',
-      demo: 'creator-card space-y-3 p-4',
-      demoBtn:
-        'flex w-full flex-col items-start rounded-md border border-border bg-background px-3 py-2 text-left transition hover:border-primary hover:bg-primary/5 min-h-[48px]',
     };
   }
   // gift + ops (Soft Gift clay)
@@ -84,9 +65,6 @@ function recipeClasses(variant: PortalLoginVariant) {
     input: 'clay-input',
     btn: 'clay-btn w-full',
     label: 'text-body',
-    demo: 'clay-card space-y-gs-3 p-gs-4',
-    demoBtn:
-      'flex w-full flex-col items-start rounded-control border border-border bg-background px-gs-3 py-gs-2 text-left transition hover:border-primary hover:bg-primary/5 min-h-[48px]',
   };
 }
 
@@ -95,7 +73,6 @@ export function PortalLoginForm({
   title,
   overline,
   description,
-  demos = [],
   variant = 'ops',
   visual,
   footer,
@@ -111,16 +88,7 @@ export function PortalLoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [filledNote, setFilledNote] = useState<string | null>(null);
   const r = recipeClasses(variant);
-
-  function fillDemo(u: PortalDemoUser) {
-    setEmail(u.email);
-    setPassword(DEMO_PASSWORD);
-    setShowPassword(true);
-    setError(null);
-    setFilledNote(`${u.note} filled — tap Sign in`);
-  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -149,7 +117,6 @@ export function PortalLoginForm({
   }
 
   const errorId = 'portal-login-error';
-  const filledId = 'portal-login-filled';
 
   return (
     <main
@@ -205,7 +172,7 @@ export function PortalLoginForm({
                   required
                   autoComplete="current-password"
                   aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? errorId : filledNote ? filledId : undefined}
+                  aria-describedby={error ? errorId : undefined}
                 />
                 <button
                   type="button"
@@ -217,11 +184,6 @@ export function PortalLoginForm({
                 </button>
               </div>
             </label>
-            {filledNote ? (
-              <p id={filledId} className="text-xs font-medium text-primary" role="status">
-                {filledNote}
-              </p>
-            ) : null}
             {error ? (
               <p id={errorId} className="text-sm text-danger" role="alert">
                 {error}
@@ -233,34 +195,6 @@ export function PortalLoginForm({
           </form>
 
           {footer ? <div className="auth-form-col__footer">{footer}</div> : null}
-
-          {SHOW_DEMO_LOGINS && demos.length > 0 ? (
-            <div className={r.demo} data-testid="demo-login-panel">
-              <div>
-                <p className={`text-sm font-semibold ${r.label}`}>Demo accounts</p>
-                <p className={`mt-1 text-xs opacity-70 ${r.muted}`}>
-                  Password: <code className="rounded bg-muted px-1 py-0.5">{DEMO_PASSWORD}</code>
-                </p>
-              </div>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {demos.map((u) => (
-                  <li key={u.email}>
-                    <button
-                      type="button"
-                      className={r.demoBtn}
-                      onClick={() => fillDemo(u)}
-                      data-testid={`demo-fill-${u.email.split('@')[0]}`}
-                    >
-                      <span className="text-xs font-semibold text-primary">{u.note}</span>
-                      <span className="mt-1 truncate font-mono text-[11px] opacity-80">
-                        {u.email}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
 
           {portalId !== 'customer' ? (
             <p className={`text-center text-xs opacity-60 ${r.muted}`}>

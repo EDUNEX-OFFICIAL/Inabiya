@@ -65,6 +65,7 @@ for (const p of portalPages) {
   assert.match(src, new RegExp(`portalId="${p.portalId}"`));
   assert.match(src, new RegExp(`variant="${p.variant}"`));
   assert.match(src, /PortalLoginForm/);
+  assert.doesNotMatch(src, /demos=\{|@test\.inabiya/);
 }
 
 const formSrc = readFileSync(join(root, 'components/auth/portal-login-form.tsx'), 'utf8');
@@ -77,6 +78,7 @@ assert.doesNotMatch(formSrc, /bg-primary px-4/);
 assert.match(formSrc, /aria-hidden="true"/);
 assert.match(formSrc, /role="alert"/);
 assert.match(formSrc, /auth-password-toggle/);
+assert.doesNotMatch(formSrc, /DEMO_PASSWORD|demo-login-panel|fillDemo/);
 
 const css = readFileSync(join(root, 'app/globals.css'), 'utf8');
 assert.match(css, /\.auth-shell/);
