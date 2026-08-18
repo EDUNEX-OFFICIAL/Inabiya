@@ -15,6 +15,18 @@ export {
   safeNextPath,
   safeStorefrontHrefSchema,
 } from './safe-href';
+export {
+  GA4_MEASUREMENT_ID_RE,
+  GOOGLE_ADS_ID_RE,
+  GOOGLE_ADS_PURCHASE_LABEL_RE,
+  GOOGLE_SITE_VERIFICATION_RE,
+  GTM_CONTAINER_ID_RE,
+  googleTrackingAdminForm,
+  googleTrackingBodySchema,
+  META_PIXEL_ID_RE,
+  normalizeGoogleTracking,
+} from './google-tracking';
+export type { GoogleTracking } from './google-tracking';
 
 /** Shared health/version response shapes */
 export const healthResponseSchema = z.object({

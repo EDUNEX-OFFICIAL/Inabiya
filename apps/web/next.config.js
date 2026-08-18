@@ -7,19 +7,23 @@ const apiRewrite =
 // next dev uses eval-source-map; without 'unsafe-eval' the admin gate stays on
 // "Checking access…" because React never hydrates. Prod `next start` does not need it.
 const isDev = process.env.NODE_ENV !== 'production';
+const googleScriptSrc =
+  'https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://www.google.com https://connect.facebook.net';
+const googleConnectSrc =
+  'https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://ssl.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://stats.g.doubleclick.net https://www.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://connect.facebook.net https://www.facebook.com https://*.facebook.com';
 const contentSecurityPolicy = [
   "default-src 'self'",
   "img-src 'self' data: https:",
   "media-src 'self' blob: https:",
   // Razorpay Checkout.js opens frames on api/checkout hosts
-  "frame-src 'self' https://www.youtube-nocookie.com https://api.razorpay.com https://checkout.razorpay.com",
+  `frame-src 'self' https://www.youtube-nocookie.com https://api.razorpay.com https://checkout.razorpay.com https://www.googletagmanager.com https://td.doubleclick.net https://www.facebook.com https://connect.facebook.net`,
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
   isDev
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com"
-    : "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
-  "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com",
+    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com ${googleScriptSrc}`
+    : `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com ${googleScriptSrc}`,
+  `connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com ${googleConnectSrc}`,
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
 ].join('; ');

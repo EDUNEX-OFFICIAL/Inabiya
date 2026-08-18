@@ -339,7 +339,7 @@ function CheckoutPageInner() {
       } else {
         throw new Error('Payment provider is unavailable.');
       }
-      trackEvent('purchase', { orderId: result.orderId });
+      trackEvent('purchase', { orderId: result.orderId, valuePaise: result.totalPaise });
       router.push(`/orders/${result.orderId}?placed=1`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Checkout failed');

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { FormEvent, Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RefreshCw, Search, X } from 'lucide-react';
-import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
+import { apiAuth, getStoredAccessToken, getStoredUser, loginUrl } from '@/lib/auth-client';
 import { COMMERCE_OPS_NAV } from '@/lib/commerce-ops-nav';
 import { opsChipClass } from '@/lib/ops-desk-ui';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
@@ -112,6 +112,24 @@ const DEFAULT_INVOICE_LEGAL_PROFILE: InvoiceLegalProfile = {
   defaultHsn: '9999',
 };
 
+type TrackingForm = {
+  googleSiteVerification: string;
+  gtmContainerId: string;
+  ga4MeasurementId: string;
+  googleAdsId: string;
+  googleAdsPurchaseLabel: string;
+  metaPixelId: string;
+};
+
+const EMPTY_TRACKING: TrackingForm = {
+  googleSiteVerification: '',
+  gtmContainerId: '',
+  ga4MeasurementId: '',
+  googleAdsId: '',
+  googleAdsPurchaseLabel: '',
+  metaPixelId: '',
+};
+
 const TRUST_ICON_OPTIONS: Array<{ value: TrustCueRow['icon']; label: string }> = [
   { value: 'lock', label: 'Lock' },
   { value: 'returns', label: 'Returns' },
@@ -121,7 +139,15 @@ const TRUST_ICON_OPTIONS: Array<{ value: TrustCueRow['icon']; label: string }> =
 function SettingsInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tab = searchParams.get('tab') === 'audit' ? 'audit' : 'policy';
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [rolesReady, setRolesReady] = useState(false);
+  const tabParam = searchParams.get('tab');
+  const tab: 'policy' | 'audit' | 'tracking' =
+    tabParam === 'audit'
+      ? 'audit'
+      : tabParam === 'tracking' && (!rolesReady || isSuperAdmin)
+        ? 'tracking'
+        : 'policy';
 
   const [policy, setPolicy] = useState<Policy | null>(null);
   const [returnWindowDays, setReturnWindowDays] = useState('14');
@@ -142,6 +168,8 @@ function SettingsInner() {
   const [auditPage, setAuditPage] = useState(1);
   const [audit, setAudit] = useState<AuditPage | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [tracking, setTracking] = useState<TrackingForm>(EMPTY_TRACKING);
+  const [trackingLoading, setTrackingLoading] = useState(false);
 
   const loadPolicy = useCallback(async () => {
     setLoading(true);
@@ -184,6 +212,31 @@ function SettingsInner() {
     }
   }, [auditQ, auditAction, auditPage]);
 
+  const loadTracking = useCallback(async () => {
+    setTrackingLoading(true);
+    setError(null);
+    try {
+      const data = await apiAuth<TrackingForm>('/admin/commerce/tracking');
+      setTracking({
+        googleSiteVerification: data.googleSiteVerification ?? '',
+        gtmContainerId: data.gtmContainerId ?? '',
+        ga4MeasurementId: data.ga4MeasurementId ?? '',
+        googleAdsId: data.googleAdsId ?? '',
+        googleAdsPurchaseLabel: data.googleAdsPurchaseLabel ?? '',
+        metaPixelId: data.metaPixelId ?? '',
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load tracking');
+    } finally {
+      setTrackingLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setIsSuperAdmin(getStoredUser()?.roles.includes('SUPER_ADMIN') ?? false);
+    setRolesReady(true);
+  }, []);
+
   useEffect(() => {
     if (!getStoredAccessToken()) {
       router.replace(loginUrl('/admin/commerce/settings'));
@@ -198,9 +251,16 @@ function SettingsInner() {
     void loadAudit();
   }, [tab, loadAudit]);
 
-  function setTab(next: 'policy' | 'audit') {
+  useEffect(() => {
+    if (tab !== 'tracking' || !isSuperAdmin) return;
+    if (!getStoredAccessToken()) return;
+    void loadTracking();
+  }, [tab, isSuperAdmin, loadTracking]);
+
+  function setTab(next: 'policy' | 'audit' | 'tracking') {
     const params = new URLSearchParams();
     if (next === 'audit') params.set('tab', 'audit');
+    if (next === 'tracking') params.set('tab', 'tracking');
     router.push(`/admin/commerce/settings${params.toString() ? `?${params}` : ''}`);
   }
 
@@ -263,6 +323,39 @@ function SettingsInner() {
     }
   }
 
+  async function onSaveTracking(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    setMsg(null);
+    try {
+      const updated = await apiAuth<TrackingForm>('/admin/commerce/tracking', {
+        method: 'PUT',
+        json: {
+          googleSiteVerification: tracking.googleSiteVerification.trim(),
+          gtmContainerId: tracking.gtmContainerId.trim(),
+          ga4MeasurementId: tracking.ga4MeasurementId.trim(),
+          googleAdsId: tracking.googleAdsId.trim(),
+          googleAdsPurchaseLabel: tracking.googleAdsPurchaseLabel.trim(),
+          metaPixelId: tracking.metaPixelId.trim(),
+        },
+      });
+      setTracking({
+        googleSiteVerification: updated.googleSiteVerification ?? '',
+        gtmContainerId: updated.gtmContainerId ?? '',
+        ga4MeasurementId: updated.ga4MeasurementId ?? '',
+        googleAdsId: updated.googleAdsId ?? '',
+        googleAdsPurchaseLabel: updated.googleAdsPurchaseLabel ?? '',
+        metaPixelId: updated.metaPixelId ?? '',
+      });
+      setMsg('Tracking saved');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div>
       <OpsPageHeader
@@ -275,15 +368,25 @@ function SettingsInner() {
             <button
               type="button"
               className="clay-btn-secondary inline-flex min-h-10 items-center gap-1.5 text-sm"
-              disabled={loading || busy || (tab === 'audit' && auditLoading)}
+              disabled={
+                loading ||
+                busy ||
+                (tab === 'audit' && auditLoading) ||
+                (tab === 'tracking' && trackingLoading)
+              }
               onClick={() => {
                 if (tab === 'audit') void loadAudit();
+                else if (tab === 'tracking') void loadTracking();
                 else void loadPolicy();
               }}
             >
               <RefreshCw
                 className={`h-3.5 w-3.5 opacity-70 ${
-                  loading || (tab === 'audit' && auditLoading) ? 'animate-spin' : ''
+                  loading ||
+                  (tab === 'audit' && auditLoading) ||
+                  (tab === 'tracking' && trackingLoading)
+                    ? 'animate-spin'
+                    : ''
                 }`}
                 aria-hidden
               />
@@ -303,6 +406,17 @@ function SettingsInner() {
         >
           Policy
         </button>
+        {isSuperAdmin ? (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'tracking'}
+            className={opsChipClass(tab === 'tracking')}
+            onClick={() => setTab('tracking')}
+          >
+            Tracking
+          </button>
+        ) : null}
         <button
           type="button"
           role="tab"
@@ -675,6 +789,46 @@ function SettingsInner() {
               </ul>
             </section>
           </div>
+        )
+      ) : null}
+
+      {tab === 'tracking' ? (
+        !rolesReady || trackingLoading ? (
+          <div className="clay-panel space-y-3 p-4" aria-busy="true">
+            <div className="h-24 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" />
+          </div>
+        ) : !isSuperAdmin ? null : (
+          <form
+            onSubmit={(e) => void onSaveTracking(e)}
+            className="clay-panel grid max-w-2xl gap-3 p-4 text-sm"
+          >
+            <h2 className="font-display text-lg leading-tight">Tracking</h2>
+            {(
+              [
+                ['gtmContainerId', 'GTM', 'GTM-XXXX'],
+                ['ga4MeasurementId', 'GA4', 'G-XXXX'],
+                ['googleAdsId', 'Google Ads', 'AW-XXXX'],
+                ['googleAdsPurchaseLabel', 'Ads purchase label', ''],
+                ['metaPixelId', 'Meta Pixel', '1234567890'],
+                ['googleSiteVerification', 'Search Console', ''],
+              ] as Array<[keyof TrackingForm, string, string]>
+            ).map(([key, label, placeholder]) => (
+              <label key={key} className="block text-xs">
+                {label}
+                <input
+                  className="clay-input mt-1 block min-h-10 w-full font-mono text-sm"
+                  value={tracking[key]}
+                  placeholder={placeholder}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(e) => setTracking((prev) => ({ ...prev, [key]: e.target.value }))}
+                />
+              </label>
+            ))}
+            <button type="submit" className="clay-btn text-sm disabled:opacity-50" disabled={busy}>
+              Save
+            </button>
+          </form>
         )
       ) : null}
 

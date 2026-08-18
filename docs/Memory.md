@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 18, 2026 (login UI + brand lockups)
+Last Updated: August 18, 2026 (Meta + consent cross-check)
 
 ---
 
@@ -144,7 +144,7 @@ Q4 (Architecture rewrite) → **Resolved**
 1. Human: re-run PSI mobile on `/` + one PLP + one PDP (API quota 429 here; do not treat local LH 12.8 as PSI 13.4)
 2. Confirm Cloudflare Web Analytics stays **off** for `inabiya.edunexservices.in` (beacon not in repo; CSP still blocks it)
 3. Resume OPS-10 Procurement
-4. CMS palette: do **not** place WhatsApp on live home
+4. **Deferred:** OPS permission matrix (Super Admin grants tracking/other nav to roles) — tracking write is SUPER_ADMIN-only until then
 5. **Deferred:** CDN + real PSP (C2 mock pay); PLP/PDP muted/strikethrough contrast + canonical if chasing a11y/SEO 100 off-home
 
 
@@ -178,6 +178,21 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-18 — Meta Pixel + cookie Consent Mode v2 (human override)
+
+- **Override:** Phase 14; human: Meta campaign tracking like Google, plus cookie banner / Consent Mode properly.
+- Meta Pixel ID (`metaPixelId`) on same `tracking.google` KV; SUPER_ADMIN Settings → Tracking. Loads only after **Accept** (marketing consent). Events: ViewContent / AddToCart / InitiateCheckout / Purchase.
+- Consent Mode v2: default denied (`ad_storage`, `analytics_storage`, `ad_user_data`, `ad_personalization`); Accept → granted; Reject → necessary only. Cookie `inabiya_consent` 180d. Banner on gift+blog public (not auth/invoice). GTM noscript / Meta noscript only if already accepted.
+- Out of scope: CAPI, catalog feed, preference center, GTM-duplicated Meta pixel (don't add Pixel twice in GTM).
+
+### 2026-08-18 — Site-wide Google tracking tags (human override)
+
+- **Override:** Phase 14 Procurement in progress; human: Shopify-style shop pixels so Super Admin can monitor campaigns in Google tools.
+- IDs only (GTM / GA4 / Ads + purchase label / Search Console verify) in `CommerceSetting` `tracking.google`. No raw HTML. Site-wide on Soft Gift + Journal; skip admin/creator/auth/invoice.
+- AuthZ this slice: **SUPER_ADMIN only** for admin GET/PUT. Permission matrix deferred (human: implement in some days).
+- Loader: GTM if set, else gtag for GA4/Ads. `dataLayer` from existing `trackEvent`. Purchase value = paise-safe INR string.
+- CSP: Google hosts in Next + Caddy `inabiya.caddy`. Cloudflare Insights still blocked.
 
 ### 2026-08-18 — GitHub Actions deploy SSH is :2222 (human)
 
@@ -1265,6 +1280,37 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-18 (push + deploy tracking)
+
+- **Override:** Phase 14; human: push and deploy Google/Meta tags + Consent Mode.
+- Commit on `main`; local `deploy-vps.sh web api` (Docker CSP). GHA also fires on push.
+
+### Session — 2026-08-18 (Meta + consent cross-check)
+
+- Plan vs repo: Meta Pixel ID + events; Consent Mode v2 default denied; Accept/Reject cookie; SUPER_ADMIN settings; CSP Facebook; banner gift+blog.
+- Fixes: cookie bar not on checkout (was covering sticky Pay, z-80 vs z-nav); banner `role="region"`; gtag.js no longer replaces Consent Mode stub; blog banner no `shadow-clay` (theme isolation).
+- Still ops: Docker web rebuild for public CSP. GTM in GTM UI must not duplicate Meta Pixel.
+
+### Session — 2026-08-18 (Meta Pixel + Consent Mode)
+
+- **Override:** Phase 14; human: Meta tracking like Google + cookie banner / Consent Mode.
+- Shipped: `metaPixelId` Zod; Settings field; `fbq` after Accept; Consent Mode v2 default+update; banner Accept/Reject; CSP `connect.facebook.net`. Checks: `google-tracking.check`, `consent.check`, `next-csp.check`.
+- GTM still loads with denied (advanced CM); Meta does not load until Accept. Migration: none.
+
+### Session — 2026-08-18 (Google tracking cross-check)
+
+- Plan vs repo: IDs Zod + KV `tracking.google`; SUPER_ADMIN GET/PUT; public GET; gift+blog inject; GTM-else-gtag; dataLayer; purchase paise; CSP Next+Caddy; Memory override. Matrix not built.
+- Fixes: Tracking tab no longer reads `localStorage` during SSR (hydration); storefront fetch `cache: 'no-store'` so Save is visible immediately.
+- Still ops: Docker **web rebuild** for Next CSP on the public host (Caddy already allows Google).
+
+### Session — 2026-08-18 (site-wide Google tracking tags)
+
+- **Override:** Phase 14; human: add tracking-code feature (GTM/GA4/Ads/GSC) like Shopify; Super Admin only until permission matrix.
+- Shipped: Zod IDs; `GET/PUT /admin/commerce/tracking`; public `GET /storefront/tracking`; Settings tab Tracking; gift+blog inject; `dataLayer` + purchase paise→INR; CSP Google hosts (Next + Caddy).
+- Checks: `google-tracking.check.ts`, `tracking-ids.check.ts`, `next-csp.check.ts`. Caddy `green-city-caddy` reloaded. Migration: none (KV `tracking.google`).
+- Docker **web image still needs rebuild** so Next CSP matches Caddy on the public host.
+- Out of scope: matrix, per-SKU tags, raw snippets, GSC API reports, consent banner.
 
 ### Session — 2026-08-18 (login UI + Inabiya logos)
 

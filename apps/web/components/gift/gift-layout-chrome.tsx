@@ -2,11 +2,16 @@
 
 import { type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
+import type { GoogleTracking } from '@inabiya/validation';
 import { BrandLogo } from '@/components/brand-logo';
 import { GiftNav } from '@/components/gift-nav';
 import { GiftChromeFooter } from '@/components/cms/gift-chrome-footer';
 import { GiftFloatingActions } from '@/components/gift/gift-floating-actions';
 import { GiftLenis } from '@/components/gift/gift-lenis';
+import { CookieBanner } from '@/components/cookie-banner';
+import { GoogleTags } from '@/components/google-tags';
+import { MetaPixel } from '@/components/meta-pixel';
+import type { ConsentChoice } from '@/lib/consent';
 
 const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/reset-password']);
 
@@ -33,15 +38,30 @@ function CheckoutLockMark() {
  * Client chrome for Soft Gift: pathname-gated nav/footer + deferred Lenis.
  * Theme shell (`data-theme`) lives on the server layout parent.
  */
-export function GiftLayoutChrome({ children }: { children: ReactNode }) {
+export function GiftLayoutChrome({
+  children,
+  tracking = {},
+  initialConsent = null,
+}: {
+  children: ReactNode;
+  tracking?: GoogleTracking;
+  initialConsent?: ConsentChoice | null;
+}) {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.has(pathname);
   const isInvoicePage = pathname.includes('/invoice');
   const isCheckoutPage = pathname === '/checkout';
   const showChrome = !isAuthPage && !isInvoicePage && !isCheckoutPage;
+  const tagsEnabled = !isAuthPage && !isInvoicePage;
 
   return (
     <GiftLenis disabled={isAuthPage}>
+      <GoogleTags tracking={tracking} enabled={tagsEnabled} initialConsent={initialConsent} />
+      <MetaPixel
+        pixelId={tracking.metaPixelId}
+        enabled={tagsEnabled}
+        initialConsent={initialConsent}
+      />
       {isAuthPage ? null : isInvoicePage ? null : isCheckoutPage ? (
         <header className="clay-nav relative sticky top-0 z-[var(--z-nav)] py-gs-3 print:hidden">
           <div className="gift-shell-width flex min-w-0 items-center justify-between gap-gs-3">
@@ -63,6 +83,11 @@ export function GiftLayoutChrome({ children }: { children: ReactNode }) {
       <div className="flex-1">{children}</div>
       {showChrome ? <GiftChromeFooter /> : null}
       {showChrome ? <GiftFloatingActions /> : null}
+      <CookieBanner
+        enabled={tagsEnabled && !isCheckoutPage}
+        initialConsent={initialConsent}
+        theme="gift"
+      />
     </GiftLenis>
   );
 }

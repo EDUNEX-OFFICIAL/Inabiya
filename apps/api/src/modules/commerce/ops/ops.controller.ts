@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import {
   adminSearchQuerySchema,
   adminCustomersQuerySchema,
@@ -11,6 +22,7 @@ import {
   customerStatusBodySchema,
   customerCommunicationBodySchema,
   giftChromeBodySchema,
+  googleTrackingBodySchema,
   type AdminAuditQuery,
   type AdminCouponsQuery,
   type AdminCustomersQuery,
@@ -20,6 +32,7 @@ import {
   type CreateCouponBody,
   type CustomerCommunicationBody,
   type GiftChromeBody,
+  type GoogleTracking,
 } from '@inabiya/validation';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard, type AuthedRequest } from '../../identity/jwt-auth.guard';
@@ -34,6 +47,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { CommercePolicyService } from './commerce-policy.service';
 import { OpsDashboardService } from './ops-dashboard.service';
 import { StorefrontConfigService } from './storefront-config.service';
+import { TrackingTagsService } from './tracking-tags.service';
 
 @Controller('admin/commerce')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -48,6 +62,7 @@ export class OpsAdminController {
     private readonly analytics: AnalyticsService,
     private readonly policy: CommercePolicyService,
     private readonly audit: AuditService,
+    private readonly tracking: TrackingTagsService,
   ) {}
 
   @Get('dashboard')
@@ -222,6 +237,22 @@ export class OpsAdminController {
   listAudit(@Query(new ZodValidationPipe(adminAuditQuerySchema)) query: AdminAuditQuery) {
     return this.audit.list(query);
   }
+
+  @Get('tracking')
+  @Roles('SUPER_ADMIN')
+  getTracking() {
+    return this.tracking.getAdmin();
+  }
+
+  @Put('tracking')
+  @Roles('SUPER_ADMIN')
+  setTracking(
+    @Body(new ZodValidationPipe(googleTrackingBodySchema)) body: GoogleTracking,
+    @CurrentUser() user: { id: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.tracking.set(body, user.id, String(req.id ?? ''));
+  }
 }
 
 @Controller('catalog/gift-chrome')
@@ -241,5 +272,15 @@ export class TrustCuesPublicController {
   @Get()
   trustCues() {
     return this.policy.getTrustCues();
+  }
+}
+
+@Controller('storefront/tracking')
+export class StorefrontTrackingPublicController {
+  constructor(private readonly tracking: TrackingTagsService) {}
+
+  @Get()
+  trackingPublic() {
+    return this.tracking.getPublic();
   }
 }

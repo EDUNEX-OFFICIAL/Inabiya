@@ -11,8 +11,10 @@ import {
   OpsAdminController,
   GiftChromePublicController,
   TrustCuesPublicController,
+  StorefrontTrackingPublicController,
 } from './ops.controller';
 import { StorefrontConfigService } from './storefront-config.service';
+import { TrackingTagsService } from './tracking-tags.service';
 
 @Module({
   imports: [
@@ -23,8 +25,18 @@ import { StorefrontConfigService } from './storefront-config.service';
     CartModule,
     AnalyticsModule,
   ],
-  controllers: [OpsAdminController, GiftChromePublicController, TrustCuesPublicController],
-  providers: [OpsDashboardService, StorefrontConfigService, CommercePolicyService],
-  exports: [StorefrontConfigService, CommercePolicyService],
+  controllers: [
+    OpsAdminController,
+    GiftChromePublicController,
+    TrustCuesPublicController,
+    StorefrontTrackingPublicController,
+  ],
+  providers: [
+    OpsDashboardService,
+    StorefrontConfigService,
+    CommercePolicyService,
+    TrackingTagsService,
+  ],
+  exports: [StorefrontConfigService, CommercePolicyService, TrackingTagsService],
 })
 export class OpsModule {}

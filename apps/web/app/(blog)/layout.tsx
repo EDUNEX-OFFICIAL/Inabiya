@@ -1,10 +1,29 @@
+import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { BrandLogo } from '@/components/brand-logo';
+import { ConsentDefault } from '@/components/consent-default';
+import { CookieBanner } from '@/components/cookie-banner';
+import { GoogleTags } from '@/components/google-tags';
+import { MetaPixel } from '@/components/meta-pixel';
 import { ThemeFontShell } from '@/components/theme-font-shell';
+import { CONSENT_COOKIE, parseConsentValue } from '@/lib/consent';
+import { fetchStorefrontTracking } from '@/lib/storefront-tracking';
 
-export default function BlogLayout({ children }: { children: React.ReactNode }) {
+export async function generateMetadata(): Promise<Metadata> {
+  const tracking = await fetchStorefrontTracking();
+  if (!tracking.googleSiteVerification) return {};
+  return { verification: { google: tracking.googleSiteVerification } };
+}
+
+export default async function BlogLayout({ children }: { children: React.ReactNode }) {
+  const tracking = await fetchStorefrontTracking();
+  const consent = parseConsentValue(cookies().get(CONSENT_COOKIE)?.value);
   return (
     <ThemeFontShell theme="blog" className="blog-shell flex min-h-screen flex-col text-foreground">
+      <ConsentDefault choice={consent} />
+      <GoogleTags tracking={tracking} enabled initialConsent={consent} />
+      <MetaPixel pixelId={tracking.metaPixelId} enabled initialConsent={consent} />
       <header className="blog-nav sticky top-0 z-[var(--z-nav)] px-gs-4 py-gs-3 sm:px-gs-6">
         <div className="mx-auto flex w-full max-w-page items-center justify-between gap-gs-3">
           <BrandLogo kind="chrome" href="/articles" size="sm" label="Inabiya Journal" />
@@ -25,6 +44,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
         </div>
       </header>
       <div className="flex-1">{children}</div>
+      <CookieBanner enabled initialConsent={consent} theme="blog" />
     </ThemeFontShell>
   );
 }

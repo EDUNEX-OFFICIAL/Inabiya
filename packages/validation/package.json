@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo \"@inabiya/validation: no eslint config yet\"",
-    "test": "tsx src/html-sanitize.check.ts"
+    "test": "tsx src/html-sanitize.check.ts && tsx src/google-tracking.check.ts"
   },
   "dependencies": {
     "sanitize-html": "^2.17.7",
