@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 18, 2026 (Meta + consent cross-check)
+Last Updated: August 18, 2026 (CI README Prettier)
 
 ---
 
@@ -1280,6 +1280,11 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-18 (CI format:check README)
+
+- **Override:** Phase 14; human: fix failed GHA verify.
+- `README.md` secrets table: long `VPS_PORT` cell broke Prettier column padding. Short cell + note below. No app change.
 
 ### Session — 2026-08-18 (push + deploy tracking)
 

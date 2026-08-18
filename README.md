@@ -121,12 +121,14 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 GitHub repo secrets (set once at project start — a TCP fail is **not** “recreate secrets”):
 
-| Secret            | Purpose                                                                 |
-| ----------------- | ----------------------------------------------------------------------- |
-| `VPS_HOST`        | Public hostname/IP                                                      |
-| `VPS_USER`        | SSH user                                                                |
-| `VPS_SSH_KEY_B64` | Base64 private key (or `VPS_SSH_KEY`)                                   |
-| `VPS_PORT`        | SSH port. **Must be `2222` on this VPS.** Empty or `22` is rewritten to `2222` in `deploy-vps.yml` because GitHub-hosted runners cannot TCP `:22` here (ISP filter). Host also has `sshd` on `2222` (`ssh-alt-isp-bypass`). |
+| Secret            | Purpose                               |
+| ----------------- | ------------------------------------- |
+| `VPS_HOST`        | Public hostname/IP                    |
+| `VPS_USER`        | SSH user                              |
+| `VPS_SSH_KEY_B64` | Base64 private key (or `VPS_SSH_KEY`) |
+| `VPS_PORT`        | SSH port — use `2222` on this VPS     |
+
+Empty or `22` is rewritten to `2222` in `deploy-vps.yml` because GitHub-hosted runners cannot TCP `:22` here (ISP filter). Host `sshd` also listens on `2222` (`ssh-alt-isp-bypass`).
 
 `gh` fine-grained PAT on the VPS is for `git push`/`gh` only. It does **not** make GitHub Actions reachable to the VPS. `Cannot reach host:port from the GitHub runner` = TCP, before SSH or `git`.
 
