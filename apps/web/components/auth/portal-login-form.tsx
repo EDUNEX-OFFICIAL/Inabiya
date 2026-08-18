@@ -3,7 +3,8 @@
 import { FormEvent, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
+import { AuthBrandLockup } from '@/components/auth/auth-brand';
+import { AuthEmailField, AuthPasswordField } from '@/components/auth/auth-fields';
 import { apiAuth, clearSession, storeSession, type AuthSession } from '@/lib/auth-client';
 import {
   AUTH_PORTALS,
@@ -37,9 +38,9 @@ function recipeClasses(variant: PortalLoginVariant) {
       title: 'blog-h1',
       overline: 'blog-overline',
       muted: 'blog-muted',
-      panel: 'blog-card auth-form-panel',
+      panel: 'auth-form-panel',
       input: 'blog-input',
-      btn: 'blog-btn w-full',
+      btn: 'blog-btn auth-submit w-full',
       label: 'blog-body',
     };
   }
@@ -49,21 +50,20 @@ function recipeClasses(variant: PortalLoginVariant) {
       title: 'creator-h1',
       overline: 'creator-overline',
       muted: 'creator-muted',
-      panel: 'creator-card auth-form-panel',
+      panel: 'auth-form-panel',
       input: 'creator-input',
-      btn: 'creator-btn w-full',
+      btn: 'creator-btn auth-submit w-full',
       label: 'creator-body',
     };
   }
-  // gift + ops (Soft Gift clay)
   return {
     shellMod: variant === 'ops' ? 'auth-shell--ops' : 'auth-shell--gift',
     title: 'gift-h1',
     overline: 'text-caption font-semibold uppercase tracking-[0.14em] text-primary',
     muted: 'gift-muted',
-    panel: 'clay-panel auth-form-panel',
+    panel: 'auth-form-panel',
     input: 'clay-input',
-    btn: 'clay-btn w-full',
+    btn: 'clay-btn auth-submit w-full',
     label: 'text-body',
   };
 }
@@ -85,10 +85,10 @@ export function PortalLoginForm({
   const resetOk = searchParams.get('reset') === '1';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const r = recipeClasses(variant);
+  const brandHref = portalId === 'customer' ? '/' : null;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -130,9 +130,10 @@ export function PortalLoginForm({
         </aside>
         <div className="auth-form-col">
           <header className="auth-form-col__header">
+            <AuthBrandLockup surface="light" placement="form" href={brandHref} />
             {overline ? <p className={r.overline}>{overline}</p> : null}
             <h1 className={r.title}>{title}</h1>
-            {description ? <p className={`${r.muted} mt-2`}>{description}</p> : null}
+            {description ? <p className={`${r.muted} auth-form-col__lede`}>{description}</p> : null}
             {resetOk && portalId === 'customer' ? (
               <p className="gift-banner gift-banner--success mt-gs-3" role="status">
                 Password updated — sign in with your new password.
@@ -142,50 +143,25 @@ export function PortalLoginForm({
 
           {beforeForm}
 
-          <form
-            onSubmit={onSubmit}
-            className={`${r.panel} auth-form-panel flex flex-col gap-3`}
-            noValidate={false}
-          >
-            <label className={`flex flex-col gap-1 ${r.label}`}>
-              Email
-              <input
-                className={r.input}
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="username"
-                spellCheck={false}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? errorId : undefined}
-              />
-            </label>
-            <label className={`flex flex-col gap-1 ${r.label}`}>
-              Password
-              <div className="relative">
-                <input
-                  className={`${r.input} auth-password-input`}
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? errorId : undefined}
-                />
-                <button
-                  type="button"
-                  className="auth-password-toggle"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  onClick={() => setShowPassword((v) => !v)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </label>
+          <form onSubmit={onSubmit} className={r.panel} noValidate={false}>
+            <AuthEmailField
+              inputClassName={r.input}
+              labelClassName={r.label}
+              value={email}
+              onChange={setEmail}
+              error={Boolean(error)}
+              describedBy={error ? errorId : undefined}
+            />
+            <AuthPasswordField
+              inputClassName={r.input}
+              labelClassName={r.label}
+              value={password}
+              onChange={setPassword}
+              error={Boolean(error)}
+              describedBy={error ? errorId : undefined}
+            />
             {error ? (
-              <p id={errorId} className="text-sm text-danger" role="alert">
+              <p id={errorId} className="auth-form-error text-sm text-danger" role="alert">
                 {error}
               </p>
             ) : null}
@@ -197,8 +173,8 @@ export function PortalLoginForm({
           {footer ? <div className="auth-form-col__footer">{footer}</div> : null}
 
           {portalId !== 'customer' ? (
-            <p className={`text-center text-xs opacity-60 ${r.muted}`}>
-              <Link href="/login" className="underline hover:opacity-100">
+            <p className={`auth-form-col__alt ${r.muted}`}>
+              <Link href="/login" className="auth-link">
                 Customer sign in
               </Link>
             </p>

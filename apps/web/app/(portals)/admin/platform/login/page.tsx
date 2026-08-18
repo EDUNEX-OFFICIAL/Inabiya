@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { PortalLoginForm } from '@/components/auth/portal-login-form';
-import { GiftOpsVisual } from '@/components/auth/auth-visuals';
+import { PlatformVisual } from '@/components/auth/auth-visuals';
 
 function Form() {
   return (
@@ -12,13 +12,7 @@ function Form() {
       overline="Control plane"
       title="Platform"
       description="Flags, media & privileged tools."
-      visual={
-        <GiftOpsVisual
-          kicker="Platform"
-          headline="High-trust controls, quiet surface"
-          chips={['Flags', 'Media', 'Audit']}
-        />
-      }
+      visual={<PlatformVisual />}
     />
   );
 }

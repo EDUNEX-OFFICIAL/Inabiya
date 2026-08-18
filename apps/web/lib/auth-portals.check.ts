@@ -73,18 +73,29 @@ assert.match(formSrc, /blog-btn/);
 assert.match(formSrc, /creator-btn/);
 assert.match(formSrc, /clay-btn/);
 assert.match(formSrc, /auth-shell/);
+assert.match(formSrc, /AuthBrandLockup/);
+assert.match(formSrc, /AuthEmailField/);
+assert.match(formSrc, /AuthPasswordField/);
 assert.doesNotMatch(formSrc, /bg-primary px-4/);
 
 assert.match(formSrc, /aria-hidden="true"/);
 assert.match(formSrc, /role="alert"/);
-assert.match(formSrc, /auth-password-toggle/);
 assert.doesNotMatch(formSrc, /DEMO_PASSWORD|demo-login-panel|fillDemo/);
+
+const fieldsSrc = readFileSync(join(root, 'components/auth/auth-fields.tsx'), 'utf8');
+assert.match(fieldsSrc, /auth-password-toggle/);
+
+const visualSrc = readFileSync(join(root, 'components/auth/auth-visuals.tsx'), 'utf8');
+assert.match(visualSrc, /AuthBrandLockup/);
+assert.match(visualSrc, /PlatformVisual/);
 
 const css = readFileSync(join(root, 'app/globals.css'), 'utf8');
 assert.match(css, /\.auth-shell/);
 assert.match(css, /auth-shell--gift/);
 assert.match(css, /auth-shell--blog/);
 assert.match(css, /auth-shell--creator/);
+assert.match(css, /auth-brand/);
+assert.match(css, /auth-platform-rings/);
 assert.match(css, /prefers-reduced-motion/);
 assert.match(css, /100dvh/);
 assert.match(css, /safe-area-inset/);

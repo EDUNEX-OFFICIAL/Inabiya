@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 18, 2026 (GHA deploy SSH :2222)
+Last Updated: August 18, 2026 (login UI + brand lockups)
 
 ---
 
@@ -1265,6 +1265,18 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-18 (login UI + Inabiya logos)
+
+- **Override:** Phase 14; human: improve login/form UI from split-screen references; use brand logos.
+- Shipped: `AuthBrandLockup` (wordmark on art panel, letter-b on form); shared `AuthEmailField` / `AuthPasswordField`; card-less pill/rounded inputs; Soft Gift blobs + Creator glass + Platform rings; register/forgot/reset match customer shell.
+- Themes still isolated (`gift` / `blog` / `creator`). Check: `auth-portals.check`. Env/migration: none.
+
+### Session — 2026-08-18 (GHA deploy SSH :2222)
+
+- **Override:** Phase 14; human: document Actions `Cannot reach` so it is not treated as missing secrets (`VPS_*` have existed since project start).
+- Cause: GitHub-hosted runner TCP to VPS **:22** filtered; alt SSH **2222**. `gh` PAT unrelated.
+- Shipped: `deploy-vps.yml` remaps empty/`22` → `2222`; README, PORTS, RUNBOOKS §11, ops rule. Migration: none.
 
 ### Session — 2026-08-18 (login demo shortcuts removed)
 

@@ -5839,7 +5839,7 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 
 .auth-shell__grid {
   width: 100%;
-  max-width: 68rem;
+  max-width: 72rem;
   margin-inline: auto;
   display: grid;
   gap: var(--space-4, 1rem);
@@ -5848,17 +5848,40 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 
 @media (min-width: 900px) {
   .auth-shell__grid {
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: var(--space-6, 1.5rem);
+    grid-template-columns: minmax(17rem, 0.92fr) minmax(0, 1.08fr);
+    gap: var(--space-7, 2.5rem);
     min-height: calc(100dvh - 2rem);
+    padding-inline: var(--space-2, 0.5rem);
   }
 }
 
 .auth-visual {
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius-xl, 1.25rem);
+  border-radius: 1.75rem;
   min-height: 7.5rem;
+}
+
+.auth-brand {
+  position: relative;
+  z-index: 2;
+}
+
+.auth-brand--visual {
+  margin-bottom: auto;
+  max-width: min(16.5rem, 78%);
+}
+
+.auth-brand--form {
+  margin-bottom: 0.35rem;
+}
+
+.auth-visual__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(155deg, color-mix(in srgb, #fff 22%, transparent), transparent 46%);
 }
 
 /* Compact brand strip on narrow screens; full panel from 900px */
@@ -5866,7 +5889,9 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   .auth-visual .auth-visual__headline {
     font-size: clamp(1.15rem, 4.2vw, 1.4rem);
   }
-  .auth-visual .auth-visual__chips {
+  .auth-visual .auth-visual__chips,
+  .auth-visual .auth-brand--visual,
+  .auth-visual .auth-visual__kicker {
     display: none;
   }
   .auth-visual .auth-visual__inner {
@@ -5877,7 +5902,9 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   .auth-visual .auth-blob,
   .auth-visual .auth-ops-grid,
   .auth-visual .auth-blog-lines,
-  .auth-visual .auth-creator-shapes {
+  .auth-visual .auth-creator-shapes,
+  .auth-visual .auth-platform-rings,
+  .auth-visual .auth-visual__sheen {
     display: none;
   }
 }
@@ -5892,7 +5919,7 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   position: relative;
   height: 100%;
   min-height: inherit;
-  padding: clamp(1.5rem, 3vw, 2.5rem);
+  padding: clamp(1.5rem, 3.2vw, 2.75rem);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -5908,7 +5935,7 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 .auth-visual__kicker {
   font-size: var(--text-caption, 0.75rem);
   font-weight: var(--weight-semibold, 600);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   margin-bottom: 0.75rem;
   opacity: 0.85;
@@ -5916,8 +5943,8 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 
 .auth-visual__headline {
   font-family: var(--font-display, inherit);
-  font-size: clamp(1.6rem, 2.4vw, 2.15rem);
-  line-height: 1.15;
+  font-size: clamp(1.7rem, 2.5vw, 2.35rem);
+  line-height: 1.12;
   font-weight: 700;
   margin: 0;
   text-wrap: balance;
@@ -5928,13 +5955,13 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   flex-wrap: wrap;
   gap: 0.5rem;
   list-style: none;
-  margin: 1.25rem 0 0;
+  margin: 1.35rem 0 0;
   padding: 0;
 }
 
 .auth-visual__chips li {
   border-radius: 999px;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.85rem;
   font-size: 0.75rem;
   font-weight: 600;
   background: color-mix(in srgb, var(--surface, #fff) 72%, transparent);
@@ -5945,9 +5972,9 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: var(--space-4, 1rem);
+  gap: 1.35rem;
   width: 100%;
-  max-width: 26rem;
+  max-width: 24.5rem;
   margin-inline: auto;
   padding-block: var(--space-4, 1rem);
   min-width: 0;
@@ -5956,23 +5983,54 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 @media (min-width: 900px) {
   .auth-form-col {
     padding-block: var(--space-5, 1.25rem);
+    margin-inline: 0 auto;
   }
 }
 
 .auth-form-col__header {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.2rem;
+}
+
+.auth-form-col__lede {
+  margin-top: 0.45rem;
 }
 
 .auth-form-col__footer {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.65rem;
+  font-size: var(--text-body, 0.95rem);
+}
+
+.auth-form-col__alt {
+  text-align: center;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.auth-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+.auth-link:hover {
+  opacity: 0.82;
 }
 
 .auth-form-panel {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.05rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
 }
 
 /* Login forms must not float on hover (blog/creator card recipes) */
@@ -5984,13 +6042,50 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   border-color: var(--border-subtle, var(--border));
 }
 
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+}
+
+.auth-field__password {
+  position: relative;
+}
+
+.auth-shell .auth-field__control {
+  margin-top: 0;
+  min-height: 2.85rem;
+  background: var(--surface, #fff);
+}
+
+.auth-shell--gift .auth-field__control {
+  border-radius: var(--radius-pill, 9999px);
+  padding-inline: 1.15rem;
+}
+
+.auth-shell--ops .auth-field__control,
+.auth-shell--blog .auth-field__control,
+.auth-shell--creator .auth-field__control {
+  border-radius: 0.85rem;
+}
+
+.auth-submit {
+  margin-top: 0.35rem;
+  min-height: 2.85rem;
+}
+
+.auth-form-error {
+  margin: 0;
+}
+
 .auth-password-input {
   padding-inline-end: 3rem !important;
 }
 
 .auth-password-toggle {
   position: absolute;
-  right: 0.25rem;
+  right: 0.2rem;
   top: 50%;
   transform: translateY(-50%);
   display: inline-flex;
@@ -5998,7 +6093,7 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   justify-content: center;
   min-height: 44px;
   min-width: 44px;
-  border-radius: var(--radius-control, 0.5rem);
+  border-radius: var(--radius-pill, 9999px);
   opacity: 0.65;
   background: transparent;
   border: 0;
@@ -6014,6 +6109,36 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   outline: 2px solid var(--border-focus, var(--primary));
   outline-offset: 2px;
   opacity: 1;
+}
+
+@keyframes auth-float-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(10px, -14px, 0);
+  }
+}
+
+@keyframes auth-float-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-12px, 10px, 0);
+  }
+}
+
+@keyframes auth-ring-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 /* Soft Gift customer */
@@ -6035,8 +6160,8 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 [data-theme='gift'] .auth-visual__inner--gift {
   background: linear-gradient(
     155deg,
-    color-mix(in srgb, var(--inabiya-pink, #ff6b9d) 28%, var(--inabiya-soft, #fff3f8)),
-    color-mix(in srgb, var(--inabiya-lavender, #e8d5f5) 55%, var(--inabiya-white, #fff))
+    color-mix(in srgb, var(--inabiya-pink, #ff6b9d) 22%, var(--inabiya-soft, #fff3f8)),
+    color-mix(in srgb, var(--inabiya-lavender, #e8d5f5) 48%, var(--inabiya-white, #fff))
   );
   color: var(--inabiya-heading, #2d2640);
   box-shadow: var(--clay-shadow, 0 12px 40px rgba(45, 38, 64, 0.08));
@@ -6045,34 +6170,39 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 [data-theme='gift'] .auth-blob {
   position: absolute;
   border-radius: 999px;
-  filter: blur(2px);
   z-index: 1;
-  opacity: 0.55;
   pointer-events: none;
+  filter: blur(1px);
 }
 
 [data-theme='gift'] .auth-blob--a {
-  width: 11rem;
-  height: 11rem;
-  top: 8%;
-  right: 8%;
-  background: color-mix(in srgb, var(--inabiya-yellow, #ffd166) 70%, transparent);
+  width: 13rem;
+  height: 13rem;
+  top: 6%;
+  right: 4%;
+  background: color-mix(in srgb, var(--inabiya-yellow, #ffd166) 62%, #fff);
+  opacity: 0.55;
+  animation: auth-float-a 16s ease-in-out infinite;
 }
 
 [data-theme='gift'] .auth-blob--b {
-  width: 8rem;
-  height: 8rem;
-  bottom: 22%;
-  left: 10%;
-  background: color-mix(in srgb, var(--inabiya-mint, #b5ead7) 75%, transparent);
+  width: 9.5rem;
+  height: 9.5rem;
+  bottom: 18%;
+  left: 8%;
+  background: color-mix(in srgb, var(--inabiya-mint, #b5ead7) 70%, #fff);
+  opacity: 0.5;
+  animation: auth-float-b 19s ease-in-out infinite;
 }
 
 [data-theme='gift'] .auth-blob--c {
-  width: 5rem;
-  height: 5rem;
-  top: 38%;
-  left: 42%;
-  background: color-mix(in srgb, var(--inabiya-pink, #ff6b9d) 55%, transparent);
+  width: 5.5rem;
+  height: 5.5rem;
+  top: 36%;
+  left: 40%;
+  background: color-mix(in srgb, var(--inabiya-pink, #ff6b9d) 50%, #fff);
+  opacity: 0.45;
+  animation: auth-float-a 13s ease-in-out infinite reverse;
 }
 
 /* Soft Gift ops (commerce / cms / platform) */
@@ -6087,8 +6217,8 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 [data-theme='gift'] .auth-visual__inner--ops {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--inabiya-heading, #2d2640) 88%, var(--inabiya-pink, #ff6b9d)),
-    color-mix(in srgb, var(--inabiya-heading, #2d2640) 72%, var(--inabiya-lavender, #e8d5f5))
+    color-mix(in srgb, var(--inabiya-heading, #2d2640) 90%, var(--inabiya-pink, #ff6b9d)),
+    color-mix(in srgb, var(--inabiya-heading, #2d2640) 70%, var(--inabiya-lavender, #e8d5f5))
   );
   color: var(--inabiya-white, #fff);
   box-shadow: var(--clay-shadow, 0 12px 40px rgba(45, 38, 64, 0.12));
@@ -6102,20 +6232,58 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 
 [data-theme='gift'] .auth-ops-grid {
   position: absolute;
-  inset: 12% 10% auto;
+  inset: 18% 12% auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.65rem;
+  gap: 0.7rem;
   z-index: 1;
-  opacity: 0.22;
+  opacity: 0.28;
 }
 
 [data-theme='gift'] .auth-ops-grid span {
   display: block;
-  aspect-ratio: 1.4;
-  border-radius: 0.65rem;
-  border: 1px solid #fff;
-  background: color-mix(in srgb, #fff 12%, transparent);
+  aspect-ratio: 1.35;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, #fff 70%, transparent);
+  background: color-mix(in srgb, #fff 10%, transparent);
+}
+
+[data-theme='gift'] .auth-platform-rings {
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  width: 15rem;
+  height: 15rem;
+  transform: translateX(-50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+[data-theme='gift'] .auth-platform-rings span {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #fff 28%, transparent);
+  animation: auth-ring-pulse 8s ease-in-out infinite;
+}
+
+[data-theme='gift'] .auth-platform-rings span:nth-child(2) {
+  inset: 18%;
+  animation-delay: 0.6s;
+}
+
+[data-theme='gift'] .auth-platform-rings span:nth-child(3) {
+  inset: 36%;
+  background: color-mix(in srgb, #fff 8%, transparent);
+  animation-delay: 1.2s;
+}
+
+[data-theme='gift'] .auth-visual__inner--platform {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--inabiya-heading, #2d2640) 94%, #000),
+    color-mix(in srgb, var(--inabiya-heading, #2d2640) 68%, var(--inabiya-pink-cta, #c44575))
+  );
 }
 
 [data-theme='gift'][data-density='compact'] .auth-form-col {
@@ -6155,7 +6323,7 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 
 [data-theme='blog'] .auth-blog-lines {
   position: absolute;
-  inset: 14% 12% auto;
+  inset: 22% 12% auto;
   display: grid;
   gap: 0.85rem;
   z-index: 1;
@@ -6221,15 +6389,16 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 [data-theme='creator'] .auth-creator-shape {
   position: absolute;
   display: block;
-  border: 1px solid color-mix(in srgb, var(--creator-cream, #f5f0e6) 35%, transparent);
-  background: color-mix(in srgb, var(--creator-accent, hsl(18 55% 48%)) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--creator-cream, #f5f0e6) 40%, transparent);
+  background: color-mix(in srgb, var(--creator-accent, hsl(18 55% 48%)) 18%, transparent);
+  backdrop-filter: blur(10px);
 }
 
 [data-theme='creator'] .auth-creator-shape--1 {
   width: 7.5rem;
   height: 7.5rem;
   border-radius: 1.25rem;
-  top: 12%;
+  top: 18%;
   right: 12%;
   transform: rotate(18deg);
 }
@@ -6240,13 +6409,14 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   border-radius: 999px;
   top: 38%;
   left: 14%;
+  animation: auth-float-b 15s ease-in-out infinite;
 }
 
 [data-theme='creator'] .auth-creator-shape--3 {
   width: 9rem;
   height: 3.25rem;
   border-radius: 999px;
-  bottom: 28%;
+  bottom: 32%;
   right: 18%;
   transform: rotate(-12deg);
 }
@@ -6255,7 +6425,8 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
   .auth-blob,
   .auth-creator-shape,
   .auth-ops-grid span,
-  .auth-blog-lines span {
+  .auth-blog-lines span,
+  .auth-platform-rings span {
     transition: none !important;
     animation: none !important;
   }

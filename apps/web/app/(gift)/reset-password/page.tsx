@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { GiftAuthShell } from '@/components/auth/auth-visuals';
+import { AuthPasswordField } from '@/components/auth/auth-fields';
 import { apiUrl } from '@/lib/api-base';
 import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
 
@@ -53,54 +54,51 @@ function ResetPasswordForm() {
     <GiftAuthShell
       overline="Soft Gift"
       title="Choose a new password"
-      description="Use at least 8 characters."
       footer={
-        <p className="text-body opacity-75">
-          <Link href="/login" className="font-medium text-primary underline">
-            ← Back to sign in
-          </Link>
-        </p>
+        <Link href="/login" className="auth-link">
+          Back to sign in
+        </Link>
       }
     >
       {!token ? (
         <p className="gift-banner gift-banner--danger">
           Missing or invalid reset link.{' '}
-          <Link href="/forgot-password" className="underline">
+          <Link href="/forgot-password" className="auth-link">
             Request a new one
           </Link>
-          .
         </p>
       ) : (
-        <form
-          onSubmit={(e) => void onSubmit(e)}
-          className="clay-panel auth-form-panel flex flex-col gap-gs-4 p-gs-5"
-        >
-          <label className="flex flex-col gap-gs-1 text-body">
-            New password
-            <input
-              className="clay-input"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
-          <label className="flex flex-col gap-gs-1 text-body">
-            Confirm password
-            <input
-              className="clay-input"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-            />
-          </label>
-          {error ? <p className="text-body text-danger">{error}</p> : null}
-          <button type="submit" disabled={busy} className="clay-btn w-full disabled:opacity-60">
+        <form onSubmit={(e) => void onSubmit(e)} className="auth-form-panel">
+          <AuthPasswordField
+            label="New password"
+            inputClassName="clay-input"
+            labelClassName="text-body"
+            value={password}
+            onChange={setPassword}
+            error={Boolean(error)}
+            autoComplete="new-password"
+            minLength={8}
+          />
+          <AuthPasswordField
+            label="Confirm password"
+            inputClassName="clay-input"
+            labelClassName="text-body"
+            value={confirm}
+            onChange={setConfirm}
+            error={Boolean(error)}
+            autoComplete="new-password"
+            minLength={8}
+          />
+          {error ? (
+            <p className="auth-form-error text-body text-danger" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <button
+            type="submit"
+            disabled={busy}
+            className="clay-btn auth-submit w-full disabled:opacity-60"
+          >
             {busy ? 'Saving…' : 'Update password'}
           </button>
         </form>

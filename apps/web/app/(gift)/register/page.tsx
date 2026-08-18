@@ -3,8 +3,8 @@
 import { FormEvent, Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
 import { GiftAuthShell } from '@/components/auth/auth-visuals';
+import { AuthEmailField, AuthPasswordField, AuthTextField } from '@/components/auth/auth-fields';
 import { apiAuth, storeSession, type AuthSession } from '@/lib/auth-client';
 import { mergeGuestCommerce } from '@/lib/merge-guest-commerce';
 import { safeNextPath } from '@inabiya/validation';
@@ -16,7 +16,6 @@ function RegisterForm() {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -49,10 +48,10 @@ function RegisterForm() {
       title="Create account"
       description={nextPath ? undefined : 'Save gifts and checkout faster.'}
       footer={
-        <p className="text-body opacity-75">
+        <p>
           Already have an account?{' '}
           <Link
-            className="font-medium text-primary underline"
+            className="auth-link"
             href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : '/login'}
           >
             Sign in
@@ -60,57 +59,40 @@ function RegisterForm() {
         </p>
       }
     >
-      <form
-        onSubmit={onSubmit}
-        className="clay-panel auth-form-panel flex flex-col gap-gs-3 p-gs-5 sm:p-gs-6"
-      >
-        <label className="flex flex-col gap-gs-1 text-body">
-          Display name
-          <input
-            className="clay-input !mt-gs-1"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            autoComplete="name"
-          />
-        </label>
-        <label className="flex flex-col gap-gs-1 text-body">
-          Email
-          <input
-            className="clay-input !mt-gs-1"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="username"
-          />
-        </label>
-        <label className="flex flex-col gap-gs-1 text-body">
-          Password (min 8)
-          <div className="relative">
-            <input
-              className="clay-input !mt-gs-1 pr-gs-7"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
-            <button
-              type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-gs-1 opacity-60 hover:opacity-100 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-              onClick={() => setShowPassword((v) => !v)}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </label>
-        {error ? <p className="text-body text-danger">{error}</p> : null}
+      <form onSubmit={onSubmit} className="auth-form-panel">
+        <AuthTextField
+          label="Display name"
+          inputClassName="clay-input"
+          labelClassName="text-body"
+          value={displayName}
+          onChange={setDisplayName}
+          autoComplete="name"
+        />
+        <AuthEmailField
+          inputClassName="clay-input"
+          labelClassName="text-body"
+          value={email}
+          onChange={setEmail}
+          error={Boolean(error)}
+        />
+        <AuthPasswordField
+          inputClassName="clay-input"
+          labelClassName="text-body"
+          value={password}
+          onChange={setPassword}
+          error={Boolean(error)}
+          autoComplete="new-password"
+          minLength={8}
+        />
+        {error ? (
+          <p className="auth-form-error text-body text-danger" role="alert">
+            {error}
+          </p>
+        ) : null}
         <button
           type="submit"
           disabled={busy}
-          className="clay-btn w-full mt-gs-1 disabled:opacity-60"
+          className="clay-btn auth-submit w-full disabled:opacity-60"
         >
           {busy ? 'Creating…' : 'Register'}
         </button>

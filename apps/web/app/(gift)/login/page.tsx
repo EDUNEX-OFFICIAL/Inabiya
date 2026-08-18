@@ -21,15 +21,13 @@ function CustomerLogin() {
       visual={<GiftCustomerVisual />}
       footer={
         <>
-          <p className="text-body opacity-75">
-            <Link className="font-medium text-primary underline" href="/forgot-password">
-              Forgot password?
-            </Link>
-          </p>
-          <p className="text-body opacity-75">
+          <Link className="auth-link" href="/forgot-password">
+            Forgot password?
+          </Link>
+          <p>
             No account?{' '}
             <Link
-              className="font-medium text-primary underline"
+              className="auth-link"
               href={nextPath ? `/register?next=${encodeURIComponent(nextPath)}` : '/register'}
             >
               Register

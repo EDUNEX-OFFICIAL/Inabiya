@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { GiftAuthShell } from '@/components/auth/auth-visuals';
+import { AuthEmailField } from '@/components/auth/auth-fields';
 import { apiUrl } from '@/lib/api-base';
 import { CSRF_HEADER, CSRF_HEADER_VALUE } from '@/lib/auth-client';
 
@@ -45,35 +46,35 @@ export default function ForgotPasswordPage() {
       title="Forgot password"
       description="Enter your email — we send a reset link if the account exists."
       footer={
-        <p className="text-body opacity-75">
-          <Link href="/login" className="font-medium text-primary underline">
-            ← Back to sign in
-          </Link>
-        </p>
+        <Link href="/login" className="auth-link">
+          Back to sign in
+        </Link>
       }
     >
-      <form
-        onSubmit={(e) => void onSubmit(e)}
-        className="clay-panel auth-form-panel flex flex-col gap-gs-4 p-gs-5"
-      >
-        <label className="flex flex-col gap-gs-1 text-body">
-          Email
-          <input
-            className="clay-input"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
-        {error ? <p className="text-body text-danger">{error}</p> : null}
+      <form onSubmit={(e) => void onSubmit(e)} className="auth-form-panel">
+        <AuthEmailField
+          inputClassName="clay-input"
+          labelClassName="text-body"
+          value={email}
+          onChange={setEmail}
+          error={Boolean(error)}
+          autoComplete="email"
+        />
+        {error ? (
+          <p className="auth-form-error text-body text-danger" role="alert">
+            {error}
+          </p>
+        ) : null}
         {msg ? (
           <p className="gift-banner gift-banner--success" role="status">
             {msg}
           </p>
         ) : null}
-        <button type="submit" disabled={busy} className="clay-btn w-full disabled:opacity-60">
+        <button
+          type="submit"
+          disabled={busy}
+          className="clay-btn auth-submit w-full disabled:opacity-60"
+        >
           {busy ? 'Sending…' : 'Send reset link'}
         </button>
       </form>
