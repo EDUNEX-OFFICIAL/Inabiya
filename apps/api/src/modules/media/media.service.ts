@@ -202,7 +202,12 @@ export class MediaService {
       asset.thumbStorageKey
     ) {
       const buffer = await this.storage.getObjectBuffer(asset.thumbStorageKey);
-      return { buffer, mimeType: 'image/webp', originalName: asset.originalName, cacheControl: longCache };
+      return {
+        buffer,
+        mimeType: 'image/webp',
+        originalName: asset.originalName,
+        cacheControl: longCache,
+      };
     }
     if (
       (variant === 'web' || variant === 'thumb') &&
@@ -210,7 +215,12 @@ export class MediaService {
       asset.webStorageKey
     ) {
       const buffer = await this.storage.getObjectBuffer(asset.webStorageKey);
-      return { buffer, mimeType: 'image/webp', originalName: asset.originalName, cacheControl: longCache };
+      return {
+        buffer,
+        mimeType: 'image/webp',
+        originalName: asset.originalName,
+        cacheControl: longCache,
+      };
     }
 
     const buffer = await this.storage.getObjectBuffer(asset.storageKey);

@@ -27,7 +27,10 @@ export function CreatorChrome({ children }: { children: ReactNode }) {
               <Link href="/creator/studio" className="opacity-80 hover:opacity-100">
                 Creator studio
               </Link>
-              <Link href="/creator/login" className="creator-btn-ghost !min-h-0 !px-gs-3 !py-gs-1 text-xs">
+              <Link
+                href="/creator/login"
+                className="creator-btn-ghost !min-h-0 !px-gs-3 !py-gs-1 text-xs"
+              >
                 Sign in
               </Link>
             </nav>

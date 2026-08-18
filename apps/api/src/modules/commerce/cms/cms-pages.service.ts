@@ -27,9 +27,7 @@ function rewriteGiftRoutesInString(raw: string): string {
       return `__GIFT_ASSET_${assets.length - 1}__`;
     },
   );
-  const rewritten = protectedStr
-    .replace(/\/gift\//g, '/')
-    .replace(/\/gift(?=[?#"'<\s]|$)/g, '/');
+  const rewritten = protectedStr.replace(/\/gift\//g, '/').replace(/\/gift(?=[?#"'<\s]|$)/g, '/');
   return rewritten.replace(/__GIFT_ASSET_(\d+)__/g, (_, i) => assets[Number(i)]!);
 }
 

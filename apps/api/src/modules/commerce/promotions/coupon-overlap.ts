@@ -1,9 +1,11 @@
 import type { CouponEligibility, CouponMatchRules } from '@inabiya/validation';
+import { parseCouponEligibility, parseCouponMatchRules } from './coupon-conditions';
 import {
-  parseCouponEligibility,
-  parseCouponMatchRules,
-} from './coupon-conditions';
-import { couponLifecycle, couponLayer, type CouponLifecycle, type CouponScopeKind } from './coupon-lifecycle';
+  couponLifecycle,
+  couponLayer,
+  type CouponLifecycle,
+  type CouponScopeKind,
+} from './coupon-lifecycle';
 
 export type CouponConflictSlice = {
   id: string;
@@ -131,10 +133,7 @@ function boundsExclusive(
   return a.max < b.min || b.max < a.min;
 }
 
-function forcedMatchBool(
-  rules: CouponMatchRules,
-  field: 'hamper' | 'onSale',
-): boolean | null {
+function forcedMatchBool(rules: CouponMatchRules, field: 'hamper' | 'onSale'): boolean | null {
   if (!canForceAll(rules)) return null;
   const conds = rules.conditions.filter((c) => c.field === field);
   if (conds.length !== 1) return null;
@@ -243,23 +242,21 @@ const PEER_SELECT = {
 
 export const couponConflictPeerSelect = PEER_SELECT;
 
-export function toCouponConflictSlice(
-  c: {
-    id: string;
-    code: string;
-    active: boolean;
-    startsAt: Date | string | null;
-    expiresAt: Date | string | null;
-    maxUses: number | null;
-    usedCount: number;
-    scope: string;
-    productIds: string[];
-    collectionIds: string[];
-    minSubtotalPaise?: number;
-    eligibility?: unknown;
-    matchRules?: unknown;
-  },
-): CouponConflictSlice {
+export function toCouponConflictSlice(c: {
+  id: string;
+  code: string;
+  active: boolean;
+  startsAt: Date | string | null;
+  expiresAt: Date | string | null;
+  maxUses: number | null;
+  usedCount: number;
+  scope: string;
+  productIds: string[];
+  collectionIds: string[];
+  minSubtotalPaise?: number;
+  eligibility?: unknown;
+  matchRules?: unknown;
+}): CouponConflictSlice {
   return {
     id: c.id,
     code: c.code,

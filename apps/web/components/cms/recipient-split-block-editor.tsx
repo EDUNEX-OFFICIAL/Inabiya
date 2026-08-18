@@ -137,7 +137,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function nextPreset(existing: RecipientCardDraft[]): RecipientCardDraft {
   const used = new Set(existing.map((c) => c.href));
   const preset = PRESETS.find((p) => !used.has(p.href));
-  return preset ? { ...preset } : { ...PRESETS[0]!, label: 'New', href: '/collections/unisex-gifts' };
+  return preset
+    ? { ...preset }
+    : { ...PRESETS[0]!, label: 'New', href: '/collections/unisex-gifts' };
 }
 
 type Props = {
@@ -198,7 +200,9 @@ export function RecipientCardsEditor({ value, onChange, grid }: Props) {
               <select
                 className={INSPECTOR_INPUT}
                 value={card.accent}
-                onChange={(e) => update(index, { accent: parseRecipientAccent(e.target.value, index) })}
+                onChange={(e) =>
+                  update(index, { accent: parseRecipientAccent(e.target.value, index) })
+                }
               >
                 {RECIPIENT_ACCENTS.map((accent) => (
                   <option key={accent} value={accent}>

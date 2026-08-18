@@ -1,10 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
-import {
-  buildImageVariants,
-  shouldSkipVariants,
-  variantStorageKey,
-} from './image-variants';
+import { buildImageVariants, shouldSkipVariants, variantStorageKey } from './image-variants';
 import { deleteMediaObject, getMediaObject, putMediaObject } from './local-media-store';
 
 export async function processMediaVariants(

@@ -53,12 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
 function LegacyGiftHomeFallback() {
   return (
     <main>
-      <link
-        rel="preload"
-        as="image"
-        href="/gift/media/baby-soft-gift.webp"
-        fetchPriority="high"
-      />
+      <link rel="preload" as="image" href="/gift/media/baby-soft-gift.webp" fetchPriority="high" />
       <GiftStorefrontHero
         headline="Little bundles of joy, thoughtfully chosen."
         subcopy="Build a bespoke baby box in gentle steps — or pick a ready-made hamper. Packed with warmth, shipped across India."

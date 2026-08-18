@@ -39,11 +39,7 @@ const PHOTO_POOL = [
 
 const TONES: TileTone[] = ['blush', 'sky', 'mint', 'lavender', 'soft'];
 
-const FEATURED_SHOP = new Set([
-  '/build-your-box',
-  '/collections/ready-hampers',
-  '/hampers',
-]);
+const FEATURED_SHOP = new Set(['/build-your-box', '/collections/ready-hampers', '/hampers']);
 
 function hashPick(s: string, n: number) {
   let h = 0;
@@ -458,11 +454,7 @@ export function GiftMenuOverlay({
               </button>
             </>
           ) : (
-            <Link
-              href="/login?next=/"
-              className="clay-btn w-full justify-center"
-              onClick={onClose}
-            >
+            <Link href="/login?next=/" className="clay-btn w-full justify-center" onClick={onClose}>
               Sign in
             </Link>
           )}

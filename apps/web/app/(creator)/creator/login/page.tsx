@@ -26,7 +26,11 @@ function Form() {
 
 export default function CreatorLoginPage() {
   return (
-    <Suspense fallback={<main className="auth-shell auth-shell--creator p-8 text-sm opacity-70">Loading…</main>}>
+    <Suspense
+      fallback={
+        <main className="auth-shell auth-shell--creator p-8 text-sm opacity-70">Loading…</main>
+      }
+    >
       <Form />
     </Suspense>
   );

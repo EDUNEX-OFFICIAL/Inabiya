@@ -46,7 +46,11 @@ function CustomerLogin() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="auth-shell auth-shell--gift p-gs-6 text-body opacity-70">Loading…</main>}>
+    <Suspense
+      fallback={
+        <main className="auth-shell auth-shell--gift p-gs-6 text-body opacity-70">Loading…</main>
+      }
+    >
       <CustomerLogin />
     </Suspense>
   );

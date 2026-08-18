@@ -6,7 +6,10 @@ import { mediaVariantUrl, parseMediaAssetId, variantFromSizes } from './media-ur
 
 const id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
 assert.equal(parseMediaAssetId(`/api/v1/media/${id}/content?v=web`), id);
-assert.equal(mediaVariantUrl(`/api/v1/media/${id}/content`, 'thumb'), `/api/v1/media/${id}/content?v=thumb`);
+assert.equal(
+  mediaVariantUrl(`/api/v1/media/${id}/content`, 'thumb'),
+  `/api/v1/media/${id}/content?v=thumb`,
+);
 assert.equal(variantFromSizes('80px'), 'thumb');
 assert.equal(variantFromSizes('(max-width: 1024px) 100vw, 50vw'), 'web');
 

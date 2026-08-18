@@ -1,12 +1,6 @@
 import { safeNextPath } from '@inabiya/validation';
 
-export type AuthPortalId =
-  | 'customer'
-  | 'commerce'
-  | 'cms'
-  | 'editorial'
-  | 'creator'
-  | 'platform';
+export type AuthPortalId = 'customer' | 'commerce' | 'cms' | 'editorial' | 'creator' | 'platform';
 
 export type AuthPortal = {
   id: AuthPortalId;
@@ -100,10 +94,7 @@ export function portalLoginUrl(nextPath: string): string {
   return `${portal.loginPath}?next=${encodeURIComponent(safe)}`;
 }
 
-export function rolesAllowedForPortal(
-  roles: readonly string[],
-  portal: AuthPortal,
-): boolean {
+export function rolesAllowedForPortal(roles: readonly string[], portal: AuthPortal): boolean {
   if (portal.allowRoles.length === 0) return true;
   return roles.some((r) => portal.allowRoles.includes(r));
 }
@@ -123,7 +114,11 @@ export function resolvePortalNext(
     if (roles.includes('CREATOR')) return '/creator/studio';
   }
   if (portal.id === 'commerce') {
-    if (roles.includes('SUPPORT') && !roles.includes('COMMERCE_ADMIN') && !roles.includes('SUPER_ADMIN')) {
+    if (
+      roles.includes('SUPPORT') &&
+      !roles.includes('COMMERCE_ADMIN') &&
+      !roles.includes('SUPER_ADMIN')
+    ) {
       return '/admin/commerce/support';
     }
     if (

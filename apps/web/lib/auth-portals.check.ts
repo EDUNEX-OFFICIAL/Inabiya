@@ -21,14 +21,8 @@ assert.equal(portalForNextPath('/creator/studio').id, 'creator');
 assert.equal(portalForNextPath('/cart').id, 'customer');
 assert.equal(portalForNextPath(null).id, 'customer');
 
-assert.equal(
-  portalLoginUrl('/admin/cms/pages'),
-  '/admin/cms/login?next=%2Fadmin%2Fcms%2Fpages',
-);
-assert.equal(
-  portalLoginUrl('/admin/commerce'),
-  '/admin/commerce/login?next=%2Fadmin%2Fcommerce',
-);
+assert.equal(portalLoginUrl('/admin/cms/pages'), '/admin/cms/login?next=%2Fadmin%2Fcms%2Fpages');
+assert.equal(portalLoginUrl('/admin/commerce'), '/admin/commerce/login?next=%2Fadmin%2Fcommerce');
 assert.equal(portalLoginUrl('/wishlist'), '/login?next=%2Fwishlist');
 assert.equal(portalLoginUrl('/creator/brand'), '/creator/login?next=%2Fcreator%2Fbrand');
 
@@ -53,10 +47,7 @@ assert.equal(
   resolvePortalNext(AUTH_PORTALS.commerce, null, ['SUPPORT']),
   '/admin/commerce/support',
 );
-assert.equal(
-  resolvePortalNext(AUTH_PORTALS.creator, null, ['BRAND']),
-  '/creator/brand',
-);
+assert.equal(resolvePortalNext(AUTH_PORTALS.creator, null, ['BRAND']), '/creator/brand');
 assert.equal(resolvePortalNext(AUTH_PORTALS.customer, null, ['CUSTOMER']), '/');
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');

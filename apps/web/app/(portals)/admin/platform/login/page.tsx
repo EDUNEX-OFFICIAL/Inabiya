@@ -28,7 +28,9 @@ function Form() {
 
 export default function PlatformLoginPage() {
   return (
-    <Suspense fallback={<main className="auth-shell auth-shell--ops p-8 text-sm opacity-70">Loading…</main>}>
+    <Suspense
+      fallback={<main className="auth-shell auth-shell--ops p-8 text-sm opacity-70">Loading…</main>}
+    >
       <Form />
     </Suspense>
   );

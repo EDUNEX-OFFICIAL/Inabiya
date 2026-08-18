@@ -30,7 +30,10 @@ function rewriteChromeHrefs<T>(value: T): T {
   }
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-    if ((k === 'href' || k === 'ctaHref' || k === 'imageSrc' || k === 'journalHref') && typeof v === 'string') {
+    if (
+      (k === 'href' || k === 'ctaHref' || k === 'imageSrc' || k === 'journalHref') &&
+      typeof v === 'string'
+    ) {
       out[k] = rewriteGiftRouteHref(v) ?? v;
     } else {
       out[k] = rewriteChromeHrefs(v);

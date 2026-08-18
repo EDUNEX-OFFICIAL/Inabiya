@@ -111,7 +111,11 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<main className="auth-shell auth-shell--gift p-gs-6 text-body opacity-70">Loading…</main>}>
+    <Suspense
+      fallback={
+        <main className="auth-shell auth-shell--gift p-gs-6 text-body opacity-70">Loading…</main>
+      }
+    >
       <ResetPasswordForm />
     </Suspense>
   );

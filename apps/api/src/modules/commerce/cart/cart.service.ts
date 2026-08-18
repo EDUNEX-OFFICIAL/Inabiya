@@ -409,11 +409,7 @@ export class CartService {
     return this.getOrCreate(userId, cartDto.guestToken ?? guestToken);
   }
 
-  async removeCoupon(
-    userId: string | undefined,
-    guestToken: string | undefined,
-    code?: string,
-  ) {
+  async removeCoupon(userId: string | undefined, guestToken: string | undefined, code?: string) {
     const cartDto = await this.getOrCreate(userId, guestToken);
     const target = code?.trim().toUpperCase();
     let lineCode = cartDto.lineCouponCode ?? null;
@@ -650,10 +646,7 @@ export class CartService {
       cartCode = null;
     }
 
-    if (
-      input.persist &&
-      (cartCode !== input.storedCartCode || lineCode !== input.storedLineCode)
-    ) {
+    if (input.persist && (cartCode !== input.storedCartCode || lineCode !== input.storedLineCode)) {
       await this.prisma.cart.update({
         where: { id: input.cartId },
         data: { couponCode: cartCode, lineCouponCode: lineCode },

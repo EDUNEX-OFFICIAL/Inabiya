@@ -1,9 +1,6 @@
 /** Pure coupon lifecycle + eligible-subtotal helpers for promotions desk. */
 import type { CouponMatchRules } from '@inabiya/validation';
-import {
-  lineMatchesRules,
-  type CouponCartLine,
-} from './coupon-conditions';
+import { lineMatchesRules, type CouponCartLine } from './coupon-conditions';
 
 export type { CouponCartLine } from './coupon-conditions';
 

@@ -362,10 +362,7 @@ export class PaymentFulfillmentService {
         });
       }
     }
-    if (
-      (order.couponCode && !cart.couponCode) ||
-      (order.lineCouponCode && !cart.lineCouponCode)
-    ) {
+    if ((order.couponCode && !cart.couponCode) || (order.lineCouponCode && !cart.lineCouponCode)) {
       await this.prisma.cart.update({
         where: { id: cart.id },
         data: {

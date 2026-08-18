@@ -15,9 +15,7 @@ assert.equal(
   '/gift/media/baby-soft-gift.webp',
 );
 assert.equal(
-  homepageLcpHref([
-    { type: 'hero', props: { imageUrl: `/api/v1/media/${id}/content` } },
-  ]),
+  homepageLcpHref([{ type: 'hero', props: { imageUrl: `/api/v1/media/${id}/content` } }]),
   `/api/v1/media/${id}/content?v=web`,
 );
 

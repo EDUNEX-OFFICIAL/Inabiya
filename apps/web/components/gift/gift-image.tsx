@@ -22,9 +22,7 @@ function skipOptimizer(src: string): boolean {
  */
 export function GiftImage({ src, sizes, blurDataUrl, priority, eager, alt, ...rest }: Props) {
   const sizesStr = typeof sizes === 'string' ? sizes : undefined;
-  const resolved = isMediaLibraryUrl(src)
-    ? mediaVariantUrl(src, variantFromSizes(sizesStr))
-    : src;
+  const resolved = isMediaLibraryUrl(src) ? mediaVariantUrl(src, variantFromSizes(sizesStr)) : src;
   const blur = blurDataUrl?.startsWith('data:') ? blurDataUrl : undefined;
 
   return (

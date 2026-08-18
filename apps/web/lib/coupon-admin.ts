@@ -1,14 +1,7 @@
 /** Admin promotions condition helpers (Shopify-like gates + line match). */
 
 export type CouponMatchField =
-  | 'recipient'
-  | 'age'
-  | 'occasion'
-  | 'hamper'
-  | 'label'
-  | 'onSale'
-  | 'brand'
-  | 'titleContains';
+  'recipient' | 'age' | 'occasion' | 'hamper' | 'label' | 'onSale' | 'brand' | 'titleContains';
 
 export type CouponMatchOp = 'is' | 'is_not' | 'contains';
 
@@ -134,7 +127,9 @@ export function matchValueOptions(
   }
 }
 
-export function matchOpOptions(field: CouponMatchField): Array<{ value: CouponMatchOp; label: string }> {
+export function matchOpOptions(
+  field: CouponMatchField,
+): Array<{ value: CouponMatchOp; label: string }> {
   if (field === 'titleContains') return [{ value: 'contains', label: 'contains' }];
   if (field === 'brand') {
     return [

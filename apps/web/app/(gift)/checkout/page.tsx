@@ -798,8 +798,7 @@ function OrderSummaryPanel({
   onRemoveCoupon: (code?: string) => void;
 }) {
   const count = itemCount ?? cart.items.reduce((n, i) => n + i.quantity, 0);
-  const discountLabel =
-    preview.couponLabel ?? formatCartCoupons(cart) ?? preview.couponCode;
+  const discountLabel = preview.couponLabel ?? formatCartCoupons(cart) ?? preview.couponCode;
 
   return (
     <aside

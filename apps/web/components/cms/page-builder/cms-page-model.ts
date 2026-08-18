@@ -682,7 +682,10 @@ export function toEditable(blocks: MarketingPage['blocks']): Block[] {
           ) {
             props.cardsJson = JSON.stringify(v);
           } else if (k === 'items' && Array.isArray(v) && b.type === 'thinStrip') {
-            props.items = v.map((row) => String(row ?? '').trim()).filter(Boolean).join('\n');
+            props.items = v
+              .map((row) => String(row ?? '').trim())
+              .filter(Boolean)
+              .join('\n');
           } else if (k === 'marquee') {
             props.marquee = v === true || v === 'true' ? 'true' : 'false';
           } else if (k === 'items' && Array.isArray(v) && b.type === 'testimonials') {
@@ -861,9 +864,7 @@ function payloadWithoutStyle(b: Block) {
       .map((row, i) => cardFromUnknown(row, i))
       .filter((row): row is NonNullable<ReturnType<typeof cardFromUnknown>> => row != null);
     const items =
-      fromJson.length >= 2
-        ? fromJson
-        : [nestCard('left', b.props), nestCard('right', b.props)];
+      fromJson.length >= 2 ? fromJson : [nestCard('left', b.props), nestCard('right', b.props)];
     if (items.length < 2) {
       throw new Error('Shop by baby needs at least two cards.');
     }
@@ -1112,10 +1113,14 @@ function payloadWithoutStyle(b: Block) {
         ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
         ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
         ...(b.props.ctaHref ? { ctaHref: b.props.ctaHref } : {}),
-        ...(b.props.display === 'marquee' || b.props.display === 'grid' || b.props.display === 'auto'
+        ...(b.props.display === 'marquee' ||
+        b.props.display === 'grid' ||
+        b.props.display === 'auto'
           ? { display: b.props.display }
           : {}),
-        ...(b.props.quoteColumns === '3' ? { quoteColumns: 3 as const } : { quoteColumns: 2 as const }),
+        ...(b.props.quoteColumns === '3'
+          ? { quoteColumns: 3 as const }
+          : { quoteColumns: 2 as const }),
         items,
       },
     };

@@ -43,10 +43,7 @@ export function parseQuoteColumns(raw: unknown): 2 | 3 {
   return Number(raw) === 3 ? 3 : 2;
 }
 
-export function parseTestimonialsDisplay(
-  raw: unknown,
-  itemCount: number,
-): 'marquee' | 'grid' {
+export function parseTestimonialsDisplay(raw: unknown, itemCount: number): 'marquee' | 'grid' {
   if (raw === 'grid' || raw === 'marquee') return raw;
   return itemCount >= 4 ? 'marquee' : 'grid';
 }

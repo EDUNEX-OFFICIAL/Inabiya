@@ -25,11 +25,7 @@ export type GiftNavPreview = {
   imageSrc: string;
 };
 
-const FEATURED_HREFS = new Set([
-  '/build-your-box',
-  '/collections/ready-hampers',
-  '/hampers',
-]);
+const FEATURED_HREFS = new Set(['/build-your-box', '/collections/ready-hampers', '/hampers']);
 
 const OCCASION_SLUGS = new Set([
   'welcome-baby',

@@ -64,7 +64,10 @@ assert.match(giftSelect, /aria-haspopup="listbox"/);
 assert.match(giftSelect, /createPortal/);
 assert.match(giftSelect, /--z-overlay/);
 
-const collPage = readFileSync(join(__dirname, '../../app/(gift)/collections/[slug]/page.tsx'), 'utf8');
+const collPage = readFileSync(
+  join(__dirname, '../../app/(gift)/collections/[slug]/page.tsx'),
+  'utf8',
+);
 assert.match(collPage, /md:hidden[\s\S]*priority/);
 assert.match(collPage, /hidden w-\[42%\] md:block[\s\S]*eager/);
 assert.equal((collPage.match(/^\s+priority$/gm) ?? []).length, 1);

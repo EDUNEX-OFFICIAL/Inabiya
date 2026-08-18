@@ -53,7 +53,10 @@ export function PdpGallery({ media, title }: { media: Media[]; title: string }) 
   const mediaKey = useMemo(() => media.map((m) => m.url).join('\0'), [media]);
   const n = media.length;
   const multi = n > 1;
-  const slides = useMemo(() => (multi ? [media[n - 1]!, ...media, media[0]!] : media), [media, multi, n]);
+  const slides = useMemo(
+    () => (multi ? [media[n - 1]!, ...media, media[0]!] : media),
+    [media, multi, n],
+  );
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');

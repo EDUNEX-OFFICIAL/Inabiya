@@ -684,10 +684,7 @@ export function GiftNav() {
               ) : null}
             </>
           ) : (
-            <Link
-              href="/login?next=/"
-              className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-caption"
-            >
+            <Link href="/login?next=/" className="clay-btn !min-h-0 !px-gs-4 !py-gs-2 text-caption">
               Sign in
             </Link>
           )}

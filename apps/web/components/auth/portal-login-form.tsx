@@ -4,12 +4,7 @@ import { FormEvent, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
-import {
-  apiAuth,
-  clearSession,
-  storeSession,
-  type AuthSession,
-} from '@/lib/auth-client';
+import { apiAuth, clearSession, storeSession, type AuthSession } from '@/lib/auth-client';
 import {
   AUTH_PORTALS,
   resolvePortalNext,
@@ -60,7 +55,8 @@ function recipeClasses(variant: PortalLoginVariant) {
       btn: 'blog-btn w-full',
       label: 'blog-body',
       demo: 'blog-card space-y-3 p-4',
-      demoBtn: 'flex w-full flex-col items-start rounded-md border border-border bg-background px-3 py-2 text-left transition hover:border-primary hover:bg-primary/5 min-h-[48px]',
+      demoBtn:
+        'flex w-full flex-col items-start rounded-md border border-border bg-background px-3 py-2 text-left transition hover:border-primary hover:bg-primary/5 min-h-[48px]',
     };
   }
   if (variant === 'creator') {
@@ -74,7 +70,8 @@ function recipeClasses(variant: PortalLoginVariant) {
       btn: 'creator-btn w-full',
       label: 'creator-body',
       demo: 'creator-card space-y-3 p-4',
-      demoBtn: 'flex w-full flex-col items-start rounded-md border border-border bg-background px-3 py-2 text-left transition hover:border-primary hover:bg-primary/5 min-h-[48px]',
+      demoBtn:
+        'flex w-full flex-col items-start rounded-md border border-border bg-background px-3 py-2 text-left transition hover:border-primary hover:bg-primary/5 min-h-[48px]',
     };
   }
   // gift + ops (Soft Gift clay)
@@ -155,7 +152,11 @@ export function PortalLoginForm({
   const filledId = 'portal-login-filled';
 
   return (
-    <main className={`auth-shell ${r.shellMod}`} data-auth-variant={variant} data-auth-portal={portalId}>
+    <main
+      className={`auth-shell ${r.shellMod}`}
+      data-auth-variant={variant}
+      data-auth-portal={portalId}
+    >
       <div className="auth-shell__grid">
         <aside className="auth-visual" aria-hidden="true">
           {visual}
@@ -251,7 +252,9 @@ export function PortalLoginForm({
                       data-testid={`demo-fill-${u.email.split('@')[0]}`}
                     >
                       <span className="text-xs font-semibold text-primary">{u.note}</span>
-                      <span className="mt-1 truncate font-mono text-[11px] opacity-80">{u.email}</span>
+                      <span className="mt-1 truncate font-mono text-[11px] opacity-80">
+                        {u.email}
+                      </span>
                     </button>
                   </li>
                 ))}

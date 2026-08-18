@@ -111,7 +111,9 @@ export function couponCodesOnCart(c: Pick<CartDto, 'couponCodes' | 'couponCode'>
   return c.couponCode ? [c.couponCode] : [];
 }
 
-export function formatCartCoupons(c: Pick<CartDto, 'couponCodes' | 'couponCode' | 'couponLabel'>): string | null {
+export function formatCartCoupons(
+  c: Pick<CartDto, 'couponCodes' | 'couponCode' | 'couponLabel'>,
+): string | null {
   if (c.couponLabel) return c.couponLabel;
   const codes = couponCodesOnCart(c);
   return codes.length ? codes.join(' + ') : null;

@@ -60,7 +60,10 @@ function RegisterForm() {
         </p>
       }
     >
-      <form onSubmit={onSubmit} className="clay-panel auth-form-panel flex flex-col gap-gs-3 p-gs-5 sm:p-gs-6">
+      <form
+        onSubmit={onSubmit}
+        className="clay-panel auth-form-panel flex flex-col gap-gs-3 p-gs-5 sm:p-gs-6"
+      >
         <label className="flex flex-col gap-gs-1 text-body">
           Display name
           <input
@@ -104,7 +107,11 @@ function RegisterForm() {
           </div>
         </label>
         {error ? <p className="text-body text-danger">{error}</p> : null}
-        <button type="submit" disabled={busy} className="clay-btn w-full mt-gs-1 disabled:opacity-60">
+        <button
+          type="submit"
+          disabled={busy}
+          className="clay-btn w-full mt-gs-1 disabled:opacity-60"
+        >
           {busy ? 'Creating…' : 'Register'}
         </button>
       </form>
@@ -114,7 +121,11 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<main className="auth-shell auth-shell--gift p-gs-6 text-body opacity-70">Loading…</main>}>
+    <Suspense
+      fallback={
+        <main className="auth-shell auth-shell--gift p-gs-6 text-body opacity-70">Loading…</main>
+      }
+    >
       <RegisterForm />
     </Suspense>
   );

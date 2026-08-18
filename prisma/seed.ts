@@ -1111,7 +1111,8 @@ async function main() {
             description:
               'Design a bespoke baby box in six gentle steps — pick recipient, age, occasion & budget, we curate the rest.',
             imageUrl: 'https://images.unsplash.com/photo-1622290291720-ac961c43ee30?w=800&q=85',
-            hoverImageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=85',
+            hoverImageUrl:
+              'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=85',
             gradient: 'linear-gradient(150deg,#FF6B9D 0%,#FFB5D0 55%,#FFE0EC 100%)',
             accent: '#7C1D3C',
             href: '/build-your-box',
@@ -1124,7 +1125,8 @@ async function main() {
             description:
               "Add the baby's name, a handwritten gift note and a ribbon colour to make every hamper unmistakably theirs.",
             imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800&q=85',
-            hoverImageUrl: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&q=85',
+            hoverImageUrl:
+              'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&q=85',
             gradient: 'linear-gradient(150deg,#E8D5F5 0%,#F5C8E4 55%,#FFE0EC 100%)',
             accent: '#5B21B6',
             href: '/build-your-box',
@@ -1137,7 +1139,8 @@ async function main() {
             description:
               'Montessori-inspired wooden toys that grow with baby — sensory, safe and beautifully made for little hands.',
             imageUrl: 'https://images.unsplash.com/photo-1609811645795-f72ea07f47e9?w=800&q=85',
-            hoverImageUrl: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&q=85',
+            hoverImageUrl:
+              'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&q=85',
             gradient: 'linear-gradient(150deg,#B5EAD7 0%,#D9F5E9 55%,#E0F7EE 100%)',
             accent: '#0F5132',
             href: '/collections/bestsellers',
@@ -1176,7 +1179,8 @@ async function main() {
             description:
               'Thoughtful welcome-baby gifts for your people — branded cards, bulk pricing and PAN-India delivery.',
             imageUrl: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=800&q=85',
-            hoverImageUrl: 'https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=800&q=85',
+            hoverImageUrl:
+              'https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=800&q=85',
             gradient: 'linear-gradient(150deg,#C7D2FE 0%,#DDD6FE 55%,#EDE9FE 100%)',
             accent: '#3730A3',
             href: '/corporate',

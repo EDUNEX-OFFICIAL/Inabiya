@@ -57,14 +57,20 @@ function tagHit(tags: string[] | undefined, value: string, withUnisex: boolean):
   return list.includes(value);
 }
 
-function lineMatchesCondition(line: CouponCartLine, field: string, op: string, value: string): boolean {
+function lineMatchesCondition(
+  line: CouponCartLine,
+  field: string,
+  op: string,
+  value: string,
+): boolean {
   if (field === 'recipient') {
     const hit = tagHit(line.recipientTags, value, true);
     return op === 'is_not' ? !hit : hit;
   }
   if (field === 'age') {
     const tags = line.ageBands ?? [];
-    const hit = value === 'any' ? tags.includes('any') : tags.includes(value) || tags.includes('any');
+    const hit =
+      value === 'any' ? tags.includes('any') : tags.includes(value) || tags.includes('any');
     return op === 'is_not' ? !hit : hit;
   }
   if (field === 'occasion') {
@@ -109,7 +115,10 @@ export function lineMatchesRules(line: CouponCartLine, rules: CouponMatchRules):
   return rules.match === 'any' ? hits.some(Boolean) : hits.every(Boolean);
 }
 
-export function matchingLines(lines: CouponCartLine[], rules: CouponMatchRules | null): CouponCartLine[] {
+export function matchingLines(
+  lines: CouponCartLine[],
+  rules: CouponMatchRules | null,
+): CouponCartLine[] {
   if (!rules) return [];
   return lines.filter((l) => lineMatchesRules(l, rules));
 }
@@ -162,7 +171,5 @@ export function eligibilitySatisfied(
 }
 
 export function eligibilityNeedsCustomer(rules: CouponEligibility): boolean {
-  return rules.conditions.some(
-    (c) => c.field === 'firstOrder' || c.field === 'returningCustomer',
-  );
+  return rules.conditions.some((c) => c.field === 'firstOrder' || c.field === 'returningCustomer');
 }

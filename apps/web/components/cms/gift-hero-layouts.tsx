@@ -225,7 +225,10 @@ export function CmsHeroByLayout({
       <section className={`gift-section ${padClass(style.pad)} ${textAlignClass(style.align)}`}>
         <div className="grid gap-gs-4 md:grid-cols-2 md:gap-gs-6">
           <div>
-            <FramePhoto src={preferPublicHeroSrc(imageUrl.trim() || DEFAULT_HERO_IMAGE)} alt={headline || 'Gift'} />
+            <FramePhoto
+              src={preferPublicHeroSrc(imageUrl.trim() || DEFAULT_HERO_IMAGE)}
+              alt={headline || 'Gift'}
+            />
             {headline ? (
               <p
                 className={`${headlineTypeClass(style.headlineSize, 'h2')} ${inkTextClass(style.ink)} mt-gs-3`}

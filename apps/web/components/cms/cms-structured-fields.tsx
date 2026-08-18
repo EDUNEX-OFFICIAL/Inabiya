@@ -62,7 +62,13 @@ export function serializeBrandRows(rows: BrandRow[]): string {
     .join(', ');
 }
 
-export function BrandsRowsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function BrandsRowsEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   const rows = parseBrandRows(value);
   function set(next: BrandRow[]) {
     onChange(serializeBrandRows(next));
@@ -80,7 +86,9 @@ export function BrandsRowsEditor({ value, onChange }: { value: string; onChange:
             <input
               className={INSPECTOR_INPUT}
               value={row.name}
-              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
+              onChange={(e) =>
+                set(rows.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))
+              }
             />
           </Field>
           <Field label="Logo">
@@ -91,7 +99,10 @@ export function BrandsRowsEditor({ value, onChange }: { value: string; onChange:
           </Field>
         </RepeatableRow>
       ))}
-      <RepeatableAdd label="Add brand" onClick={() => set([...rows, { name: 'New brand', logoUrl: '' }])} />
+      <RepeatableAdd
+        label="Add brand"
+        onClick={() => set([...rows, { name: 'New brand', logoUrl: '' }])}
+      />
     </div>
   );
 }
@@ -129,7 +140,13 @@ export function serializeUspRows(rows: UspRow[]): string {
     .join(', ');
 }
 
-export function UspsRowsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function UspsRowsEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   const rows = parseUspRows(value);
   function set(next: UspRow[]) {
     onChange(serializeUspRows(next));
@@ -148,7 +165,9 @@ export function UspsRowsEditor({ value, onChange }: { value: string; onChange: (
               <select
                 className={INSPECTOR_INPUT}
                 value={row.icon}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, icon: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, icon: e.target.value } : r)))
+                }
               >
                 <option value="">None</option>
                 {USP_ICONS.map((icon) => (
@@ -162,7 +181,9 @@ export function UspsRowsEditor({ value, onChange }: { value: string; onChange: (
               <input
                 className={INSPECTOR_INPUT}
                 value={row.label}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))
+                }
               />
             </Field>
           </div>
@@ -170,7 +191,9 @@ export function UspsRowsEditor({ value, onChange }: { value: string; onChange: (
             <input
               className={INSPECTOR_INPUT}
               value={row.body}
-              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, body: e.target.value } : r)))}
+              onChange={(e) =>
+                set(rows.map((r, j) => (j === i ? { ...r, body: e.target.value } : r)))
+              }
             />
           </Field>
         </RepeatableRow>
@@ -228,8 +251,12 @@ export function OfferCardsEditor({
           ...(r.body ? { body: r.body } : {}),
           ctaLabel: r.ctaLabel,
           ctaHref: r.ctaHref,
-          ...(r.tone === 'sky' || r.tone === 'lavender' || r.tone === 'blush' ? { tone: r.tone } : {}),
-          ...(r.icon === 'heart' || r.icon === 'briefcase' || r.icon === 'box' ? { icon: r.icon } : {}),
+          ...(r.tone === 'sky' || r.tone === 'lavender' || r.tone === 'blush'
+            ? { tone: r.tone }
+            : {}),
+          ...(r.icon === 'heart' || r.icon === 'briefcase' || r.icon === 'box'
+            ? { icon: r.icon }
+            : {}),
         })),
       ),
     );
@@ -248,14 +275,18 @@ export function OfferCardsEditor({
               <input
                 className={INSPECTOR_INPUT}
                 value={row.tag}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, tag: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, tag: e.target.value } : r)))
+                }
               />
             </Field>
             <Field label="Title">
               <input
                 className={INSPECTOR_INPUT}
                 value={row.title}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, title: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, title: e.target.value } : r)))
+                }
               />
             </Field>
           </div>
@@ -263,14 +294,18 @@ export function OfferCardsEditor({
             <input
               className={INSPECTOR_INPUT}
               value={row.subtitle}
-              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, subtitle: e.target.value } : r)))}
+              onChange={(e) =>
+                set(rows.map((r, j) => (j === i ? { ...r, subtitle: e.target.value } : r)))
+              }
             />
           </Field>
           <Field label="Body">
             <textarea
               className={INSPECTOR_TEXTAREA_SHORT}
               value={row.body}
-              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, body: e.target.value } : r)))}
+              onChange={(e) =>
+                set(rows.map((r, j) => (j === i ? { ...r, body: e.target.value } : r)))
+              }
             />
           </Field>
           <div className="grid grid-cols-2 gap-1.5">
@@ -298,7 +333,9 @@ export function OfferCardsEditor({
               <select
                 className={INSPECTOR_INPUT}
                 value={row.tone}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, tone: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, tone: e.target.value } : r)))
+                }
               >
                 <option value="blush">Blush</option>
                 <option value="sky">Sky</option>
@@ -309,7 +346,9 @@ export function OfferCardsEditor({
               <select
                 className={INSPECTOR_INPUT}
                 value={row.icon}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, icon: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, icon: e.target.value } : r)))
+                }
               >
                 <option value="heart">Heart</option>
                 <option value="briefcase">Briefcase</option>
@@ -344,7 +383,13 @@ export function OfferCardsEditor({
 
 type FaqRow = { question: string; answerHtml: string };
 
-export function FaqItemsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function FaqItemsEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   const rows = parseJsonArray(value).map((row) => ({
     question: String(row.question ?? ''),
     answerHtml: String(row.answerHtml ?? ''),
@@ -365,13 +410,18 @@ export function FaqItemsEditor({ value, onChange }: { value: string; onChange: (
             <input
               className={INSPECTOR_INPUT}
               value={row.question}
-              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, question: e.target.value } : r)))}
+              onChange={(e) =>
+                set(rows.map((r, j) => (j === i ? { ...r, question: e.target.value } : r)))
+              }
             />
           </Field>
           <Field label="Answer">
             <textarea
               className={INSPECTOR_TEXTAREA_SHORT}
-              value={row.answerHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}
+              value={row.answerHtml
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()}
               onChange={(e) =>
                 set(
                   rows.map((r, j) =>
@@ -437,7 +487,9 @@ export function TestimonialsEditor({
             <textarea
               className={INSPECTOR_TEXTAREA_SHORT}
               value={row.quote}
-              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, quote: e.target.value } : r)))}
+              onChange={(e) =>
+                set(rows.map((r, j) => (j === i ? { ...r, quote: e.target.value } : r)))
+              }
             />
           </Field>
           <div className="grid grid-cols-2 gap-1.5">
@@ -445,14 +497,18 @@ export function TestimonialsEditor({
               <input
                 className={INSPECTOR_INPUT}
                 value={row.author}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, author: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, author: e.target.value } : r)))
+                }
               />
             </Field>
             <Field label="Role">
               <input
                 className={INSPECTOR_INPUT}
                 value={row.role}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, role: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, role: e.target.value } : r)))
+                }
               />
             </Field>
           </div>
@@ -492,7 +548,13 @@ function serializeLinkRows(rows: LinkRow[]): string {
     .join('\n');
 }
 
-export function LinkRowsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function LinkRowsEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   const rows = parseLinkRows(value);
   function set(next: LinkRow[]) {
     onChange(serializeLinkRows(next));
@@ -511,14 +573,18 @@ export function LinkRowsEditor({ value, onChange }: { value: string; onChange: (
               <input
                 className={INSPECTOR_INPUT}
                 value={row.label}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))
+                }
               />
             </Field>
             <Field label="Link">
               <input
                 className={INSPECTOR_INPUT}
                 value={row.href}
-                onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, href: e.target.value } : r)))}
+                onChange={(e) =>
+                  set(rows.map((r, j) => (j === i ? { ...r, href: e.target.value } : r)))
+                }
               />
             </Field>
           </div>
@@ -531,7 +597,13 @@ export function LinkRowsEditor({ value, onChange }: { value: string; onChange: (
 
 type StepRow = { title: string; body: string };
 
-export function StepsRowsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function StepsRowsEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   const rows = (value || '')
     .split('\n')
     .map((line) => line.trim())
@@ -565,14 +637,18 @@ export function StepsRowsEditor({ value, onChange }: { value: string; onChange: 
             <input
               className={INSPECTOR_INPUT}
               value={row.title}
-              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, title: e.target.value } : r)))}
+              onChange={(e) =>
+                set(rows.map((r, j) => (j === i ? { ...r, title: e.target.value } : r)))
+              }
             />
           </Field>
           <Field label="Body">
             <input
               className={INSPECTOR_INPUT}
               value={row.body}
-              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, body: e.target.value } : r)))}
+              onChange={(e) =>
+                set(rows.map((r, j) => (j === i ? { ...r, body: e.target.value } : r)))
+              }
             />
           </Field>
         </RepeatableRow>
@@ -602,7 +678,12 @@ export function TextRowsEditor({
     .map((s) => s.trim())
     .filter(Boolean);
   function set(next: string[]) {
-    onChange(next.map((s) => s.trim()).filter(Boolean).join('\n'));
+    onChange(
+      next
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .join('\n'),
+    );
   }
   return (
     <div className="space-y-2">

@@ -23,7 +23,11 @@ import {
   type CouponCartLine,
   type CouponScopeKind,
 } from './coupon-lifecycle';
-import { buildConflictCodesById, couponConflictPeerSelect, toCouponConflictSlice } from './coupon-overlap';
+import {
+  buildConflictCodesById,
+  couponConflictPeerSelect,
+  toCouponConflictSlice,
+} from './coupon-overlap';
 
 export type CouponResult = {
   code: string;
@@ -222,8 +226,7 @@ export class CouponService {
     }
 
     const matchRules = scope === 'MATCHING' ? (body.matchRules ?? null) : null;
-    const eligibility =
-      body.eligibility?.conditions.length ? body.eligibility : null;
+    const eligibility = body.eligibility?.conditions.length ? body.eligibility : null;
 
     const created = await this.prisma.coupon.create({
       data: {
@@ -382,7 +385,10 @@ export class CouponService {
     const matchingQty = linesKnown ? matchingQtyFromLines(scoped) : 0;
 
     let paidOrderCount = 0;
-    if (ctx.userId && (eligibilityNeedsCustomer(eligibility) || coupon.maxUsesPerCustomer != null)) {
+    if (
+      ctx.userId &&
+      (eligibilityNeedsCustomer(eligibility) || coupon.maxUsesPerCustomer != null)
+    ) {
       paidOrderCount = await this.prisma.order.count({
         where: { userId: ctx.userId, status: { in: COUNTED_ORDER } },
       });

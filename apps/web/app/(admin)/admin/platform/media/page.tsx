@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { apiAuth, apiAuthUpload, getStoredAccessToken, loginUrl, type AuthUser } from '@/lib/auth-client';
+import {
+  apiAuth,
+  apiAuthUpload,
+  getStoredAccessToken,
+  loginUrl,
+  type AuthUser,
+} from '@/lib/auth-client';
 
 type MediaAsset = {
   id: string;

@@ -6,10 +6,7 @@ import { ProductGridBlockEditor } from '@/components/cms/product-grid-block-edit
 import { DiscoveryChipsBlockEditor } from '@/components/cms/discovery-chips-block-editor';
 import { FeaturedCarouselCardsEditor } from '@/components/cms/featured-carousel-block-editor';
 import { RecipientCardsEditor } from '@/components/cms/recipient-split-block-editor';
-import {
-  RECIPIENT_GRID_LABELS,
-  RECIPIENT_GRIDS,
-} from '@/lib/cms-section-layout';
+import { RECIPIENT_GRID_LABELS, RECIPIENT_GRIDS } from '@/lib/cms-section-layout';
 import {
   BrandsRowsEditor,
   FaqItemsEditor,
@@ -164,7 +161,10 @@ function PropField({
   if (fieldKey === 'cardsJson' && blockType === 'featuredCarousel') {
     return <FeaturedCarouselCardsEditor value={value} onChange={onChange} />;
   }
-  if (fieldKey === 'cardsJson' && (blockType === 'exclusiveOffers' || blockType === 'offerCarousel')) {
+  if (
+    fieldKey === 'cardsJson' &&
+    (blockType === 'exclusiveOffers' || blockType === 'offerCarousel')
+  ) {
     return (
       <OfferCardsEditor
         value={value}

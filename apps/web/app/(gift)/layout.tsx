@@ -4,10 +4,7 @@ import './gift-hero-fouc.css';
 
 export default function GiftLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeFontShell
-      theme="gift"
-      className="clay-shell flex min-h-screen flex-col text-foreground"
-    >
+    <ThemeFontShell theme="gift" className="clay-shell flex min-h-screen flex-col text-foreground">
       <GiftLayoutChrome>{children}</GiftLayoutChrome>
     </ThemeFontShell>
   );
