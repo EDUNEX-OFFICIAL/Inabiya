@@ -88,5 +88,15 @@ bash scripts/dr-smoke.sh   # restore into temp DB, verify, drop — live DB unto
 ## 10. Related docs
 
 - `docs/SECURITY.md` — pentest MVP findings + remediations
+- `docs/PORTS.md` — GitHub Actions must SSH **`:2222`**, not `:22`
 - `scripts/phase9-load-smoke.sh` — concurrent hot-path smoke
 - `scripts/dr-smoke.sh` — backup/restore DR smoke
+
+## 11. Runbook — GitHub Actions `Cannot reach host:port`
+
+`verify` green + `deploy` fail on `Cannot reach ***:*** from the GitHub runner` means the runner never opened TCP to the VPS. It is **not** a missing Actions secret, expired `gh` PAT, or `GITHUB_TOKEN` contents permission.
+
+1. Confirm `VPS_HOST` is the public address (secrets have existed since project start).
+2. SSH port for Actions is **2222** (workflow remaps empty/`22` → `2222`).
+3. If still failing: check VPS `ufw` allows `2222/tcp`, `sshd` listening on `2222`, and that this is not a new cloud firewall in front of the host.
+4. Meanwhile ship with `bash /srv/Inabiya/scripts/deploy-vps.sh` on the box (same script the workflow runs after SSH).

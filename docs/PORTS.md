@@ -49,6 +49,15 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml stop api web wor
 pnpm dev
 ```
 
+## GitHub Actions deploy SSH
+
+`Build and deploy VPS` SSHes from **GitHub-hosted** `ubuntu-latest` into this machine, then runs `scripts/deploy-vps.sh`.
+
+- App ports stay loopback (`3001`/`4001`). SSH is the only inbound the runner needs.
+- **Do not use port 22 from Actions.** Many GitHub runner IPs cannot TCP `:22` on this VPS (ISP filter). `sshd` listens on **`2222`** as well (`ufw` comment `ssh-alt-isp-bypass`; host registry).
+- Workflow maps empty/`22` `VPS_PORT` → **`2222`**. Repo secrets (`VPS_HOST` / `VPS_USER` / key) have been set since first deploy — a `Cannot reach ***:***` log is that TCP check, not missing tokens.
+- VPS `gh` PAT: local git/GitHub API. Unrelated to runner → VPS reachability.
+
 ## Why EADDRINUSE happened
 
 `pnpm dev` and `inabiya-api` Docker both tried **4001**. Split prod (3001/4001) vs dev (3101/4101) fixes this permanently.

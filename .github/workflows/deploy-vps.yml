@@ -1,5 +1,13 @@
 # Verify on GitHub, build Docker images on the VPS (BuildKit), recreate, smoke.
-# Secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY_B64 (or VPS_SSH_KEY), optional VPS_PORT
+#
+# Repo secrets (present since first deploy — do not "recreate to fix" a TCP fail):
+#   VPS_HOST, VPS_USER, VPS_SSH_KEY_B64 (or VPS_SSH_KEY), optional VPS_PORT
+#
+# GitHub-hosted runners often cannot TCP this VPS on :22 (ISP / cloud filter).
+# sshd also listens on :2222 (host ufw: ssh-alt-isp-bypass). Workflow uses 2222
+# when VPS_PORT is empty or 22. A fine-grained `gh` PAT on the VPS does not
+# open that TCP path — "Cannot reach host:port" is network, not git auth.
+#
 # Server must have /srv/Inabiya/.env (gitignored).
 name: Build and deploy VPS
 
@@ -70,7 +78,8 @@ jobs:
           P="${P//$'\r'/}"; P="${P//$'\n'/}"
           H="${H#https://}"; H="${H#http://}"; H="${H%%/*}"
           H="$(echo -n "$H" | xargs)"; U="$(echo -n "$U" | xargs)"; P="$(echo -n "$P" | xargs)"
-          if [ -z "$P" ]; then P="22"; fi
+          # Do not default to 22 — GitHub runners cannot reach this VPS on :22.
+          if [ -z "$P" ] || [ "$P" = "22" ]; then P="2222"; fi
           if [ -z "$H" ] || [ -z "$U" ]; then
             echo "::error::VPS_HOST or VPS_USER empty"; exit 1
           fi
@@ -117,7 +126,7 @@ jobs:
             done
           }
           if ! timeout 15 bash -lc "cat </dev/null >/dev/tcp/${VPS_HOST_CLEAN}/${VPS_PORT_CLEAN}" 2>/dev/null; then
-            echo "::error::Cannot reach ${VPS_HOST_CLEAN}:${VPS_PORT_CLEAN} from the GitHub runner."
+            echo "::error::Cannot reach ${VPS_HOST_CLEAN}:${VPS_PORT_CLEAN} from the GitHub runner. Not a missing secret / gh PAT issue — TCP to the VPS failed. This host filters :22 from GitHub IPs; deploy SSH is :2222 (see README + docs/PORTS.md)."
             exit 1
           fi
           retry_ssh ssh "${ssh_opts[@]}" "${VPS_USER_CLEAN}@${VPS_HOST_CLEAN}" \

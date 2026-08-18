@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 18, 2026 (login demo shortcuts removed)
+Last Updated: August 18, 2026 (GHA deploy SSH :2222)
 
 ---
 
@@ -178,6 +178,12 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-18 — GitHub Actions deploy SSH is :2222 (human)
+
+- **Override:** Phase 14; human: document so `Cannot reach host:port` does not get misread as missing secrets.
+- Secrets (`VPS_HOST` / `VPS_USER` / SSH key) have been set since first deploy. Fail is TCP from GitHub-hosted runners to **:22** (ISP filter). Host `sshd` + ufw alt is **2222**.
+- `gh` fine-grained PAT on the VPS ≠ runner reachability. Workflow remaps empty/`22` `VPS_PORT` → `2222`. Docs: README, `docs/PORTS.md`, `docs/RUNBOOKS.md` §11, `deploy-vps.yml` header.
 
 ### 2026-08-18 — Remove login credential shortcuts (human override)
 

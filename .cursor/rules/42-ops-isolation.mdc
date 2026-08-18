@@ -36,3 +36,4 @@ Health: `http://127.0.0.1:4001/api/v1/health` (prod) or `:4101` (dev). API has *
 - Point Caddy at `localhost:PORT` for another project’s container.
 - Flat shared LAN / revive ghost compose paths.
 - Publish app ports on all interfaces.
+- Default GitHub Actions SSH to port **22** on this VPS — runners cannot TCP `:22`; use **2222** (`docs/PORTS.md`).
