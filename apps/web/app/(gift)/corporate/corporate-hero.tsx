@@ -15,6 +15,7 @@ const TRUST = [
 export function CorporateHero() {
   const containerRef = useRef<HTMLElement>(null);
   const [photoReady, setPhotoReady] = useState(false);
+  const entered = useRef(false);
   const markPhotoReady = useCallback(() => setPhotoReady(true), []);
 
   useEffect(() => {
@@ -28,6 +29,8 @@ export function CorporateHero() {
       if (!photoReady) return;
       const root = containerRef.current;
       if (!root) return;
+      if (entered.current && root.hasAttribute('data-hero-ready')) return;
+      entered.current = true;
 
       return runGiftHeroEntrance(root, {
         wash: root.querySelector('.gift-hero-split__wash'),
@@ -108,6 +111,8 @@ export function CorporateHero() {
             <img
               src="/gift/media/gift-box.svg"
               alt="Inabiya Soft Gift box"
+              width={480}
+              height={400}
               className={`gift-hero-split__photo gift-hero-split__photo--contain${photoReady ? ' gift-hero-split__photo--ready' : ''}`}
               onLoad={markPhotoReady}
             />

@@ -15,7 +15,7 @@ type HeroEntranceEls = {
 /** Hide → ready → fade/slide in. Call from useGSAP; return cleanup. */
 export function runGiftHeroEntrance(root: HTMLElement, els: HeroEntranceEls): () => void {
   const targets = root.querySelectorAll(
-    '[data-hero-anim], [data-hero-cta], .gift-hero-split__frame, .gift-hero-split__wash',
+    '[data-hero-anim], [data-hero-cta], .gift-hero-split__wash',
   );
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -25,10 +25,9 @@ export function runGiftHeroEntrance(root: HTMLElement, els: HeroEntranceEls): ()
     return () => root.removeAttribute('data-hero-ready');
   }
 
-  const { wash, frame, early, title, body, primary, secondary, trust } = els;
+  const { wash, early, title, body, primary, secondary, trust } = els;
 
   if (wash) gsap.set(wash, { opacity: 0, visibility: 'visible' });
-  if (frame) gsap.set(frame, { opacity: 0, visibility: 'visible', y: 22, scale: 1.03 });
   if (early) gsap.set(early, { opacity: 0, visibility: 'visible', y: 10 });
   if (title) gsap.set(title, { opacity: 0, visibility: 'visible', y: 28 });
   if (body) gsap.set(body, { opacity: 0, visibility: 'visible', y: 16 });
@@ -43,8 +42,6 @@ export function runGiftHeroEntrance(root: HTMLElement, els: HeroEntranceEls): ()
   const fadeClear = 'opacity,visibility,transform';
 
   if (wash) tl.to(wash, { opacity: 1, duration: 1.1, clearProps: 'opacity,visibility' }, 0);
-  if (frame)
-    tl.to(frame, { opacity: 1, y: 0, scale: 1, duration: 1.2, clearProps: fadeClear }, 0.15);
   if (early) tl.to(early, { opacity: 1, y: 0, duration: 0.7, clearProps: fadeClear }, 0.4);
   if (title) tl.to(title, { opacity: 1, y: 0, duration: 1.05, clearProps: fadeClear }, 0.55);
   if (body) tl.to(body, { opacity: 1, y: 0, duration: 0.85, clearProps: fadeClear }, 0.85);
@@ -54,8 +51,5 @@ export function runGiftHeroEntrance(root: HTMLElement, els: HeroEntranceEls): ()
 
   return () => {
     tl.kill();
-    root.removeAttribute('data-hero-ready');
-    if (targets.length)
-      gsap.set(targets, { opacity: 0, visibility: 'hidden', clearProps: 'transform' });
   };
 }

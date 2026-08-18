@@ -31,6 +31,7 @@ import {
   type AdminListSort,
 } from './admin-catalog-cursor';
 import { collectionDeleteBlocked } from './collection-ops';
+import { parseMediaAssetId } from '../../media/media-url';
 import {
   applySmartRulesToWhere,
   parseSmartRules,
@@ -593,7 +594,7 @@ export class CatalogService {
     } else if (sort === 'price_desc') {
       mapped.sort((a, b) => b.fromPricePaise - a.fromPricePaise);
     }
-    return this.attachReviewSummaries(mapped);
+    return this.decorateStorefront(mapped);
   }
 
   async getPublishedProductBySlug(slug: string) {
@@ -604,7 +605,7 @@ export class CatalogService {
     if (!product) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Product not found.' });
     }
-    const [withReviews] = await this.attachReviewSummaries([this.mapProduct(product)]);
+    const [withReviews] = await this.decorateStorefront([this.mapProduct(product)]);
     return withReviews!;
   }
 
@@ -1343,6 +1344,61 @@ export class CatalogService {
   }
 
   /** Batch approved-review avg + count onto storefront product DTOs. */
+  private async decorateStorefront<
+    T extends {
+      id: string;
+      media: Array<{ url: string }>;
+      hamperItems?: Array<{ imageUrl: string | null }>;
+    },
+  >(products: T[]) {
+    const withReviews = await this.attachReviewSummaries(products);
+    return this.attachMediaVariants(withReviews);
+  }
+
+  private async attachMediaVariants<
+    T extends {
+      media: Array<{ url: string }>;
+      hamperItems?: Array<{ imageUrl: string | null }>;
+    },
+  >(products: T[]): Promise<T[]> {
+    if (products.length === 0) return products;
+    const ids = new Set<string>();
+    for (const p of products) {
+      for (const m of p.media) {
+        const id = parseMediaAssetId(m.url);
+        if (id) ids.add(id);
+      }
+      for (const h of p.hamperItems ?? []) {
+        const id = parseMediaAssetId(h.imageUrl);
+        if (id) ids.add(id);
+      }
+    }
+    if (ids.size === 0) return products;
+    const rows = await this.prisma.mediaAsset.findMany({
+      where: { id: { in: [...ids] } },
+      select: { id: true, blurDataUrl: true, variantsStatus: true },
+    });
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const hint = (url: string | null | undefined) => {
+      const id = parseMediaAssetId(url);
+      const row = id ? byId.get(id) : undefined;
+      if (!row) return { blurDataUrl: null as string | null, variantsReady: false };
+      return {
+        blurDataUrl: row.blurDataUrl,
+        variantsReady: row.variantsStatus === 'READY',
+      };
+    };
+    return products.map((p) => ({
+      ...p,
+      media: p.media.map((m) => ({ ...m, ...hint(m.url) })),
+      ...(p.hamperItems
+        ? {
+            hamperItems: p.hamperItems.map((h) => ({ ...h, ...hint(h.imageUrl) })),
+          }
+        : {}),
+    }));
+  }
+
   private async attachReviewSummaries<T extends { id: string }>(
     products: T[],
   ): Promise<Array<T & { averageRating: number | null; reviewCount: number }>> {

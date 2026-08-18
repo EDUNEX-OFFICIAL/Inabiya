@@ -1,7 +1,9 @@
+import { ThemeFontShell } from '@/components/theme-font-shell';
+
 export default function PlatformAdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div data-theme="gift" data-density="compact">
+    <ThemeFontShell theme="gift" density="compact">
       {children}
-    </div>
+    </ThemeFontShell>
   );
 }

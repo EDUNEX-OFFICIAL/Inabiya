@@ -1,5 +1,5 @@
 /** Pixel speed — left column slower, right a bit faster (not frantic). */
-export const TESTIMONIAL_MARQUEE_PX = { slow: 16, fast: 24 } as const;
+export const TESTIMONIAL_MARQUEE_PX = { slow: 20, fast: 30 } as const;
 
 /** When the lead card has fully left, shift offset so moving it to the end is seamless. */
 export function shiftMarqueeOffset(

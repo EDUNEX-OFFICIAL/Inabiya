@@ -23,7 +23,12 @@ export function GiftChromeFooter() {
     void fetch(apiUrl('/catalog/gift-chrome'))
       .then((res) => (res.ok ? res.json() : null))
       .then((data: GiftChrome | null) => {
-        if (!cancelled) setFooter(data?.footer ?? { showNewsletter: true });
+        if (!cancelled) {
+          const next = data?.footer ?? { showNewsletter: true };
+          setFooter((prev) =>
+            prev && JSON.stringify(prev) === JSON.stringify(next) ? prev : next,
+          );
+        }
       })
       .catch(() => {
         if (!cancelled) setFooter({ showNewsletter: true });

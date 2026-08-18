@@ -11,5 +11,11 @@ assert.match(cfg, /isDev/);
 assert.match(cfg, /NODE_ENV !== 'production'/);
 assert.match(cfg, /checkout\.razorpay\.com/);
 assert.match(cfg, /connect-src/);
+assert.doesNotMatch(cfg, /fonts\.googleapis\.com/);
+assert.doesNotMatch(cfg, /fonts\.gstatic\.com/);
+assert.doesNotMatch(cfg, /cloudflareinsights/);
+assert.match(cfg, /font-src 'self'/);
+assert.match(cfg, /\/brand\/:path\*/);
+assert.match(cfg, /\/gift\/media\/:path\*/);
 
 console.log('next-csp.check: ok');

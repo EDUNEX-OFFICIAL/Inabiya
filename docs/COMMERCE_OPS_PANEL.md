@@ -337,7 +337,7 @@ Lookup by email → open order → add note → visible on order timeline + cust
 #### UI / UX
 
 - [x] Promotions list: type, schedule, status, usage
-- [x] Builder: conditions → benefit → schedule → preview
+- [x] Builder: conditions → benefit → schedule
 - [x] Conflict / priority display when multiple qualify P1
 - [x] Coupon codes UX polish (generate, deactivate)
 
@@ -350,7 +350,7 @@ Lookup by email → open order → add note → visible on order timeline + cust
 
 #### Exit criteria
 
-- [x] Create promo → preview + redeem path via existing cart validate
+- [x] Create promo → redeem path via existing cart validate
 - [x] Expired / inactive / exhausted promo rejected by validate
 
 #### Demo
@@ -501,7 +501,7 @@ Adjust length to team size; **never start two OPS-N P0 tracks in parallel** with
 | OPS-3 Inventory ops | **Shipped** | 2026-07-29 | Ledger + adjust + low-stock board |
 | OPS-4 Order desk | **Shipped** | 2026-07-29 | Queue + case file + carrier/AWB |
 | OPS-5 CRM & support | **Shipped** | 2026-07-29 | 360 + support phone lookup |
-| OPS-6 Promotions | **Shipped** | 2026-07-29 | Builder + schedule + preview |
+| OPS-6 Promotions | **Shipped** | 2026-07-29 | Builder + schedule (admin preview removed 2026-08-17) |
 | OPS-7 Reports | **Shipped** | 2026-07-29 | Gallery + sales CSV |
 | OPS-8 Settings & trust | **Shipped** | 2026-07-29 | Policy hub + audit viewer |
 | OPS-9 Power-user | **Shipped** | 2026-07-29 | Shortcuts, pin views, bulk, CSV import |

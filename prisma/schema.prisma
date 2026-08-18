@@ -123,6 +123,13 @@ model AuditLog {
 
 // --- Media metadata ---
 
+enum MediaVariantsStatus {
+  PENDING
+  READY
+  SKIPPED
+  FAILED
+}
+
 model MediaAsset {
   id           String   @id @default(uuid()) @db.Uuid
   storageKey   String   @unique @map("storage_key")
@@ -132,6 +139,13 @@ model MediaAsset {
   originalName String?  @map("original_name")
   /// Default alt for CMS / gallery pickers (product media can still override)
   altText      String?  @map("alt_text")
+  width        Int?
+  height       Int?
+  webStorageKey   String?              @map("web_storage_key")
+  thumbStorageKey String?              @map("thumb_storage_key")
+  /// Tiny JPEG data-URL for next/image blur (metadata, not full bytes)
+  blurDataUrl     String?              @map("blur_data_url") @db.VarChar(2048)
+  variantsStatus  MediaVariantsStatus  @default(PENDING) @map("variants_status")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -536,6 +550,8 @@ model Cart {
   guestToken             String?    @unique @map("guest_token")
   status                 CartStatus @default(ACTIVE)
   couponCode             String?    @map("coupon_code")
+  /// PRODUCT / COLLECTION / MATCHING layer; nests with `couponCode` (CART).
+  lineCouponCode         String?    @map("line_coupon_code")
   abandonmentNotifiedAt  DateTime?  @map("abandonment_notified_at")
   createdAt              DateTime   @default(now()) @map("created_at")
   updatedAt              DateTime   @updatedAt @map("updated_at")
@@ -591,6 +607,8 @@ enum CouponScope {
   CART
   PRODUCT
   COLLECTION
+  /// Discount lines that match `matchRules` (product attributes).
+  MATCHING
 }
 
 model Coupon {
@@ -605,10 +623,16 @@ model Coupon {
   active           Boolean     @default(true)
   startsAt         DateTime?   @map("starts_at")
   expiresAt        DateTime?   @map("expires_at")
-  /// CART = whole cart; PRODUCT / COLLECTION = discount only on matching lines (MANUAL joins only).
+  /// CART = whole cart; PRODUCT / COLLECTION = matching lines (MANUAL joins); MATCHING = matchRules.
   scope            CouponScope @default(CART)
   productIds       String[]    @default([]) @map("product_ids")
   collectionIds    String[]    @default([]) @map("collection_ids")
+  /// Product-attribute rules when scope=MATCHING (Shopify-like line match).
+  matchRules       Json?       @map("match_rules")
+  /// Cart/customer gates (ALL/ANY). Empty/null = no extra gates.
+  eligibility      Json?
+  maxDiscountPaise Int?        @map("max_discount_paise")
+  maxUsesPerCustomer Int?      @map("max_uses_per_customer")
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
 
@@ -626,6 +650,8 @@ model Order {
   taxPaise        Int                @default(0) @map("tax_paise")
   totalPaise      Int                @map("total_paise")
   couponCode      String?            @map("coupon_code")
+  /// PRODUCT / COLLECTION / MATCHING layer; nests with `couponCode` (CART).
+  lineCouponCode  String?            @map("line_coupon_code")
   shippingMethod  ShippingMethodCode @map("shipping_method")
   giftMessage     String?            @map("gift_message")
   giftWrap        Boolean            @default(false) @map("gift_wrap")

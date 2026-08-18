@@ -368,7 +368,7 @@ export class OpsDashboardService {
 
   async couponsReport(days = 7) {
     const rangeStart = this.rangeStart(days);
-    const [coupons, redeemed] = await Promise.all([
+    const [coupons, redeemed, lineOnly] = await Promise.all([
       this.prisma.coupon.findMany({
         orderBy: { usedCount: 'desc' },
         take: 100,
@@ -379,6 +379,17 @@ export class OpsDashboardService {
           paidAt: { gte: rangeStart },
           status: { in: PAID_STATUSES },
           couponCode: { not: null },
+        },
+        _count: { _all: true },
+        _sum: { discountPaise: true, totalPaise: true },
+      }),
+      this.prisma.order.groupBy({
+        by: ['lineCouponCode'],
+        where: {
+          paidAt: { gte: rangeStart },
+          status: { in: PAID_STATUSES },
+          lineCouponCode: { not: null },
+          couponCode: null,
         },
         _count: { _all: true },
         _sum: { discountPaise: true, totalPaise: true },
@@ -397,6 +408,15 @@ export class OpsDashboardService {
           },
         ]),
     );
+
+    for (const r of lineOnly) {
+      if (!r.lineCouponCode) continue;
+      windowMap.set(r.lineCouponCode, {
+        orders: r._count._all,
+        discountPaise: r._sum.discountPaise ?? 0,
+        revenuePaise: r._sum.totalPaise ?? 0,
+      });
+    }
 
     return {
       days,

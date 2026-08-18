@@ -15,26 +15,28 @@ alwaysApply: false
 | Hero | Full-bleed crop | One LCP `priority` image max |
 
 ```tsx
-// ✅ sized parent prevents CLS
+// ✅ sized parent prevents CLS; GiftImage picks web/thumb + LQIP
 <div className="relative aspect-square">
-  <Image src={url} alt={`${name} gift`} fill sizes="(max-width:768px) 50vw, 25vw" />
+  <GiftImage src={url} alt={`${name} gift`} fill sizes="(max-width:768px) 50vw, 25vw" />
 </div>
 ```
 
 - Empty `alt` only when decorative.
 - No abstract purple-gradient “product” heroes.
+- One LCP `priority` image max (`GiftImage` emits the preload). PLP/cards stay lazy.
 
 ## Platform
 
 | Store | Holds |
 |---|---|
-| S3-compatible | Bytes |
-| Postgres | Metadata, keys, dimensions, MIME — **not** BYTEA/base64 |
+| S3-compatible | Original + `*-web.webp` + `*-thumb.webp` bytes |
+| Postgres | Metadata, keys, dimensions, MIME, tiny `blurDataUrl` — **not** full BYTEA |
 
 - Validate MIME + size at upload; reject executables/polyglots.
+- Raster uploads enqueue BullMQ `media-variants` (1600 web / 400 thumb / LQIP). GIF/SVG/PDF skipped.
+- Public bytes: `GET /api/v1/media/:id/content?v=web|thumb|original` (web/thumb when READY).
 - Private assets → **signed URLs** with expiry (never permanent public ACL for private).
-- Variants (thumb/web) via BullMQ when needed — don’t block request path on heavy transforms.
 
 ## Don't
 
-Hotlink unsigned private objects from the browser. Ship unsized `<img>` that shove layout.
+Hotlink unsigned private objects from the browser. Ship unsized `<img>` that shove layout. Transform on the request path (use the worker).

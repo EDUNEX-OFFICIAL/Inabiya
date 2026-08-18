@@ -395,6 +395,7 @@ export class CmsPagesService {
         altText: m.altText,
         kind: m.kind ?? null,
         id: m.id ?? null,
+        blurDataUrl: 'blurDataUrl' in m ? (m.blurDataUrl as string | null) : null,
       })),
     };
   }

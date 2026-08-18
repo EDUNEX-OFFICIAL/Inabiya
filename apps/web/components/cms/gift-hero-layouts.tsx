@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { preferPublicHeroSrc } from '@/lib/public-hero';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
 import { HeroMedia } from '@/components/cms/hero-media';
 import { safeHrefOrHash } from '@inabiya/validation';
@@ -17,7 +18,7 @@ import {
   type SectionInk,
 } from '@/components/cms/section-style';
 
-const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.jpg';
+const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.webp';
 
 function href(raw: unknown, fallback = '/'): string {
   const s = typeof raw === 'string' && raw.trim() ? raw.trim() : fallback;
@@ -151,7 +152,7 @@ export function CmsHeroByLayout({
   }
 
   if (layout === 'full') {
-    const photo = imageUrl.trim() || DEFAULT_HERO_IMAGE;
+    const photo = preferPublicHeroSrc(imageUrl.trim() || DEFAULT_HERO_IMAGE);
     const height =
       style.pad === 'sm'
         ? 'min-h-[min(52vh,28rem)]'
@@ -224,7 +225,7 @@ export function CmsHeroByLayout({
       <section className={`gift-section ${padClass(style.pad)} ${textAlignClass(style.align)}`}>
         <div className="grid gap-gs-4 md:grid-cols-2 md:gap-gs-6">
           <div>
-            <FramePhoto src={imageUrl.trim() || DEFAULT_HERO_IMAGE} alt={headline || 'Gift'} />
+            <FramePhoto src={preferPublicHeroSrc(imageUrl.trim() || DEFAULT_HERO_IMAGE)} alt={headline || 'Gift'} />
             {headline ? (
               <p
                 className={`${headlineTypeClass(style.headlineSize, 'h2')} ${inkTextClass(style.ink)} mt-gs-3`}
@@ -240,7 +241,7 @@ export function CmsHeroByLayout({
           </div>
           <div>
             <FramePhoto
-              src={imageUrl2.trim() || DEFAULT_HERO_IMAGE}
+              src={preferPublicHeroSrc(imageUrl2.trim() || DEFAULT_HERO_IMAGE)}
               alt={headline2 || headline || 'Gift'}
             />
             {headline2 ? (

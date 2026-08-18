@@ -47,7 +47,8 @@ export class CheckoutService {
     if (items.length === 0) {
       throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });
     }
-    if (input.couponCode && input.couponCode !== cartDto.couponCode) {
+    const stacked = new Set((cartDto.couponCodes ?? []).map((c) => c.toUpperCase()));
+    if (input.couponCode && !stacked.has(input.couponCode.toUpperCase())) {
       await this.cart.applyCoupon(userId, guestToken, input.couponCode);
     }
     return this.cart.totals(cartDto.id, input.shippingMethod, {
@@ -70,8 +71,9 @@ export class CheckoutService {
       throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });
     }
 
-    const couponCode = body.couponCode ?? cartDto.couponCode ?? undefined;
-    if (couponCode && couponCode !== cartDto.couponCode) {
+    const couponCode = body.couponCode ?? undefined;
+    const stacked = new Set((cartDto.couponCodes ?? []).map((c) => c.toUpperCase()));
+    if (couponCode && !stacked.has(couponCode.toUpperCase())) {
       await this.cart.applyCoupon(userId, guestToken, couponCode);
     }
 
@@ -107,6 +109,7 @@ export class CheckoutService {
           taxPaise: totals.taxPaise,
           totalPaise: totals.totalPaise,
           couponCode: totals.couponCode,
+          lineCouponCode: totals.lineCouponCode,
           shippingMethod: body.shippingMethod,
           giftMessage: body.giftMessage,
           giftWrap: body.giftWrap ?? false,

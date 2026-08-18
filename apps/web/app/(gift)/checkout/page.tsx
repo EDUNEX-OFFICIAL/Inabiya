@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { FormEvent, Suspense, useEffect, useId, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
-import { cartApi, fetchCart, formatInr, type CartDto } from '@/lib/cart-client';
+import { cartApi, fetchCart, formatCartCoupons, formatInr, type CartDto } from '@/lib/cart-client';
+import { CartCouponField } from '@/components/gift/cart-coupon-field';
 import { buyNowCartItems, parseBuyNowVariantId } from '@/lib/buy-now';
 import { trackEvent } from '@/lib/analytics';
 import { CheckoutSkeleton } from '@/components/gift/gift-skeletons';
@@ -17,6 +18,8 @@ type Preview = {
   taxPaise: number;
   totalPaise: number;
   couponCode: string | null;
+  couponLabel?: string | null;
+  couponCodes?: string[];
 };
 
 type SavedAddress = {
@@ -191,7 +194,7 @@ function CheckoutPageInner() {
       .then(async ([c, addrs]) => {
         setCart(c);
         setAddresses(addrs);
-        if (c.couponCode) setCouponDraft(c.couponCode);
+        setCouponDraft('');
         const def = addrs.find((a) => a.isDefault) ?? addrs[0];
         if (def) {
           setSelectedAddressId(def.id);
@@ -210,7 +213,7 @@ function CheckoutPageInner() {
           setGate('empty');
           return;
         }
-        await loadQuotes(token, c.couponCode);
+        await loadQuotes(token);
         setGate('ready');
       })
       .catch((e) => {
@@ -266,8 +269,8 @@ function CheckoutPageInner() {
         authToken: token,
       });
       setCart(updated);
-      setCouponDraft(updated.couponCode ?? code.toUpperCase());
-      await loadQuotes(token, updated.couponCode);
+      setCouponDraft('');
+      await loadQuotes(token);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid coupon');
     } finally {
@@ -275,13 +278,14 @@ function CheckoutPageInner() {
     }
   }
 
-  async function removeCoupon() {
+  async function removeCoupon(code?: string) {
     const token = getStoredAccessToken();
     if (!token) return;
     setCouponBusy(true);
     setError(null);
     try {
-      const updated = await cartApi<CartDto>('/cart/coupon', {
+      const qs = code ? `?code=${encodeURIComponent(code)}` : '';
+      const updated = await cartApi<CartDto>(`/cart/coupon${qs}`, {
         method: 'DELETE',
         authToken: token,
       });
@@ -432,7 +436,7 @@ function CheckoutPageInner() {
           onToggle={() => setSummaryOpen((v) => !v)}
           onCouponDraft={setCouponDraft}
           onApplyCoupon={() => void applyCoupon()}
-          onRemoveCoupon={() => void removeCoupon()}
+          onRemoveCoupon={(code) => void removeCoupon(code)}
           className="mb-gs-5 lg:hidden"
         />
 
@@ -734,7 +738,7 @@ function CheckoutPageInner() {
             itemCount={itemCount}
             onCouponDraft={setCouponDraft}
             onApplyCoupon={() => void applyCoupon()}
-            onRemoveCoupon={() => void removeCoupon()}
+            onRemoveCoupon={(code) => void removeCoupon(code)}
             className="hidden lg:block"
           />
         </div>
@@ -791,10 +795,11 @@ function OrderSummaryPanel({
   onToggle?: () => void;
   onCouponDraft: (v: string) => void;
   onApplyCoupon: () => void;
-  onRemoveCoupon: () => void;
+  onRemoveCoupon: (code?: string) => void;
 }) {
   const count = itemCount ?? cart.items.reduce((n, i) => n + i.quantity, 0);
-  const applied = Boolean(cart.couponCode);
+  const discountLabel =
+    preview.couponLabel ?? formatCartCoupons(cart) ?? preview.couponCode;
 
   return (
     <aside
@@ -837,43 +842,16 @@ function OrderSummaryPanel({
               ))}
             </ul>
 
-            <div className="mt-gs-4 flex flex-col gap-gs-2 sm:flex-row sm:items-end">
-              <label className="block min-w-0 flex-1 text-body">
-                Coupon
-                <input
-                  className={`${inputClass} !mt-gs-1`}
-                  value={couponDraft}
-                  onChange={(e) => onCouponDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (!applied && !couponBusy) onApplyCoupon();
-                    }
-                  }}
-                  placeholder="Code"
-                  disabled={applied || couponBusy}
-                  autoCapitalize="characters"
-                />
-              </label>
-              {applied ? (
-                <button
-                  type="button"
-                  onClick={onRemoveCoupon}
-                  disabled={couponBusy}
-                  className="clay-btn-ghost text-danger disabled:opacity-60"
-                >
-                  Remove
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onApplyCoupon}
-                  disabled={couponBusy}
-                  className="clay-btn-secondary w-full sm:w-auto disabled:opacity-60"
-                >
-                  Apply
-                </button>
-              )}
+            <div className="mt-gs-4">
+              <CartCouponField
+                cart={cart}
+                draft={couponDraft}
+                busy={couponBusy}
+                inputClassName={`${inputClass} !mt-gs-1`}
+                onDraft={onCouponDraft}
+                onApply={onApplyCoupon}
+                onRemove={onRemoveCoupon}
+              />
             </div>
             {cart.couponRemoved ? (
               <p className="mt-gs-2 text-caption text-warning">
@@ -888,7 +866,7 @@ function OrderSummaryPanel({
               </div>
               {preview.discountPaise > 0 ? (
                 <div className="flex justify-between gap-gs-3 text-success">
-                  <dt>Discount{preview.couponCode ? ` (${preview.couponCode})` : ''}</dt>
+                  <dt>Discount{discountLabel ? ` (${discountLabel})` : ''}</dt>
                   <dd>−{formatInr(preview.discountPaise)}</dd>
                 </div>
               ) : null}

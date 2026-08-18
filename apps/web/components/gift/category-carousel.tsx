@@ -11,34 +11,24 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
 } from 'react';
-import Image from 'next/image';
+import { GiftImage } from '@/components/gift/gift-image';
 import Link from 'next/link';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  parseCmsCarouselCards,
+  type CarouselCardData,
+  type CarouselCategory,
+  type CarouselHoverMedia,
+} from './parse-cms-carousel-cards';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export type CarouselCategory = 'Create' | 'Develop' | 'Explore';
-
-export type CarouselHoverMedia =
-  { type: 'image'; src: string } | { type: 'video'; src: string; poster?: string };
-
-export type CarouselCardData = {
-  id: string;
-  category: CarouselCategory;
-  kicker: string;
-  title: string;
-  description: string;
-  image?: string;
-  /** Shown on desktop hover / mobile media tap — image or muted looping video. */
-  hoverMedia?: CarouselHoverMedia;
-  gradient: string;
-  accent: string;
-  href: string;
-};
+export type { CarouselCardData, CarouselCategory, CarouselHoverMedia };
+export { parseCmsCarouselCards };
 
 /** Editable card data — Soft Gift routes (not CRA paths). */
 export const CAROUSEL_CARDS: CarouselCardData[] = [
@@ -140,8 +130,8 @@ export const CAROUSEL_CARDS: CarouselCardData[] = [
   },
 ];
 
-const FILTERS = ['All', 'Create', 'Develop', 'Explore'] as const;
-type Filter = (typeof FILTERS)[number];
+const DEFAULT_FILTERS = ['All', 'Create', 'Develop', 'Explore'] as const;
+type Filter = string;
 
 /** Tight smile so neighbours stay on-screen — no hole in the middle. */
 function arcTransform(offset: number, step: number) {
@@ -351,7 +341,7 @@ function CardMedia({
         aria-hidden={showAlt}
       >
         {card.image ? (
-          <Image
+          <GiftImage
             src={card.image}
             alt=""
             fill
@@ -388,7 +378,7 @@ function CardMedia({
           aria-hidden={!showAlt}
         >
           {card.hoverMedia.type === 'image' ? (
-            <Image
+            <GiftImage
               src={card.hoverMedia.src}
               alt=""
               fill
@@ -578,7 +568,41 @@ function CarouselCard({
   );
 }
 
-export function CategoryCarousel() {
+function accentHeadline(headline: string, accentWord: string) {
+  const word = accentWord.trim();
+  if (!word) return headline;
+  const idx = headline.toLowerCase().lastIndexOf(word.toLowerCase());
+  if (idx < 0) return headline;
+  const before = headline.slice(0, idx);
+  const match = headline.slice(idx, idx + word.length);
+  const after = headline.slice(idx + word.length);
+  return (
+    <>
+      {before}
+      <span className="italic text-primary">{match}</span>
+      {after}
+    </>
+  );
+}
+
+export function CategoryCarousel({
+  eyebrow = 'Explore Inabiya',
+  headline = 'A different way to gift',
+  accentWord = 'gift',
+  subcopy = 'Swipe through the ways to gift with Inabiya — create, develop and explore, all in one place.',
+  cards: cardsProp,
+}: {
+  eyebrow?: string;
+  headline?: string;
+  accentWord?: string;
+  subcopy?: string;
+  cards?: CarouselCardData[];
+} = {}) {
+  const source = cardsProp?.length ? cardsProp : CAROUSEL_CARDS;
+  const filters = useMemo(() => {
+    const cats = [...new Set(source.map((c) => c.category).filter(Boolean))];
+    return cats.length ? ['All', ...cats] : [...DEFAULT_FILTERS];
+  }, [source]);
   const [filter, setFilter] = useState<Filter>('All');
   const [active, setActive] = useState(0);
   const [step, setStep] = useState(260);
@@ -591,9 +615,13 @@ export function CategoryCarousel() {
   const drag = useRef({ startX: 0, dragging: false, moved: false });
   const enteredRef = useRef(false);
 
+  useEffect(() => {
+    if (!filters.includes(filter)) setFilter('All');
+  }, [filters, filter]);
+
   const cards = useMemo(
-    () => (filter === 'All' ? CAROUSEL_CARDS : CAROUSEL_CARDS.filter((c) => c.category === filter)),
-    [filter],
+    () => (filter === 'All' ? source : source.filter((c) => c.category === filter)),
+    [filter, source],
   );
   const n = cards.length;
 
@@ -624,6 +652,7 @@ export function CategoryCarousel() {
       );
 
       if (reduceMotion) {
+        root.setAttribute('data-carousel-ready', '');
         stageRef.current?.setAttribute('data-cards-live', '');
         gsap.set([...intro, ...cardNodes, ...controls], {
           clearProps: 'all',
@@ -646,8 +675,9 @@ export function CategoryCarousel() {
         return;
       }
 
-      gsap.set(intro, { opacity: 0, y: 28 });
-      gsap.set(controls, { opacity: 0, y: 18 });
+      gsap.set(intro, { opacity: 0, y: 28, visibility: 'visible' });
+      gsap.set(controls, { opacity: 0, y: 18, visibility: 'visible' });
+      root.setAttribute('data-carousel-ready', '');
 
       const tl = gsap.timeline({
         defaults: { ease: 'power3.out' },
@@ -796,18 +826,19 @@ export function CategoryCarousel() {
             data-carousel-intro=""
             className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary shadow-clay"
           >
-            <Sparkles size={12} aria-hidden /> Explore Inabiya
+            <Sparkles size={12} aria-hidden /> {eyebrow}
           </span>
           <h2
             data-carousel-intro=""
             className="mt-gs-4 font-display text-[clamp(2rem,5vw,3.75rem)] font-medium leading-[1.05] text-foreground"
           >
-            A different way to <span className="italic text-primary">gift</span>
+            {accentHeadline(headline, accentWord)}
           </h2>
-          <p data-carousel-intro="" className="gift-muted mt-gs-4 text-base sm:text-lg">
-            Swipe through the ways to gift with Inabiya — create, develop and explore, all in one
-            place.
-          </p>
+          {subcopy ? (
+            <p data-carousel-intro="" className="gift-muted mt-gs-4 text-base sm:text-lg">
+              {subcopy}
+            </p>
+          ) : null}
         </div>
 
         {/* Tabs stay above the stage (client + human preference) */}
@@ -818,7 +849,7 @@ export function CategoryCarousel() {
           role="tablist"
           aria-label="Category filters"
         >
-          {FILTERS.map((f) => {
+          {filters.map((f) => {
             const selected = filter === f;
             return (
               <button

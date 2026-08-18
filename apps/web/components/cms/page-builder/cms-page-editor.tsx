@@ -7,9 +7,9 @@ import { arrayMove } from '@dnd-kit/sortable';
 import {
   DndContext,
   DragOverlay,
+  MeasuringStrategy,
   PointerSensor,
   KeyboardSensor,
-  closestCenter,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -29,8 +29,14 @@ import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { defaultPathForCmsSlug, getSiteOrigin, webPageJsonLd } from '@/lib/cms-seo';
 import { collectCmsFaqJsonLd } from '@/lib/seo-json-ld/cms-faq';
 import type { SeoSchemaEntry } from '@inabiya/validation';
+import {
+  cmsCanvasCollision,
+  dropIndexForOver,
+  remapSelectedAfterMove,
+  toggleSectionPreview,
+} from './cms-canvas-dnd';
 import { CmsBlockPalette } from './cms-block-palette';
-import { CmsBlockCanvas } from './cms-block-canvas';
+import { CmsBlockCanvas, CmsCanvasDragPreview } from './cms-block-canvas';
 import { CmsBlockInspector } from './cms-block-inspector';
 import { CmsPageSeoForm } from './cms-page-seo-form';
 import { CmsSectionPreview } from './cms-section-preview';
@@ -137,12 +143,14 @@ export function CmsPageEditor({ pageId }: { pageId: string }) {
   const [seoSchemaExtras, setSeoSchemaExtras] = useState<SeoSchemaEntry[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selected, setSelected] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(true);
   const [tab, setTab] = useState<InspectorTab>('block');
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [dragInsert, setDragInsert] = useState<PaletteInsert | null>(null);
+  const [dragBlock, setDragBlock] = useState<Block | null>(null);
   const [resolvedExtras, setResolvedExtras] = useState<Record<string, Record<string, unknown>>>({});
   const [inserterOpen, setInserterOpen] = useState(true);
   const [inspectorOpen, setInspectorOpen] = useState(true);
@@ -368,26 +376,35 @@ export function CmsPageEditor({ pageId }: { pageId: string }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [save]);
 
+  function clearDrag() {
+    setDragInsert(null);
+    setDragBlock(null);
+  }
+
   function onDragStart(event: DragStartEvent) {
     const insert = event.active.data.current?.insert as PaletteInsert | undefined;
     setDragInsert(insert ?? null);
+    if (event.active.data.current?.source === 'canvas') {
+      const block = blocks.find((b) => b.clientId === event.active.id) ?? null;
+      setDragBlock(block);
+    }
   }
 
   function onDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    setDragInsert(null);
+    clearDrag();
     const insert = active.data.current?.insert as PaletteInsert | undefined;
     if (insert) {
       if (!over) return;
       setBlocks((prev) => {
-        let index = prev.length;
-        if (over.id !== 'canvas-drop') {
-          const i = prev.findIndex((b) => b.clientId === over.id);
-          if (i >= 0) index = i;
-        }
+        const index = dropIndexForOver(
+          over.id,
+          prev.map((b) => b.clientId),
+        );
         const block = createBlockFromInsert(insert);
         const next = [...prev.slice(0, index), block, ...prev.slice(index)];
         setSelected(index);
+        setPreviewOpen(true);
         return next;
       });
       setTab('block');
@@ -399,7 +416,7 @@ export function CmsPageEditor({ pageId }: { pageId: string }) {
       const newIndex = prev.findIndex((b) => b.clientId === over.id);
       if (oldIndex < 0 || newIndex < 0) return prev;
       const next = arrayMove(prev, oldIndex, newIndex);
-      setSelected(newIndex);
+      setSelected(remapSelectedAfterMove(selected, oldIndex, newIndex));
       return next;
     });
   }
@@ -408,6 +425,7 @@ export function CmsPageEditor({ pageId }: { pageId: string }) {
     setBlocks((prev) => {
       const next = [...prev, createBlockFromInsert(insert)];
       setSelected(next.length - 1);
+      setPreviewOpen(true);
       return next;
     });
     setTab('block');
@@ -433,6 +451,7 @@ export function CmsPageEditor({ pageId }: { pageId: string }) {
       });
       const next = [...prev.slice(0, index + 1), copy, ...prev.slice(index + 1)];
       setSelected(index + 1);
+      setPreviewOpen(true);
       return next;
     });
     setTab('block');
@@ -503,9 +522,11 @@ export function CmsPageEditor({ pageId }: { pageId: string }) {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={cmsCanvasCollision}
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      onDragCancel={clearDrag}
     >
       <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
         <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 sm:px-4">
@@ -658,9 +679,12 @@ export function CmsPageEditor({ pageId }: { pageId: string }) {
               <CmsBlockCanvas
                 blocks={blocks}
                 selected={selected}
+                previewOpen={previewOpen}
                 onSelect={(i) => {
-                  setSelected(i);
-                  setTab('block');
+                  const next = toggleSectionPreview(selected, previewOpen, i);
+                  setSelected(next.selected);
+                  setPreviewOpen(next.previewOpen);
+                  if (next.previewOpen) setTab('block');
                 }}
                 onRemove={removeBlock}
                 onDuplicate={duplicateBlock}
@@ -775,6 +799,8 @@ export function CmsPageEditor({ pageId }: { pageId: string }) {
           <div className="rounded-lg border border-[var(--primary)] bg-[var(--surface)] px-3 py-2 text-xs font-medium shadow-lg">
             {dragInsert.label}
           </div>
+        ) : dragBlock ? (
+          <CmsCanvasDragPreview block={dragBlock} />
         ) : null}
       </DragOverlay>
     </DndContext>

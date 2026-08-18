@@ -1,7 +1,9 @@
+import { ThemeFontShell } from '@/components/theme-font-shell';
+
 export default function EditorialAdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div data-theme="blog" data-density="compact">
+    <ThemeFontShell theme="blog" density="compact">
       {children}
-    </div>
+    </ThemeFontShell>
   );
 }

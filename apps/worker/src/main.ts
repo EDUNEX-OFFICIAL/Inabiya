@@ -1,7 +1,9 @@
 import { Worker, type Job } from 'bullmq';
 import IORedis from 'ioredis';
 import pino from 'pino';
+import { PrismaClient } from '@prisma/client';
 import { sendConsoleMail } from './console-mail';
+import { processMediaVariants } from './process-media-variants';
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
@@ -27,6 +29,7 @@ type CartAbandonmentJob = {
 async function main() {
   const redisUrl = process.env.REDIS_URL ?? 'redis://127.0.0.1:6381';
   const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+  const prisma = new PrismaClient();
 
   const notifications = new Worker(
     'notifications',
@@ -90,15 +93,30 @@ async function main() {
     { connection },
   );
 
+  const mediaVariants = new Worker(
+    'media-variants',
+    async (job: Job) => {
+      const mediaAssetId = (job.data as { mediaAssetId?: string }).mediaAssetId;
+      if (!mediaAssetId) return { skipped: true };
+      return processMediaVariants(prisma, logger, mediaAssetId);
+    },
+    { connection, concurrency: 2 },
+  );
+
   notifications.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, err }, 'notification job failed');
   });
+  mediaVariants.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, err }, 'media variants job failed');
+  });
 
-  logger.info('worker ready — notifications queue');
+  logger.info('worker ready — notifications + media-variants');
 
   const shutdown = async () => {
     logger.info('shutting down worker');
     await notifications.close();
+    await mediaVariants.close();
+    await prisma.$disconnect();
     await connection.quit();
     process.exit(0);
   };

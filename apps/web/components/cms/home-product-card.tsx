@@ -67,8 +67,8 @@ export function HomeProductCard({ product, featured = false, hideHamperChip = fa
           href={`/products/${product.slug}`}
           sizes={
             featured
-              ? '(max-width: 640px) 100vw, 55vw'
-              : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+              ? '(max-width: 640px) 100vw, 50vw'
+              : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw'
           }
           className={featured ? 'aspect-[4/3] sm:aspect-auto sm:min-h-[16rem]' : 'aspect-[4/3]'}
           imageClassName="transition duration-500 group-hover:scale-[1.03]"

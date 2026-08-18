@@ -61,6 +61,8 @@ services:
     container_name: inabiya-worker
     restart: unless-stopped
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
@@ -68,7 +70,11 @@ services:
     environment:
       NODE_ENV: production
       REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inabiya}:${POSTGRES_PASSWORD:-inabiya}@postgres:5432/${POSTGRES_DB:-inabiya}?schema=public
+      MEDIA_LOCAL_ROOT: /data/media
       LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - inabiya_media_data:/data/media
     networks:
       - inabiya_internal
 

@@ -25,6 +25,10 @@ import {
   Timer,
   MousePointerClick,
   SquareDashed,
+  GalleryHorizontal,
+  MessageCircle,
+  Ticket,
+  Minus,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -54,6 +58,10 @@ const TYPE_ICONS: Record<BlockType, LucideIcon> = {
   exclusiveOffers: Gift,
   testimonials: Quote,
   countdown: Timer,
+  featuredCarousel: GalleryHorizontal,
+  whatsappCta: MessageCircle,
+  offerCarousel: Ticket,
+  thinStrip: Minus,
   customSection: SquareDashed,
 };
 

@@ -99,7 +99,12 @@ export function TrustStrip({ cues: cuesProp }: { cues?: TrustCue[] }) {
         });
         if (!res.ok) return;
         const data: unknown = await res.json();
-        if (!cancelled) setCues(normalizeCues(data));
+        if (!cancelled) {
+          setCues((prev) => {
+            const next = normalizeCues(data);
+            return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+          });
+        }
       } catch {
         /* keep defaults */
       }

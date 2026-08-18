@@ -16,6 +16,7 @@ export type CmsBlockProduct = {
     altText: string | null;
     kind?: string | null;
     id?: string | null;
+    blurDataUrl?: string | null;
   }>;
   brandName?: string | null;
   brandNames?: string[];

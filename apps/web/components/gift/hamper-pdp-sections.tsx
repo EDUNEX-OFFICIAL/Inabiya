@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import { GiftImage } from '@/components/gift/gift-image';
 import { formatInr, type CatalogProduct } from '@/lib/catalog';
 
 export function HamperWhatsInside({ product }: { product: CatalogProduct }) {
@@ -27,7 +27,14 @@ export function HamperWhatsInside({ product }: { product: CatalogProduct }) {
           >
             <div className="relative size-16 shrink-0 overflow-hidden rounded-control bg-foreground/5 sm:size-20">
               {item.imageUrl ? (
-                <Image src={item.imageUrl} alt="" fill sizes="80px" className="object-cover" />
+                <GiftImage
+                  src={item.imageUrl}
+                  alt=""
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                  blurDataUrl={item.blurDataUrl}
+                />
               ) : (
                 <div className="gift-media-fallback h-full w-full" aria-hidden />
               )}

@@ -2,7 +2,6 @@ import {
   Controller,
   Delete,
   Get,
-  Header,
   Body,
   Param,
   ParseUUIDPipe,
@@ -27,7 +26,13 @@ import { Roles } from '../identity/roles.decorator';
 import { RolesGuard } from '../identity/roles.guard';
 import { MediaService } from './media.service';
 import { MAX_MEDIA_BYTES, sanitizeContentDispositionFilename } from './media-mime';
+import type { MediaVariant } from './media-url';
 import { AdminMutationRateLimitGuard } from '../../common/guards/rate-limit.guard';
+
+function parseContentVariant(raw: unknown): MediaVariant {
+  if (raw === 'thumb' || raw === 'original' || raw === 'web') return raw;
+  return 'web';
+}
 
 /** Public image bytes for Soft Gift / CMS `<img src="/api/v1/media/:id/content">`. */
 @Controller('media')
@@ -35,9 +40,16 @@ export class MediaPublicController {
   constructor(private readonly media: MediaService) {}
 
   @Get(':id/content')
-  @Header('Cache-Control', 'public, max-age=86400')
-  async content(@Param('id', ParseUUIDPipe) id: string, @Res({ passthrough: true }) res: Response) {
-    const { buffer, mimeType, originalName } = await this.media.getPublicContent(id);
+  async content(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('v') v: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { buffer, mimeType, originalName, cacheControl } = await this.media.getPublicContent(
+      id,
+      parseContentVariant(v),
+    );
+    res.setHeader('Cache-Control', cacheControl);
     res.setHeader('Content-Type', mimeType);
     // SVG can embed script — sandbox so inline use stays display-only.
     if (mimeType === 'image/svg+xml') {

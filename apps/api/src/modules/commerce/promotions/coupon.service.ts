@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import type { AdminCouponsQuery, CouponPreviewBody, CreateCouponBody } from '@inabiya/validation';
-import type { Prisma } from '@prisma/client';
+import type { AdminCouponsQuery, CreateCouponBody } from '@inabiya/validation';
+import { OrderStatus, type Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import {
@@ -9,13 +9,21 @@ import {
   encodeAdminCouponCursor,
 } from './admin-coupons-cursor';
 import {
+  eligibilityNeedsCustomer,
+  eligibilitySatisfied,
+  parseCouponEligibility,
+  parseCouponMatchRules,
+} from './coupon-conditions';
+import {
   computeDiscountPaise,
   couponLifecycle,
   eligibleSubtotalPaise,
+  matchingQtyFromLines,
+  scopeMatchingLines,
   type CouponCartLine,
   type CouponScopeKind,
 } from './coupon-lifecycle';
-import { buildConflictCodesById, type CouponConflictSlice } from './coupon-overlap';
+import { buildConflictCodesById, couponConflictPeerSelect, toCouponConflictSlice } from './coupon-overlap';
 
 export type CouponResult = {
   code: string;
@@ -23,6 +31,22 @@ export type CouponResult = {
   eligibleSubtotalPaise: number;
   scope: CouponScopeKind;
 };
+
+export type CouponValidateContext = {
+  userId?: string | null;
+  shippingMethod?: 'STANDARD' | 'EXPRESS' | null;
+  /** When set (CART nested after a line coupon), percent/fixed apply to this remaining subtotal. Min still uses eligible. */
+  discountBasePaise?: number;
+};
+
+const COUNTED_ORDER: OrderStatus[] = [
+  OrderStatus.PAID,
+  OrderStatus.PROCESSING,
+  OrderStatus.SHIPPED,
+  OrderStatus.DELIVERED,
+];
+
+const REDEEM_ORDER: OrderStatus[] = [...COUNTED_ORDER, OrderStatus.PENDING_PAYMENT];
 
 function parseOptionalDate(raw: string | undefined, field: string): Date | null {
   if (!raw?.trim()) return null;
@@ -115,35 +139,15 @@ export class CouponService {
 
     const peerRows = await this.prisma.coupon.findMany({
       where: { active: true },
-      select: {
-        id: true,
-        code: true,
-        active: true,
-        startsAt: true,
-        expiresAt: true,
-        maxUses: true,
-        usedCount: true,
-        scope: true,
-        productIds: true,
-        collectionIds: true,
-      },
+      select: couponConflictPeerSelect,
     });
-    const peers: CouponConflictSlice[] = peerRows.map((c) => ({
-      id: c.id,
-      code: c.code,
-      active: c.active,
-      startsAt: c.startsAt,
-      expiresAt: c.expiresAt,
-      maxUses: c.maxUses,
-      usedCount: c.usedCount,
-      scope: c.scope as CouponScopeKind,
-      productIds: c.productIds,
-      collectionIds: c.collectionIds,
-    }));
+    const peers = peerRows.map(toCouponConflictSlice);
     const conflictsById = buildConflictCodesById(peers, now);
 
     const items = page.map((c) => {
       const type = c.discountPercent != null ? ('PERCENT' as const) : ('FIXED_PAISE' as const);
+      const matchRules = parseCouponMatchRules(c.matchRules);
+      const eligibility = parseCouponEligibility(c.eligibility);
       return {
         id: c.id,
         code: c.code,
@@ -152,7 +156,9 @@ export class CouponService {
         discountPaise: c.discountPaise,
         discountPercent: c.discountPercent,
         minSubtotalPaise: c.minSubtotalPaise,
+        maxDiscountPaise: c.maxDiscountPaise,
         maxUses: c.maxUses,
+        maxUsesPerCustomer: c.maxUsesPerCustomer,
         usedCount: c.usedCount,
         active: c.active,
         startsAt: c.startsAt,
@@ -160,6 +166,8 @@ export class CouponService {
         scope: c.scope as CouponScopeKind,
         productIds: c.productIds,
         collectionIds: c.collectionIds,
+        matchRules,
+        eligibility,
         products: c.productIds
           .map((id) => productMap.get(id))
           .filter(Boolean)
@@ -213,6 +221,10 @@ export class CouponService {
       }
     }
 
+    const matchRules = scope === 'MATCHING' ? (body.matchRules ?? null) : null;
+    const eligibility =
+      body.eligibility?.conditions.length ? body.eligibility : null;
+
     const created = await this.prisma.coupon.create({
       data: {
         code: body.code.toUpperCase(),
@@ -220,13 +232,17 @@ export class CouponService {
         discountPaise: body.discountPaise ?? null,
         discountPercent: body.discountPercent ?? null,
         minSubtotalPaise: body.minSubtotalPaise ?? 0,
+        maxDiscountPaise: body.maxDiscountPaise ?? null,
         maxUses: body.maxUses ?? null,
+        maxUsesPerCustomer: body.maxUsesPerCustomer ?? null,
         active: body.active ?? true,
         startsAt,
         expiresAt,
         scope,
         productIds: ids.productIds,
         collectionIds: ids.collectionIds,
+        matchRules: matchRules ?? undefined,
+        eligibility: eligibility ?? undefined,
       },
     });
 
@@ -240,12 +256,16 @@ export class CouponService {
         discountPaise: created.discountPaise,
         discountPercent: created.discountPercent,
         minSubtotalPaise: created.minSubtotalPaise,
+        maxDiscountPaise: created.maxDiscountPaise,
         maxUses: created.maxUses,
+        maxUsesPerCustomer: created.maxUsesPerCustomer,
         startsAt: created.startsAt,
         expiresAt: created.expiresAt,
         scope: created.scope,
         productIds: created.productIds,
         collectionIds: created.collectionIds,
+        matchRules: created.matchRules,
+        eligibility: created.eligibility,
       },
       requestId,
     });
@@ -253,31 +273,9 @@ export class CouponService {
     const now = new Date();
     const peerRows = await this.prisma.coupon.findMany({
       where: { active: true },
-      select: {
-        id: true,
-        code: true,
-        active: true,
-        startsAt: true,
-        expiresAt: true,
-        maxUses: true,
-        usedCount: true,
-        scope: true,
-        productIds: true,
-        collectionIds: true,
-      },
+      select: couponConflictPeerSelect,
     });
-    const peers: CouponConflictSlice[] = peerRows.map((c) => ({
-      id: c.id,
-      code: c.code,
-      active: c.active,
-      startsAt: c.startsAt,
-      expiresAt: c.expiresAt,
-      maxUses: c.maxUses,
-      usedCount: c.usedCount,
-      scope: c.scope as CouponScopeKind,
-      productIds: c.productIds,
-      collectionIds: c.collectionIds,
-    }));
+    const peers = peerRows.map(toCouponConflictSlice);
     const conflictsWith = buildConflictCodesById(peers, now).get(created.id) ?? [];
 
     return { ...created, conflictsWith };
@@ -308,88 +306,11 @@ export class CouponService {
     return updated;
   }
 
-  /** Preview discount for an existing code or draft fields (builder). */
-  async preview(body: CouponPreviewBody) {
-    const min = body.minSubtotalPaise ?? 0;
-    const lines = body.lines as CouponCartLine[] | undefined;
-
-    if (body.code?.trim()) {
-      try {
-        const result = await this.validate(body.code.trim(), body.subtotalPaise, lines);
-        return {
-          ok: true as const,
-          code: result.code,
-          discountPaise: result.discountPaise,
-          eligibleSubtotalPaise: result.eligibleSubtotalPaise,
-          scope: result.scope,
-          totalAfterPaise: body.subtotalPaise - result.discountPaise,
-        };
-      } catch (e) {
-        const message =
-          e instanceof BadRequestException
-            ? ((e.getResponse() as { message?: string })?.message ?? 'Invalid coupon')
-            : 'Invalid coupon';
-        return { ok: false as const, message: String(message) };
-      }
-    }
-
-    if (body.discountPaise == null && body.discountPercent == null) {
-      throw new BadRequestException({
-        code: 'INVALID_PREVIEW',
-        message: 'Provide code or draft discount fields.',
-      });
-    }
-
-    const scope = (body.scope ?? 'CART') as CouponScopeKind;
-    const ids = normalizeScopeIds(scope, body.productIds, body.collectionIds);
-    let eligible = body.subtotalPaise;
-    if (scope !== 'CART') {
-      if (lines?.length) {
-        eligible = eligibleSubtotalPaise({
-          scope,
-          productIds: ids.productIds,
-          collectionIds: ids.collectionIds,
-          cartSubtotalPaise: body.subtotalPaise,
-          lines,
-        });
-      }
-      // else: admin preview treats entered subtotal as eligible amount
-    }
-
-    if (scope !== 'CART' && eligible <= 0) {
-      return {
-        ok: false as const,
-        message:
-          scope === 'PRODUCT'
-            ? 'No matching products in cart.'
-            : 'No matching collections in cart.',
-      };
-    }
-    if (eligible < min) {
-      return {
-        ok: false as const,
-        message: `Minimum order ${min / 100} INR required.`,
-      };
-    }
-    const discountPaise = computeDiscountPaise({
-      subtotalPaise: eligible,
-      discountPaise: body.discountPaise,
-      discountPercent: body.discountPercent,
-    });
-    return {
-      ok: true as const,
-      code: null,
-      discountPaise,
-      eligibleSubtotalPaise: eligible,
-      scope,
-      totalAfterPaise: body.subtotalPaise - discountPaise,
-    };
-  }
-
   async validate(
     code: string,
     cartSubtotalPaise: number,
     lines?: CouponCartLine[] | null,
+    ctx: CouponValidateContext = {},
   ): Promise<CouponResult> {
     const coupon = await this.prisma.coupon.findUnique({
       where: { code: code.toUpperCase() },
@@ -421,12 +342,16 @@ export class CouponService {
     }
 
     const scope = coupon.scope as CouponScopeKind;
+    const matchRules = parseCouponMatchRules(coupon.matchRules);
+    const eligibility = parseCouponEligibility(coupon.eligibility);
+
     const eligible = eligibleSubtotalPaise({
       scope,
       productIds: coupon.productIds,
       collectionIds: coupon.collectionIds,
       cartSubtotalPaise,
       lines,
+      matchRules,
     });
 
     if (scope !== 'CART' && eligible <= 0) {
@@ -443,10 +368,66 @@ export class CouponService {
       });
     }
 
+    const linesKnown = lines != null;
+    const cartQty = linesKnown ? matchingQtyFromLines(lines) : 0;
+    const scoped = linesKnown
+      ? scopeMatchingLines({
+          scope,
+          productIds: coupon.productIds,
+          collectionIds: coupon.collectionIds,
+          matchRules,
+          lines,
+        })
+      : [];
+    const matchingQty = linesKnown ? matchingQtyFromLines(scoped) : 0;
+
+    let paidOrderCount = 0;
+    if (ctx.userId && (eligibilityNeedsCustomer(eligibility) || coupon.maxUsesPerCustomer != null)) {
+      paidOrderCount = await this.prisma.order.count({
+        where: { userId: ctx.userId, status: { in: COUNTED_ORDER } },
+      });
+    }
+
+    if (coupon.maxUsesPerCustomer != null && ctx.userId) {
+      const uses = await this.prisma.order.count({
+        where: {
+          userId: ctx.userId,
+          status: { in: REDEEM_ORDER },
+          OR: [{ couponCode: coupon.code }, { lineCouponCode: coupon.code }],
+        },
+      });
+      if (uses >= coupon.maxUsesPerCustomer) {
+        throw new BadRequestException({
+          code: 'INVALID_COUPON',
+          message: 'Coupon is not valid.',
+        });
+      }
+    }
+
+    const gatesOk = eligibilitySatisfied(eligibility, {
+      cartQty,
+      matchingQty,
+      eligibleSubtotalPaise: eligible,
+      paidOrderCount,
+      shippingMethod: ctx.shippingMethod ?? null,
+      linesUnknown: !linesKnown,
+    });
+    if (!gatesOk) {
+      throw new BadRequestException({
+        code: 'INVALID_COUPON',
+        message: 'Coupon is not valid.',
+      });
+    }
+
+    const discountBase =
+      ctx.discountBasePaise != null
+        ? Math.max(0, Math.min(ctx.discountBasePaise, eligible))
+        : eligible;
     const discountPaise = computeDiscountPaise({
-      subtotalPaise: eligible,
+      subtotalPaise: discountBase,
       discountPaise: coupon.discountPaise,
       discountPercent: coupon.discountPercent,
+      maxDiscountPaise: coupon.maxDiscountPaise,
     });
 
     return {

@@ -21,6 +21,7 @@ import {
   decodeAdminOrderCursor,
   encodeAdminOrderCursor,
 } from './admin-orders-cursor';
+import { formatCouponLabel } from '../promotions/coupon-lifecycle';
 
 const FULFILLMENT_NEXT: Partial<Record<OrderStatus, OrderStatus[]>> = {
   PAID: ['PROCESSING'],
@@ -203,7 +204,7 @@ export class OrdersService {
       taxPaise: order.taxPaise,
       totalPaise: order.totalPaise,
       shippingMethod: order.shippingMethod,
-      couponCode: order.couponCode,
+      couponCode: formatCouponLabel(order.lineCouponCode, order.couponCode),
       paymentProvider: payment?.provider ?? order.payments[0]?.provider ?? null,
       paymentStatus: payment?.status ?? order.payments[0]?.status ?? null,
       legalProfile: asInvoiceLegalProfile(legalSetting?.value ?? DEFAULT_INVOICE_LEGAL_PROFILE),
@@ -693,6 +694,7 @@ export class OrdersService {
     taxPaise: number;
     totalPaise: number;
     couponCode: string | null;
+    lineCouponCode?: string | null;
     shippingMethod: string;
     giftMessage: string | null;
     giftWrap: boolean;
@@ -725,7 +727,7 @@ export class OrdersService {
       discountPaise: order.discountPaise,
       shippingPaise: order.shippingPaise,
       taxPaise: order.taxPaise,
-      couponCode: order.couponCode,
+      couponCode: formatCouponLabel(order.lineCouponCode, order.couponCode),
       shippingMethod: order.shippingMethod,
       giftMessage: order.giftMessage,
       giftWrap: order.giftWrap,

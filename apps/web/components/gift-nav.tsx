@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -108,6 +109,20 @@ const DEFAULT_NAV_ITEMS: GiftTopNavItem[] = [
 ];
 
 type MegaKey = string | null;
+
+/** Isolates `useSearchParams` so GiftNav itself can SSR (no empty-nav fallback). */
+function GiftNavQuerySync({ onQuery }: { onQuery: (searchKey: string) => void }) {
+  const searchParams = useSearchParams();
+  const searchKey = searchParams.toString();
+  useEffect(() => {
+    onQuery(searchKey);
+  }, [searchKey, onQuery]);
+  return null;
+}
+
+function navItemsEqual(a: GiftTopNavItem[], b: GiftTopNavItem[]): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
 
 function readAuth() {
   const token = getStoredAccessToken();
@@ -322,8 +337,8 @@ function MorePanel({ items, onNavigate }: { items: GiftTopNavItem[]; onNavigate:
 
 export function GiftNav() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const searchKey = searchParams.toString();
+  const [searchKey, setSearchKey] = useState('');
+  const onQuery = useCallback((key: string) => setSearchKey(key), []);
   const [signedIn, setSignedIn] = useState(false);
   const [label, setLabel] = useState('Account');
   const [mega, setMega] = useState<MegaKey>(null);
@@ -349,7 +364,8 @@ export function GiftNav() {
       .then((data) => {
         if (cancelled || !data) return;
         if (Array.isArray(data.navItems) && data.navItems.length) {
-          setNavItems(data.navItems);
+          const next = data.navItems as GiftTopNavItem[];
+          setNavItems((prev) => (navItemsEqual(prev, next) ? prev : next));
         }
       })
       .catch(() => {
@@ -360,7 +376,7 @@ export function GiftNav() {
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     function sync() {
       const next = readAuth();
       setSignedIn(next.signedIn);
@@ -532,6 +548,9 @@ export function GiftNav() {
       className="flex min-w-0 flex-1 items-center justify-end gap-gs-2 text-body"
       aria-label="Gift shop"
     >
+      <Suspense fallback={null}>
+        <GiftNavQuerySync onQuery={onQuery} />
+      </Suspense>
       {/* Desktop primary — lg+ only; md/tablet uses hamburger (search+links overflow at 768) */}
       <div
         className="relative hidden min-w-0 flex-1 items-center justify-end gap-gs-2 lg:flex"

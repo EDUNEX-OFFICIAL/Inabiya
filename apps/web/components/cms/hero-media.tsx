@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { GiftImage } from '@/components/gift/gift-image';
 import { useEffect, useState } from 'react';
 import {
   parseAmbientVideoUrl,
@@ -50,7 +50,7 @@ export function HeroMedia({
   if (video?.kind === 'youtube') {
     if (reduceMotion) {
       return (
-        <Image
+        <GiftImage
           src={youtubePosterUrl(video.id)}
           alt={alt}
           fill
@@ -90,7 +90,7 @@ export function HeroMedia({
   }
 
   return (
-    <Image
+    <GiftImage
       src={url}
       alt={alt}
       fill

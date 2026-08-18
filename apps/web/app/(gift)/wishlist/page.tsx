@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { GiftImage } from '@/components/gift/gift-image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -83,7 +83,7 @@ export default function WishlistPage() {
             <li key={r.id} className="clay-card overflow-hidden text-body sm:flex sm:items-center">
               {r.product.imageUrl ? (
                 <div className="relative h-36 w-full sm:h-28 sm:w-28 sm:shrink-0">
-                  <Image
+                  <GiftImage
                     src={r.product.imageUrl}
                     alt=""
                     fill

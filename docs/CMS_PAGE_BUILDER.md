@@ -2,7 +2,7 @@
 
 Version: 1.1.1  
 Status: **11A–11D + Phase 12 TipTap/saleStrip/media shipped** (real S3 SDK still deferred)  
-Last Updated: 2026-08-15 (CMS SEO schema Auto/Manual)
+Last Updated: 2026-08-17 (per-section layout knobs: recipient grid, USP/offer/quote columns)
 
 Client asked for **drag-and-drop page creation** in CMS. Product decision (**1B**): full **marketing pages** at `/pages/[slug]`, composed of ordered blocks — not TipTap-only articles, and not “homepage section reorder only” as the end state.
 
@@ -51,7 +51,7 @@ MarketingPage
 
 PageBlock
   id, pageId
-  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | discoveryChips | buildYourBoxTeaser | articleTeasers | footer | saleStrip | faq | exclusiveOffers | testimonials | countdown | customSection
+  type: hero | richText | image | productGrid | cta | spacer | brandStrip | recipientSplit | discoveryChips | buildYourBoxTeaser | articleTeasers | footer | saleStrip | faq | exclusiveOffers | testimonials | countdown | featuredCarousel | whatsappCta | offerCarousel | thinStrip | customSection
   sortOrder: Int
   props: Json   # Zod-validated per type
 ```
@@ -71,10 +71,16 @@ Money never lives in block props as floats; product prices always come from cata
 | `cta` | `label`, `href`, `variant?` | Link to box / PLP / external |
 | `spacer` | `size: sm\|md\|lg` | Layout only |
 | `saleStrip` | `text`, `ctaLabel?`, `ctaHref?`, `tone?` | Soft Gift promo band (Phase 12) |
+| `thinStrip` | `text`, `items[]?`, `ctaLabel?`, `ctaHref?`, `tone?`, `marquee?` | Compact sale/announcement bar; optional ticker |
+| `offerCarousel` | `overline?`, `title?`, `subtitle?`, `cards[{ tag, title, … }]` (max 8) | Horizontal offer cards |
+| `featuredCarousel` | `eyebrow?`, `headline?`, `accentWord?`, `subcopy?`, `cards[{ category, kicker, title, imageUrl, href, … }]` | Explore fan carousel (was hardcoded on `/gift`) |
+| `whatsappCta` | `eyebrow?`, `title`, `body?`, `countryCode?`, `placeholder?`, `ctaLabel?`, `disclaimer?` | Early-access band — palette only until placed on a page |
 | `countdown` | `endsAt`, `title?`, `expiredLabel?`, `ctaLabel?`, `ctaHref?` | Soft Gift offer timer (dev leftovers Wave 4) |
 | `faq` | `title?`, `items[{ question, answerHtml }]` | Accordion + FAQPage JSON-LD |
-| `exclusiveOffers` | `overline?`, `title?`, `subtitle?`, `cards[{ tag, title, subtitle?, body?, ctaLabel, ctaHref, tone?, icon? }]` | 3 gradient offer cards |
-| `testimonials` | `overline?`, `title?`, `subtitle?`, `ctaLabel?`, `ctaHref?`, `items[{ quote, author, role?, rating?, dated? }]` (max 12) | Split copy + dual-speed vertical quote marquee (static grid if < 4 quotes) |
+| `exclusiveOffers` | `overline?`, `title?`, `subtitle?`, `columns?` (2\|3), `cards[{ tag, title, … }]` (max 6) | Offer cards; phone 1 col |
+| `testimonials` | `overline?`, `title?`, `subtitle?`, `cta*?`, `display?` (auto\|marquee\|grid), `quoteColumns?` (2\|3), `items[{ quote, author, … }]` (max 12) | Auto: marquee at 4+ quotes |
+| `recipientSplit` | `title?`, `subtitle?`, `grid?` (2x1\|2x2\|2x3\|3x2), `items[{ label, href, … }]` (2–6) | Shop-by-baby tiles. Phone 1 col; tablet 2; `3x2` is 3 col from `lg`. Legacy `left`/`right` still load |
+| `brandStrip` | `title?`, `brands[]?`, `usps[]?`, `showUsps?`, `uspColumns?` (2\|3\|4) | Logo strip + USP cards; phone 1 / tablet 2 / desktop `uspColumns` |
 | `discoveryChips` | `title?`, `items[{ label, href, imageUrl?, imageAlt? }]`, `seeAll*` | Category / occasion / age image tiles; admin card editor + presets |
 | `cta` | `label`, `href`, `variant?`, `title?`, `body?` | Corporate / promo band on Soft Gift home |
 
@@ -92,6 +98,8 @@ Unknown `type` → fail validation on save; public renderer skips unknown types 
    - Hero `layout` prop drives Soft Gift public render (legacy pages without `layout` keep storefront/panel)
    - **`productGrid`:** source dropdown, filters, published-product multi-select (manual)
    - **`discoveryChips`:** structured tile editor + `CmsMediaField` + occasion/age presets
+   - **`recipientSplit`:** tile layout 2×1 / 2×2 / 2×3 / 3×2 + card rows (max 6)
+   - **`brandStrip` / `exclusiveOffers` / `testimonials`:** column / quote-display knobs for their own elements (not a shared grid builder)
 3. Actions: Save (⌘/Ctrl+S) · Publish · Unpublish · Preview
 4. Nav & footer chrome: `/admin/cms/gift-chrome`
 
@@ -178,7 +186,7 @@ Track here so testers/eng remember gaps. Ship only when Product/phase asks.
 | **More block types** (countdown) | **Shipped Wave 4 (2026-07-28)** | Zod + admin + Soft Gift band |
 | **FAQ block** | Shipped 2026-07-22 | Accordion + FAQPage JSON-LD |
 | **`productGrid` merchandising sources** | **Shipped 2026-07-28** | `bestsellers` / `editors` / `new` / `on_sale` / `manual` + CMS inspector |
-| **Real AWS/MinIO SDK** | Local disk store today | **Post-dev** — swap behind `S3StorageAdapter` |
+| **More promo variants** | **Shipped 2026-08-17** | `featuredCarousel` on home; `whatsappCta` / `offerCarousel` / `thinStrip` in CMS palette (not auto-placed) |
 | **Razorpay** | Mock pay in checkout | **Post-dev** — keep `PAYMENT_PROVIDER=mock` |
 
 **Editorial TipTap reminder:** Toolbar shows only when article is editable (`ASSIGNED` / `DRAFT` / `CHANGES_REQUESTED`). **PUBLISHED** / review queues = read-only body (by design).

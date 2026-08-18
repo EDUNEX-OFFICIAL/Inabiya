@@ -1098,6 +1098,128 @@ export type AdminOrdersQuery = z.infer<typeof adminOrdersQuerySchema>;
 
 const couponUuidList = z.array(z.string().uuid()).max(50);
 
+export const couponScopeSchema = z.enum(['CART', 'PRODUCT', 'COLLECTION', 'MATCHING']);
+
+/** Line-match fields when scope=MATCHING (cart lines, not collection publishedWithinDays). */
+export const couponMatchFieldSchema = z.enum([
+  'recipient',
+  'age',
+  'occasion',
+  'hamper',
+  'label',
+  'onSale',
+  'brand',
+  'titleContains',
+]);
+
+export const couponMatchOpSchema = z.enum(['is', 'is_not', 'contains']);
+
+export const couponMatchConditionSchema = z.object({
+  field: couponMatchFieldSchema,
+  op: couponMatchOpSchema,
+  value: z.string().min(1).max(120),
+});
+
+export const couponMatchRulesSchema = z.object({
+  match: z.enum(['all', 'any']).default('all'),
+  conditions: z.array(couponMatchConditionSchema).min(1).max(12),
+});
+
+export const couponEligibilityFieldSchema = z.enum([
+  'cartQty',
+  'matchingQty',
+  'maxSubtotalPaise',
+  'firstOrder',
+  'returningCustomer',
+  'shippingMethod',
+]);
+
+export const couponEligibilityOpSchema = z.enum(['is', 'is_not', 'gte', 'lte']);
+
+export const couponEligibilityConditionSchema = z
+  .object({
+    field: couponEligibilityFieldSchema,
+    op: couponEligibilityOpSchema,
+    value: z.string().min(1).max(40),
+  })
+  .superRefine((c, ctx) => {
+    if (c.field === 'cartQty' || c.field === 'matchingQty') {
+      if (c.op !== 'gte' && c.op !== 'lte') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Quantity conditions use at least / at most.',
+          path: ['op'],
+        });
+      }
+      const n = Number.parseInt(c.value, 10);
+      if (!Number.isInteger(n) || n < 1 || n > 999) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Quantity must be 1–999.',
+          path: ['value'],
+        });
+      }
+    }
+    if (c.field === 'maxSubtotalPaise') {
+      if (c.op !== 'lte') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Max purchase uses at most.',
+          path: ['op'],
+        });
+      }
+      const n = Number.parseInt(c.value, 10);
+      if (!Number.isInteger(n) || n < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Max purchase must be a positive paise amount.',
+          path: ['value'],
+        });
+      }
+    }
+    if (c.field === 'firstOrder' || c.field === 'returningCustomer') {
+      if (c.op !== 'is' && c.op !== 'is_not') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Customer conditions use is / is not.',
+          path: ['op'],
+        });
+      }
+      if (c.value !== 'yes' && c.value !== 'no') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Use yes or no.',
+          path: ['value'],
+        });
+      }
+    }
+    if (c.field === 'shippingMethod') {
+      if (c.op !== 'is' && c.op !== 'is_not') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Shipping uses is / is not.',
+          path: ['op'],
+        });
+      }
+      if (c.value !== 'STANDARD' && c.value !== 'EXPRESS') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Shipping must be STANDARD or EXPRESS.',
+          path: ['value'],
+        });
+      }
+    }
+  });
+
+export const couponEligibilitySchema = z.object({
+  match: z.enum(['all', 'any']).default('all'),
+  conditions: z.array(couponEligibilityConditionSchema).max(12),
+});
+
+export type CouponScopeKind = z.infer<typeof couponScopeSchema>;
+export type CouponMatchRules = z.infer<typeof couponMatchRulesSchema>;
+export type CouponEligibility = z.infer<typeof couponEligibilitySchema>;
+
 export const createCouponBodySchema = z
   .object({
     code: z
@@ -1109,15 +1231,19 @@ export const createCouponBodySchema = z
     discountPaise: z.number().int().min(1).optional(),
     discountPercent: z.number().int().min(1).max(100).optional(),
     minSubtotalPaise: z.number().int().min(0).optional(),
+    maxDiscountPaise: z.number().int().min(1).optional(),
     maxUses: z.number().int().min(1).optional(),
+    maxUsesPerCustomer: z.number().int().min(1).max(99).optional(),
     active: z.boolean().optional(),
     /** ISO or datetime-local string */
     startsAt: z.string().trim().min(1).max(40).optional(),
     expiresAt: z.string().trim().min(1).max(40).optional(),
-    /** CART (default) | PRODUCT | COLLECTION — COLLECTION matches MANUAL joins only. */
-    scope: z.enum(['CART', 'PRODUCT', 'COLLECTION']).optional().default('CART'),
+    /** CART (default) | PRODUCT | COLLECTION | MATCHING */
+    scope: couponScopeSchema.optional().default('CART'),
     productIds: couponUuidList.optional(),
     collectionIds: couponUuidList.optional(),
+    matchRules: couponMatchRulesSchema.optional(),
+    eligibility: couponEligibilitySchema.optional(),
   })
   .superRefine((v, ctx) => {
     if (v.discountPaise == null && v.discountPercent == null) {
@@ -1142,34 +1268,21 @@ export const createCouponBodySchema = z
         path: ['collectionIds'],
       });
     }
+    if (scope === 'MATCHING' && !v.matchRules?.conditions?.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Add at least one matching-item condition.',
+        path: ['matchRules'],
+      });
+    }
   });
 
 export const couponActiveBodySchema = z.object({
   active: z.boolean(),
 });
 
-const couponPreviewLineSchema = z.object({
-  productId: z.string().uuid(),
-  collectionIds: couponUuidList.default([]),
-  lineTotalPaise: z.number().int().min(0),
-});
-
-export const couponPreviewBodySchema = z.object({
-  subtotalPaise: z.number().int().min(0),
-  code: z.string().trim().min(2).max(40).optional(),
-  discountPaise: z.number().int().min(1).optional(),
-  discountPercent: z.number().int().min(1).max(100).optional(),
-  minSubtotalPaise: z.number().int().min(0).optional(),
-  scope: z.enum(['CART', 'PRODUCT', 'COLLECTION']).optional(),
-  productIds: couponUuidList.optional(),
-  collectionIds: couponUuidList.optional(),
-  /** Optional cart lines — when omitted, scoped drafts use subtotalPaise as eligible. */
-  lines: z.array(couponPreviewLineSchema).max(100).optional(),
-});
-
 export type CreateCouponBody = z.infer<typeof createCouponBodySchema>;
 export type CouponActiveBody = z.infer<typeof couponActiveBodySchema>;
-export type CouponPreviewBody = z.infer<typeof couponPreviewBodySchema>;
 
 /** Admin promotions list — keyset cursor (createdAt DESC). */
 export const adminCouponsQuerySchema = z.object({
@@ -1616,6 +1729,11 @@ export const pageBlockTypeSchema = z.enum([
   'faq',
   'exclusiveOffers',
   'testimonials',
+  'countdown',
+  'featuredCarousel',
+  'whatsappCta',
+  'offerCarousel',
+  'thinStrip',
   'customSection',
 ]);
 
@@ -1738,6 +1856,8 @@ const brandStripPropsSchema = z.object({
   /** When set, replaces hardcoded USP row under Soft Gift home brand band */
   usps: z.array(uspItemSchema).max(8).optional(),
   showUsps: z.boolean().optional(),
+  /** Desktop USP columns. Phone = 1, tablet = 2. */
+  uspColumns: z.union([z.literal(2), z.literal(3), z.literal(4)]).optional(),
 });
 
 const recipientCardSchema = z.object({
@@ -1746,7 +1866,7 @@ const recipientCardSchema = z.object({
   eyebrow: z.string().max(80).optional(),
   blurb: z.string().max(200).optional(),
   cta: z.string().max(80).optional(),
-  accent: z.enum(['pink', 'sky']).optional(),
+  accent: z.enum(['pink', 'sky', 'mint', 'lavender']).optional(),
   imageUrl: cmsMediaUrlSchema.optional(),
   imageAlt: z.string().max(200).optional(),
 });
@@ -1754,8 +1874,12 @@ const recipientCardSchema = z.object({
 const recipientSplitPropsSchema = z.object({
   title: z.string().max(120).optional(),
   subtitle: z.string().max(300).optional(),
-  left: recipientCardSchema,
-  right: recipientCardSchema,
+  /** Desktop tile layout. Phone = 1 col; tablet = 2; `3x2` = 3 col from lg. */
+  grid: z.enum(['2x1', '2x2', '2x3', '3x2']).optional(),
+  items: z.array(recipientCardSchema).min(2).max(6).optional(),
+  /** Legacy two-pane fields — still accepted; renderer prefers `items`. */
+  left: recipientCardSchema.optional(),
+  right: recipientCardSchema.optional(),
 });
 
 const articleTeasersPropsSchema = z.object({
@@ -1848,6 +1972,59 @@ const saleStripPropsSchema = z.object({
   tone: z.enum(['blush', 'mint', 'sky', 'soft']).optional(),
 });
 
+const featuredCarouselCardSchema = z.object({
+  id: z.string().trim().min(1).max(80).optional(),
+  category: z.string().trim().min(1).max(40),
+  kicker: z.string().trim().min(1).max(60),
+  title: z.string().trim().min(1).max(80),
+  description: z.string().max(400).optional(),
+  imageUrl: cmsMediaUrlSchema.optional(),
+  hoverImageUrl: cmsMediaUrlSchema.optional(),
+  hoverVideoUrl: cmsMediaUrlSchema.optional(),
+  gradient: z
+    .string()
+    .max(220)
+    .regex(/^linear-gradient\([^<>;{}]*\)$/i, 'Must be a linear-gradient(...) value')
+    .optional(),
+  accent: z
+    .string()
+    .regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Must be a hex color')
+    .optional(),
+  href: safeStorefrontHrefSchema,
+});
+
+const featuredCarouselPropsSchema = z.object({
+  eyebrow: z.string().max(80).optional(),
+  headline: z.string().max(160).optional(),
+  accentWord: z.string().max(40).optional(),
+  subcopy: z.string().max(400).optional(),
+  cards: z.array(featuredCarouselCardSchema).min(1).max(8),
+});
+
+const whatsappCtaPropsSchema = z.object({
+  eyebrow: z.string().max(80).optional(),
+  title: z.string().min(1).max(160),
+  body: z.string().max(400).optional(),
+  countryCode: z
+    .string()
+    .trim()
+    .max(8)
+    .regex(/^\+\d{1,4}$/, 'Must be a +country code')
+    .optional(),
+  placeholder: z.string().max(80).optional(),
+  ctaLabel: z.string().max(80).optional(),
+  disclaimer: z.string().max(240).optional(),
+});
+
+const thinStripPropsSchema = z.object({
+  text: z.string().min(1).max(200),
+  items: z.array(z.string().trim().min(1).max(120)).max(8).optional(),
+  ctaLabel: z.string().max(80).optional(),
+  ctaHref: optionalSafeStorefrontHrefSchema,
+  tone: z.enum(['blush', 'mint', 'sky', 'soft', 'gold']).optional(),
+  marquee: z.boolean().optional(),
+});
+
 const faqItemSchema = z.object({
   question: z.string().trim().min(1).max(300),
   answerHtml: z.string().trim().min(1).max(10_000).transform(sanitizeArticleHtml),
@@ -1873,7 +2050,16 @@ const exclusiveOffersPropsSchema = z.object({
   overline: z.string().max(80).optional(),
   title: z.string().max(160).optional(),
   subtitle: z.string().max(200).optional(),
-  cards: z.array(exclusiveOfferCardSchema).min(1).max(3),
+  cards: z.array(exclusiveOfferCardSchema).min(1).max(6),
+  /** Desktop columns. Phone always 1. */
+  columns: z.union([z.literal(2), z.literal(3)]).optional(),
+});
+
+const offerCarouselPropsSchema = z.object({
+  overline: z.string().max(80).optional(),
+  title: z.string().max(160).optional(),
+  subtitle: z.string().max(200).optional(),
+  cards: z.array(exclusiveOfferCardSchema).min(1).max(8),
 });
 
 const testimonialItemSchema = z.object({
@@ -1891,6 +2077,9 @@ const testimonialsPropsSchema = z.object({
   ctaLabel: z.string().max(80).optional(),
   ctaHref: optionalSafeStorefrontHrefSchema,
   items: z.array(testimonialItemSchema).min(1).max(12),
+  /** Default auto: marquee at 4+ quotes, else static grid. */
+  display: z.enum(['auto', 'marquee', 'grid']).optional(),
+  quoteColumns: z.union([z.literal(2), z.literal(3)]).optional(),
 });
 
 const countdownPropsSchema = z.object({
@@ -1974,6 +2163,19 @@ export const pageBlockInputSchema = z.discriminatedUnion('type', [
     props: testimonialsPropsSchema.merge(sectionStyleSchema),
   }),
   z.object({ type: z.literal('countdown'), props: countdownPropsSchema.merge(sectionStyleSchema) }),
+  z.object({
+    type: z.literal('featuredCarousel'),
+    props: featuredCarouselPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({
+    type: z.literal('whatsappCta'),
+    props: whatsappCtaPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({
+    type: z.literal('offerCarousel'),
+    props: offerCarouselPropsSchema.merge(sectionStyleSchema),
+  }),
+  z.object({ type: z.literal('thinStrip'), props: thinStripPropsSchema.merge(sectionStyleSchema) }),
   z.object({
     type: z.literal('customSection'),
     props: customSectionPropsSchema.merge(sectionStyleSchema),

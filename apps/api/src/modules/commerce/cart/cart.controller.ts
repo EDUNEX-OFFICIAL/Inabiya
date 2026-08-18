@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -76,8 +77,12 @@ export class CartController {
   }
 
   @Delete('coupon')
-  removeCoupon(@Req() req: AuthedRequest, @Headers('x-cart-token') cartHeader: string | undefined) {
-    return this.cart.removeCoupon(req.user?.id, guestToken(req, cartHeader));
+  removeCoupon(
+    @Req() req: AuthedRequest,
+    @Headers('x-cart-token') cartHeader: string | undefined,
+    @Query('code') code?: string,
+  ) {
+    return this.cart.removeCoupon(req.user?.id, guestToken(req, cartHeader), code);
   }
 
   @Post('merge')

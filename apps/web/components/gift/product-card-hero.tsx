@@ -1,17 +1,18 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { CardThumbStrip } from '@/components/gift/card-thumb-strip';
 import { productCardImages, type ProductCardImage } from '@/components/gift/card-thumbs';
+import { GiftImage } from '@/components/gift/gift-image';
 
 type Media = {
   url: string;
   altText: string | null;
   kind?: string | null;
   id?: string | null;
+  blurDataUrl?: string | null;
 };
 
 type GalleryValue = {
@@ -81,11 +82,12 @@ export function ProductCardHero({
     <div className={cn('relative overflow-hidden bg-white/40', className)}>
       <Link href={href} className="absolute inset-0 block" data-testid={linkTestId}>
         {hero?.url ? (
-          <Image
+          <GiftImage
             src={hero.url}
             alt={hero.altText ?? title}
             fill
             sizes={sizes}
+            blurDataUrl={hero.blurDataUrl}
             className={cn('object-cover', imageClassName)}
           />
         ) : (
@@ -106,6 +108,7 @@ export function ProductCardThumbs({ className }: { className?: string }) {
         id: img.id,
         imageUrl: img.url,
         alt: img.altText ?? title,
+        blurDataUrl: img.blurDataUrl,
       }))}
       hideIfSingle
       activeId={hero?.id}

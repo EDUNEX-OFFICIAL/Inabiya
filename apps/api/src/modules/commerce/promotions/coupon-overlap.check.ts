@@ -37,7 +37,7 @@ assert.equal(
     { scope: 'CART', productIds: [], collectionIds: [] },
     { scope: 'PRODUCT', productIds: ['p1'], collectionIds: [] },
   ),
-  true,
+  false,
 );
 assert.equal(
   scopesCollide(
@@ -60,6 +60,20 @@ assert.equal(
   ),
   true,
 );
+assert.equal(
+  scopesCollide(
+    { scope: 'MATCHING', productIds: [], collectionIds: [] },
+    { scope: 'PRODUCT', productIds: ['a'], collectionIds: [] },
+  ),
+  true,
+);
+assert.equal(
+  scopesCollide(
+    { scope: 'MATCHING', productIds: [], collectionIds: [] },
+    { scope: 'MATCHING', productIds: [], collectionIds: [] },
+  ),
+  true,
+);
 
 const now = new Date('2026-08-11T12:00:00Z');
 const cartA: CouponConflictSlice = {
@@ -75,6 +89,87 @@ const cartB: CouponConflictSlice = {
   scope: 'CART',
 };
 assert.equal(couponsConflict(cartA, cartB, now), true);
+
+const firstOrder: CouponConflictSlice = {
+  ...cartA,
+  id: '4',
+  code: 'WELCOME',
+  eligibility: {
+    match: 'all',
+    conditions: [{ field: 'firstOrder', op: 'is', value: 'yes' }],
+  },
+};
+const returning: CouponConflictSlice = {
+  ...cartB,
+  id: '5',
+  code: 'LOYAL',
+  eligibility: {
+    match: 'all',
+    conditions: [{ field: 'returningCustomer', op: 'is', value: 'yes' }],
+  },
+};
+assert.equal(couponsConflict(firstOrder, returning, now), false);
+assert.equal(couponsConflict(firstOrder, cartB, now), true);
+
+const expressOnly: CouponConflictSlice = {
+  ...cartA,
+  id: '6',
+  code: 'FAST',
+  eligibility: {
+    match: 'all',
+    conditions: [{ field: 'shippingMethod', op: 'is', value: 'EXPRESS' }],
+  },
+};
+const standardOnly: CouponConflictSlice = {
+  ...cartB,
+  id: '7',
+  code: 'SLOW',
+  eligibility: {
+    match: 'all',
+    conditions: [{ field: 'shippingMethod', op: 'is', value: 'STANDARD' }],
+  },
+};
+assert.equal(couponsConflict(expressOnly, standardOnly, now), false);
+
+const hamperYes: CouponConflictSlice = {
+  ...base,
+  id: '8',
+  code: 'HAMPER',
+  scope: 'MATCHING',
+  matchRules: {
+    match: 'all',
+    conditions: [{ field: 'hamper', op: 'is', value: 'yes' }],
+  },
+};
+const hamperNo: CouponConflictSlice = {
+  ...base,
+  id: '9',
+  code: 'NOTHAMP',
+  scope: 'MATCHING',
+  matchRules: {
+    match: 'all',
+    conditions: [{ field: 'hamper', op: 'is', value: 'no' }],
+  },
+};
+assert.equal(couponsConflict(hamperYes, hamperNo, now), false);
+assert.equal(couponsConflict(hamperYes, cartA, now), false);
+
+const highMin: CouponConflictSlice = {
+  ...cartA,
+  id: '10',
+  code: 'BIG',
+  minSubtotalPaise: 10_000,
+};
+const lowCap: CouponConflictSlice = {
+  ...cartB,
+  id: '11',
+  code: 'SMALL',
+  eligibility: {
+    match: 'all',
+    conditions: [{ field: 'maxSubtotalPaise', op: 'lte', value: '5000' }],
+  },
+};
+assert.equal(couponsConflict(highMin, lowCap, now), false);
 
 const off = { ...cartB, id: '3', code: 'OFF', active: false };
 assert.equal(couponsConflict(cartA, off, now), false);

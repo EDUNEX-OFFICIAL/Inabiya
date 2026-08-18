@@ -1,11 +1,11 @@
-import Image from 'next/image';
+import { GiftImage } from '@/components/gift/gift-image';
 
 export function LineThumb({ imageUrl, quantity }: { imageUrl?: string | null; quantity: number }) {
   return (
     <span className="relative size-14 shrink-0">
       <span className="absolute inset-0 overflow-hidden rounded-control border border-border-subtle bg-surface">
         {imageUrl ? (
-          <Image src={imageUrl} alt="" fill sizes="56px" className="object-cover" />
+          <GiftImage src={imageUrl} alt="" fill sizes="56px" className="object-cover" />
         ) : (
           <span className="gift-media-fallback absolute inset-0" />
         )}

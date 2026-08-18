@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { GiftImage } from '@/components/gift/gift-image';
 import { useState } from 'react';
 import { Play } from 'lucide-react';
 import {
@@ -71,12 +71,11 @@ export function ProductVideoPlayer({ url, title, posterUrl, fallbackPosterUrl }:
     >
       <div className="relative aspect-video w-full bg-foreground/10">
         {poster ? (
-          <Image
+          <GiftImage
             src={poster}
             alt=""
             fill
             sizes="100vw"
-            loading="lazy"
             className="object-cover transition group-hover:scale-[1.01]"
           />
         ) : (

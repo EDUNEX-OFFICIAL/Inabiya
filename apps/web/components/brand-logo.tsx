@@ -80,7 +80,7 @@ function BrandArt({
         height={height}
         className={imgClass}
         decoding="async"
-        fetchPriority={priority ? 'high' : undefined}
+        fetchPriority={priority ? 'high' : 'low'}
       />
     );
   }

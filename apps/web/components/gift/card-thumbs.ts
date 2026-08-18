@@ -5,12 +5,14 @@ export type CardThumbItem = {
   id: string;
   imageUrl: string | null;
   alt?: string;
+  blurDataUrl?: string | null;
 };
 
 export type ProductCardImage = {
   id: string;
   url: string;
   altText: string | null;
+  blurDataUrl?: string | null;
 };
 
 /** Still images only — videos stay off the card strip. */
@@ -20,6 +22,7 @@ export function productCardImages(
     altText?: string | null;
     kind?: string | null;
     id?: string | null;
+    blurDataUrl?: string | null;
   }>,
 ): ProductCardImage[] {
   const out: ProductCardImage[] = [];
@@ -30,6 +33,7 @@ export function productCardImages(
       id: m.id || `img-${i}`,
       url: m.url,
       altText: m.altText ?? null,
+      ...(m.blurDataUrl ? { blurDataUrl: m.blurDataUrl } : {}),
     });
   }
   return out;

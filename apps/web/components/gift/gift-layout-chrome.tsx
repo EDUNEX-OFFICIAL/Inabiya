@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { BrandLogo } from '@/components/brand-logo';
 import { GiftNav } from '@/components/gift-nav';
@@ -45,7 +45,7 @@ export function GiftLayoutChrome({ children }: { children: ReactNode }) {
       {isAuthPage ? null : isInvoicePage ? null : isCheckoutPage ? (
         <header className="clay-nav relative sticky top-0 z-[var(--z-nav)] py-gs-3 print:hidden">
           <div className="gift-shell-width flex min-w-0 items-center justify-between gap-gs-3">
-            <BrandLogo kind="chrome" href="/" size="md" priority />
+            <BrandLogo kind="chrome" href="/" size="md" />
             <p className="flex items-center gap-gs-2 text-caption font-medium opacity-70">
               <CheckoutLockMark />
               Secure checkout
@@ -55,12 +55,8 @@ export function GiftLayoutChrome({ children }: { children: ReactNode }) {
       ) : (
         <header className="clay-nav relative sticky top-0 z-[var(--z-nav)] overflow-x-clip py-gs-3 sm:py-gs-4 print:hidden">
           <div className="gift-shell-width relative flex min-w-0 items-center justify-between gap-gs-3">
-            <BrandLogo kind="chrome" href="/" className="relative z-10" size="md" priority />
-            <Suspense
-              fallback={<nav className="flex min-w-0 flex-1 justify-end" aria-label="Gift shop" />}
-            >
-              <GiftNav />
-            </Suspense>
+            <BrandLogo kind="chrome" href="/" className="relative z-10" size="md" />
+            <GiftNav />
           </div>
         </header>
       )}

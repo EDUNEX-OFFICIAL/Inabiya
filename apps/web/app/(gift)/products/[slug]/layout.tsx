@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { fetchCatalog, type CatalogProduct } from '@/lib/catalog';
+import { mediaVariantUrl, parseMediaAssetId } from '@/lib/media-url';
 
 export async function generateMetadata({
   params,
@@ -30,6 +31,25 @@ export async function generateMetadata({
   }
 }
 
-export default function ProductSlugLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default async function ProductSlugLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { slug: string };
+}) {
+  let lcp: string | null = null;
+  try {
+    const product = await fetchCatalog<CatalogProduct>(`/catalog/products/${params.slug}`);
+    const first = product.media.find((m) => m.kind !== 'VIDEO') ?? product.media[0];
+    if (first?.url && parseMediaAssetId(first.url)) lcp = mediaVariantUrl(first.url, 'web');
+  } catch {
+    lcp = null;
+  }
+  return (
+    <>
+      {lcp ? <link rel="preload" as="image" href={lcp} fetchPriority="high" /> : null}
+      {children}
+    </>
+  );
 }

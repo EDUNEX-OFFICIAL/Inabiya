@@ -109,7 +109,7 @@ Post-dev stubs unchanged: Razorpay, real S3/MinIO, real SMTP, public Caddy/DNS, 
 | **OPS-3** Inventory | **Pass** | inventory desk + `InventoryMovement`; migration `20260729193000_ops3_inventory_movements` |
 | **OPS-2** Catalog | **Pass** | products power-table + categories + merchandising polish; admin list `?q`/`?status` |
 | **OPS-5** CRM & support | **Pass** | customers LTV/segments + 360; support phone search; `assertActiveForCheckout` |
-| **OPS-6** Promotions | **Pass** | coupons builder/preview/schedule; `couponLifecycle` + audit create/deactivate |
+| **OPS-6** Promotions | **Pass** | coupons builder/schedule; `couponLifecycle` + audit create/deactivate (admin preview removed) |
 | **OPS-7** Reports | **Pass** | reports gallery; `/reports/sales|products|inventory|returns|coupons`; CSV export (paise) |
 | **OPS-8** Settings & trust | **Pass** | `/admin/commerce/policy` + audit list; return window → returns eligibility path |
 | **OPS-9** Power-user | **Pass (P0)** | shortcuts/`?` help; pin views; order bulk PROCESSING; `/admin/commerce/import` dry-run |

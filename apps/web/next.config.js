@@ -20,8 +20,8 @@ const contentSecurityPolicy = [
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com"
     : "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
   "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
 ].join('; ');
 
 const nextConfig = {
@@ -29,6 +29,10 @@ const nextConfig = {
   poweredByHeader: false,
   transpilePackages: ['@inabiya/types', '@inabiya/validation'],
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 14,
+    deviceSizes: [640, 750, 828, 1080, 1200, 1600],
+    imageSizes: [32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'i.ytimg.com' },
@@ -61,7 +65,16 @@ const nextConfig = {
     ];
   },
   async headers() {
+    const longCache = 'public, max-age=2592000, stale-while-revalidate=86400';
     return [
+      {
+        source: '/brand/:path*',
+        headers: [{ key: 'Cache-Control', value: longCache }],
+      },
+      {
+        source: '/gift/media/:path*',
+        headers: [{ key: 'Cache-Control', value: longCache }],
+      },
       {
         source: '/:path*',
         headers: [

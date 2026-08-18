@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { GiftImage } from '@/components/gift/gift-image';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useId, useRef, useState, type MouseEvent } from 'react';
@@ -187,12 +187,13 @@ function HamperContentsModal({
               >
                 <div className="relative size-14 shrink-0 overflow-hidden rounded-control bg-foreground/5 ring-1 ring-border-subtle sm:size-16">
                   {item.imageUrl ? (
-                    <Image
+                    <GiftImage
                       src={item.imageUrl}
                       alt={item.title}
                       fill
                       sizes="64px"
                       className="object-cover"
+                      blurDataUrl={item.blurDataUrl}
                     />
                   ) : (
                     <div className="gift-media-fallback h-full w-full" aria-hidden />

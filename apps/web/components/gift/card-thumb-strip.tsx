@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { GiftImage } from '@/components/gift/gift-image';
 import type { MouseEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { splitCardThumbs, type CardThumbItem } from '@/components/gift/card-thumbs';
@@ -44,11 +44,12 @@ export function CardThumbStrip({
           active ? 'border-primary' : 'border-border-subtle',
         );
         const inner = item.imageUrl ? (
-          <Image
+          <GiftImage
             src={item.imageUrl}
             alt={onSelect ? (item.alt ?? '') : ''}
             fill
             sizes="32px"
+            blurDataUrl={item.blurDataUrl}
             className="object-cover"
           />
         ) : (

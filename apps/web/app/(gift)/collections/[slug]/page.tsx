@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import { GiftImage } from '@/components/gift/gift-image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -166,14 +166,16 @@ export default async function GiftCollectionPage({
       >
         <div className={`absolute inset-0 bg-gradient-to-r ${accentWash}`} aria-hidden />
         <div className="absolute inset-y-0 right-0 hidden w-[42%] md:block" aria-hidden>
-          <Image
-            src={collection.heroImageUrl}
-            alt=""
-            fill
-            className="object-cover opacity-90"
-            sizes="42vw"
-            priority
-          />
+          {collection.heroImageUrl ? (
+            <GiftImage
+              src={collection.heroImageUrl}
+              alt=""
+              fill
+              className="object-cover opacity-90"
+              sizes="42vw"
+              eager
+            />
+          ) : null}
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/40 to-transparent" />
         </div>
 
@@ -227,14 +229,16 @@ export default async function GiftCollectionPage({
 
           {/* Mobile hero photo — short strip */}
           <div className="relative mt-gs-5 aspect-[21/9] overflow-hidden rounded-control md:hidden">
-            <Image
-              src={collection.heroImageUrl}
-              alt={collection.heroImageAlt}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
+            {collection.heroImageUrl ? (
+              <GiftImage
+                src={collection.heroImageUrl}
+                alt={collection.heroImageAlt ?? ''}
+                fill
+                className="object-cover"
+                sizes="100vw"
+                priority
+              />
+            ) : null}
           </div>
         </div>
       </section>

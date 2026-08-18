@@ -7,6 +7,11 @@ import {
   parseCustomSectionLayout,
   type CustomSectionLayout,
 } from '../custom-section-layout';
+import {
+  parseRecipientAccent,
+  parseRecipientGrid,
+  RECIPIENT_GRID_MAX,
+} from '@/lib/cms-section-layout';
 
 export type { HeroLayout, CustomSectionLayout };
 export { HERO_LAYOUTS, HERO_LAYOUT_LABELS, parseHeroLayout };
@@ -30,6 +35,10 @@ export type BlockType =
   | 'exclusiveOffers'
   | 'testimonials'
   | 'countdown'
+  | 'featuredCarousel'
+  | 'whatsappCta'
+  | 'offerCarousel'
+  | 'thinStrip'
   | 'customSection';
 
 export type Block = {
@@ -71,8 +80,144 @@ export const ALL_TYPES: BlockType[] = [
   'exclusiveOffers',
   'testimonials',
   'countdown',
+  'featuredCarousel',
+  'whatsappCta',
+  'offerCarousel',
+  'thinStrip',
   'customSection',
 ];
+
+const DEFAULT_FEATURED_CARDS_JSON = JSON.stringify(
+  [
+    {
+      id: 'build-box',
+      category: 'Create',
+      kicker: 'Gift Builder',
+      title: 'Build Your Box',
+      description:
+        'Design a bespoke baby box in six gentle steps — pick recipient, age, occasion & budget, we curate the rest.',
+      imageUrl: 'https://images.unsplash.com/photo-1622290291720-ac961c43ee30?w=800&q=85',
+      hoverImageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=85',
+      gradient: 'linear-gradient(150deg,#FF6B9D 0%,#FFB5D0 55%,#FFE0EC 100%)',
+      accent: '#7C1D3C',
+      href: '/build-your-box',
+    },
+    {
+      id: 'keepsakes',
+      category: 'Create',
+      kicker: 'Personalised',
+      title: 'Name & Note Keepsakes',
+      description:
+        "Add the baby's name, a handwritten gift note and a ribbon colour to make every hamper unmistakably theirs.",
+      imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800&q=85',
+      hoverImageUrl: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&q=85',
+      gradient: 'linear-gradient(150deg,#E8D5F5 0%,#F5C8E4 55%,#FFE0EC 100%)',
+      accent: '#5B21B6',
+      href: '/build-your-box',
+    },
+    {
+      id: 'milestone-toys',
+      category: 'Develop',
+      kicker: 'Play & Learn',
+      title: 'Milestone Toys',
+      description:
+        'Montessori-inspired wooden toys that grow with baby — sensory, safe and beautifully made for little hands.',
+      imageUrl: 'https://images.unsplash.com/photo-1609811645795-f72ea07f47e9?w=800&q=85',
+      hoverImageUrl: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&q=85',
+      gradient: 'linear-gradient(150deg,#B5EAD7 0%,#D9F5E9 55%,#E0F7EE 100%)',
+      accent: '#0F5132',
+      href: '/collections/bestsellers',
+    },
+    {
+      id: 'first-year',
+      category: 'Develop',
+      kicker: 'Essentials',
+      title: 'First-Year Essentials',
+      description:
+        'Clothing, bath, skincare and feeding staples from baby-safe brands parents actually trust — all in one place.',
+      imageUrl: 'https://images.unsplash.com/photo-1522771930-78848d9293e8?w=800&q=85',
+      hoverImageUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=800&q=85',
+      gradient: 'linear-gradient(150deg,#7DD3FC 0%,#BAE6FD 55%,#E0F2FE 100%)',
+      accent: '#0C4A6E',
+      href: '/collections/newborn',
+    },
+    {
+      id: 'ready-hampers',
+      category: 'Explore',
+      kicker: 'Ready to Gift',
+      title: 'Ready-Made Hampers',
+      description:
+        'Beautifully packed, occasion-ready hampers with complimentary wrapping — order in a tap, delivered across India.',
+      imageUrl: 'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=800&q=85',
+      hoverImageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=85',
+      gradient: 'linear-gradient(150deg,#FFD166 0%,#FFE3A3 55%,#FFF4D6 100%)',
+      accent: '#7C4A03',
+      href: '/collections/ready-hampers',
+    },
+    {
+      id: 'corporate',
+      category: 'Explore',
+      kicker: 'For Teams',
+      title: 'Corporate Gifting',
+      description:
+        'Thoughtful welcome-baby gifts for your people — branded cards, bulk pricing and PAN-India delivery.',
+      imageUrl: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=800&q=85',
+      hoverImageUrl: 'https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=800&q=85',
+      gradient: 'linear-gradient(150deg,#C7D2FE 0%,#DDD6FE 55%,#EDE9FE 100%)',
+      accent: '#3730A3',
+      href: '/corporate',
+    },
+  ],
+  null,
+  0,
+);
+
+const DEFAULT_OFFER_CAROUSEL_JSON = JSON.stringify(
+  [
+    {
+      tag: 'Welcome Baby',
+      title: 'Save 10%',
+      subtitle: 'Newborn hampers',
+      body: 'Curated welcome boxes with wrap and a personalised note.',
+      ctaLabel: 'Shop',
+      ctaHref: '/collections/ready-hampers',
+      tone: 'blush',
+      icon: 'heart',
+    },
+    {
+      tag: 'Flash sale',
+      title: 'Free wrap',
+      subtitle: 'This week only',
+      body: 'Complimentary gift wrap on boxes over ₹1,999.',
+      ctaLabel: 'Browse',
+      ctaHref: '/collections/bestsellers',
+      tone: 'sky',
+      icon: 'box',
+    },
+    {
+      tag: 'Corporate',
+      title: 'Save 15%',
+      subtitle: 'Team gifting',
+      body: 'Bulk welcome-baby gifts with branded cards.',
+      ctaLabel: 'Get a quote',
+      ctaHref: '/corporate',
+      tone: 'lavender',
+      icon: 'briefcase',
+    },
+    {
+      tag: 'Milestone',
+      title: 'Toys 12% off',
+      subtitle: 'Play & learn',
+      body: 'Wooden toys that grow with baby.',
+      ctaLabel: 'Shop toys',
+      ctaHref: '/collections/bestsellers',
+      tone: 'blush',
+      icon: 'heart',
+    },
+  ],
+  null,
+  0,
+);
 
 export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
   hero: {
@@ -117,26 +262,38 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     brands: '',
     usps: '',
     showUsps: 'true',
+    uspColumns: '4',
   },
   recipientSplit: {
     title: 'Shop by baby',
     subtitle: 'Curated palettes, unisex-safe products.',
-    leftLabel: 'girl',
-    leftHref: '/collections/for-baby-girl',
-    leftEyebrow: 'For the little',
-    leftBlurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
-    leftCta: 'Shop girl gifts →',
-    leftAccent: 'pink',
-    leftImageUrl: '/gift/media/baby-girl-soft.jpg',
-    leftImageAlt: 'Baby girl with soft toys',
-    rightLabel: 'boy',
-    rightHref: '/collections/for-baby-boy',
-    rightEyebrow: 'For the little',
-    rightBlurb: 'Sky ribbons, soft brights, gender-neutral picks.',
-    rightCta: 'Shop boy gifts →',
-    rightAccent: 'sky',
-    rightImageUrl: '/gift/media/train-toy.jpg',
-    rightImageAlt: 'Wooden train set for little boys',
+    grid: '2x1',
+    itemsJson: JSON.stringify(
+      [
+        {
+          label: 'girl',
+          href: '/collections/for-baby-girl',
+          eyebrow: 'For the little',
+          blurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
+          cta: 'Shop girl gifts →',
+          accent: 'pink',
+          imageUrl: '/gift/media/baby-girl-soft.jpg',
+          imageAlt: 'Baby girl with soft toys',
+        },
+        {
+          label: 'boy',
+          href: '/collections/for-baby-boy',
+          eyebrow: 'For the little',
+          blurb: 'Sky ribbons, soft brights, gender-neutral picks.',
+          cta: 'Shop boy gifts →',
+          accent: 'sky',
+          imageUrl: '/gift/media/train-toy.jpg',
+          imageAlt: 'Wooden train set for little boys',
+        },
+      ],
+      null,
+      0,
+    ),
   },
   discoveryChips: {
     overline: '',
@@ -218,6 +375,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     overline: 'Limited-time benefits',
     title: 'Exclusive Offers for Every Occasion',
     subtitle: 'Curated for every occasion',
+    columns: '3',
     cardsJson: JSON.stringify(
       [
         {
@@ -261,6 +419,8 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     subtitle: '',
     ctaLabel: '',
     ctaHref: '',
+    display: 'auto',
+    quoteColumns: '2',
     itemsJson: JSON.stringify(
       [
         {
@@ -294,6 +454,37 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     expiredLabel: 'This offer has ended',
     ctaLabel: 'Shop now',
     ctaHref: '/',
+  },
+  featuredCarousel: {
+    eyebrow: 'Explore Inabiya',
+    headline: 'A different way to gift',
+    accentWord: 'gift',
+    subcopy:
+      'Swipe through the ways to gift with Inabiya — create, develop and explore, all in one place.',
+    cardsJson: DEFAULT_FEATURED_CARDS_JSON,
+  },
+  whatsappCta: {
+    eyebrow: 'Early access',
+    title: "Be First to See What's New",
+    body: 'Fresh styles arrive every week. Join Inabiya on WhatsApp for new-arrival alerts and early access to fresh drops.',
+    countryCode: '+91',
+    placeholder: 'Enter WhatsApp number',
+    ctaLabel: 'Get early access',
+    disclaimer: 'By joining, you agree to receive Inabiya updates on WhatsApp. Opt out anytime.',
+  },
+  offerCarousel: {
+    overline: 'This week',
+    title: 'Offers in motion',
+    subtitle: 'Swipe through limited-time savings.',
+    cardsJson: DEFAULT_OFFER_CAROUSEL_JSON,
+  },
+  thinStrip: {
+    text: 'Free personalisation on gift boxes this week',
+    items: 'Free wrap over ₹1,999\nName notes on every hamper\nPAN-India delivery',
+    ctaLabel: 'Shop',
+    ctaHref: '/collections/bestsellers',
+    tone: 'gold',
+    marquee: 'true',
   },
   customSection: {
     layout: 'stack',
@@ -333,43 +524,45 @@ function nestCard(
   href: string;
   eyebrow?: string;
   cta?: string;
-  accent?: 'pink' | 'sky';
+  accent?: 'pink' | 'sky' | 'mint' | 'lavender';
   imageUrl?: string;
+  imageAlt?: string;
+  blurb?: string;
 } {
   const label = props[`${prefix}Label`] || (prefix === 'left' ? 'girl' : 'boy');
   const href =
     props[`${prefix}Href`] ||
     (prefix === 'left' ? '/collections/for-baby-girl' : '/collections/for-baby-boy');
-  const accentRaw = props[`${prefix}Accent`];
-  const accent =
-    accentRaw === 'pink' || accentRaw === 'sky' ? (accentRaw as 'pink' | 'sky') : undefined;
+  const accent = parseRecipientAccent(props[`${prefix}Accent`], prefix === 'left' ? 0 : 1);
   return {
     label,
     href,
     ...(props[`${prefix}Eyebrow`] ? { eyebrow: props[`${prefix}Eyebrow`] } : {}),
     ...(props[`${prefix}Blurb`] ? { blurb: props[`${prefix}Blurb`] } : {}),
     ...(props[`${prefix}Cta`] ? { cta: props[`${prefix}Cta`] } : {}),
-    ...(accent ? { accent } : {}),
+    accent,
     ...(props[`${prefix}ImageUrl`] ? { imageUrl: props[`${prefix}ImageUrl`] } : {}),
     ...(props[`${prefix}ImageAlt`] ? { imageAlt: props[`${prefix}ImageAlt`] } : {}),
   };
 }
 
-function flattenRecipientCard(
-  side: unknown,
-  prefix: 'left' | 'right',
-  props: Record<string, string>,
-) {
-  if (!side || typeof side !== 'object' || Array.isArray(side)) return;
-  const card = side as Record<string, unknown>;
-  if (card.label != null) props[`${prefix}Label`] = String(card.label);
-  if (card.href != null) props[`${prefix}Href`] = String(card.href);
-  if (card.eyebrow != null) props[`${prefix}Eyebrow`] = String(card.eyebrow);
-  if (card.blurb != null) props[`${prefix}Blurb`] = String(card.blurb);
-  if (card.cta != null) props[`${prefix}Cta`] = String(card.cta);
-  if (card.accent != null) props[`${prefix}Accent`] = String(card.accent);
-  if (card.imageUrl != null) props[`${prefix}ImageUrl`] = String(card.imageUrl);
-  if (card.imageAlt != null) props[`${prefix}ImageAlt`] = String(card.imageAlt);
+function cardFromUnknown(row: unknown, index: number) {
+  if (!row || typeof row !== 'object' || Array.isArray(row)) return null;
+  const card = row as Record<string, unknown>;
+  const label = String(card.label ?? '').trim();
+  const href = String(card.href ?? '').trim();
+  if (!label || !href) return null;
+  const accent = parseRecipientAccent(card.accent, index);
+  return {
+    label,
+    href,
+    ...(card.eyebrow ? { eyebrow: String(card.eyebrow) } : {}),
+    ...(card.blurb ? { blurb: String(card.blurb) } : {}),
+    ...(card.cta ? { cta: String(card.cta) } : {}),
+    accent,
+    ...(card.imageUrl ? { imageUrl: String(card.imageUrl).trim() } : {}),
+    ...(card.imageAlt ? { imageAlt: String(card.imageAlt).trim() } : {}),
+  };
 }
 
 export function toEditable(blocks: MarketingPage['blocks']): Block[] {
@@ -381,11 +574,24 @@ export function toEditable(blocks: MarketingPage['blocks']): Block[] {
 
       if (b.type === 'recipientSplit') {
         for (const [k, v] of Object.entries(raw)) {
-          if (k === 'left' || k === 'right') continue;
+          if (k === 'left' || k === 'right' || k === 'items') continue;
           if (v != null && typeof v !== 'object') props[k] = String(v);
         }
-        flattenRecipientCard(raw.left, 'left', props);
-        flattenRecipientCard(raw.right, 'right', props);
+        const fromItems = Array.isArray(raw.items)
+          ? raw.items
+              .map((row, i) => cardFromUnknown(row, i))
+              .filter((row): row is NonNullable<ReturnType<typeof cardFromUnknown>> => row != null)
+          : [];
+        const items =
+          fromItems.length >= 2
+            ? fromItems
+            : [cardFromUnknown(raw.left, 0), cardFromUnknown(raw.right, 1)].filter(
+                (row): row is NonNullable<ReturnType<typeof cardFromUnknown>> => row != null,
+              );
+        if (items.length >= 2) {
+          props.itemsJson = JSON.stringify(items);
+        }
+        if (!props.grid) props.grid = '2x1';
       } else {
         for (const [k, v] of Object.entries(raw)) {
           if (k === 'products' || k === 'articles') {
@@ -467,8 +673,18 @@ export function toEditable(blocks: MarketingPage['blocks']): Block[] {
               })
               .filter(Boolean)
               .join('\n');
-          } else if (k === 'cards' && Array.isArray(v) && b.type === 'exclusiveOffers') {
+          } else if (
+            k === 'cards' &&
+            Array.isArray(v) &&
+            (b.type === 'exclusiveOffers' ||
+              b.type === 'offerCarousel' ||
+              b.type === 'featuredCarousel')
+          ) {
             props.cardsJson = JSON.stringify(v);
+          } else if (k === 'items' && Array.isArray(v) && b.type === 'thinStrip') {
+            props.items = v.map((row) => String(row ?? '').trim()).filter(Boolean).join('\n');
+          } else if (k === 'marquee') {
+            props.marquee = v === true || v === 'true' ? 'true' : 'false';
           } else if (k === 'items' && Array.isArray(v) && b.type === 'testimonials') {
             props.itemsJson = JSON.stringify(v);
           } else if (k === 'steps' && Array.isArray(v) && b.type === 'buildYourBoxTeaser') {
@@ -625,17 +841,46 @@ function payloadWithoutStyle(b: Block) {
         ...(brands.length ? { brands } : {}),
         ...(usps.length ? { usps } : {}),
         ...(b.props.showUsps === 'false' ? { showUsps: false } : { showUsps: true }),
+        ...(b.props.uspColumns === '2' || b.props.uspColumns === '3' || b.props.uspColumns === '4'
+          ? { uspColumns: Number(b.props.uspColumns) as 2 | 3 | 4 }
+          : {}),
       },
     };
   }
   if (b.type === 'recipientSplit') {
+    let parsedItems: unknown[] = [];
+    if (b.props.itemsJson?.trim()) {
+      try {
+        const parsed = JSON.parse(b.props.itemsJson) as unknown;
+        parsedItems = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        throw new Error('Shop by baby cards JSON is invalid.');
+      }
+    }
+    const fromJson = parsedItems
+      .map((row, i) => cardFromUnknown(row, i))
+      .filter((row): row is NonNullable<ReturnType<typeof cardFromUnknown>> => row != null);
+    const items =
+      fromJson.length >= 2
+        ? fromJson
+        : [nestCard('left', b.props), nestCard('right', b.props)];
+    if (items.length < 2) {
+      throw new Error('Shop by baby needs at least two cards.');
+    }
+    const grid = parseRecipientGrid(b.props.grid);
+    const stored = items.slice(0, 6);
+    const visible = stored.slice(0, RECIPIENT_GRID_MAX[grid]);
+    const left = visible[0]!;
+    const right = visible[1] ?? visible[0]!;
     return {
       type: 'recipientSplit' as const,
       props: {
         ...(b.props.title ? { title: b.props.title } : {}),
         ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
-        left: nestCard('left', b.props),
-        right: nestCard('right', b.props),
+        grid,
+        items: stored,
+        left,
+        right,
       },
     };
   }
@@ -814,7 +1059,7 @@ function payloadWithoutStyle(b: Block) {
           : {}),
       }))
       .filter((row) => row.tag && row.title && row.ctaLabel && row.ctaHref)
-      .slice(0, 3);
+      .slice(0, 6);
     if (cards.length === 0) {
       throw new Error('Exclusive offers needs at least one card.');
     }
@@ -824,6 +1069,7 @@ function payloadWithoutStyle(b: Block) {
         ...(b.props.overline ? { overline: b.props.overline } : {}),
         ...(b.props.title ? { title: b.props.title } : {}),
         ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
+        ...(b.props.columns === '2' ? { columns: 2 as const } : { columns: 3 as const }),
         cards,
       },
     };
@@ -866,6 +1112,10 @@ function payloadWithoutStyle(b: Block) {
         ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
         ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
         ...(b.props.ctaHref ? { ctaHref: b.props.ctaHref } : {}),
+        ...(b.props.display === 'marquee' || b.props.display === 'grid' || b.props.display === 'auto'
+          ? { display: b.props.display }
+          : {}),
+        ...(b.props.quoteColumns === '3' ? { quoteColumns: 3 as const } : { quoteColumns: 2 as const }),
         items,
       },
     };
@@ -883,6 +1133,134 @@ function payloadWithoutStyle(b: Block) {
         ...(b.props.expiredLabel ? { expiredLabel: b.props.expiredLabel } : {}),
         ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
         ...(b.props.ctaHref ? { ctaHref: b.props.ctaHref } : {}),
+      },
+    };
+  }
+  if (b.type === 'featuredCarousel') {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(b.props.cardsJson || '[]') as unknown;
+    } catch {
+      throw new Error('Featured carousel cards JSON is invalid.');
+    }
+    if (!Array.isArray(parsed)) {
+      throw new Error('Featured carousel cards must be a JSON array.');
+    }
+    const cards = parsed
+      .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+      .map((row, i) => {
+        const id = String(row.id ?? '').trim() || `card-${i + 1}`;
+        const hoverImageUrl = String(row.hoverImageUrl ?? '').trim();
+        const hoverVideoUrl = String(row.hoverVideoUrl ?? '').trim();
+        const gradient = String(row.gradient ?? '').trim();
+        const accent = String(row.accent ?? '').trim();
+        return {
+          id,
+          category: String(row.category ?? '').trim(),
+          kicker: String(row.kicker ?? '').trim(),
+          title: String(row.title ?? '').trim(),
+          ...(row.description ? { description: String(row.description) } : {}),
+          ...(row.imageUrl ? { imageUrl: String(row.imageUrl).trim() } : {}),
+          ...(hoverImageUrl ? { hoverImageUrl } : {}),
+          ...(hoverVideoUrl ? { hoverVideoUrl } : {}),
+          ...(gradient ? { gradient } : {}),
+          ...(accent ? { accent } : {}),
+          href: String(row.href ?? '').trim(),
+        };
+      })
+      .filter((row) => row.category && row.kicker && row.title && row.href)
+      .slice(0, 8);
+    if (cards.length === 0) {
+      throw new Error('Featured carousel needs at least one card.');
+    }
+    return {
+      type: 'featuredCarousel' as const,
+      props: {
+        ...(b.props.eyebrow ? { eyebrow: b.props.eyebrow } : {}),
+        ...(b.props.headline ? { headline: b.props.headline } : {}),
+        ...(b.props.accentWord ? { accentWord: b.props.accentWord } : {}),
+        ...(b.props.subcopy ? { subcopy: b.props.subcopy } : {}),
+        cards,
+      },
+    };
+  }
+  if (b.type === 'whatsappCta') {
+    const countryRaw = (b.props.countryCode || '+91').trim();
+    const countryCode = /^\+\d{1,4}$/.test(countryRaw) ? countryRaw : '+91';
+    return {
+      type: 'whatsappCta' as const,
+      props: {
+        title: b.props.title || "Be First to See What's New",
+        ...(b.props.eyebrow ? { eyebrow: b.props.eyebrow } : {}),
+        ...(b.props.body ? { body: b.props.body } : {}),
+        countryCode,
+        ...(b.props.placeholder ? { placeholder: b.props.placeholder } : {}),
+        ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
+        ...(b.props.disclaimer ? { disclaimer: b.props.disclaimer } : {}),
+      },
+    };
+  }
+  if (b.type === 'offerCarousel') {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(b.props.cardsJson || '[]') as unknown;
+    } catch {
+      throw new Error('Offer carousel cards JSON is invalid.');
+    }
+    if (!Array.isArray(parsed)) {
+      throw new Error('Offer carousel cards must be a JSON array.');
+    }
+    const cards = parsed
+      .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+      .map((row) => ({
+        tag: String(row.tag ?? '').trim(),
+        title: String(row.title ?? '').trim(),
+        ...(row.subtitle ? { subtitle: String(row.subtitle) } : {}),
+        ...(row.body ? { body: String(row.body) } : {}),
+        ctaLabel: String(row.ctaLabel ?? '').trim(),
+        ctaHref: String(row.ctaHref ?? '').trim(),
+        ...(row.tone === 'blush' || row.tone === 'sky' || row.tone === 'lavender'
+          ? { tone: row.tone }
+          : {}),
+        ...(row.icon === 'heart' || row.icon === 'briefcase' || row.icon === 'box'
+          ? { icon: row.icon }
+          : {}),
+      }))
+      .filter((row) => row.tag && row.title && row.ctaLabel && row.ctaHref)
+      .slice(0, 8);
+    if (cards.length === 0) {
+      throw new Error('Offer carousel needs at least one card.');
+    }
+    return {
+      type: 'offerCarousel' as const,
+      props: {
+        ...(b.props.overline ? { overline: b.props.overline } : {}),
+        ...(b.props.title ? { title: b.props.title } : {}),
+        ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
+        cards,
+      },
+    };
+  }
+  if (b.type === 'thinStrip') {
+    const tone = (['blush', 'mint', 'sky', 'soft', 'gold'] as const).includes(
+      b.props.tone as 'gold',
+    )
+      ? (b.props.tone as 'blush' | 'mint' | 'sky' | 'soft' | 'gold')
+      : 'gold';
+    const items = (b.props.items || '')
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+    return {
+      type: 'thinStrip' as const,
+      props: {
+        text: b.props.text || 'Limited-time offer',
+        ...(items.length ? { items } : {}),
+        ...(b.props.ctaLabel ? { ctaLabel: b.props.ctaLabel } : {}),
+        ...(b.props.ctaHref ? { ctaHref: b.props.ctaHref } : {}),
+        tone,
+        ...(b.props.marquee === 'true' ? { marquee: true } : {}),
       },
     };
   }
@@ -980,7 +1358,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   cta: 'Call to action',
   spacer: 'Spacer',
   brandStrip: 'Brands',
-  recipientSplit: 'Girl / boy',
+  recipientSplit: 'Shop by baby',
   discoveryChips: 'Collections',
   buildYourBoxTeaser: 'Build your box',
   articleTeasers: 'Journal',
@@ -990,6 +1368,10 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   exclusiveOffers: 'Offers',
   testimonials: 'Testimonials',
   countdown: 'Countdown',
+  featuredCarousel: 'Featured carousel',
+  whatsappCta: 'WhatsApp CTA',
+  offerCarousel: 'Offer carousel',
+  thinStrip: 'Thin sale strip',
   customSection: 'Custom section',
 };
 
@@ -998,10 +1380,29 @@ export const BLOCK_GROUPS: Array<{ id: string; label: string; types: BlockType[]
   {
     id: 'shop',
     label: 'Shop',
-    types: ['productGrid', 'discoveryChips', 'recipientSplit', 'brandStrip', 'buildYourBoxTeaser'],
+    types: [
+      'featuredCarousel',
+      'productGrid',
+      'discoveryChips',
+      'recipientSplit',
+      'brandStrip',
+      'buildYourBoxTeaser',
+    ],
   },
   { id: 'stories', label: 'Stories', types: ['articleTeasers', 'faq', 'testimonials'] },
-  { id: 'promo', label: 'Promo', types: ['saleStrip', 'exclusiveOffers', 'countdown', 'cta'] },
+  {
+    id: 'promo',
+    label: 'Promo',
+    types: [
+      'saleStrip',
+      'thinStrip',
+      'exclusiveOffers',
+      'offerCarousel',
+      'countdown',
+      'cta',
+      'whatsappCta',
+    ],
+  },
 ];
 
 export type PaletteInsert = {
@@ -1179,28 +1580,22 @@ export const FIELD_LABELS: Record<string, string> = {
   cardsJson: 'Cards',
   endsAt: 'Ends at',
   expiredLabel: 'Expired label',
+  accentWord: 'Accent word',
+  countryCode: 'Country code',
+  placeholder: 'Placeholder',
+  disclaimer: 'Disclaimer',
+  marquee: 'Marquee',
   imageAlt: 'Image alt',
   imageFit: 'Image fit',
   steps: 'Steps',
   brands: 'Brands',
   usps: 'USPs',
   showUsps: 'Show USPs',
-  leftLabel: 'Left label',
-  leftHref: 'Left link',
-  leftEyebrow: 'Left eyebrow',
-  leftBlurb: 'Left blurb',
-  leftCta: 'Left button',
-  leftAccent: 'Left accent',
-  leftImageUrl: 'Left image',
-  leftImageAlt: 'Left image alt',
-  rightLabel: 'Right label',
-  rightHref: 'Right link',
-  rightEyebrow: 'Right eyebrow',
-  rightBlurb: 'Right blurb',
-  rightCta: 'Right button',
-  rightAccent: 'Right accent',
-  rightImageUrl: 'Right image',
-  rightImageAlt: 'Right image alt',
+  uspColumns: 'USP columns',
+  grid: 'Tile layout',
+  columns: 'Columns',
+  display: 'Quotes',
+  quoteColumns: 'Quote columns',
   seeAllHref: 'See-all link',
   seeAllLabel: 'See-all label',
   limit: 'Limit',
@@ -1280,6 +1675,14 @@ export function blockSummary(block: Block): string {
       return p.title?.trim() || '';
     case 'countdown':
       return p.title?.trim() || '';
+    case 'featuredCarousel':
+      return p.headline?.trim() || '';
+    case 'whatsappCta':
+      return p.title?.trim() || '';
+    case 'offerCarousel':
+      return p.title?.trim() || '';
+    case 'thinStrip':
+      return p.text?.trim() || '';
     case 'discoveryChips':
       return p.title?.trim() || '';
     case 'brandStrip':

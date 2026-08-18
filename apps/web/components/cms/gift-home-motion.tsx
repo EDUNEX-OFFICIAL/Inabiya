@@ -19,17 +19,27 @@ export function GiftHomeMotion({ children }: { children: ReactNode }) {
       const nodes = root.current?.querySelectorAll<HTMLElement>('[data-gift-reveal]');
       if (!nodes?.length) return;
 
+      const markReady = () => {
+        nodes.forEach((el) => el.setAttribute('data-reveal-ready', ''));
+      };
+
       if (reduced) {
+        markReady();
         gsap.set(nodes, { clearProps: 'all', opacity: 1, y: 0 });
         return;
       }
 
+      // Own opacity before unlocking CSS hide (gsap.from after paint = FOUC).
+      gsap.set(nodes, { opacity: 0, y: 28, visibility: 'visible' });
+      markReady();
+
       nodes.forEach((el) => {
-        gsap.from(el, {
-          opacity: 0,
-          y: 28,
+        gsap.to(el, {
+          opacity: 1,
+          y: 0,
           duration: 0.75,
           ease: 'power2.out',
+          clearProps: 'opacity,visibility,transform',
           scrollTrigger: {
             trigger: el,
             start: 'top 88%',

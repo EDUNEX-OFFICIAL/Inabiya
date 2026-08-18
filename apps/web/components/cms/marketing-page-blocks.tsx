@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { Fragment, type ReactNode } from 'react';
+import { GiftImage } from '@/components/gift/gift-image';
+import dynamic from 'next/dynamic';
 import {
   ArrowRight,
   Baby,
@@ -18,6 +19,15 @@ import {
   Wallet,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
+import {
+  parseOfferColumns,
+  parseQuoteColumns,
+  parseRecipientAccent,
+  parseRecipientGrid,
+  parseTestimonialsDisplay,
+  parseUspColumns,
+  RECIPIENT_GRID_MAX,
+} from '@/lib/cms-section-layout';
 import {
   fetchCatalogCollections,
   isCollectionHref,
@@ -46,8 +56,13 @@ import {
   ProductCardHero,
   ProductCardThumbs,
 } from '@/components/gift/product-card-hero';
-import { CategoryCarousel } from '@/components/gift/category-carousel';
+import { parseCmsCarouselCards } from '@/components/gift/parse-cms-carousel-cards';
+import { WhatsappCtaBlock } from '@/components/cms/whatsapp-cta-block';
 import type { CmsBlockProduct, CmsPageBlock } from '@/components/cms/marketing-page-types';
+
+const CategoryCarousel = dynamic(() =>
+  import('@/components/gift/category-carousel').then((m) => ({ default: m.CategoryCarousel })),
+);
 
 export type { CmsBlockProduct, CmsPageBlock } from '@/components/cms/marketing-page-types';
 
@@ -294,8 +309,10 @@ function normalizeUspLabel(label: string): string {
 
 function UspRow({
   items,
+  columns = 4,
 }: {
   items?: Array<{ label: string; icon?: keyof typeof USP_ICON_MAP; body?: string }>;
+  columns?: 2 | 3 | 4;
 }) {
   const rows =
     items?.length && items.some((i) => i.label.trim())
@@ -319,7 +336,7 @@ function UspRow({
         title="Thoughtful extras, every order"
         subtitle="Personal notes, ready hampers, and baby-safe picks — so gifting feels easy, not overwhelming."
       />
-      <ul className="gift-usp-cards list-none">
+      <ul className="gift-usp-cards list-none" data-cols={String(columns)}>
         {rows.map(({ icon, label, body }, idx) => {
           const Icon = USP_ICON_MAP[icon] ?? Heart;
           const tone = USP_CARD_TONES[idx % USP_CARD_TONES.length] ?? 'pink';
@@ -361,7 +378,7 @@ function HeroBlock({ props, layout }: { props: Record<string, unknown>; layout: 
       <div className="relative">
         {props.imageUrl ? (
           <div className="relative mb-gs-6 h-52 w-full overflow-hidden rounded-control shadow-clay">
-            <Image
+            <GiftImage
               src={String(props.imageUrl)}
               alt=""
               fill
@@ -428,7 +445,16 @@ function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: bool
       <div className="gift-cta-split__stage">
         <div className="gift-cta-split__blob" aria-hidden />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/gift/media/gift-box.svg" alt="" className="gift-cta-split__photo" />
+        <img
+          src="/gift/media/gift-box.svg"
+          alt=""
+          width={264}
+          height={220}
+          className="gift-cta-split__photo"
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
+        />
         {highlights.length ? (
           <ul className="gift-cta-split__chips">
             {highlights.map(({ label, Icon }) => (
@@ -474,7 +500,7 @@ function ImageBlock({ props }: { props: Record<string, unknown> }) {
   return (
     <figure className="py-gs-6">
       <div className="relative max-h-[32rem] w-full overflow-hidden rounded-clay shadow-clay">
-        <Image
+        <GiftImage
           src={url}
           alt={String(props.alt ?? '')}
           width={1600}
@@ -728,7 +754,14 @@ function BrandCarouselRow({
             <span className="gift-brand-panel__icon" aria-hidden>
               {brand.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- brand marks often SVG
-                <img src={brand.logoUrl} alt="" className="gift-brand-panel__mark-img" />
+                <img
+                  src={brand.logoUrl}
+                  alt=""
+                  className="gift-brand-panel__mark-img"
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
+                />
               ) : (
                 initials
               )}
@@ -813,7 +846,7 @@ function BrandStripBlock({ props, home }: { props: Record<string, unknown>; home
 
   const body = (
     <>
-      {showUsps ? <UspRow items={usps} /> : null}
+      {showUsps ? <UspRow items={usps} columns={parseUspColumns(props.uspColumns)} /> : null}
       {showBrands ? <BrandPillPanel brands={brands} title={title} /> : null}
     </>
   );
@@ -829,12 +862,44 @@ function BrandStripBlock({ props, home }: { props: Record<string, unknown>; home
 }
 
 function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
-  const left = (props.left ?? {}) as Record<string, unknown>;
-  const right = (props.right ?? {}) as Record<string, unknown>;
-  const cards = [
-    { key: 'left', card: left },
-    { key: 'right', card: right },
-  ] as const;
+  const grid = parseRecipientGrid(props.grid);
+  const rawItems = Array.isArray(props.items) ? props.items : [];
+  const fallback = [props.left, props.right];
+  const source = rawItems.length >= 2 ? rawItems : fallback;
+  const cards = source
+    .map((row, i) => {
+      if (!row || typeof row !== 'object' || Array.isArray(row)) return null;
+      const card = row as Record<string, unknown>;
+      const label = String(card.label ?? '').trim();
+      const href = String(card.href ?? '').trim();
+      if (!label || !href) return null;
+      const accent = parseRecipientAccent(card.accent, i);
+      return {
+        key: `${href}-${i}`,
+        label,
+        href,
+        eyebrow: String(card.eyebrow ?? 'For the little'),
+        blurb: card.blurb ? String(card.blurb) : '',
+        cta: String(card.cta ?? `Shop ${label} gifts →`),
+        accent,
+        imageUrl: card.imageUrl ? String(card.imageUrl) : '',
+        imageAlt: String(card.imageAlt || `Shop gifts for ${label}`),
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row != null)
+    .slice(0, RECIPIENT_GRID_MAX[grid]);
+  if (cards.length < 2) return null;
+
+  const accentClass = {
+    pink: 'gift-recipient-card gift-recipient-card--pink',
+    sky: 'gift-recipient-card gift-recipient-card--sky',
+    mint: 'gift-recipient-card gift-recipient-card--mint',
+    lavender: 'gift-recipient-card gift-recipient-card--lavender',
+  } as const;
+  const sizes =
+    grid === '3x2'
+      ? '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+      : '(max-width: 640px) 100vw, 50vw';
 
   const body = (
     <>
@@ -843,42 +908,36 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
         title={props.title ? String(props.title) : null}
         subtitle={props.subtitle ? String(props.subtitle) : null}
       />
-      <div className="grid gap-gs-5 sm:grid-cols-2 sm:gap-gs-6">
-        {cards.map(({ key, card }) => {
-          const sky = card.accent === 'sky';
-          const blurb = card.blurb ? String(card.blurb) : null;
-          const eyebrow = String(card.eyebrow ?? 'For the little');
-          const cta = String(card.cta ?? (sky ? 'Shop boy gifts →' : 'Shop girl gifts →'));
-          const label = String(card.label ?? '');
-
+      <div className="gift-recipient-grid" data-grid={grid}>
+        {cards.map((card) => {
           if (home) {
             return (
               <Link
-                key={key}
+                key={card.key}
                 href={cmsHref(card.href, '/products')}
-                className={`gift-recipient-card group ${sky ? 'gift-recipient-card--sky' : 'gift-recipient-card--pink'}`}
-                data-testid={`recipient-${label || key}`}
+                className={`group ${accentClass[card.accent]}`}
+                data-testid={`recipient-${card.label}`}
               >
                 <div className="gift-recipient-card__media">
                   {card.imageUrl ? (
-                    <Image
-                      src={String(card.imageUrl)}
-                      alt={String(card.imageAlt || `Shop gifts for ${label || 'baby'}`)}
+                    <GiftImage
+                      src={card.imageUrl}
+                      alt={card.imageAlt}
                       fill
-                      sizes="(max-width: 640px) 100vw, 50vw"
+                      sizes={sizes}
                       className="object-cover object-center transition duration-500 group-hover:scale-[1.03]"
                     />
                   ) : (
                     <div
-                      className={`h-full w-full ${sky ? 'gift-panel-sky' : 'gift-media-fallback'}`}
+                      className={`h-full w-full ${card.accent === 'sky' ? 'gift-panel-sky' : 'gift-media-fallback'}`}
                     />
                   )}
                   <div className="gift-recipient-card__overlay" aria-hidden />
                   <div className="gift-recipient-card__copy">
-                    <p className="gift-recipient-card__eyebrow">{eyebrow}</p>
-                    <p className="gift-recipient-card__label">{label}</p>
-                    {blurb ? <p className="gift-recipient-card__blurb">{blurb}</p> : null}
-                    <span className="gift-recipient-card__cta">{cta}</span>
+                    <p className="gift-recipient-card__eyebrow">{card.eyebrow}</p>
+                    <p className="gift-recipient-card__label">{card.label}</p>
+                    {card.blurb ? <p className="gift-recipient-card__blurb">{card.blurb}</p> : null}
+                    <span className="gift-recipient-card__cta">{card.cta}</span>
                   </div>
                 </div>
               </Link>
@@ -887,14 +946,16 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
 
           return (
             <Link
-              key={key}
+              key={card.key}
               href={cmsHref(card.href, '/products')}
-              className={`${sky ? 'gift-panel-sky ' : ''}clay-panel block overflow-hidden p-gs-6 transition hover:-translate-y-px`}
+              className={`${card.accent === 'sky' ? 'gift-panel-sky ' : ''}clay-panel block overflow-hidden p-gs-6 transition hover:-translate-y-px`}
             >
-              <p className="gift-muted">{eyebrow}</p>
-              <p className={`gift-display mt-gs-1 ${sky ? 'text-info' : ''}`}>{label}</p>
-              {blurb ? <p className="gift-muted mt-gs-3">{blurb}</p> : null}
-              <p className="mt-gs-4 text-body font-medium text-foreground">{cta}</p>
+              <p className="gift-muted">{card.eyebrow}</p>
+              <p className={`gift-display mt-gs-1 ${card.accent === 'sky' ? 'text-info' : ''}`}>
+                {card.label}
+              </p>
+              {card.blurb ? <p className="gift-muted mt-gs-3">{card.blurb}</p> : null}
+              <p className="mt-gs-4 text-body font-medium text-foreground">{card.cta}</p>
             </Link>
           );
         })}
@@ -1004,16 +1065,19 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
                       src={String(a.imageUrl)}
                       alt={a.title}
                       className="absolute inset-0 h-full w-full object-contain p-gs-3 sm:p-gs-4 transition duration-300 group-hover:scale-[1.02]"
+                      loading="lazy"
+                      decoding="async"
+                      fetchPriority="low"
                     />
                   ) : (
-                    <Image
+                    <GiftImage
                       src={String(a.imageUrl)}
                       alt={a.title}
                       fill
                       sizes={
                         featured
-                          ? '(max-width: 640px) 100vw, 55vw'
-                          : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                          ? '(max-width: 640px) 100vw, 50vw'
+                          : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw'
                       }
                       className="object-cover transition duration-300 group-hover:scale-[1.02]"
                     />
@@ -1100,6 +1164,156 @@ function SaleStripBlock({ props, home }: { props: Record<string, unknown>; home?
   return (
     <section className={`gift-band gift-band--${tone}`}>
       <div className="gift-band-inner">{inner}</div>
+    </section>
+  );
+}
+
+function FeaturedCarouselBlock({ props }: { props: Record<string, unknown> }) {
+  const cards = parseCmsCarouselCards(props.cards);
+  if (!cards.length) return null;
+  const eyebrow = String(props.eyebrow ?? '').trim();
+  const headline = String(props.headline ?? '').trim();
+  const accentWord = String(props.accentWord ?? '').trim();
+  const subcopy = String(props.subcopy ?? '').trim();
+  return (
+    <CategoryCarousel
+      eyebrow={eyebrow || undefined}
+      headline={headline || undefined}
+      accentWord={accentWord || undefined}
+      subcopy={subcopy || undefined}
+      cards={cards}
+    />
+  );
+}
+
+function WhatsappCtaSection({ props }: { props: Record<string, unknown> }) {
+  const title = String(props.title ?? '').trim();
+  if (!title) return null;
+  return (
+    <div className="gift-shell-width py-gs-5">
+      <WhatsappCtaBlock
+        eyebrow={String(props.eyebrow ?? '').trim() || undefined}
+        title={title}
+        body={String(props.body ?? '').trim() || undefined}
+        countryCode={String(props.countryCode ?? '').trim() || undefined}
+        placeholder={String(props.placeholder ?? '').trim() || undefined}
+        ctaLabel={String(props.ctaLabel ?? '').trim() || undefined}
+        disclaimer={String(props.disclaimer ?? '').trim() || undefined}
+      />
+    </div>
+  );
+}
+
+function OfferCarouselBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
+  const cards = Array.isArray(props.cards)
+    ? (props.cards as Array<Record<string, unknown>>)
+        .map((c) => ({
+          tag: String(c.tag ?? '').trim(),
+          title: String(c.title ?? '').trim(),
+          subtitle: c.subtitle ? String(c.subtitle) : '',
+          body: c.body ? String(c.body) : '',
+          ctaLabel: String(c.ctaLabel ?? '').trim(),
+          ctaHref: String(c.ctaHref ?? '').trim(),
+          tone:
+            c.tone === 'sky' || c.tone === 'lavender' || c.tone === 'blush'
+              ? (c.tone as 'sky' | 'lavender' | 'blush')
+              : 'blush',
+          icon:
+            c.icon === 'briefcase' || c.icon === 'box' || c.icon === 'heart'
+              ? (c.icon as 'briefcase' | 'box' | 'heart')
+              : 'heart',
+        }))
+        .filter((c) => c.tag && c.title && c.ctaLabel && c.ctaHref)
+        .slice(0, 8)
+    : [];
+  if (!cards.length) return null;
+
+  const iconMap = { heart: Heart, briefcase: Briefcase, box: Package } as const;
+  const toneClass = {
+    blush: 'gift-offer-card gift-offer-card--blush',
+    sky: 'gift-offer-card gift-offer-card--sky',
+    lavender: 'gift-offer-card gift-offer-card--lavender',
+  } as const;
+
+  const body = (
+    <>
+      <GiftSectionHeader
+        overline={props.overline ? String(props.overline) : 'This week'}
+        title={props.title ? String(props.title) : 'Offers in motion'}
+        subtitle={props.subtitle ? String(props.subtitle) : null}
+      />
+      <ul className="gift-offers-carousel list-none">
+        {cards.map((card) => {
+          const Icon = iconMap[card.icon];
+          return (
+            <li key={`${card.tag}-${card.title}`} className={toneClass[card.tone]}>
+              <div className="gift-offer-card__top">
+                <span className="gift-offer-card__icon" aria-hidden>
+                  <Icon className="h-4 w-4" strokeWidth={1.75} />
+                </span>
+                <span className="gift-offer-card__tag">{card.tag}</span>
+              </div>
+              <p className="gift-offer-card__title">{card.title}</p>
+              {card.subtitle ? <p className="gift-offer-card__subtitle">{card.subtitle}</p> : null}
+              {card.body ? <p className="gift-offer-card__body">{card.body}</p> : null}
+              <Link
+                href={cmsHref(card.ctaHref)}
+                className="gift-offer-card__cta clay-btn-secondary inline-flex items-center gap-gs-2"
+              >
+                {card.ctaLabel}
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+
+  if (home) {
+    return <GiftBand tone="soft">{body}</GiftBand>;
+  }
+  return <section className="py-gs-4">{body}</section>;
+}
+
+function ThinStripBlock({ props }: { props: Record<string, unknown> }) {
+  const text = String(props.text ?? '').trim();
+  const extra = Array.isArray(props.items)
+    ? (props.items as unknown[]).map((row) => String(row ?? '').trim()).filter(Boolean)
+    : [];
+  const lines = extra.length ? extra : text ? [text] : [];
+  if (!lines.length) return null;
+
+  const ctaLabel = props.ctaLabel ? String(props.ctaLabel) : '';
+  const ctaHref = props.ctaHref ? String(props.ctaHref) : '';
+  const rawTone = String(props.tone ?? 'gold');
+  const tone =
+    rawTone === 'blush' ||
+    rawTone === 'mint' ||
+    rawTone === 'sky' ||
+    rawTone === 'soft' ||
+    rawTone === 'gold'
+      ? rawTone
+      : 'gold';
+  const marquee = props.marquee === true || props.marquee === 'true';
+  const loop = marquee && lines.length > 0 ? [...lines, ...lines] : lines;
+
+  return (
+    <section className={`gift-thin-strip gift-thin-strip--${tone}`} data-testid="thin-strip">
+      <div className="gift-thin-strip__inner">
+        <div className={marquee ? 'gift-thin-strip__marquee' : 'gift-thin-strip__static'}>
+          {loop.map((line, i) => (
+            <span key={`${line}-${i}`} className="gift-thin-strip__item">
+              {line}
+            </span>
+          ))}
+        </div>
+        {ctaLabel && ctaHref ? (
+          <Link href={cmsHref(ctaHref)} className="gift-thin-strip__cta">
+            {ctaLabel}
+          </Link>
+        ) : null}
+      </div>
     </section>
   );
 }
@@ -1305,7 +1519,7 @@ async function DiscoveryChipsBlock({
                   <div className="gift-category-card__sticker">
                     <div className="gift-category-card__media">
                       {item.imageUrl ? (
-                        <Image
+                        <GiftImage
                           src={item.imageUrl}
                           alt={item.imageAlt || item.label}
                           fill
@@ -1466,7 +1680,7 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
               : 'heart',
         }))
         .filter((c) => c.tag && c.title && c.ctaLabel && c.ctaHref)
-        .slice(0, 3)
+        .slice(0, 6)
     : [];
   if (!cards.length) return null;
 
@@ -1477,6 +1691,7 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
     sky: 'gift-offer-card gift-offer-card--sky',
     lavender: 'gift-offer-card gift-offer-card--lavender',
   } as const;
+  const columns = parseOfferColumns(props.columns);
 
   const body = (
     <>
@@ -1485,7 +1700,7 @@ function ExclusiveOffersBlock({ props, home }: { props: Record<string, unknown>;
         title={props.title ? String(props.title) : 'Exclusive Offers for Every Occasion'}
         subtitle={props.subtitle ? String(props.subtitle) : null}
       />
-      <ul className="gift-offers-grid list-none">
+      <ul className="gift-offers-grid list-none" data-cols={String(columns)}>
         {cards.map((card) => {
           const Icon = iconMap[card.icon];
           return (
@@ -1550,7 +1765,8 @@ function TestimonialsBlock({ props, home }: { props: Record<string, unknown>; ho
     : 'Honest notes from recent gifts — personal, on-budget, and actually useful.';
   const ctaLabel = typeof props.ctaLabel === 'string' ? props.ctaLabel.trim() : '';
   const ctaHref = typeof props.ctaHref === 'string' ? props.ctaHref.trim() : '';
-  const useMarquee = items.length >= 4;
+  const useMarquee = parseTestimonialsDisplay(props.display, items.length) === 'marquee';
+  const quoteColumns = parseQuoteColumns(props.quoteColumns);
   const leftCol = items.filter((_, i) => i % 2 === 0);
   const rightCol = items.filter((_, i) => i % 2 === 1);
 
@@ -1578,6 +1794,7 @@ function TestimonialsBlock({ props, home }: { props: Record<string, unknown>; ho
         <div className="gift-testimonials__stage">
           <div
             className="gift-testimonials__viewport gift-testimonials__viewport--desktop"
+            role="region"
             tabIndex={0}
             aria-label="Parent testimonials"
           >
@@ -1586,6 +1803,7 @@ function TestimonialsBlock({ props, home }: { props: Record<string, unknown>; ho
           </div>
           <div
             className="gift-testimonials__viewport gift-testimonials__viewport--mobile"
+            role="region"
             tabIndex={0}
             aria-label="Parent testimonials"
           >
@@ -1593,7 +1811,7 @@ function TestimonialsBlock({ props, home }: { props: Record<string, unknown>; ho
           </div>
         </div>
       ) : (
-        <ul className="gift-testimonials-grid list-none">
+        <ul className="gift-testimonials-grid list-none" data-cols={String(quoteColumns)}>
           {items.map((item) => (
             <TestimonialCard key={`${item.author}-${item.quote.slice(0, 24)}`} item={item} />
           ))}
@@ -1670,6 +1888,18 @@ function renderRestBlock(
   if (b.type === 'saleStrip') {
     return wrapStyle(b.props, <SaleStripBlock props={b.props} home={home} />, b.id);
   }
+  if (b.type === 'thinStrip') {
+    return wrapStyle(b.props, <ThinStripBlock props={b.props} />, b.id);
+  }
+  if (b.type === 'featuredCarousel') {
+    return wrapStyle(b.props, <FeaturedCarouselBlock props={b.props} />, b.id);
+  }
+  if (b.type === 'whatsappCta') {
+    return wrapStyle(b.props, <WhatsappCtaSection props={b.props} />, b.id);
+  }
+  if (b.type === 'offerCarousel') {
+    return wrapStyle(b.props, <OfferCarouselBlock props={b.props} home={home} />, b.id);
+  }
   if (b.type === 'countdown') {
     return wrapStyle(b.props, <CountdownBlock props={b.props} home={home} />, b.id);
   }
@@ -1714,7 +1944,6 @@ export function MarketingPageBlocks({
         ))}
         <GiftHomeMotion>
           <div className="space-y-0">
-            <CategoryCarousel />
             {rest.map((b) => renderRestBlock(b, 'home', productBandIndex))}
           </div>
         </GiftHomeMotion>

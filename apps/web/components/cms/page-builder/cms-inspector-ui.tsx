@@ -51,9 +51,15 @@ export function inspectorFieldGroup(key: string): 'layout' | 'content' | 'action
     key === 'size' ||
     key === 'imageFit' ||
     key === 'tone' ||
+    key === 'marquee' ||
     key === 'source' ||
     key === 'hamper' ||
-    key === 'showUsps'
+    key === 'showUsps' ||
+    key === 'grid' ||
+    key === 'uspColumns' ||
+    key === 'columns' ||
+    key === 'display' ||
+    key === 'quoteColumns'
   ) {
     return 'layout';
   }
@@ -75,13 +81,9 @@ export function inspectorFieldGroup(key: string): 'layout' | 'content' | 'action
     key === 'imageUrl2' ||
     key === 'imageUrl3' ||
     key === 'bgImageUrl' ||
-    key === 'leftImageUrl' ||
-    key === 'rightImageUrl' ||
     key === 'alt' ||
     key === 'caption' ||
-    key === 'imageAlt' ||
-    key === 'leftImageAlt' ||
-    key === 'rightImageAlt'
+    key === 'imageAlt'
   ) {
     return 'media';
   }
@@ -96,3 +98,58 @@ export const INSPECTOR_GROUP_TITLE: Record<(typeof INSPECTOR_GROUP_ORDER)[number
   actions: 'Buttons',
   media: 'Media',
 };
+
+export function RepeatableRow({
+  label,
+  onMove,
+  onRemove,
+  children,
+}: {
+  label: string;
+  onMove: (dir: -1 | 1) => void;
+  onRemove: () => void;
+  children: ReactNode;
+}) {
+  const btn =
+    'inline-flex h-6 w-6 items-center justify-center rounded text-[11px] text-[var(--muted-foreground)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]';
+  return (
+    <div className="space-y-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] p-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] font-medium text-[var(--muted-foreground)]">{label}</p>
+        <div className="flex shrink-0">
+          <button type="button" className={btn} onClick={() => onMove(-1)} aria-label="Move up">
+            ↑
+          </button>
+          <button type="button" className={btn} onClick={() => onMove(1)} aria-label="Move down">
+            ↓
+          </button>
+          <button type="button" className={btn} onClick={onRemove} aria-label="Remove">
+            ×
+          </button>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function RepeatableAdd({
+  label,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="w-full rounded-lg border border-dashed border-[var(--border-subtle)] px-2 py-1.5 text-xs font-medium text-[var(--muted-foreground)] hover:border-[var(--primary)] hover:text-[var(--foreground)] disabled:opacity-40"
+    >
+      {label}
+    </button>
+  );
+}

@@ -7,9 +7,10 @@ import { ArrowRight, Gift, HeartHandshake, ShieldCheck, Truck } from 'lucide-rea
 import { runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
 import { HeroMedia } from '@/components/cms/hero-media';
 import { GiftResponsiveLink } from '@/components/gift/gift-responsive-cta';
+import { preferPublicHeroSrc } from '@/lib/public-hero';
 import type { SectionStyle } from '@/components/cms/section-style';
 
-const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.jpg';
+const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.webp';
 
 const DEFAULT_TRUST = [
   'Baby-safe brands',
@@ -99,18 +100,23 @@ export function GiftStorefrontHero({
   style,
 }: GiftStorefrontHeroProps) {
   const containerRef = useRef<HTMLElement>(null);
-  const photoSrc = imageUrl?.trim() || DEFAULT_HERO_IMAGE;
+  const photoSrc = preferPublicHeroSrc(imageUrl?.trim() || DEFAULT_HERO_IMAGE);
   const trustChips = parseTrustChips(trustLine);
   const eyebrowText = eyebrow?.trim() || 'Personalised baby gifting';
   const accent = accentWord?.trim() || (/\bjoy\b/i.test(headline) ? 'joy' : undefined);
   const [photoReady, setPhotoReady] = useState(false);
+  const enteredSrc = useRef<string | null>(null);
 
   const markPhotoReady = useCallback(() => {
     setPhotoReady(true);
   }, []);
 
+  const prevPhotoSrc = useRef(photoSrc);
   useEffect(() => {
+    if (prevPhotoSrc.current === photoSrc) return;
+    prevPhotoSrc.current = photoSrc;
     setPhotoReady(false);
+    enteredSrc.current = null;
   }, [photoSrc]);
 
   // Don't leave hero permanently hidden if decode stalls
@@ -125,6 +131,8 @@ export function GiftStorefrontHero({
       if (!photoReady) return;
       const root = containerRef.current;
       if (!root) return;
+      if (enteredSrc.current === photoSrc && root.hasAttribute('data-hero-ready')) return;
+      enteredSrc.current = photoSrc;
 
       return runGiftHeroEntrance(root, {
         wash: root.querySelector('.gift-hero-split__wash'),

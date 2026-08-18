@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getStoredAccessToken } from '@/lib/auth-client';
-import { cartApi, fetchCart, formatInr, type CartDto } from '@/lib/cart-client';
+import { cartApi, fetchCart, formatCartCoupons, formatInr, type CartDto } from '@/lib/cart-client';
+import { CartCouponField } from '@/components/gift/cart-coupon-field';
 import { GiftListSkeleton } from '@/components/gift/gift-skeletons';
 import { LineThumb } from '@/components/gift/line-thumb';
 
@@ -19,7 +20,7 @@ export default function CartPage() {
     fetchCart(getStoredAccessToken())
       .then((c) => {
         setCart(c);
-        if (c.couponCode) setCoupon(c.couponCode);
+        setCoupon('');
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load cart'));
   }, []);
@@ -71,16 +72,17 @@ export default function CartPage() {
         authToken: getStoredAccessToken(),
       });
       setCart(updated);
-      setCoupon(updated.couponCode ?? code.toUpperCase());
+      setCoupon('');
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid coupon');
     }
   }
 
-  async function removeCoupon() {
+  async function removeCoupon(code?: string) {
     try {
-      const updated = await cartApi<CartDto>('/cart/coupon', {
+      const qs = code ? `?code=${encodeURIComponent(code)}` : '';
+      const updated = await cartApi<CartDto>(`/cart/coupon${qs}`, {
         method: 'DELETE',
         authToken: getStoredAccessToken(),
       });
@@ -193,41 +195,14 @@ export default function CartPage() {
 
           <aside className="checkout-section checkout-section--soft lg:sticky lg:top-[calc(var(--gift-sticky-offset)+var(--space-4))]">
             <h2 className="gift-h2">Summary</h2>
-            <div className="mt-gs-4 flex flex-col gap-gs-2 sm:flex-row sm:items-end">
-              <label className="block min-w-0 flex-1 text-body">
-                Coupon
-                <input
-                  className="clay-input"
-                  value={coupon}
-                  onChange={(e) => setCoupon(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (!cart.couponCode) void applyCoupon();
-                    }
-                  }}
-                  placeholder="Code"
-                  disabled={Boolean(cart.couponCode)}
-                  autoCapitalize="characters"
-                />
-              </label>
-              {cart.couponCode ? (
-                <button
-                  type="button"
-                  onClick={() => void removeCoupon()}
-                  className="clay-btn-ghost text-danger"
-                >
-                  Remove
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void applyCoupon()}
-                  className="clay-btn-secondary w-full sm:w-auto"
-                >
-                  Apply
-                </button>
-              )}
+            <div className="mt-gs-4">
+              <CartCouponField
+                cart={cart}
+                draft={coupon}
+                onDraft={setCoupon}
+                onApply={() => void applyCoupon()}
+                onRemove={(code) => void removeCoupon(code)}
+              />
             </div>
 
             <dl className="mt-gs-5 space-y-gs-2 text-body">
@@ -237,7 +212,7 @@ export default function CartPage() {
               </div>
               {(cart.discountPaise ?? 0) > 0 ? (
                 <div className="flex justify-between gap-gs-3 text-success">
-                  <dt>Discount ({cart.couponCode})</dt>
+                  <dt>Discount{formatCartCoupons(cart) ? ` (${formatCartCoupons(cart)})` : ''}</dt>
                   <dd>−{formatInr(cart.discountPaise!)}</dd>
                 </div>
               ) : null}

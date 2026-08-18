@@ -37,18 +37,32 @@ export function resolveTestimonialDated(author: string, dated: string): string {
   return TESTIMONIAL_FALLBACK_DATES[author] ?? '';
 }
 
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
+
 export function formatTestimonialDate(raw: string): { label: string; dateTime?: string } {
   const trimmed = raw.trim();
   if (!trimmed) return { label: '' };
   const ms = Date.parse(trimmed);
   if (Number.isNaN(ms)) return { label: trimmed };
+  const d = new Date(ms);
+  // UTC so Node ICU vs Chrome Intl cannot drift (React #425).
+  const label = `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   return {
-    label: new Intl.DateTimeFormat('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }).format(ms),
-    dateTime: trimmed.length <= 10 ? trimmed : new Date(ms).toISOString().slice(0, 10),
+    label,
+    dateTime: trimmed.length <= 10 ? trimmed : d.toISOString().slice(0, 10),
   };
 }
 

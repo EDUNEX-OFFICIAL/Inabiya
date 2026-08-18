@@ -1094,8 +1094,99 @@ async function main() {
       },
     },
     {
-      type: 'saleStrip',
+      type: 'featuredCarousel',
       sortOrder: 1,
+      props: {
+        eyebrow: 'Explore Inabiya',
+        headline: 'A different way to gift',
+        accentWord: 'gift',
+        subcopy:
+          'Swipe through the ways to gift with Inabiya — create, develop and explore, all in one place.',
+        cards: [
+          {
+            id: 'build-box',
+            category: 'Create',
+            kicker: 'Gift Builder',
+            title: 'Build Your Box',
+            description:
+              'Design a bespoke baby box in six gentle steps — pick recipient, age, occasion & budget, we curate the rest.',
+            imageUrl: 'https://images.unsplash.com/photo-1622290291720-ac961c43ee30?w=800&q=85',
+            hoverImageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=85',
+            gradient: 'linear-gradient(150deg,#FF6B9D 0%,#FFB5D0 55%,#FFE0EC 100%)',
+            accent: '#7C1D3C',
+            href: '/build-your-box',
+          },
+          {
+            id: 'keepsakes',
+            category: 'Create',
+            kicker: 'Personalised',
+            title: 'Name & Note Keepsakes',
+            description:
+              "Add the baby's name, a handwritten gift note and a ribbon colour to make every hamper unmistakably theirs.",
+            imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800&q=85',
+            hoverImageUrl: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&q=85',
+            gradient: 'linear-gradient(150deg,#E8D5F5 0%,#F5C8E4 55%,#FFE0EC 100%)',
+            accent: '#5B21B6',
+            href: '/build-your-box',
+          },
+          {
+            id: 'milestone-toys',
+            category: 'Develop',
+            kicker: 'Play & Learn',
+            title: 'Milestone Toys',
+            description:
+              'Montessori-inspired wooden toys that grow with baby — sensory, safe and beautifully made for little hands.',
+            imageUrl: 'https://images.unsplash.com/photo-1609811645795-f72ea07f47e9?w=800&q=85',
+            hoverImageUrl: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&q=85',
+            gradient: 'linear-gradient(150deg,#B5EAD7 0%,#D9F5E9 55%,#E0F7EE 100%)',
+            accent: '#0F5132',
+            href: '/collections/bestsellers',
+          },
+          {
+            id: 'first-year',
+            category: 'Develop',
+            kicker: 'Essentials',
+            title: 'First-Year Essentials',
+            description:
+              'Clothing, bath, skincare and feeding staples from baby-safe brands parents actually trust — all in one place.',
+            imageUrl: 'https://images.unsplash.com/photo-1522771930-78848d9293e8?w=800&q=85',
+            hoverImageUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=800&q=85',
+            gradient: 'linear-gradient(150deg,#7DD3FC 0%,#BAE6FD 55%,#E0F2FE 100%)',
+            accent: '#0C4A6E',
+            href: '/collections/newborn',
+          },
+          {
+            id: 'ready-hampers',
+            category: 'Explore',
+            kicker: 'Ready to Gift',
+            title: 'Ready-Made Hampers',
+            description:
+              'Beautifully packed, occasion-ready hampers with complimentary wrapping — order in a tap, delivered across India.',
+            imageUrl: 'https://images.unsplash.com/photo-1635874714425-c342060a4c58?w=800&q=85',
+            hoverImageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=85',
+            gradient: 'linear-gradient(150deg,#FFD166 0%,#FFE3A3 55%,#FFF4D6 100%)',
+            accent: '#7C4A03',
+            href: '/collections/ready-hampers',
+          },
+          {
+            id: 'corporate',
+            category: 'Explore',
+            kicker: 'For Teams',
+            title: 'Corporate Gifting',
+            description:
+              'Thoughtful welcome-baby gifts for your people — branded cards, bulk pricing and PAN-India delivery.',
+            imageUrl: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=800&q=85',
+            hoverImageUrl: 'https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=800&q=85',
+            gradient: 'linear-gradient(150deg,#C7D2FE 0%,#DDD6FE 55%,#EDE9FE 100%)',
+            accent: '#3730A3',
+            href: '/corporate',
+          },
+        ],
+      },
+    },
+    {
+      type: 'saleStrip',
+      sortOrder: 2,
       props: {
         text: 'Free personalisation on gift boxes this week',
         ctaLabel: 'Shop bestsellers →',
@@ -1105,7 +1196,7 @@ async function main() {
     },
     {
       type: 'brandStrip',
-      sortOrder: 2,
+      sortOrder: 3,
       props: {
         title: 'Trusted baby & kids brands we stock',
         showUsps: false,
@@ -1129,10 +1220,33 @@ async function main() {
     },
     {
       type: 'recipientSplit',
-      sortOrder: 3,
+      sortOrder: 4,
       props: {
         title: 'Shop by baby',
         subtitle: 'Curated palettes, unisex-safe products.',
+        grid: '2x1',
+        items: [
+          {
+            label: 'girl',
+            href: '/collections/for-baby-girl',
+            eyebrow: 'For the little',
+            blurb: 'Blush ribbons, gentle pastels, gender-neutral picks.',
+            cta: 'Shop girl gifts →',
+            accent: 'pink',
+            imageUrl: media.girl,
+            imageAlt: 'Baby girl with soft toys',
+          },
+          {
+            label: 'boy',
+            href: '/collections/for-baby-boy',
+            eyebrow: 'For the little',
+            blurb: 'Sky ribbons, soft brights, gender-neutral picks.',
+            cta: 'Shop boy gifts →',
+            accent: 'sky',
+            imageUrl: media.boy,
+            imageAlt: 'Wooden train set for little boys',
+          },
+        ],
         left: {
           label: 'girl',
           href: '/collections/for-baby-girl',
@@ -1157,7 +1271,7 @@ async function main() {
     },
     {
       type: 'brandStrip',
-      sortOrder: 4,
+      sortOrder: 5,
       props: {
         showUsps: true,
         usps: [
@@ -1186,7 +1300,7 @@ async function main() {
     },
     {
       type: 'productGrid',
-      sortOrder: 5,
+      sortOrder: 6,
       props: {
         source: 'bestsellers',
         overline: 'Parents love these',
@@ -1199,7 +1313,7 @@ async function main() {
     },
     {
       type: 'exclusiveOffers',
-      sortOrder: 6,
+      sortOrder: 7,
       props: {
         overline: 'Limited-time benefits',
         title: 'Exclusive Offers for Every Occasion',
@@ -1239,7 +1353,7 @@ async function main() {
     },
     {
       type: 'discoveryChips',
-      sortOrder: 7,
+      sortOrder: 8,
       props: {
         title: 'Shop by collection',
         seeAllHref: '/products',
@@ -1288,7 +1402,7 @@ async function main() {
     },
     {
       type: 'productGrid',
-      sortOrder: 8,
+      sortOrder: 9,
       props: {
         source: 'new',
         overline: 'Just landed',
@@ -1302,7 +1416,7 @@ async function main() {
     },
     {
       type: 'discoveryChips',
-      sortOrder: 9,
+      sortOrder: 10,
       props: {
         title: 'Shop by occasion',
         seeAllHref: '/products',
@@ -1337,7 +1451,7 @@ async function main() {
     },
     {
       type: 'discoveryChips',
-      sortOrder: 10,
+      sortOrder: 11,
       props: {
         title: 'Shop by age',
         seeAllHref: '/products',
@@ -1366,7 +1480,7 @@ async function main() {
     },
     {
       type: 'productGrid',
-      sortOrder: 11,
+      sortOrder: 12,
       props: {
         source: 'on_sale',
         overline: 'Limited deals',
@@ -1379,7 +1493,7 @@ async function main() {
     },
     {
       type: 'productGrid',
-      sortOrder: 12,
+      sortOrder: 13,
       props: {
         source: 'editors',
         overline: 'Curated',
@@ -1392,7 +1506,7 @@ async function main() {
     },
     {
       type: 'productGrid',
-      sortOrder: 13,
+      sortOrder: 14,
       props: {
         source: 'manual',
         overline: 'Trending',
@@ -1413,7 +1527,7 @@ async function main() {
     },
     {
       type: 'buildYourBoxTeaser',
-      sortOrder: 14,
+      sortOrder: 15,
       props: {
         overline: '6-step gift builder',
         title: 'Customise a box just for them.',
@@ -1432,7 +1546,7 @@ async function main() {
     },
     {
       type: 'productGrid',
-      sortOrder: 15,
+      sortOrder: 16,
       props: {
         source: 'auto',
         overline: 'Hampers',
@@ -1446,7 +1560,7 @@ async function main() {
     },
     {
       type: 'cta',
-      sortOrder: 16,
+      sortOrder: 17,
       props: {
         title: 'Corporate & bulk gifting',
         body: 'Welcome-baby hampers for your team — branded cards, volume pricing, PAN-India delivery.',
@@ -1457,7 +1571,7 @@ async function main() {
     },
     {
       type: 'testimonials',
-      sortOrder: 17,
+      sortOrder: 18,
       props: {
         overline: 'Parent love',
         title: 'Loved by new parents across India',
@@ -1558,7 +1672,7 @@ async function main() {
     },
     {
       type: 'articleTeasers',
-      sortOrder: 18,
+      sortOrder: 19,
       props: {
         overline: 'Journal',
         title: 'From the parenting journal',
@@ -1570,7 +1684,7 @@ async function main() {
     },
     {
       type: 'faq',
-      sortOrder: 19,
+      sortOrder: 20,
       props: {
         overline: 'Help',
         title: 'Frequently asked questions',

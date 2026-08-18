@@ -2,7 +2,13 @@ import { randomUUID } from 'crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CartStatus, ProductStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
-import { CouponService } from '../promotions/coupon.service';
+import { CouponService, type CouponValidateContext } from '../promotions/coupon.service';
+import {
+  couponLayer,
+  formatCouponLabel,
+  nestedDiscountPaise,
+  type CouponCartLine,
+} from '../promotions/coupon-lifecycle';
 import { shippingPaise } from '../commerce-pricing';
 import { selectBuyNowItems } from './buy-now-slice';
 import { assertCartPersonalization } from './assert-cart-personalization';
@@ -58,6 +64,64 @@ function readGiftOptions(raw: unknown) {
         : undefined,
     wrap: choices(root.wrap),
     ribbon: choices(root.ribbon),
+  };
+}
+
+function couponLinesFromItems(
+  items: Array<{
+    productId: string;
+    collectionIds: string[];
+    lineTotalPaise: number;
+    quantity: number;
+    onSale: boolean;
+    recipientTags: string[];
+    ageBands: string[];
+    occasionTags: string[];
+    isReadyMadeHamper: boolean;
+    storefrontLabels: string[];
+    brandName: string | null;
+    productTitle: string;
+  }>,
+): CouponCartLine[] {
+  return items.map((i) => ({
+    productId: i.productId,
+    collectionIds: i.collectionIds,
+    lineTotalPaise: i.lineTotalPaise,
+    quantity: i.quantity,
+    onSale: i.onSale,
+    recipientTags: i.recipientTags,
+    ageBands: i.ageBands,
+    occasionTags: i.occasionTags,
+    isReadyMadeHamper: i.isReadyMadeHamper,
+    storefrontLabels: i.storefrontLabels,
+    brandName: i.brandName,
+    title: i.productTitle,
+  }));
+}
+
+function couponFailReason(err: unknown): string {
+  if (err instanceof BadRequestException) {
+    const body = err.getResponse();
+    if (
+      typeof body === 'object' &&
+      body &&
+      'message' in body &&
+      typeof (body as { message: unknown }).message === 'string'
+    ) {
+      return (body as { message: string }).message;
+    }
+  }
+  return 'Coupon no longer valid for this cart.';
+}
+
+function stackDtoFields(lineCode: string | null, cartCode: string | null) {
+  const couponCodes = [lineCode, cartCode].filter((c): c is string => Boolean(c));
+  return {
+    lineCouponCode: lineCode,
+    cartCouponCode: cartCode,
+    couponCodes,
+    couponCode: cartCode ?? lineCode,
+    couponLabel: formatCouponLabel(lineCode, cartCode),
   };
 }
 
@@ -309,27 +373,64 @@ export class CartService {
 
   async applyCoupon(userId: string | undefined, guestToken: string | undefined, code: string) {
     const cartDto = await this.getOrCreate(userId, guestToken);
-    await this.coupons.validate(
-      code,
-      cartDto.subtotalPaise,
-      cartDto.items.map((i) => ({
-        productId: i.productId,
-        collectionIds: i.collectionIds,
-        lineTotalPaise: i.lineTotalPaise,
-      })),
-    );
+    const lines = couponLinesFromItems(cartDto.items);
+    const ctx: CouponValidateContext = { userId };
+    const result = await this.coupons.validate(code, cartDto.subtotalPaise, lines, ctx);
+    const layer = couponLayer(result.scope);
+
+    let lineCode = cartDto.lineCouponCode ?? null;
+    let cartCode = cartDto.cartCouponCode ?? null;
+
+    if (layer === 'line') {
+      lineCode = result.code;
+    } else {
+      if (lineCode) {
+        let lineDiscount = 0;
+        try {
+          const lineRes = await this.coupons.validate(lineCode, cartDto.subtotalPaise, lines, ctx);
+          lineDiscount = lineRes.discountPaise;
+        } catch {
+          lineCode = null;
+        }
+        if (lineCode) {
+          await this.coupons.validate(code, cartDto.subtotalPaise, lines, {
+            ...ctx,
+            discountBasePaise: cartDto.subtotalPaise - lineDiscount,
+          });
+        }
+      }
+      cartCode = result.code;
+    }
+
     await this.prisma.cart.update({
       where: { id: cartDto.id },
-      data: { couponCode: code.toUpperCase() },
+      data: { couponCode: cartCode, lineCouponCode: lineCode },
     });
     return this.getOrCreate(userId, cartDto.guestToken ?? guestToken);
   }
 
-  async removeCoupon(userId: string | undefined, guestToken: string | undefined) {
+  async removeCoupon(
+    userId: string | undefined,
+    guestToken: string | undefined,
+    code?: string,
+  ) {
     const cartDto = await this.getOrCreate(userId, guestToken);
+    const target = code?.trim().toUpperCase();
+    let lineCode = cartDto.lineCouponCode ?? null;
+    let cartCode = cartDto.cartCouponCode ?? null;
+
+    if (!target) {
+      lineCode = null;
+      cartCode = null;
+    } else if (lineCode === target) {
+      lineCode = null;
+    } else if (cartCode === target) {
+      cartCode = null;
+    }
+
     await this.prisma.cart.update({
       where: { id: cartDto.id },
-      data: { couponCode: null },
+      data: { couponCode: cartCode, lineCouponCode: lineCode },
     });
     return this.getOrCreate(userId, cartDto.guestToken ?? guestToken);
   }
@@ -416,7 +517,10 @@ export class CartService {
         shippingPaise: ship,
         taxPaise: 0,
         totalPaise: subtotalAfterDiscount + ship,
-        couponCode: mapped.couponCode,
+        couponCode: mapped.cartCouponCode ?? null,
+        lineCouponCode: mapped.lineCouponCode ?? null,
+        couponCodes: mapped.couponCodes ?? [],
+        couponLabel: mapped.couponLabel ?? null,
       };
     }
 
@@ -426,92 +530,155 @@ export class CartService {
       throw new BadRequestException({ code: 'EMPTY_CART', message: 'Cart is empty.' });
     }
     const subtotalPaise = items.reduce((s, i) => s + i.lineTotalPaise, 0);
-    let discountPaise = 0;
-    let couponCode = mapped.couponCode;
-    if (mapped.couponCode) {
-      try {
-        const coupon = await this.coupons.validate(
-          mapped.couponCode,
-          subtotalPaise,
-          items.map((i) => ({
-            productId: i.productId,
-            collectionIds: i.collectionIds,
-            lineTotalPaise: i.lineTotalPaise,
-          })),
-        );
-        discountPaise = coupon.discountPaise;
-      } catch {
-        couponCode = null;
-        discountPaise = 0;
-      }
-    }
-    const subtotalAfterDiscount = subtotalPaise - discountPaise;
+    const quoted = await this.quoteStack({
+      cartId: cart.id,
+      storedCartCode: mapped.cartCouponCode,
+      storedLineCode: mapped.lineCouponCode,
+      subtotalPaise,
+      lines: couponLinesFromItems(items),
+      ctx: { userId: cart.userId, shippingMethod },
+      persist: false,
+    });
+    const subtotalAfterDiscount = subtotalPaise - quoted.discountPaise;
     const ship = shippingPaise(shippingMethod, subtotalAfterDiscount);
     return {
       subtotalPaise,
-      discountPaise,
+      discountPaise: quoted.discountPaise,
       shippingPaise: ship,
       taxPaise: 0,
       totalPaise: subtotalAfterDiscount + ship,
-      couponCode,
+      couponCode: quoted.cartCode,
+      lineCouponCode: quoted.lineCode,
+      couponCodes: quoted.couponCodes,
+      couponLabel: quoted.couponLabel,
     };
   }
 
   /** Cart DTO with live coupon discount (same rules as checkout preview). */
   private async toCartDto(cart: Parameters<CartService['mapCart']>[0], guestToken?: string) {
     const mapped = this.mapCart(cart, guestToken);
-    let discountPaise = 0;
-    let couponCode = mapped.couponCode;
-    let couponRemoved = false;
-    let couponRemovedReason: string | null = null;
-    if (mapped.couponCode) {
-      try {
-        const coupon = await this.coupons.validate(
-          mapped.couponCode,
-          mapped.subtotalPaise,
-          mapped.items.map((i) => ({
-            productId: i.productId,
-            collectionIds: i.collectionIds,
-            lineTotalPaise: i.lineTotalPaise,
-          })),
-        );
-        discountPaise = coupon.discountPaise;
-      } catch (err) {
-        await this.prisma.cart.update({
-          where: { id: cart.id },
-          data: { couponCode: null },
-        });
-        couponCode = null;
-        couponRemoved = true;
-        couponRemovedReason = 'Coupon no longer valid for this cart.';
-        if (err instanceof BadRequestException) {
-          const body = err.getResponse();
-          if (
-            typeof body === 'object' &&
-            body &&
-            'message' in body &&
-            typeof (body as { message: unknown }).message === 'string'
-          ) {
-            couponRemovedReason = (body as { message: string }).message;
-          }
-        }
-      }
-    }
+    const quoted = await this.quoteStack({
+      cartId: cart.id,
+      storedCartCode: mapped.cartCouponCode,
+      storedLineCode: mapped.lineCouponCode,
+      subtotalPaise: mapped.subtotalPaise,
+      lines: couponLinesFromItems(mapped.items),
+      ctx: { userId: cart.userId },
+      persist: true,
+    });
     return {
       ...mapped,
-      couponCode,
-      discountPaise,
-      totalPaise: mapped.subtotalPaise - discountPaise,
-      couponRemoved,
-      couponRemovedReason,
+      ...stackDtoFields(quoted.lineCode, quoted.cartCode),
+      discountPaise: quoted.discountPaise,
+      totalPaise: mapped.subtotalPaise - quoted.discountPaise,
+      couponRemoved: quoted.stripped,
+      couponRemovedReason: quoted.reason,
+    };
+  }
+
+  private async quoteStack(input: {
+    cartId: string;
+    storedCartCode: string | null;
+    storedLineCode: string | null;
+    subtotalPaise: number;
+    lines: CouponCartLine[];
+    ctx: CouponValidateContext;
+    persist: boolean;
+  }) {
+    let lineCode: string | null = input.storedLineCode;
+    let cartCode: string | null = input.storedCartCode;
+    let lineDiscount = 0;
+    let cartDiscount = 0;
+    let stripped = false;
+    let reason: string | null = null;
+
+    const tryCode = async (code: string, discountBasePaise?: number) =>
+      this.coupons.validate(code, input.subtotalPaise, input.lines, {
+        ...input.ctx,
+        ...(discountBasePaise != null ? { discountBasePaise } : {}),
+      });
+
+    if (lineCode) {
+      try {
+        const r = await tryCode(lineCode);
+        if (couponLayer(r.scope) === 'line') {
+          lineDiscount = r.discountPaise;
+          lineCode = r.code;
+        } else {
+          cartCode = cartCode ?? r.code;
+          cartDiscount = r.discountPaise;
+          lineCode = null;
+        }
+      } catch (err) {
+        lineCode = null;
+        stripped = true;
+        reason = couponFailReason(err);
+      }
+    }
+
+    if (cartCode && cartCode !== lineCode) {
+      try {
+        if (!lineCode) {
+          const r = await tryCode(cartCode);
+          if (couponLayer(r.scope) === 'line') {
+            lineCode = r.code;
+            lineDiscount = r.discountPaise;
+            cartCode = null;
+            cartDiscount = 0;
+          } else {
+            cartCode = r.code;
+            cartDiscount = r.discountPaise;
+          }
+        } else {
+          const remaining = input.subtotalPaise - lineDiscount;
+          const r = await tryCode(cartCode, remaining);
+          if (couponLayer(r.scope) === 'cart') {
+            cartCode = r.code;
+            cartDiscount = r.discountPaise;
+          } else {
+            cartCode = null;
+            stripped = true;
+            reason = reason ?? 'Coupon no longer valid for this cart.';
+          }
+        }
+      } catch (err) {
+        cartCode = null;
+        stripped = true;
+        reason = reason ?? couponFailReason(err);
+      }
+    } else if (cartCode && cartCode === lineCode) {
+      cartCode = null;
+    }
+
+    if (
+      input.persist &&
+      (cartCode !== input.storedCartCode || lineCode !== input.storedLineCode)
+    ) {
+      await this.prisma.cart.update({
+        where: { id: input.cartId },
+        data: { couponCode: cartCode, lineCouponCode: lineCode },
+      });
+    }
+
+    const couponCodes = [lineCode, cartCode].filter((c): c is string => Boolean(c));
+    return {
+      lineCode,
+      cartCode,
+      discountPaise: nestedDiscountPaise(input.subtotalPaise, lineDiscount, cartDiscount),
+      couponCodes,
+      couponLabel: formatCouponLabel(lineCode, cartCode),
+      stripped,
+      reason,
     };
   }
 
   private mapCart(
     cart: {
       id: string;
+      userId?: string | null;
       guestToken: string | null;
       couponCode: string | null;
+      lineCouponCode?: string | null;
       items: Array<{
         id: string;
         quantity: number;
@@ -523,11 +690,18 @@ export class CartService {
           sku: string;
           label: string;
           pricePaise: number;
+          compareAtPricePaise: number | null;
           product: {
             id: string;
             slug: string;
             title: string;
             status: ProductStatus;
+            recipientTags: string[];
+            ageBands: string[];
+            occasionTags: string[];
+            isReadyMadeHamper: boolean;
+            storefrontLabels: string[];
+            brandName: string | null;
             collections: Array<{ collectionId: string }>;
             media: Array<{ url: string }>;
           };
@@ -541,6 +715,7 @@ export class CartService {
       .filter((i) => i.variant.product.status === ProductStatus.PUBLISHED)
       .map((i) => {
         const available = (i.variant.inventory?.onHand ?? 0) - (i.variant.inventory?.reserved ?? 0);
+        const compareAt = i.variant.compareAtPricePaise;
         return {
           id: i.id,
           variantId: i.variant.id,
@@ -558,6 +733,13 @@ export class CartService {
           available,
           personalization: i.personalization,
           giftExtras: i.giftExtras,
+          onSale: compareAt != null && compareAt > i.variant.pricePaise,
+          recipientTags: i.variant.product.recipientTags,
+          ageBands: i.variant.product.ageBands,
+          occasionTags: i.variant.product.occasionTags,
+          isReadyMadeHamper: i.variant.product.isReadyMadeHamper,
+          storefrontLabels: i.variant.product.storefrontLabels,
+          brandName: i.variant.product.brandName,
         };
       });
     const subtotalPaise = items.reduce((s, i) => s + i.lineTotalPaise, 0);
@@ -565,6 +747,8 @@ export class CartService {
       id: cart.id,
       guestToken: guestToken ?? cart.guestToken,
       couponCode: cart.couponCode,
+      cartCouponCode: cart.couponCode,
+      lineCouponCode: cart.lineCouponCode ?? null,
       itemCount: items.reduce((s, i) => s + i.quantity, 0),
       subtotalPaise,
       items,

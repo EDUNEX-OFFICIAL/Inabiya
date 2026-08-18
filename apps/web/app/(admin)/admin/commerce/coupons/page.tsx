@@ -10,8 +10,26 @@ import { opsChipClass, opsRowActionClass } from '@/lib/ops-desk-ui';
 import { canMutateCommerceFinance } from '@/lib/commerce-ops-nav';
 import { OpsPageHeader } from '@/components/commerce-ops/ops-page-header';
 import { OpsTableScroll } from '@/components/commerce-ops/ops-table-scroll';
+import { ConditionRowsBuilder } from '@/components/commerce-ops/condition-rows-builder';
+import {
+  EMPTY_ELIGIBILITY,
+  EMPTY_MATCH_RULES,
+  ELIGIBILITY_FIELD_OPTS,
+  MATCH_FIELD_OPTS,
+  defaultEligibilityOp,
+  defaultEligibilityValue,
+  defaultMatchOp,
+  defaultMatchValue,
+  eligibilityOpOptions,
+  eligibilityToApi,
+  eligibilityValueOptions,
+  matchOpOptions,
+  matchValueOptions,
+  type CouponEligibility,
+  type CouponMatchRules,
+} from '@/lib/coupon-admin';
 
-type CouponScope = 'CART' | 'PRODUCT' | 'COLLECTION';
+type CouponScope = 'CART' | 'PRODUCT' | 'COLLECTION' | 'MATCHING';
 type CouponStatus = 'off' | 'scheduled' | 'active' | 'expired' | 'exhausted';
 type BenefitKind = 'percent' | 'fixed';
 type StatusFilter = '' | CouponStatus;
@@ -24,7 +42,9 @@ type CouponRow = {
   discountPercent: number | null;
   discountPaise: number | null;
   minSubtotalPaise: number;
+  maxDiscountPaise: number | null;
   maxUses: number | null;
+  maxUsesPerCustomer: number | null;
   usedCount: number;
   active: boolean;
   startsAt: string | null;
@@ -32,6 +52,8 @@ type CouponRow = {
   scope: CouponScope;
   productIds: string[];
   collectionIds: string[];
+  matchRules: CouponMatchRules | null;
+  eligibility: CouponEligibility;
   products: Array<{ id: string; title: string; slug: string }>;
   collections: Array<{ id: string; title: string; slug: string }>;
   status: CouponStatus;
@@ -62,6 +84,7 @@ const SCOPE_CHIPS: Array<{ value: CouponScope; label: string }> = [
   { value: 'CART', label: 'Whole cart' },
   { value: 'PRODUCT', label: 'Products' },
   { value: 'COLLECTION', label: 'Collections' },
+  { value: 'MATCHING', label: 'Matching items' },
 ];
 
 function generateCode(): string {
@@ -93,6 +116,7 @@ function statusLabel(status: CouponStatus): string {
 function scopeLabel(scope: CouponScope): string {
   if (scope === 'PRODUCT') return 'Products';
   if (scope === 'COLLECTION') return 'Collections';
+  if (scope === 'MATCHING') return 'Matching';
   return 'Cart';
 }
 
@@ -101,6 +125,7 @@ function scopeTone(scope: CouponScope): string {
     return 'bg-[color-mix(in_srgb,var(--primary)_12%,white)] text-[var(--primary)] ring-1 ring-[color-mix(in_srgb,var(--primary)_28%,transparent)]';
   }
   if (scope === 'COLLECTION') return 'bg-sky-50 text-sky-900 ring-1 ring-sky-200/80';
+  if (scope === 'MATCHING') return 'bg-violet-50 text-violet-900 ring-1 ring-violet-200/80';
   return 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200/80';
 }
 
@@ -137,13 +162,14 @@ function CouponsDeskInner() {
   const [scope, setScope] = useState<CouponScope>('CART');
   const [selectedProducts, setSelectedProducts] = useState<ProductHit[]>([]);
   const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
+  const [matchRules, setMatchRules] = useState<CouponMatchRules>(EMPTY_MATCH_RULES);
+  const [eligibility, setEligibility] = useState<CouponEligibility>(EMPTY_ELIGIBILITY);
+  const [maxDiscountRupees, setMaxDiscountRupees] = useState('');
+  const [maxUsesPerCustomer, setMaxUsesPerCustomer] = useState('');
   const [collections, setCollections] = useState<CollectionOption[]>([]);
   const [productQ, setProductQ] = useState('');
   const [productHits, setProductHits] = useState<ProductHit[]>([]);
   const [productSearching, setProductSearching] = useState(false);
-
-  const [previewSubtotalRupees, setPreviewSubtotalRupees] = useState('1000');
-  const [previewResult, setPreviewResult] = useState<string | null>(null);
 
   const loadSeq = useRef(0);
   const hasLoadedOnce = useRef(false);
@@ -284,9 +310,12 @@ function CouponsDeskInner() {
     setScope('CART');
     setSelectedProducts([]);
     setSelectedCollectionIds([]);
+    setMatchRules(EMPTY_MATCH_RULES);
+    setEligibility(EMPTY_ELIGIBILITY);
+    setMaxDiscountRupees('');
+    setMaxUsesPerCustomer('');
     setProductQ('');
     setProductHits([]);
-    setPreviewResult(null);
   }
 
   function buildDraftBody(includeCode: boolean) {
@@ -300,6 +329,18 @@ function CouponsDeskInner() {
       scope,
       productIds: scope === 'PRODUCT' ? selectedProducts.map((p) => p.id) : undefined,
       collectionIds: scope === 'COLLECTION' ? selectedCollectionIds : undefined,
+      matchRules:
+        scope === 'MATCHING'
+          ? {
+              match: matchRules.match,
+              conditions: matchRules.conditions.filter((c) => c.value.trim()),
+            }
+          : undefined,
+      eligibility: eligibilityToApi(eligibility),
+      maxDiscountPaise: maxDiscountRupees.trim()
+        ? Math.round(Number(maxDiscountRupees) * 100)
+        : undefined,
+      maxUsesPerCustomer: maxUsesPerCustomer.trim() ? Number(maxUsesPerCustomer) : undefined,
     };
     if (includeCode) base.code = code.trim().toUpperCase();
     if (benefit === 'percent') base.discountPercent = Number(percent);
@@ -353,42 +394,6 @@ function CouponsDeskInner() {
       setError(err instanceof Error ? err.message : 'Update failed');
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function runPreview(mode: 'draft' | 'code', existingCode?: string) {
-    setPreviewResult(null);
-    setError(null);
-    const subtotalPaise = Math.round(Number(previewSubtotalRupees || '0') * 100);
-    try {
-      const body =
-        mode === 'code' && existingCode
-          ? { subtotalPaise, code: existingCode }
-          : {
-              subtotalPaise,
-              ...buildDraftBody(false),
-            };
-      const res = await apiAuth<{
-        ok: boolean;
-        message?: string;
-        discountPaise?: number;
-        totalAfterPaise?: number;
-        eligibleSubtotalPaise?: number;
-        scope?: CouponScope;
-      }>('/admin/commerce/coupons/preview', { method: 'POST', json: body });
-      if (!res.ok) {
-        setPreviewResult(res.message ?? 'Would not apply');
-      } else {
-        const scopeBit =
-          res.scope && res.scope !== 'CART'
-            ? ` · eligible ${formatInr(res.eligibleSubtotalPaise ?? 0)}`
-            : '';
-        setPreviewResult(
-          `Discount ${formatInr(res.discountPaise ?? 0)} → total ${formatInr(res.totalAfterPaise ?? 0)}${scopeBit}`,
-        );
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Preview failed');
     }
   }
 
@@ -617,10 +622,44 @@ function CouponsDeskInner() {
                 </div>
               )}
               {!selectedCollectionIds.length ? (
-                <p className="text-xs opacity-55">Select at least one category.</p>
+                <p className="text-xs opacity-55">Select at least one collection.</p>
               ) : null}
             </div>
           ) : null}
+
+          {scope === 'MATCHING' ? (
+            <div className="space-y-2">
+              <p className="text-xs font-medium opacity-70">Matching items</p>
+              <ConditionRowsBuilder
+                match={matchRules.match}
+                conditions={matchRules.conditions}
+                onMatchChange={(m) => setMatchRules({ ...matchRules, match: m })}
+                onConditionsChange={(conditions) => setMatchRules({ ...matchRules, conditions })}
+                fieldOpts={MATCH_FIELD_OPTS}
+                opOptions={matchOpOptions}
+                valueOptions={matchValueOptions}
+                defaultOp={defaultMatchOp}
+                defaultValue={defaultMatchValue}
+                addField="recipient"
+              />
+            </div>
+          ) : null}
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium opacity-70">Conditions</p>
+            <ConditionRowsBuilder
+              match={eligibility.match}
+              conditions={eligibility.conditions}
+              onMatchChange={(m) => setEligibility({ ...eligibility, match: m })}
+              onConditionsChange={(conditions) => setEligibility({ ...eligibility, conditions })}
+              fieldOpts={ELIGIBILITY_FIELD_OPTS}
+              opOptions={eligibilityOpOptions}
+              valueOptions={eligibilityValueOptions}
+              defaultOp={defaultEligibilityOp}
+              defaultValue={defaultEligibilityValue}
+              addField="cartQty"
+            />
+          </div>
 
           <fieldset className="space-y-2">
             <legend className="text-xs font-medium opacity-70">Benefit</legend>
@@ -688,6 +727,26 @@ function CouponsDeskInner() {
               />
             </label>
             <label className="block text-xs">
+              Max discount (₹)
+              <input
+                className="clay-input mt-1 block w-full min-h-10 text-sm"
+                value={maxDiscountRupees}
+                onChange={(e) => setMaxDiscountRupees(e.target.value)}
+                placeholder="No cap"
+                inputMode="decimal"
+              />
+            </label>
+            <label className="block text-xs">
+              Per customer
+              <input
+                className="clay-input mt-1 block w-full min-h-10 text-sm"
+                value={maxUsesPerCustomer}
+                onChange={(e) => setMaxUsesPerCustomer(e.target.value)}
+                placeholder="Unlimited"
+                inputMode="numeric"
+              />
+            </label>
+            <label className="block text-xs">
               Starts
               <input
                 type="datetime-local"
@@ -705,26 +764,6 @@ function CouponsDeskInner() {
                 onChange={(e) => setExpiresAt(e.target.value)}
               />
             </label>
-          </div>
-
-          <div className="flex flex-wrap items-end gap-2 rounded-lg border border-dashed border-[var(--border-subtle)] p-3">
-            <label className="text-xs">
-              Preview subtotal (₹)
-              <input
-                className="clay-input mt-1 block w-32 min-h-10 text-sm"
-                value={previewSubtotalRupees}
-                onChange={(e) => setPreviewSubtotalRupees(e.target.value)}
-                inputMode="decimal"
-              />
-            </label>
-            <button
-              type="button"
-              className="clay-btn-secondary min-h-10 px-3 text-sm"
-              onClick={() => void runPreview('draft')}
-            >
-              Preview
-            </button>
-            {previewResult ? <p className="w-full text-xs opacity-80">{previewResult}</p> : null}
           </div>
 
           <button
@@ -890,8 +929,20 @@ function CouponsDeskInner() {
                       {c.collections.map((cat) => cat.title).join(' · ')}
                     </p>
                   ) : null}
-                  <div className="mt-2 flex flex-wrap gap-0.5">
-                    {canFinance ? (
+                  {c.scope === 'MATCHING' && c.matchRules?.conditions.length ? (
+                    <p className="mt-1.5 line-clamp-2 text-[11px] opacity-60">
+                      {c.matchRules.match === 'any' ? 'Any' : 'All'} ·{' '}
+                      {c.matchRules.conditions.length} match
+                    </p>
+                  ) : null}
+                  {c.eligibility?.conditions?.length ? (
+                    <p className="mt-1 text-[11px] opacity-50">
+                      {c.eligibility.conditions.length} condition
+                      {c.eligibility.conditions.length === 1 ? '' : 's'}
+                    </p>
+                  ) : null}
+                  {canFinance ? (
+                    <div className="mt-2 flex flex-wrap gap-0.5">
                       <button
                         type="button"
                         className={`${opsRowActionClass} text-[var(--primary)]`}
@@ -901,16 +952,8 @@ function CouponsDeskInner() {
                       >
                         {c.active ? 'Deactivate' : 'Activate'}
                       </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className={opsRowActionClass}
-                      aria-label={`Preview ${c.code}`}
-                      onClick={() => void runPreview('code', c.code)}
-                    >
-                      Preview
-                    </button>
-                  </div>
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -928,7 +971,9 @@ function CouponsDeskInner() {
                       <th className="px-2 py-2.5 pr-3 font-medium">Schedule</th>
                       <th className="px-2 py-2.5 pr-3 font-medium">Usage</th>
                       <th className="px-2 py-2.5 pr-3 font-medium">Status</th>
-                      <th className="px-2 py-2.5 pr-3 font-medium">Actions</th>
+                      {canFinance ? (
+                        <th className="px-2 py-2.5 pr-3 font-medium">Actions</th>
+                      ) : null}
                     </tr>
                   </thead>
                   <tbody>
@@ -959,6 +1004,18 @@ function CouponsDeskInner() {
                           {c.scope === 'COLLECTION' && c.collections.length ? (
                             <p className="mt-1 max-w-[10rem] text-[11px] leading-snug opacity-60">
                               {c.collections.map((cat) => cat.title).join(', ')}
+                            </p>
+                          ) : null}
+                          {c.scope === 'MATCHING' && c.matchRules?.conditions.length ? (
+                            <p className="mt-1 max-w-[10rem] text-[11px] leading-snug opacity-60">
+                              {c.matchRules.match === 'any' ? 'Any' : 'All'} ·{' '}
+                              {c.matchRules.conditions.length} match
+                            </p>
+                          ) : null}
+                          {c.eligibility?.conditions?.length ? (
+                            <p className="mt-1 text-[11px] opacity-50">
+                              {c.eligibility.conditions.length} condition
+                              {c.eligibility.conditions.length === 1 ? '' : 's'}
                             </p>
                           ) : null}
                         </td>
@@ -1014,9 +1071,9 @@ function CouponsDeskInner() {
                             ) : null}
                           </div>
                         </td>
-                        <td className="px-2 py-2.5 pr-3 align-top">
-                          <div className="flex flex-wrap justify-end gap-0.5">
-                            {canFinance ? (
+                        {canFinance ? (
+                          <td className="px-2 py-2.5 pr-3 align-top">
+                            <div className="flex flex-wrap justify-end gap-0.5">
                               <button
                                 type="button"
                                 className={`${opsRowActionClass} text-[var(--primary)]`}
@@ -1028,17 +1085,9 @@ function CouponsDeskInner() {
                               >
                                 {c.active ? 'Deactivate' : 'Activate'}
                               </button>
-                            ) : null}
-                            <button
-                              type="button"
-                              className={opsRowActionClass}
-                              aria-label={`Preview ${c.code}`}
-                              onClick={() => void runPreview('code', c.code)}
-                            >
-                              Preview
-                            </button>
-                          </div>
-                        </td>
+                            </div>
+                          </td>
+                        ) : null}
                       </tr>
                     ))}
                   </tbody>
@@ -1047,12 +1096,6 @@ function CouponsDeskInner() {
             </OpsTableScroll>
           </div>
         </div>
-      ) : null}
-
-      {previewResult && !showBuilder ? (
-        <p className="mt-3 text-xs opacity-80" role="status">
-          {previewResult}
-        </p>
       ) : null}
 
       {!loading && rows.length > 0 ? (

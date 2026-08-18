@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 17, 2026 (carousel pagination tuck)
+Last Updated: August 18, 2026 (storefront PageSpeed Easy→Hard)
 
 ---
 
@@ -141,11 +141,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Smoke redesigned portal logins (`/login`, `/admin/*/login`, `/creator/login`) desktop + mobile
-2. Re-auth GitHub on VPS (`gh auth login`) then `git push origin main` so remote matches
-3. Resume OPS-10 after portal/storefront smoke
-4. **Deferred:** demo logins hardening + real PSP (C1/C2)
-5. Optional: CSP nonce instead of `script-src 'unsafe-inline'`
+1. Human: re-run PSI mobile on `/` + one PLP + one PDP (API quota 429 here; do not treat local LH 12.8 as PSI 13.4)
+2. Confirm Cloudflare Web Analytics stays **off** for `inabiya.edunexservices.in` (beacon not in repo; CSP still blocks it)
+3. Resume OPS-10 Procurement after that PSI smoke
+4. CMS palette: do **not** place WhatsApp on live home
+5. **Deferred:** CDN + real PSP (C1/C2); PLP/PDP muted/strikethrough contrast + canonical if chasing a11y/SEO 100 off-home
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -178,6 +178,62 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-18 — Soft Gift PageSpeed Easy→Hard (human override)
+
+- **Override:** Phase 14 Procurement in progress; human: full Soft Gift storefront PSI pass (home + PLP + PDP), Easy → Hard.
+- Baseline PSI `72zlyhea6j` mobile: Perf 70 / A11y 93 / BP 92 / SEO 100 / Agentic 50. CrUX none.
+- CTA: keep `--inabiya-pink` for washes; `--inabiya-pink-cta` for white-text buttons (WCAG AA). Cloudflare Insights: keep CSP tight (not in app).
+- FOUC must not hide LCP photo. Fonts: `next/font` per theme layout, not six Google families on root.
+
+### 2026-08-18 — Upload variants (web/thumb/LQIP) via BullMQ (human)
+
+- **Override:** Phase 14; human: apply media opts 5–7, 9–12 (skip CDN, skip source/Unsplash policy).
+- Upload stores original, enqueues `media-variants`. Worker Sharp: web 1600 WebP, thumb 400 WebP, 16px JPEG LQIP (`blurDataUrl` ≤2KB). GIF/SVG/PDF skipped.
+- Serve `GET /api/v1/media/:id/content?v=web|thumb|original`. Pending originals short-cache; ready variants 30d immutable. First content hit backfills existing uploads.
+- Storefront `GiftImage`: variant URL, blur placeholder, lazy default, one LCP `priority` + layout preload. Unsplash/third-party still goes through next/image optimizer until replaced.
+- Worker Docker now has `DATABASE_URL` + shared `inabiya_media_data`. Migration `20260818120000_media_asset_variants`.
+
+### 2026-08-18 — PDP gallery autoplay + swipe; public media cache (human)
+
+- **Override:** Phase 14 Procurement in progress; human: product gallery should auto-advance and swipe on desktop + mobile; images felt late.
+- Gallery (`pdp-gallery`): 4.5s autoplay (pause on hover/focus/drag/hidden tab/`prefers-reduced-motion`); pointer swipe/drag both viewports; keyboard arrows; clone-track wrap; Lenis `data-lenis-prevent`.
+- Cache: public `/media/:id/content` no longer gets API `Cache-Control: no-store`; 30d immutable. Next image optimizer: AVIF+WebP + 14d `minimumCacheTTL`. Adjacent slides eager-load.
+- Not this slice: Sharp/BullMQ upload variants, CDN, blur placeholders.
+
+### 2026-08-17 — Storefront FOUC: no gsap.from after paint (human)
+
+- **Override:** Phase 14; human: search storefront for FOUC.
+- Homepage bands used `gsap.from` with no CSS pre-hide (flash → hide → reveal). Carousel intro/controls same. Corporate hero could replay.
+- Rule: CSS hide until ready; `gsap.set` then `to()`. Fonts `display=swap` is FOUT, not this slice.
+
+### 2026-08-17 — Gift Lenis must not remount chrome (human)
+
+- **Override:** Phase 14; human: navbar + hero FOUC / re-render.
+- Cause: `GiftLenis` swapped Fragment → `ReactLenis` after lazy load, remounting header + page (hero replay). Secondary: `GiftNav` `useSearchParams` empty Suspense fallback; GSAP cleanup re-hid hero.
+- Fix: Lenis boots as a sibling; nav SSR without empty fallback; hero entrance is once-per-src.
+
+### 2026-08-17 — Nested coupons: one per layer (human)
+
+- **Override:** Phase 14; client: nested coupons allowed.
+- Stack is **two layers max**: line (PRODUCT/COLLECTION/MATCHING) then CART on remaining subtotal (paise). Same layer still replaces. CART×CART still overlap; CART×line nests (no overlap chip).
+- Schema: `Cart.lineCouponCode` + `Order.lineCouponCode`. Capture increments both. Not full PRD stack matrix (no 3+ codes, no shipping-type coupon).
+
+### 2026-08-17 — Coupon overlap uses eligibility gates (human)
+
+- **Override:** Phase 14; human: Promotions → Coupons overlap issue.
+- `conflictsWith` is a compete-warning (one code per cart), not a stack error. Mutually exclusive gates no longer flag; unconstrained CART pairs still do.
+
+### 2026-08-17 — Promotion eligibility conditions (human)
+
+- **Override:** Phase 14; human: Commerce Ops promotions need more logical conditions (not only whole cart / product / collection).
+- Kept `scope` as discount target; added `MATCHING` (line attributes: recipient, age, occasion, hamper, label, onSale, brand, title) plus `eligibility` ALL/ANY gates (cart qty, matching qty, max purchase, first/returning, shipping). Caps: `maxDiscountPaise`, `maxUsesPerCustomer`.
+- Out of scope this slice: BXGY, free shipping type, customer segments, geo/pincode. Stack later: nested layers (see 2026-08-17 nested coupons).
+
+### 2026-08-17 — Drop admin coupon preview (human)
+
+- **Override:** Phase 14; human: Commerce Ops Promotions **Preview subtotal** is unused fake-cart math — remove it.
+- Removed builder field, list/table Preview actions, `POST /admin/commerce/coupons/preview`, and `couponPreviewBodySchema`. Checkout `validate` + cart apply unchanged.
 
 ### 2026-08-16 — Theme-native portal login redesign (human)
 
@@ -1197,6 +1253,163 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-18 (storefront PageSpeed Easy→Hard)
+
+- **Override:** Phase 14; human: Soft Gift PSI Easy → Hard (home + PLP + PDP). Baseline PSI `72zlyhea6j` mobile 70/93/92/100/50.
+- Easy: testimonials `role="region"`; `--inabiya-pink-cta` + Design.md §4.2; gift-box dimensions; `/brand`+`/gift/media` cache 30d; CF Insights = zone inject, CSP **not** opened; hydration = no `Intl` in testimonials (React #418/#423/#425 gone locally).
+- Medium: FOUC no longer hides LCP photo; `next/font` per theme layout (no global Google CSS); CSP `font-src 'self'` (Next + Caddy); homepage WebP + preload; collection PLP one `priority` (mobile only). Nav logo not LCP-priority; below-fold SVGs `loading="lazy"` so Next experimental React stops competing image preloads.
+- Hard: GiftLenis already deferred; CategoryCarousel `next/dynamic`; SVGO logo/gift-box/sleep-cues. **CSS split skipped** (ponytail; LCP not still a globals.css problem after Medium).
+- Verify: PSI API **429** quota. Local LH **12.8.2** (not PSI 13.4.1): home Perf 51 / A11y **100** / BP 93 / SEO 100, LCP 5.0s (was 6.5s local / 5.6s PSI). PLP 72/96/93/92; PDP 67/96/93/92. BP stuck on CF beacon console + skipped source maps. Do **not** mark lab Perf ≥85.
+- Env/Caddy: `font-src 'self'`; cache headers on public SVGs. Migration: none.
+- Next: human PSI re-run; resume OPS-10.
+
+### Session — 2026-08-18 (media variants cross-check)
+
+- **Override:** Phase 14; human: cross-check gallery + media opts.
+- Wiring OK: upload → BullMQ → Sharp web/thumb/LQIP; `GiftImage` `?v=`; catalog hydrate; worker Docker volume; gallery autoplay/swipe.
+- Gaps fixed: FAILED jobs could not re-queue (same `jobId`); LCP preload fired on Unsplash (double fetch) — now library URLs only; PDP video poster still raw `next/image`.
+- Left as-is: Unsplash still optimizer path; collection hero has two `priority` images (desktop+mobile); nav/logo not GiftImage.
+- Next: restart worker, upload an original, confirm `?v=web`.
+
+### Session — 2026-08-18 (media variants 5–12)
+
+- **Override:** Phase 14; human: Sharp/BullMQ variants, LQIP, LCP preload, lazy, tighter sizes. Skip CDN + photographer/Unsplash rules.
+- Shipped: `MediaAsset` web/thumb/blur + worker `media-variants`; `GiftImage`; PDP preload; PLP lazy; `deviceSizes` cap 1600. Checks: `image-variants`, `media-url`.
+- Next: restart worker, upload an original photo, confirm `?v=web` WebP. Existing Unsplash URLs unchanged until replaced.
+- Risk: variants need worker + shared `MEDIA_LOCAL_ROOT`; first hit of old uploads is still original until the job finishes.
+
+### Session — 2026-08-18 (PDP gallery autoplay + media)
+
+- **Override:** Phase 14; human: gallery auto-move + swipe; investigate slow images.
+- Shipped: `pdp-gallery` autoplay/swipe/drag; public media cacheable; Next AVIF/WebP + optimizer TTL. Checks: `pdp-gallery.check`, `security-headers.check`.
+- Next: hard-refresh a 3-image PDP (mobile swipe + desktop drag). Deeper variants still deferred.
+- Risk: first hit still waits on Nest `getObjectBuffer` + `/_next/image` (no upload-time resize yet).
+
+### Session — 2026-08-17 (CMS canvas drag/preview cross-check)
+
+- **Override:** Phase 14; human: cross-check the two builder UX fixes.
+- Wiring OK: `previewOpen` toggle, overlay, collision prefers sections, remap-on-reorder, check green.
+- Gaps found + fixed: sortable was nested inside a non-sortable wrapper (shifts too small / overlap); unused `canvas-drop`/`canvas-end` stayed enabled; title hit-area missed row padding (`self-stretch`); `pointerWithin` dropped for list `closestCenter`.
+- Next: hard-refresh `/admin/cms/pages/[id]` — drag a section past neighbours; click the same header twice.
+
+### Session — 2026-08-17 (CMS canvas drag + preview toggle)
+
+- **Override:** Phase 14; human: page-builder UX — drag had no drop slot; section preview did not collapse on second click.
+- Drag: wrapping `canvas-drop` was stealing collisions so rows never made space. Collision now prefers sections; dashed placeholder + overlay; previews hide while dragging; palette insert line + end zone.
+- Preview: same-section click toggles closed; inspector selection stays. Check: `cms-canvas-dnd.check`.
+- Next: hard-refresh `/admin/cms/pages/[id]` and reorder a couple of blocks.
+
+### Session — 2026-08-17 (deploy web+api CMS editors)
+
+- **Override:** Phase 14; human: deploy.
+- `bash scripts/deploy-vps.sh web api` @ `b2c9dd3` (working tree). Images `inabiya-web`/`inabiya-api` recreated healthy on `127.0.0.1:3001`/`4001`. Prisma: no pending migrations. Worker left on prior container.
+- Docker inspector now has `RecipientCardsEditor` (no JSON `INSPECTOR_TEXTAREA_CODE`). API validation dist has `2x1`/`uspColumns`.
+- Smoke: `/api/v1/health` ok, `/ready` db+redis, `3001` 200. Published `home` still has `featuredCarousel` @1.
+- Note: `home` now has `21:whatsappCta` (22 blocks). Old Docker skipped unknown types; new web **will render it** on the public site. Original ask was CMS-only — confirm if it should stay.
+- Next: hard-refresh public CMS — Shop by baby tile layout + row editors.
+
+### Session — 2026-08-17 (CMS layout knobs cross-check)
+
+- **Override:** Phase 14; human: cross-check all CMS section customisation.
+- Workspace: inspector knobs + row editors wired; live `home` 21 blocks still `left`/`right` girl/boy (no grid yet). Zod 21/21 on live props. Legacy left/right + items-only 2×2 both parse after validation rebuild.
+- Fixes: Save no longer drops extra Shop-by-baby cards when layout is 2×1; rebuilt stale `@inabiya/validation` dist (old dist still required `left`/`right` and would strip `items`/`grid`/`uspColumns`).
+- Gap: Docker web/api ~11h old — public CMS still JSON textarea; Caddy Save can still strip `featuredCarousel`. Use `3101`/`4101`; restart 4101 if it was up before the validation build so Save keeps new props.
+- Next: deploy web+api, or edit only on pnpm ports.
+
+### Session — 2026-08-17 (WhatsApp CTA Soft Gift restyle)
+
+- **Override:** Phase 14; human: WhatsApp CTA banner was WhatsApp-green and off-brand — restyle to Soft Gift, more creative, responsive.
+- Canvas is blush / lavender / mint wash + pink doodle (not `#128c7e`→`#25d366`). `--gift-whatsapp` only on a mint orb so the channel is still obvious.
+- Form is a stacked white clay card (unified +91/phone row, full-width pink `clay-btn`) so the CTA no longer wraps in a cramped 3-col.
+- Layout uses container query `gift-wa` (≥40rem split; stacks in CMS canvas / phone).
+- Live home still must not auto-place this block.
+
+### Session — 2026-08-17 (CMS per-section element layout)
+
+- **Override:** Phase 14; human: more customisation on each section’s own elements — not a generic grid builder.
+- `recipientSplit`: `grid` 2×1 / 2×2 / 2×3 / 3×2 (phone 1 col, tablet 2, `3x2` 3-col from lg) + `items` 2–6; legacy `left`/`right` still load; save dual-writes first two as left/right.
+- Native knobs: brand USP columns 2/3/4; offers columns 2/3 (max 6 cards); testimonials `display` auto/marquee/grid + quote columns 2/3.
+- Live home unchanged until an admin picks a denser layout. Edit on `3101` until Docker web deploy.
+- Check: cms-page-model.check (legacy left/right → items, 2×2 payload).
+
+### Session — 2026-08-17 (CMS structured-editor cross-check)
+
+- **Override:** Phase 14; human: cross-check structured list editors.
+- Workspace OK: inspector has row editors before any leftover generic input; `INSPECTOR_TEXTAREA_CODE` unused. Roundtrip: featured carousel 6 cards; 14 brands (Chicco logo object); USP `gift` icon.
+- Live `home` (both APIs): `0:hero → 1:featuredCarousel → … → 20:faq`. No whatsapp/offer/thin.
+- Gap: Caddy `inabiya.edunexservices.in` → Docker `inabiya-web` (~10h old) still renders `cardsJson`/`brands`/`usps` as code textarea. pnpm `3101` has the new editors. **Do not Save home on the Docker CMS** (old `ALL_TYPES` would strip `featuredCarousel`).
+- Next: deploy web (and api if CMS types needed) before trusting public CMS Save; or edit via `127.0.0.1:3101`.
+
+### Session — 2026-08-17 (CMS structured list editors)
+
+- **Override:** Phase 14; human: JSON/pipe blobs too hard to edit in CMS inspector.
+- Root: `cardsJson` hit the code textarea before the carousel editor. Replaced blob fields with compact add/reorder/remove rows: featured carousel, brands, USPs, offer cards, FAQ, testimonials, footer links, BYB steps, thin-strip lines.
+- Check: cms-page-model.check (inspector wiring + 14-brand parse). Docker CMS still old until web deploy.
+- Next: hard-refresh page builder — Cards/Brands should be labeled rows, not a JSON dump.
+
+### Session — 2026-08-17 (CMS carousel cross-check)
+
+- **Override:** Phase 14; human: cross-check CMS carousel/WhatsApp/offer changes.
+- Wiring OK: Zod roundtrip all 4 types; live `home` has `featuredCarousel` @1 (6 cards), no whatsapp/offer/thin. Seed sort 0–20 unique.
+- Bugfix: `parseCmsCarouselCards` moved out of `'use client'` so the server homepage renderer can parse CMS cards.
+- Gap: Docker `inabiya-web`/`api` still 10h-old image (hardcoded `<CategoryCarousel />`). Live `/` still works via that hardcode. **Do not Save home in old CMS** (would strip `featuredCarousel`). Deploy web+api before relying on CMS edit.
+- Check: cms-page-model + collection-plp; web tsc.
+
+### Session — 2026-08-17 (CMS featured carousel + promo variants)
+
+- **Override:** Phase 14; human: Explore carousel not in CMS; add WhatsApp CTA (CMS only, not on live site); more sale/offer variants (carousel + thin strip).
+- `featuredCarousel` block: Zod + admin cards editor + public renderer. Removed hardcoded `<CategoryCarousel />` from home layout. Seed + `scripts/insert-home-featured-carousel.ts` place it after hero.
+- CMS-only palette (not seeded on home): `whatsappCta`, `offerCarousel`, `thinStrip`.
+- Check: cms-page-model.check + collection-plp.check; validation/web typecheck.
+- Next: hard-refresh `/` and `/admin/cms/pages` home — carousel editable; WhatsApp not on storefront until placed.
+
+### Session — 2026-08-17 (storefront FOUC scan)
+
+- **Override:** Phase 14; human: search storefront for FOUC.
+- Found: `GiftHomeMotion` `gsap.from` (bands flash); carousel intro/controls `gsap.set` after paint; corporate hero replay; footer/trust CMS swap if payload equals defaults.
+- Fix: `data-reveal-ready` + `gsap.to`; `data-carousel-ready`; corporate `entered` skip; skip identical footer/trust setState.
+- Check: `collection-plp.check.ts` (reveal/carousel CSS + no `gsap.from`).
+- Next: hard-refresh `/` then `/corporate`.
+
+### Session — 2026-08-17 (navbar + hero FOUC remount)
+
+- **Override:** Phase 14; human: check navbar/hero FOUC or re-rendering.
+- Root: `GiftLenis` lazy-wrap remounted chrome+page; nav `useSearchParams` painted an empty fallback; hero GSAP cleanup hid then replayed.
+- Fix: Lenis `GiftLenisBoot` sibling (children stay mounted); `GiftNavQuerySync` + `useLayoutEffect` auth; skip identical CMS nav; hero `enteredSrc` + kill-only cleanup.
+- Check: `collection-plp.check.ts` (Lenis sibling + nav/hero guards).
+- Next: hard-refresh `/` — nav links present on first paint; hero animates once.
+
+### Session — 2026-08-17 (nested coupon layers)
+
+- **Override:** Phase 14; human: implement nested coupons carefully (client).
+- Line coupon + cart coupon nest: line discount first, CART %/flat on remaining; min still on original eligible. Same layer replace. Migration `20260817094500_coupon_line_layer`.
+- Cart/checkout chips per code; overlap chips no longer flag CART vs product/matching.
+- Check: coupon-lifecycle + coupon-overlap; validation build; api+web tsc; migrate `20260817094500_coupon_line_layer` applied on inabiya Postgres.
+- Live: `deploy-vps.sh api web` — health/ready OK.
+- Next: hard-refresh cart — Matching 10% then FLAT100.
+
+### Session — 2026-08-17 (coupon overlap gates)
+
+- **Override:** Phase 14; human: Promotions → Coupons overlap issue.
+- Overlap chips were scope-only (CART/MATCHING vs every live code). Now also skip when gates cannot both pass: first vs returning, Standard vs Express, cart-qty ranges, min vs max eligible ₹, MATCHING hamper/onSale opposites.
+- WELCOME10 × FLAT100 still flag — both whole-cart, same window, one-code-per-cart ceiling.
+- Check: `coupon-overlap.check.ts`; api tsc.
+
+### Session — 2026-08-17 (promotion conditions)
+
+- **Override:** Phase 14; human: promotions need ecommerce-style logical conditions beyond cart/product/collection.
+- Schema: `CouponScope.MATCHING`; `match_rules` / `eligibility` JSON; `max_discount_paise`; `max_uses_per_customer`. Migration `20260817093000_coupon_match_eligibility`.
+- Engine: line-match + eligibility helpers; cart validate passes merchandising lines + userId/shipping. Ops builder: Matching items + Conditions (All/Any).
+- Check: `coupon-lifecycle.check.ts`, `coupon-overlap.check.ts`; validation build; api+web tsc.
+- Next: hard-refresh promotions desk; create MATCHING + first-order coupon and redeem on cart.
+
+### Session — 2026-08-17 (remove coupon preview)
+
+- **Override:** Phase 14; human: Promotions Preview subtotal not needed — strip it.
+- Ops coupons desk: no preview field/buttons. API: dropped `POST /admin/commerce/coupons/preview`. Checkout coupon apply unchanged.
+- Env/migration: none.
+- Next: hard-refresh `/admin/commerce/coupons` — builder is create-only; list Activate/Deactivate only.
 
 ### Session — 2026-08-17 (carousel pagination tuck)
 

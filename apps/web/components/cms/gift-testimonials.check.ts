@@ -6,12 +6,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { shiftMarqueeOffset, TESTIMONIAL_MARQUEE_PX } from './gift-testimonial-marquee-offset';
-import { resolveTestimonialDated } from './gift-testimonial-card';
+import { resolveTestimonialDated, formatTestimonialDate } from './gift-testimonial-card';
 
 assert.equal(TESTIMONIAL_MARQUEE_PX.fast > TESTIMONIAL_MARQUEE_PX.slow, true);
 assert.equal(resolveTestimonialDated('Anaya', ''), '2026-07-18');
 assert.equal(resolveTestimonialDated('Anaya', '2026-01-01'), '2026-01-01');
 assert.equal(resolveTestimonialDated('Unknown', ''), '');
+assert.equal(formatTestimonialDate('2026-07-18').label, '18 Jul 2026');
 
 assert.deepEqual(shiftMarqueeOffset(10, 40), { offset: 10, shift: false });
 assert.deepEqual(shiftMarqueeOffset(40, 40), { offset: 0, shift: true });
@@ -38,7 +39,7 @@ assert.match(slice, /gift-testimonial-card__role[\s\S]*font-size:\s*var\(--text-
 assert.match(slice, /gift-testimonial-card__mark[\s\S]*font-size:\s*var\(--text-display\)/);
 
 const tsx = readFileSync(join(__dirname, 'marketing-page-blocks.tsx'), 'utf8');
-assert.match(tsx, /items\.length >= 4/);
+assert.match(tsx, /parseTestimonialsDisplay\(props\.display, items\.length\)/);
 assert.match(tsx, /i % 2 === 0/);
 assert.match(
   tsx,
@@ -46,6 +47,7 @@ assert.match(
 );
 assert.match(tsx, /gift-testimonials__viewport--desktop/);
 assert.match(tsx, /gift-testimonials__viewport--mobile/);
+assert.match(tsx, /role="region"/);
 
 const marquee = readFileSync(join(__dirname, 'gift-testimonial-marquee.tsx'), 'utf8');
 assert.match(marquee, /appendChild\(lead\)/);

@@ -25,6 +25,7 @@ export type CatalogHamperItem = {
   qty: number;
   unitPricePaise: number;
   sortOrder: number;
+  blurDataUrl?: string | null;
 };
 
 export type CatalogProduct = {
@@ -75,6 +76,8 @@ export type CatalogProduct = {
     posterUrl?: string | null;
     sortOrder?: number;
     id?: string;
+    blurDataUrl?: string | null;
+    variantsReady?: boolean;
   }>;
   collections: Array<{ slug: string; title: string }>;
   variants: Array<{

@@ -113,8 +113,10 @@ First viewport on branded marketing pages:
 
 | Token | Hex | CSS var | Usage |
 |---|---|---|---|
-| Pink primary | `#FF6B9D` | `--inabiya-pink` | CTAs, progress, accents |
-| Pink dark | `#E65688` | `--inabiya-pink-dark` | Hover |
+| Pink primary | `#FF6B9D` | `--inabiya-pink` | Washes, chips, progress, accents |
+| Pink dark | `#E65688` | `--inabiya-pink-dark` | Hover on decorative pink |
+| Pink CTA | `#C44575` | `--inabiya-pink-cta` | Filled buttons (white text, WCAG AA) |
+| Pink CTA hover | `#A83661` | `--inabiya-pink-cta-hover` | Filled button hover |
 | Soft bg | `#FFF3F8` | `--inabiya-soft` | Page background |
 | Heading | `#2D2640` | `--inabiya-heading` | H1–H6 |
 | Body | `#3C3352` | `--inabiya-body` | Body/secondary |
@@ -128,7 +130,7 @@ First viewport on branded marketing pages:
 - Soft pink ground + white cards
 - No generic blue CTAs
 - Tag text = heading dark (never white on yellow/mint/lavender)
-- Primary button = white on pink
+- Primary button = white on `--inabiya-pink-cta` (not decorative `#FF6B9D`; AA contrast)
 - Progress fill = pink; track = lavender
 - **Soft Gift UI must not hardcode hex, rgba, or ad-hoc spacing in TSX** — use CSS vars + recipes + Tailwind `gs-*` / semantic colors only (see §4.2a–4.7)
 
@@ -177,6 +179,8 @@ Exact HSL conversions should live in theme CSS; hex above is brand source.
 [data-theme="gift"] {
   --inabiya-pink: #FF6B9D;
   --inabiya-pink-dark: #E65688;
+  --inabiya-pink-cta: #C44575;
+  --inabiya-pink-cta-hover: #A83661;
   --inabiya-soft: #FFF3F8;
   --inabiya-heading: #2D2640;
   --inabiya-body: #3C3352;

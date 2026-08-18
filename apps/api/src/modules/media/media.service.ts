@@ -1,9 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { MediaVariantsStatus } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { S3StorageAdapter } from '../../infrastructure/storage/s3-storage.adapter';
+import { MediaVariantsQueueService } from '../../infrastructure/media-variants/media-variants-queue.service';
 import { AuditService } from '../audit/audit.service';
 import { validateMediaUpload } from './media-mime';
+import type { MediaVariant } from './media-url';
+
+const VARIANT_SKIP_MIMES = new Set(['image/gif', 'image/svg+xml', 'application/pdf']);
 
 @Injectable()
 export class MediaService {
@@ -11,18 +16,38 @@ export class MediaService {
     private readonly prisma: PrismaService,
     private readonly storage: S3StorageAdapter,
     private readonly audit: AuditService,
+    private readonly variants: MediaVariantsQueueService,
   ) {}
 
   /** Stable same-origin path for CMS / Soft Gift `<img src>`. */
-  publicUrlFor(id: string): string {
-    return `/api/v1/media/${id}/content`;
+  publicUrlFor(id: string, variant: MediaVariant = 'web'): string {
+    if (variant === 'original') return `/api/v1/media/${id}/content?v=original`;
+    if (variant === 'thumb') return `/api/v1/media/${id}/content?v=thumb`;
+    return `/api/v1/media/${id}/content?v=web`;
   }
 
-  private mapAsset<T extends { id: string; storageKey: string }>(asset: T) {
+  private mapAsset<
+    T extends {
+      id: string;
+      storageKey: string;
+      variantsStatus?: MediaVariantsStatus;
+      blurDataUrl?: string | null;
+    },
+  >(asset: T) {
     return {
       ...asset,
-      publicUrl: this.publicUrlFor(asset.id),
+      publicUrl: this.publicUrlFor(asset.id, 'web'),
+      originalUrl: this.publicUrlFor(asset.id, 'original'),
+      thumbUrl: this.publicUrlFor(asset.id, 'thumb'),
     };
+  }
+
+  private async enqueueVariants(id: string): Promise<void> {
+    try {
+      await this.variants.enqueue(id);
+    } catch {
+      // Redis down must not fail the upload; worker/backfill can retry.
+    }
   }
 
   async upload(input: { file: Express.Multer.File; actorId: string; requestId?: string }) {
@@ -43,6 +68,7 @@ export class MediaService {
       contentType: input.file.mimetype,
     });
 
+    const skip = VARIANT_SKIP_MIMES.has(input.file.mimetype);
     const asset = await this.prisma.mediaAsset.create({
       data: {
         storageKey: put.key,
@@ -50,8 +76,13 @@ export class MediaService {
         mimeType: input.file.mimetype,
         sizeBytes: input.file.size,
         originalName: input.file.originalname?.slice(0, 255) ?? null,
+        variantsStatus: skip ? MediaVariantsStatus.SKIPPED : MediaVariantsStatus.PENDING,
       },
     });
+
+    if (!skip) {
+      await this.enqueueVariants(asset.id);
+    }
 
     await this.audit.write({
       actorId: input.actorId,
@@ -131,10 +162,14 @@ export class MediaService {
     return this.mapAsset(asset);
   }
 
-  async getPublicContent(id: string): Promise<{
+  async getPublicContent(
+    id: string,
+    variant: MediaVariant = 'web',
+  ): Promise<{
     buffer: Buffer;
     mimeType: string;
     originalName: string | null;
+    cacheControl: string;
   }> {
     const asset = await this.prisma.mediaAsset.findUnique({ where: { id } });
     if (!asset) {
@@ -149,8 +184,42 @@ export class MediaService {
         message: 'Only image assets are publicly readable.',
       });
     }
+
+    const needsVariants =
+      !VARIANT_SKIP_MIMES.has(asset.mimeType) &&
+      (asset.variantsStatus === MediaVariantsStatus.PENDING ||
+        asset.variantsStatus === MediaVariantsStatus.FAILED);
+    if (needsVariants) {
+      void this.enqueueVariants(asset.id);
+    }
+
+    const longCache = 'public, max-age=2592000, stale-while-revalidate=86400, immutable';
+    const shortCache = 'public, max-age=60, stale-while-revalidate=30';
+
+    if (
+      variant === 'thumb' &&
+      asset.variantsStatus === MediaVariantsStatus.READY &&
+      asset.thumbStorageKey
+    ) {
+      const buffer = await this.storage.getObjectBuffer(asset.thumbStorageKey);
+      return { buffer, mimeType: 'image/webp', originalName: asset.originalName, cacheControl: longCache };
+    }
+    if (
+      (variant === 'web' || variant === 'thumb') &&
+      asset.variantsStatus === MediaVariantsStatus.READY &&
+      asset.webStorageKey
+    ) {
+      const buffer = await this.storage.getObjectBuffer(asset.webStorageKey);
+      return { buffer, mimeType: 'image/webp', originalName: asset.originalName, cacheControl: longCache };
+    }
+
     const buffer = await this.storage.getObjectBuffer(asset.storageKey);
-    return { buffer, mimeType: asset.mimeType, originalName: asset.originalName };
+    return {
+      buffer,
+      mimeType: asset.mimeType,
+      originalName: asset.originalName,
+      cacheControl: asset.variantsStatus === MediaVariantsStatus.READY ? longCache : shortCache,
+    };
   }
 
   async delete(input: { id: string; actorId: string; requestId?: string }) {
@@ -162,6 +231,8 @@ export class MediaService {
       });
     }
     await this.storage.deleteObject(asset.storageKey);
+    if (asset.webStorageKey) await this.storage.deleteObject(asset.webStorageKey);
+    if (asset.thumbStorageKey) await this.storage.deleteObject(asset.thumbStorageKey);
     await this.prisma.mediaAsset.delete({ where: { id: asset.id } });
     await this.audit.write({
       actorId: input.actorId,

@@ -7,7 +7,6 @@ import {
   adminAuditQuerySchema,
   createCouponBodySchema,
   couponActiveBodySchema,
-  couponPreviewBodySchema,
   commercePolicyBodySchema,
   customerStatusBodySchema,
   customerCommunicationBodySchema,
@@ -18,7 +17,6 @@ import {
   type AdminReportsQuery,
   type CommercePolicyBody,
   type CouponActiveBody,
-  type CouponPreviewBody,
   type CreateCouponBody,
   type CustomerCommunicationBody,
   type GiftChromeBody,
@@ -140,12 +138,6 @@ export class OpsAdminController {
   @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
   listCoupons(@Query(new ZodValidationPipe(adminCouponsQuerySchema)) query: AdminCouponsQuery) {
     return this.coupons.listAdmin(query);
-  }
-
-  @Post('coupons/preview')
-  @Roles('COMMERCE_ADMIN', 'SUPER_ADMIN', 'FINANCE')
-  previewCoupon(@Body(new ZodValidationPipe(couponPreviewBodySchema)) body: CouponPreviewBody) {
-    return this.coupons.preview(body);
   }
 
   @Post('coupons')

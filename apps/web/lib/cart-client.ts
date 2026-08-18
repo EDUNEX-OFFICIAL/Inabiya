@@ -16,6 +16,10 @@ export type CartDto = {
   id: string;
   guestToken?: string | null;
   couponCode?: string | null;
+  cartCouponCode?: string | null;
+  lineCouponCode?: string | null;
+  couponCodes?: string[];
+  couponLabel?: string | null;
   couponRemoved?: boolean;
   couponRemovedReason?: string | null;
   itemCount: number;
@@ -94,7 +98,24 @@ export async function cartApi<T>(
   return data as T;
 }
 
-export { formatInr } from './catalog';
+export function formatInr(paise: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(paise / 100);
+}
+
+export function couponCodesOnCart(c: Pick<CartDto, 'couponCodes' | 'couponCode'>): string[] {
+  if (c.couponCodes?.length) return c.couponCodes;
+  return c.couponCode ? [c.couponCode] : [];
+}
+
+export function formatCartCoupons(c: Pick<CartDto, 'couponCodes' | 'couponCode' | 'couponLabel'>): string | null {
+  if (c.couponLabel) return c.couponLabel;
+  const codes = couponCodesOnCart(c);
+  return codes.length ? codes.join(' + ') : null;
+}
 
 export function shippingMethodLabel(method?: string | null): string {
   if (method === 'EXPRESS') return 'Express';

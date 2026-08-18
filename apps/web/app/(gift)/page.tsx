@@ -1,12 +1,17 @@
 import type { Metadata } from 'next';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
-import { CategoryCarousel } from '@/components/gift/category-carousel';
 import { JsonLdScript } from '@/components/seo/json-ld-script';
 import { apiUrl } from '@/lib/api-base';
+import { homepageLcpHref } from '@/lib/homepage-lcp';
 import { GIFT_HOMEPAGE_SLUG, type SeoSchemaEntry } from '@inabiya/validation';
 import { marketingPageMetadata, type CmsSeoPage } from '@/lib/cms-seo';
 import { marketingPageMergedJsonLd } from '@/lib/seo-json-ld/cms-page';
+import nextDynamic from 'next/dynamic';
+
+const CategoryCarousel = nextDynamic(() =>
+  import('@/components/gift/category-carousel').then((m) => ({ default: m.CategoryCarousel })),
+);
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +53,12 @@ export async function generateMetadata(): Promise<Metadata> {
 function LegacyGiftHomeFallback() {
   return (
     <main>
+      <link
+        rel="preload"
+        as="image"
+        href="/gift/media/baby-soft-gift.webp"
+        fetchPriority="high"
+      />
       <GiftStorefrontHero
         headline="Little bundles of joy, thoughtfully chosen."
         subcopy="Build a bespoke baby box in gentle steps — or pick a ready-made hamper. Packed with warmth, shipped across India."
@@ -76,6 +87,7 @@ export default async function GiftHomePage() {
 
   // Layout owns Soft Gift footer — skip CMS footer blocks on home to avoid double footer.
   const blocks = page.blocks.filter((b) => b.type !== 'footer');
+  const lcp = homepageLcpHref(page.blocks);
   const ld = marketingPageMergedJsonLd(
     { ...page, slug: GIFT_HOMEPAGE_SLUG },
     page.blocks,
@@ -84,6 +96,7 @@ export default async function GiftHomePage() {
 
   return (
     <main>
+      {lcp ? <link rel="preload" as="image" href={lcp} fetchPriority="high" /> : null}
       <JsonLdScript data={ld} />
       <MarketingPageBlocks blocks={blocks} layout="home" emitFaqJsonLd={false} />
     </main>

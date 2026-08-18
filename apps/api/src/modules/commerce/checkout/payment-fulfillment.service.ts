@@ -129,6 +129,12 @@ export class PaymentFulfillmentService {
         if (payment.order.couponCode) {
           await this.coupons.incrementUsage(payment.order.couponCode, tx);
         }
+        if (
+          payment.order.lineCouponCode &&
+          payment.order.lineCouponCode !== payment.order.couponCode
+        ) {
+          await this.coupons.incrementUsage(payment.order.lineCouponCode, tx);
+        }
       });
       await this.inventory.commit(lineItems);
       await this.notifications.enqueueOrderConfirmation({
@@ -308,6 +314,7 @@ export class PaymentFulfillmentService {
         data: {
           userId: order.userId,
           couponCode: order.couponCode,
+          lineCouponCode: order.lineCouponCode,
           status: CartStatus.ACTIVE,
         },
         include: { items: true },
@@ -355,10 +362,16 @@ export class PaymentFulfillmentService {
         });
       }
     }
-    if (order.couponCode && !cart.couponCode) {
+    if (
+      (order.couponCode && !cart.couponCode) ||
+      (order.lineCouponCode && !cart.lineCouponCode)
+    ) {
       await this.prisma.cart.update({
         where: { id: cart.id },
-        data: { couponCode: order.couponCode },
+        data: {
+          couponCode: cart.couponCode ?? order.couponCode,
+          lineCouponCode: cart.lineCouponCode ?? order.lineCouponCode,
+        },
       });
     }
   }

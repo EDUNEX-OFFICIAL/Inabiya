@@ -16,6 +16,7 @@ import { RedisModule } from './infrastructure/redis/redis.module';
 import { StorageModule } from './infrastructure/storage/storage.module';
 import { PaymentsModule } from './infrastructure/payments/payments.module';
 import { NotificationsQueueModule } from './infrastructure/notifications/notifications-queue.module';
+import { MediaVariantsQueueModule } from './infrastructure/media-variants/media-variants-queue.module';
 import { MailModule } from './infrastructure/mail/mail.module';
 import { CommonModule } from './common/common.module';
 import { SecurityHeadersModule } from './common/security-headers.middleware';
@@ -62,6 +63,7 @@ import { SecurityHeadersModule } from './common/security-headers.middleware';
     StorageModule,
     PaymentsModule,
     NotificationsQueueModule,
+    MediaVariantsQueueModule,
     MailModule,
     HealthModule,
     IdentityModule,

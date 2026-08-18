@@ -25,7 +25,7 @@ function GiftLenisScrollSync() {
 }
 
 /** Loaded only when GiftLenis enables smooth scroll (see gift-lenis.tsx). */
-export function GiftLenisInner({ children }: { children: ReactNode }) {
+export function GiftLenisInner({ children }: { children?: ReactNode }) {
   return (
     <ReactLenis
       root
