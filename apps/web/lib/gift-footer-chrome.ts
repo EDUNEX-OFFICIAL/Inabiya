@@ -1,3 +1,11 @@
+/** Locked storefront credit — never a CMS/chrome prop, never overridable. */
+export const FOOTER_DEVELOPER_CREDIT = {
+  prefix: 'Developed with',
+  mid: 'By',
+  label: 'EDUNEX',
+  href: 'https://edunexservices.in',
+} as const;
+
 export function formatFooterCopyright(
   tpl: string | undefined,
   year: number,

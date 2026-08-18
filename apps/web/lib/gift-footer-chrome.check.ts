@@ -3,10 +3,16 @@
  */
 import assert from 'node:assert/strict';
 import {
+  FOOTER_DEVELOPER_CREDIT,
   composeCopyrightTpl,
   formatFooterCopyright,
   parseCopyrightTpl,
 } from './gift-footer-chrome';
+
+assert.equal(FOOTER_DEVELOPER_CREDIT.prefix, 'Developed with');
+assert.equal(FOOTER_DEVELOPER_CREDIT.mid, 'By');
+assert.equal(FOOTER_DEVELOPER_CREDIT.label, 'EDUNEX');
+assert.equal(FOOTER_DEVELOPER_CREDIT.href, 'https://edunexservices.in');
 
 assert.equal(formatFooterCopyright('© {year} {brand}.', 2026, 'Inabiya'), '© 2026 Inabiya.');
 assert.equal(

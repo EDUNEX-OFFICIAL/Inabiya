@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 18, 2026 (CI README Prettier)
+Last Updated: August 18, 2026 (footer EDUNEX heart credit)
 
 ---
 
@@ -1280,6 +1280,17 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-18 (footer EDUNEX heart credit)
+
+- **Override:** Phase 14; human: copy “Developed with ♥ By EDUNEX” (EDUNEX → edunexservices.in), then push + deploy.
+- Locked credit restyled; still not a CMS prop. Deploy: `deploy-vps.sh web`.
+
+### Session — 2026-08-18 (hardcoded footer developer credit)
+
+- **Override:** Phase 14; human: add developer reference in storefront footer, not CMS-editable.
+- Footer bar: locked `Developed by EduNex Services` → `https://edunexservices.in` in `GiftStorefrontFooter` (constant, not a chrome/CMS prop).
+- Check: `gift-footer-chrome.check.ts` wired into web `test`. Env: none. Migration: none.
 
 ### Session — 2026-08-18 (CI format:check README)
 

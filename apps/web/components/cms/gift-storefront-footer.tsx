@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { Facebook, Gift, Instagram, Mail } from 'lucide-react';
+import { Facebook, Gift, Heart, Instagram, Mail } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
 import { WhatsAppIcon } from '@/components/gift/whatsapp-icon';
-import { formatFooterCopyright } from '@/lib/gift-footer-chrome';
+import { FOOTER_DEVELOPER_CREDIT, formatFooterCopyright } from '@/lib/gift-footer-chrome';
 import { safeHrefOrHash } from '@inabiya/validation';
 
 export type GiftFooterColumn = {
@@ -243,13 +243,31 @@ export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
 
         <div className="gift-footer__bar">
           <p>{formatFooterCopyright(props.copyright, year, brandName)}</p>
-          {legalLinks.length ? (
-            <nav className="gift-footer__bar-links" aria-label="Legal">
-              {legalLinks.map((l) => (
-                <FooterAnchor key={`${l.label}-${l.href}`} href={l.href} label={l.label} />
-              ))}
-            </nav>
-          ) : null}
+          <div className="gift-footer__bar-end">
+            {/* Locked credit — not from GiftFooterProps / CMS chrome. */}
+            <p className="gift-footer__credit">
+              <span>{FOOTER_DEVELOPER_CREDIT.prefix}</span>
+              <Heart className="gift-footer__heart" strokeWidth={2} aria-hidden />
+              <span className="sr-only">love</span>
+              <span>
+                {FOOTER_DEVELOPER_CREDIT.mid}{' '}
+                <a
+                  href={FOOTER_DEVELOPER_CREDIT.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {FOOTER_DEVELOPER_CREDIT.label}
+                </a>
+              </span>
+            </p>
+            {legalLinks.length ? (
+              <nav className="gift-footer__bar-links" aria-label="Legal">
+                {legalLinks.map((l) => (
+                  <FooterAnchor key={`${l.label}-${l.href}`} href={l.href} label={l.label} />
+                ))}
+              </nav>
+            ) : null}
+          </div>
         </div>
       </footer>
     </div>
