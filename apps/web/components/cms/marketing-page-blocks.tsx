@@ -19,6 +19,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
+import { blogPostPath, rewriteLegacyArticlesPath } from '@/lib/blog-paths';
 import {
   parseOfferColumns,
   parseQuoteColumns,
@@ -1002,7 +1003,9 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
     return null;
   }
 
-  const seeAllHref = props.seeAllHref ? String(props.seeAllHref) : '/articles';
+  const seeAllHref = rewriteLegacyArticlesPath(
+    props.seeAllHref ? String(props.seeAllHref) : '/blog',
+  );
   const seeAllLabel = props.seeAllLabel ? String(props.seeAllLabel) : 'All articles →';
   const featured = articles.length === 1;
 
@@ -1025,7 +1028,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
         {articles.map((a) => (
           <li key={a.slug} className="min-w-0">
             <Link
-              href={`/articles/${a.slug}`}
+              href={blogPostPath(a.slug)}
               className={`group clay-panel block w-full overflow-hidden transition hover:-translate-y-px ${
                 featured ? 'sm:grid sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]' : ''
               }`}

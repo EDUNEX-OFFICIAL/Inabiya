@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   articleCommentBodySchema,
   articleTransitionBodySchema,
@@ -102,5 +102,26 @@ export class ArticlesController {
     @Req() req: AuthedRequest,
   ) {
     return this.articles.addComment(id, user, body, String(req.id ?? ''));
+  }
+
+  @Post('articles/:id/return-to-draft')
+  @Roles('CONTENT_ADMIN', 'SUPER_ADMIN')
+  returnToDraft(
+    @CurrentUser() user: EditorialUser,
+    @Param('id') id: string,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.articles.returnToDraft(id, user, String(req.id ?? ''));
+  }
+
+  @Delete('articles/:id')
+  @HttpCode(204)
+  @Roles('CONTENT_ADMIN', 'SUPER_ADMIN')
+  async remove(
+    @CurrentUser() user: EditorialUser,
+    @Param('id') id: string,
+    @Req() req: AuthedRequest,
+  ) {
+    await this.articles.remove(id, user, String(req.id ?? ''));
   }
 }

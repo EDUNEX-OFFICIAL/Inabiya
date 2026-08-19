@@ -224,10 +224,10 @@ export function ArticleEditor({
 
   return (
     <div
-      className={`rounded border border-black/15 bg-white/90 overflow-hidden ${className ?? ''}`}
+      className={`flex max-h-[min(70vh,36rem)] flex-col overflow-hidden rounded border border-black/15 bg-white/90 ${className ?? ''}`}
     >
       {editable ? (
-        <div className="flex flex-wrap items-center gap-1 border-b border-black/10 bg-[var(--background)] p-2">
+        <div className="article-editor-toolbar sticky top-0 z-10 flex shrink-0 flex-wrap items-center gap-1 border-b border-black/10 bg-[var(--background)] p-2">
           <select
             className={selectCls}
             aria-label="Text style"
@@ -364,7 +364,9 @@ export function ArticleEditor({
           </ToolbarButton>
         </div>
       ) : null}
-      <EditorContent editor={editor} />
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <EditorContent editor={editor} />
+      </div>
       {imagesOn && enableMediaLibrary ? (
         <MediaLibraryModal
           open={libraryOpen}

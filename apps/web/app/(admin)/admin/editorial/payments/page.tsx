@@ -1,9 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Banknote, Inbox, UserRound, Wallet } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
+import { EditorialEmpty, EditorialIconButton } from '@/components/editorial/editorial-ui';
 
 type PaymentRow = {
   id: string;
@@ -48,36 +49,43 @@ export default function WriterPaymentsPage() {
 
   async function release(id: string) {
     await apiAuth(`/editorial/writer-payments/${id}/release`, { method: 'POST' });
-    setMsg('Payment released');
+    setMsg('Released');
     await load();
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-3xl">
-      <Link href="/admin/editorial" className="text-sm underline opacity-70">
-        ← Editorial
-      </Link>
-      <h1 className="font-display text-3xl mt-4">Writer payments</h1>
-      {msg ? <p className="mt-2 text-sm opacity-70">{msg}</p> : null}
-      <ul className="mt-6 space-y-3">
+    <main className="blog-page">
+      <p className="blog-overline">Editorial</p>
+      <h1 className="blog-h1 mt-gs-2">Payments</h1>
+      {msg ? <p className="blog-banner blog-banner--success mt-gs-4 text-sm">{msg}</p> : null}
+      <ul className="editorial-panel mt-gs-6">
         {rows.map((p) => (
-          <li key={p.id} className="rounded border p-3 text-sm">
-            <p className="font-medium">{p.article.title}</p>
-            <p className="opacity-70 mt-1">
-              {formatInr(p.amountPaise)} · {p.status} · {p.writer.displayName ?? p.writer.email}
+          <li key={p.id} className="editorial-row text-sm">
+            <p className="font-display text-lg leading-snug">{p.article.title}</p>
+            <p className="editorial-meta">
+              <span>
+                <Wallet aria-hidden />
+                {formatInr(p.amountPaise)}
+              </span>
+              <span>{p.status}</span>
+              <span>
+                <UserRound aria-hidden />
+                {p.writer.displayName ?? p.writer.email}
+              </span>
             </p>
             {canRelease && p.status === 'PENDING' ? (
-              <button
-                type="button"
-                className="mt-2 rounded border px-3 py-1"
+              <EditorialIconButton
+                className="mt-gs-3"
+                label="Release"
+                icon={Banknote}
                 onClick={() => void release(p.id)}
-              >
-                Release
-              </button>
+              />
             ) : null}
           </li>
         ))}
-        {rows.length === 0 ? <li className="opacity-70">No writer payments yet.</li> : null}
+        {rows.length === 0 ? (
+          <EditorialEmpty icon={Inbox}>No writer payments yet.</EditorialEmpty>
+        ) : null}
       </ul>
     </main>
   );

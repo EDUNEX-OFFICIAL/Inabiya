@@ -1,15 +1,19 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   createEditorialCategoryBodySchema,
   createSpecialistBodySchema,
   newsletterSignupBodySchema,
   publishArticleBodySchema,
   scheduleArticleBodySchema,
+  updateEditorialCategoryBodySchema,
+  updateSpecialistBodySchema,
   type CreateEditorialCategoryBody,
   type CreateSpecialistBody,
   type NewsletterSignupBody,
   type PublishArticleBody,
   type ScheduleArticleBody,
+  type UpdateEditorialCategoryBody,
+  type UpdateSpecialistBody,
 } from '@inabiya/validation';
 import type { RoleCode } from '@inabiya/types';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
@@ -22,7 +26,7 @@ import { PublishingService } from './publishing.service';
 
 type OpsUser = { id: string; roles: RoleCode[] };
 
-@Controller('articles')
+@Controller('blog')
 export class PublishingPublicController {
   constructor(private readonly publishing: PublishingService) {}
 
@@ -44,6 +48,11 @@ export class PublishingPublicController {
   @Get('categories')
   listCategories() {
     return this.publishing.listCategories();
+  }
+
+  @Get('tags')
+  listTags() {
+    return this.publishing.listTags();
   }
 
   @Get(':slug')
@@ -84,6 +93,20 @@ export class PublishingAdminController {
     return this.publishing.publishNow(id, user, body, String(req.id ?? ''));
   }
 
+  @Post('articles/:id/unpublish')
+  unpublish(
+    @CurrentUser() user: OpsUser,
+    @Param('id') id: string,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.publishing.unpublish(id, user, String(req.id ?? ''));
+  }
+
+  @Get('specialists')
+  listSpecialistsAdmin() {
+    return this.publishing.listSpecialists();
+  }
+
   @Post('specialists')
   createSpecialist(
     @CurrentUser() user: OpsUser,
@@ -91,6 +114,21 @@ export class PublishingAdminController {
     @Req() req: AuthedRequest,
   ) {
     return this.publishing.createSpecialist(user, body, String(req.id ?? ''));
+  }
+
+  @Patch('specialists/:id')
+  updateSpecialist(
+    @CurrentUser() user: OpsUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateSpecialistBodySchema)) body: UpdateSpecialistBody,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.publishing.updateSpecialist(id, user, body, String(req.id ?? ''));
+  }
+
+  @Get('categories')
+  listCategoriesAdmin() {
+    return this.publishing.listCategories();
   }
 
   @Post('categories')
@@ -101,6 +139,17 @@ export class PublishingAdminController {
     @Req() req: AuthedRequest,
   ) {
     return this.publishing.createCategory(user, body, String(req.id ?? ''));
+  }
+
+  @Patch('categories/:id')
+  updateCategory(
+    @CurrentUser() user: OpsUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateEditorialCategoryBodySchema))
+    body: UpdateEditorialCategoryBody,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.publishing.updateCategory(id, user, body, String(req.id ?? ''));
   }
 
   /** Manual kick for due schedules (also runs on interval). */

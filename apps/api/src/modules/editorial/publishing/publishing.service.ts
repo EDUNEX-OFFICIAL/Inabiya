@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -10,11 +11,16 @@ import type {
   CreateSpecialistBody,
   PublishArticleBody,
   ScheduleArticleBody,
+  UpdateEditorialCategoryBody,
+  UpdateSpecialistBody,
 } from '@inabiya/validation';
 import type { RoleCode } from '@inabiya/types';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { readSeoSchemaExtras } from '../../../common/seo-schema-extras';
+import { upsertArticleTagIds } from '../article-tags';
+import { articleCanonicalPath } from '../article-canonical';
+import { publishBlockReason } from '../articles/editorial-transitions';
 
 type Actor = { id: string; roles: RoleCode[] };
 
@@ -47,7 +53,7 @@ export class PublishingService {
         publishedAt: null,
         seoTitle: body.seoTitle ?? article.seoTitle ?? article.title,
         seoDescription: body.seoDescription ?? article.seoDescription,
-        canonicalPath: `/articles/${article.slug}`,
+        canonicalPath: articleCanonicalPath(article.slug),
         ogImageUrl: body.ogImageUrl ?? article.ogImageUrl,
         categoryId: meta.categoryId ?? article.categoryId,
         specialistId: meta.specialistId ?? article.specialistId,
@@ -98,6 +104,45 @@ export class PublishingService {
       tagIds: meta.tagIds,
       requestId,
     });
+  }
+
+  /** Take off Journal. Stays APPROVED so ops can Publish again without re-running gates. */
+  async unpublish(articleId: string, actor: Actor, requestId?: string) {
+    this.assertOps(actor);
+    const article = await this.prisma.article.findUnique({ where: { id: articleId } });
+    if (!article) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Article not found.' });
+    }
+    if (article.status !== ArticleStatus.PUBLISHED && article.status !== ArticleStatus.SCHEDULED) {
+      throw new BadRequestException({
+        code: 'NOT_PUBLIC',
+        message: 'Only published or scheduled articles can be hidden.',
+      });
+    }
+    const updated = await this.prisma.article.update({
+      where: { id: articleId },
+      data: {
+        status: ArticleStatus.APPROVED,
+        publishedAt: null,
+        scheduledAt: null,
+        statusHistory: {
+          create: {
+            status: ArticleStatus.APPROVED,
+            note: 'Hidden from Journal',
+            actorId: actor.id,
+          },
+        },
+      },
+    });
+    await this.audit.write({
+      actorId: actor.id,
+      action: 'article.unpublished',
+      resource: 'article',
+      resourceId: articleId,
+      metadata: { from: article.status },
+      requestId,
+    });
+    return updated;
   }
 
   /** Worker / scheduler: flip due SCHEDULED articles to PUBLISHED. */
@@ -197,32 +242,120 @@ export class PublishingService {
 
   async createSpecialist(actor: Actor, body: CreateSpecialistBody, requestId?: string) {
     this.assertOps(actor);
-    const row = await this.prisma.specialistProfile.create({ data: body });
-    await this.audit.write({
-      actorId: actor.id,
-      action: 'specialist.created',
-      resource: 'specialist',
-      resourceId: row.id,
-      requestId,
-    });
-    return row;
+    try {
+      const row = await this.prisma.specialistProfile.create({ data: body });
+      await this.audit.write({
+        actorId: actor.id,
+        action: 'specialist.created',
+        resource: 'specialist',
+        resourceId: row.id,
+        requestId,
+      });
+      return row;
+    } catch (e) {
+      this.throwIfSlugTaken(e, 'SPECIALIST_SLUG_TAKEN');
+      throw e;
+    }
+  }
+
+  async updateSpecialist(
+    id: string,
+    actor: Actor,
+    body: UpdateSpecialistBody,
+    requestId?: string,
+  ) {
+    this.assertOps(actor);
+    const existing = await this.prisma.specialistProfile.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Specialist not found.' });
+    }
+    try {
+      const row = await this.prisma.specialistProfile.update({
+        where: { id },
+        data: {
+          ...(body.slug !== undefined ? { slug: body.slug } : {}),
+          ...(body.name !== undefined ? { name: body.name } : {}),
+          ...(body.title !== undefined ? { title: body.title } : {}),
+          ...(body.bio !== undefined ? { bio: body.bio } : {}),
+          ...(body.credentials !== undefined ? { credentials: body.credentials } : {}),
+        },
+      });
+      await this.audit.write({
+        actorId: actor.id,
+        action: 'specialist.updated',
+        resource: 'specialist',
+        resourceId: row.id,
+        requestId,
+      });
+      return row;
+    } catch (e) {
+      this.throwIfSlugTaken(e, 'SPECIALIST_SLUG_TAKEN');
+      throw e;
+    }
   }
 
   async listCategories() {
     return this.prisma.editorialCategory.findMany({ orderBy: { name: 'asc' } });
   }
 
+  async listTags() {
+    return this.prisma.articleTag.findMany({
+      orderBy: { name: 'asc' },
+      take: 200,
+      select: { slug: true, name: true },
+    });
+  }
+
   async createCategory(actor: Actor, body: CreateEditorialCategoryBody, requestId?: string) {
     this.assertOps(actor);
-    const row = await this.prisma.editorialCategory.create({ data: body });
-    await this.audit.write({
-      actorId: actor.id,
-      action: 'editorial.category.created',
-      resource: 'editorial_category',
-      resourceId: row.id,
-      requestId,
-    });
-    return row;
+    try {
+      const row = await this.prisma.editorialCategory.create({ data: body });
+      await this.audit.write({
+        actorId: actor.id,
+        action: 'editorial.category.created',
+        resource: 'editorial_category',
+        resourceId: row.id,
+        requestId,
+      });
+      return row;
+    } catch (e) {
+      this.throwIfSlugTaken(e, 'CATEGORY_SLUG_TAKEN');
+      throw e;
+    }
+  }
+
+  async updateCategory(
+    id: string,
+    actor: Actor,
+    body: UpdateEditorialCategoryBody,
+    requestId?: string,
+  ) {
+    this.assertOps(actor);
+    const existing = await this.prisma.editorialCategory.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Category not found.' });
+    }
+    try {
+      const row = await this.prisma.editorialCategory.update({
+        where: { id },
+        data: {
+          ...(body.slug !== undefined ? { slug: body.slug } : {}),
+          ...(body.name !== undefined ? { name: body.name } : {}),
+          ...(body.description !== undefined ? { description: body.description } : {}),
+        },
+      });
+      await this.audit.write({
+        actorId: actor.id,
+        action: 'editorial.category.updated',
+        resource: 'editorial_category',
+        resourceId: row.id,
+        requestId,
+      });
+      return row;
+    } catch (e) {
+      this.throwIfSlugTaken(e, 'CATEGORY_SLUG_TAKEN');
+      throw e;
+    }
   }
 
   async newsletterSignup(email: string) {
@@ -268,7 +401,7 @@ export class PublishingService {
           scheduledAt: null,
           seoTitle: meta.seoTitle,
           seoDescription: meta.seoDescription,
-          canonicalPath: `/articles/${article.slug}`,
+          canonicalPath: articleCanonicalPath(article.slug),
           ogImageUrl: meta.ogImageUrl,
           categoryId: meta.categoryId,
           specialistId: meta.specialistId,
@@ -323,20 +456,18 @@ export class PublishingService {
     medicalGateRequired: boolean;
     statusHistory: Array<{ status: ArticleStatus }>;
   }) {
-    if (article.status !== ArticleStatus.APPROVED && article.status !== ArticleStatus.SCHEDULED) {
+    const block = publishBlockReason(article);
+    if (block === 'NOT_APPROVED') {
       throw new BadRequestException({
         code: 'NOT_APPROVED',
         message: 'Only APPROVED (or already SCHEDULED) articles can be published.',
       });
     }
-    if (article.medicalGateRequired) {
-      const passed = article.statusHistory.some((h) => h.status === ArticleStatus.MEDICAL_REVIEW);
-      if (!passed) {
-        throw new ForbiddenException({
-          code: 'MEDICAL_GATE_REQUIRED',
-          message: 'Medical gate cannot be skipped before publish.',
-        });
-      }
+    if (block === 'MEDICAL_GATE_REQUIRED') {
+      throw new ForbiddenException({
+        code: 'MEDICAL_GATE_REQUIRED',
+        message: 'Medical gate cannot be skipped before publish.',
+      });
     }
   }
 
@@ -369,16 +500,8 @@ export class PublishingService {
       }
       specialistId = s.id;
     }
-    if (body.tagSlugs?.length) {
-      tagIds = [];
-      for (const slug of body.tagSlugs) {
-        const tag = await this.prisma.articleTag.upsert({
-          where: { slug },
-          create: { slug, name: slug.replace(/-/g, ' ') },
-          update: {},
-        });
-        tagIds.push(tag.id);
-      }
+    if (body.tagSlugs !== undefined) {
+      tagIds = await upsertArticleTagIds(this.prisma, body.tagSlugs);
     }
     return { categoryId, specialistId, tagIds };
   }
@@ -389,6 +512,15 @@ export class PublishingService {
       throw new BadRequestException({ code: 'INVALID_DATE', message: 'Invalid datetime.' });
     }
     return d;
+  }
+
+  private throwIfSlugTaken(e: unknown, code: 'CATEGORY_SLUG_TAKEN' | 'SPECIALIST_SLUG_TAKEN'): void {
+    if (typeof e === 'object' && e && 'code' in e && (e as { code: string }).code === 'P2002') {
+      throw new ConflictException({
+        code,
+        message: 'That slug is already in use.',
+      });
+    }
   }
 
   private assertOps(actor: Actor) {
@@ -441,7 +573,7 @@ export class PublishingService {
       seo: {
         title: a.seoTitle ?? a.title,
         description: a.seoDescription,
-        canonicalPath: a.canonicalPath ?? `/articles/${a.slug}`,
+        canonicalPath: articleCanonicalPath(a.slug),
         ogImageUrl: a.ogImageUrl,
       },
       seoSchemaExtras: readSeoSchemaExtras(a.seoSchemaExtras),

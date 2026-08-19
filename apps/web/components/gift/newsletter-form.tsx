@@ -25,7 +25,7 @@ export function NewsletterForm({ compact = false, hideTitle = false, title, hint
     setBusy(true);
     setMsg(null);
     try {
-      const res = await fetch(apiUrl('/articles/newsletter'), {
+      const res = await fetch(apiUrl('/blog/newsletter'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', [CSRF_HEADER]: CSRF_HEADER_VALUE },
         credentials: 'include',

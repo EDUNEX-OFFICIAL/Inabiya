@@ -1,9 +1,9 @@
 # Procurement OPS — Suppliers & Purchase Orders
 
 Version: 1.0.0  
-Status: **Active** — OPS-10 S0→S3 first slice  
-Last Updated: 2026-08-11  
-Authority (override): [`docs/Memory.md`](Memory.md) — Phase 13 P0/P1 closed; human override to start procurement
+Status: **Paused** — OPS-10 S0→S3 shipped in repo; not the next client product (2026-08-19)  
+Last Updated: 2026-08-19  
+Authority (override): [`docs/Memory.md`](Memory.md) — Phase 13 P0/P1 closed; human override to start procurement; **paused 2026-08-19** while shop/ops/CMS are in client UAT and Editorial is next
 
 **Not** multi-vendor marketplace. Single merchant buys from Delhi-area (and India) suppliers, receives stock into existing inventory ledger.
 
@@ -101,4 +101,5 @@ Zod on every body. Audit: `supplier.*`, `purchase_order.ordered|received|cancell
 
 | Date | Change |
 |---|---|
+| 2026-08-19 | Status → **Paused**. Next client product is Editorial, not more procurement |
 | 2026-08-11 | v1.0.0 — first slice contract under human override |

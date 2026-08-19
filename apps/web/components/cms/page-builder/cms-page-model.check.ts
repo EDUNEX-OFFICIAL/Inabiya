@@ -195,6 +195,9 @@ assert.ok(promoTypes.includes('offerCarousel'));
 assert.ok(PALETTE_INSERTS.some((i) => i.type === 'featuredCarousel'));
 
 const inspector = readFileSync(join(__dirname, 'cms-block-inspector.tsx'), 'utf8');
+const articleEditor = readFileSync(join(__dirname, '../../editorial/article-editor.tsx'), 'utf8');
+assert.match(articleEditor, /article-editor-toolbar/);
+assert.match(articleEditor, /sticky top-0/);
 assert.match(inspector, /FeaturedCarouselCardsEditor/);
 assert.match(inspector, /BrandsRowsEditor/);
 assert.match(inspector, /UspsRowsEditor/);

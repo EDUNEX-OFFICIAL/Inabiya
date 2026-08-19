@@ -57,7 +57,7 @@ export const DEFAULT_FOOTER_COLUMNS: GiftFooterColumn[] = [
     links: [
       { label: 'About', href: '/about' },
       { label: 'Contact', href: '/contact' },
-      { label: 'Parenting Blog', href: '/articles' },
+      { label: 'Parenting Blog', href: '/blog' },
       { label: 'Our Specialists', href: '/specialists' },
     ],
   },

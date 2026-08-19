@@ -1,15 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  apiAuth,
-  clearSession,
-  getStoredAccessToken,
-  loginUrl,
-  type AuthUser,
-} from '@/lib/auth-client';
+  AlertTriangle,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  Inbox,
+  Pencil,
+  PenLine,
+  Timer,
+  Trash2,
+  UserRound,
+} from 'lucide-react';
+import { apiAuth, getStoredAccessToken, loginUrl, type AuthUser } from '@/lib/auth-client';
+import {
+  ARTICLE_STATUS_LABEL,
+  editorialQueueActions,
+  type EditorialQueueAction,
+} from '@/lib/editorial-nav';
+import { EditorialEmpty } from '@/components/editorial/editorial-ui';
+import { EditorialSelect, type EditorialSelectOption } from '@/components/editorial/editorial-select';
+import { EditorialStatusRail } from '@/components/editorial/editorial-status-rail';
 
 type ArticleRow = {
   id: string;
@@ -30,17 +47,17 @@ type Turnaround = {
   approvedSample: number;
 };
 
-const STATUSES = [
-  '',
-  'ASSIGNED',
-  'DRAFT',
-  'SEO_REVIEW',
-  'MEDICAL_REVIEW',
-  'CHANGES_REQUESTED',
-  'APPROVED',
-  'SCHEDULED',
-  'PUBLISHED',
-] as const;
+const STATUS_OPTIONS: EditorialSelectOption[] = [
+  { value: '', label: 'All' },
+  { value: 'ASSIGNED', label: ARTICLE_STATUS_LABEL.ASSIGNED ?? 'Assigned' },
+  { value: 'DRAFT', label: ARTICLE_STATUS_LABEL.DRAFT ?? 'Draft' },
+  { value: 'SEO_REVIEW', label: ARTICLE_STATUS_LABEL.SEO_REVIEW ?? 'SEO' },
+  { value: 'MEDICAL_REVIEW', label: ARTICLE_STATUS_LABEL.MEDICAL_REVIEW ?? 'Medical' },
+  { value: 'CHANGES_REQUESTED', label: ARTICLE_STATUS_LABEL.CHANGES_REQUESTED ?? 'Changes' },
+  { value: 'APPROVED', label: ARTICLE_STATUS_LABEL.APPROVED ?? 'Approved' },
+  { value: 'SCHEDULED', label: ARTICLE_STATUS_LABEL.SCHEDULED ?? 'Scheduled' },
+  { value: 'PUBLISHED', label: ARTICLE_STATUS_LABEL.PUBLISHED ?? 'Published' },
+];
 
 export default function EditorialAdminPage() {
   const router = useRouter();
@@ -49,6 +66,9 @@ export default function EditorialAdminPage() {
   const [status, setStatus] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [stats, setStats] = useState<Turnaround | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const load = useCallback(async (u: AuthUser, st: string, overdue: boolean) => {
     const params = new URLSearchParams();
@@ -92,9 +112,7 @@ export default function EditorialAdminPage() {
         if (
           u.roles.includes('FINANCE') &&
           !u.roles.some((r) =>
-            ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'SUPER_ADMIN'].includes(
-              r,
-            ),
+            ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'SUPER_ADMIN'].includes(r),
           )
         ) {
           router.replace('/admin/editorial/payments');
@@ -106,124 +124,247 @@ export default function EditorialAdminPage() {
   }, [router, load, status, overdueOnly]);
 
   if (!user) {
-    return <main className="p-8 text-sm opacity-70">Loading editorial…</main>;
+    return <main className="blog-page text-sm opacity-70">Loading…</main>;
   }
 
-  const isContent = user.roles.includes('CONTENT_ADMIN') || user.roles.includes('SUPER_ADMIN');
+  const actor = user;
+  const isOps = actor.roles.includes('CONTENT_ADMIN') || actor.roles.includes('SUPER_ADMIN');
+  const published = stats?.byStatus.find((s) => s.status === 'PUBLISHED')?.count ?? 0;
+  const avg = stats?.avgHoursToApprove;
+
+  async function runAction(id: string, action: Exclude<EditorialQueueAction, 'edit' | 'preview' | 'live'>) {
+    if (busyId) return;
+    if (action === 'delete' && confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      setActionError(null);
+      return;
+    }
+    setBusyId(id);
+    setActionError(null);
+    setConfirmDeleteId(null);
+    try {
+      if (action === 'hide') {
+        await apiAuth(`/editorial/articles/${id}/unpublish`, { method: 'POST', json: {} });
+      } else if (action === 'draft') {
+        await apiAuth(`/editorial/articles/${id}/return-to-draft`, { method: 'POST', json: {} });
+      } else {
+        await apiAuth(`/editorial/articles/${id}`, { method: 'DELETE' });
+      }
+      await load(actor, status, overdueOnly);
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Failed');
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
-    <main className="min-h-screen p-8 bg-[var(--background)] text-[var(--foreground)]">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <main className="blog-page">
+      <div className="flex flex-col gap-gs-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl">Editorial</h1>
-          <p className="mt-1 text-sm opacity-70">
-            {user.email} · {user.roles.join(', ')}
-          </p>
+          <p className="blog-overline">Editorial</p>
+          <h1 className="blog-h1 mt-gs-2">Queue</h1>
         </div>
-        <button
-          type="button"
-          className="rounded border px-3 py-1.5 text-sm"
-          onClick={() => {
-            clearSession();
-            window.location.href = loginUrl('/admin/editorial');
-          }}
-        >
-          Log out
-        </button>
+        <div className="editorial-filters">
+          <div className="editorial-filters__status">
+            Status
+            <EditorialSelect
+              variant="inline"
+              ariaLabel="Filter by workflow status"
+              value={status}
+              onChange={setStatus}
+              options={STATUS_OPTIONS}
+            />
+          </div>
+          <button
+            type="button"
+            className={`editorial-chip ${overdueOnly ? 'is-on' : ''}`}
+            aria-pressed={overdueOnly}
+            onClick={() => setOverdueOnly((v) => !v)}
+          >
+            <AlertTriangle className="h-4 w-4" aria-hidden />
+            Overdue
+          </button>
+        </div>
       </div>
-      {user.roles.includes('SEO_EDITOR') && !isContent ? (
-        <p className="mt-2 text-sm text-amber-800">
-          SEO queue — showing articles in SEO_REVIEW (change status filter to see others).
-        </p>
-      ) : null}
-      {user.roles.includes('MEDICAL_REVIEWER') && !isContent ? (
-        <p className="mt-2 text-sm text-amber-800">
-          Medical queue — showing MEDICAL_REVIEW. Only MEDICAL_REVIEWER can approve past the medical
-          gate.
-        </p>
-      ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-3 text-sm">
-        {isContent ? (
-          <Link href="/admin/editorial/articles/new" className="rounded border px-3 py-1">
-            New assignment
-          </Link>
-        ) : null}
-        <Link href="/admin/editorial/writer" className="rounded border px-3 py-1">
-          Writer queue
-        </Link>
-        {isContent || user.roles.includes('FINANCE') ? (
-          <Link href="/admin/editorial/payments" className="rounded border px-3 py-1">
-            Writer payments
-          </Link>
-        ) : null}
-        <Link href="/articles" className="rounded border px-3 py-1">
-          Public articles
-        </Link>
-      </div>
+      {actionError ? (
+        <p className="blog-banner blog-banner--danger mt-gs-4 text-sm">{actionError}</p>
+      ) : null}
 
       {stats ? (
-        <section className="mt-6 rounded border p-4 text-sm max-w-2xl">
-          <h2 className="font-medium">Turnaround</h2>
-          <p className="mt-1 opacity-80">
-            Avg hours to approve: {stats.avgHoursToApprove ?? '—'} · Overdue: {stats.overdueCount} ·
-            Approved sample: {stats.approvedSample}
-          </p>
-          <ul className="mt-2 flex flex-wrap gap-2">
-            {stats.byStatus.map((s) => (
-              <li key={s.status} className="rounded bg-neutral-100 px-2 py-0.5 text-xs">
-                {s.status}: {s.count}
-              </li>
-            ))}
-          </ul>
+        <section className="editorial-stats mt-gs-6" aria-label="Queue stats">
+          <StatTile
+            icon={<Timer className="h-4 w-4" aria-hidden />}
+            label="Approve avg"
+            value={avg == null ? '—' : `${avg}h`}
+          />
+          <StatTile
+            icon={<Clock className="h-4 w-4" aria-hidden />}
+            label="Overdue"
+            value={String(stats.overdueCount)}
+            pressed={overdueOnly}
+            alert={stats.overdueCount > 0}
+            onClick={() => setOverdueOnly((v) => !v)}
+          />
+          <StatTile
+            icon={<CheckCircle2 className="h-4 w-4" aria-hidden />}
+            label="Published"
+            value={String(published)}
+          />
         </section>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap gap-3 text-sm items-center">
-        <label>
-          Status{' '}
-          <select
-            className="rounded border px-2 py-1"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            {STATUSES.map((s) => (
-              <option key={s || 'ALL'} value={s}>
-                {s || 'ALL'}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={overdueOnly}
-            onChange={(e) => setOverdueOnly(e.target.checked)}
-          />
-          Overdue only
-        </label>
-      </div>
-
-      <ul className="mt-4 space-y-2 max-w-2xl">
-        {rows.map((a) => (
-          <li key={a.id} className="rounded border p-3 text-sm">
-            <Link
-              href={`/admin/editorial/articles/${a.id}`}
-              className="font-medium hover:underline"
-            >
-              {a.title}
-            </Link>
-            <p className="opacity-70 mt-1">
-              {a.status}
-              {a.medicalGateRequired ? ' · medical gate' : ''}
-              {a.assignee ? ` · ${a.assignee.displayName ?? a.assignee.email}` : ' · unassigned'}
-              {a.dueAt ? ` · due ${new Date(a.dueAt).toLocaleDateString()}` : ''}
-              {a.overdue ? ' · OVERDUE' : ''}
-            </p>
-          </li>
-        ))}
-        {rows.length === 0 ? <li className="text-sm opacity-70">No articles yet.</li> : null}
+      <ul className="editorial-queue mt-gs-4">
+        {rows.map((a) => {
+          const actions = editorialQueueActions(a.status, isOps);
+          return (
+            <li key={a.id}>
+              <article className="editorial-queue-card">
+                <div className="editorial-queue-card__main">
+                  <div className="editorial-queue-card__head">
+                    <div className="editorial-queue-card__id">
+                      <Link href={`/admin/editorial/articles/${a.id}`} className="editorial-queue-card__title">
+                        {a.title}
+                      </Link>
+                      <p className="editorial-queue-card__slug">/blog/{a.slug}</p>
+                    </div>
+                    <span className="editorial-status-pill">
+                      {ARTICLE_STATUS_LABEL[a.status] ?? a.status}
+                    </span>
+                  </div>
+                  <EditorialStatusRail
+                    spread
+                    status={a.status}
+                    medicalGate={a.medicalGateRequired}
+                  />
+                  <p className="editorial-meta">
+                    {a.medicalGateRequired ? <span>Medical gate</span> : null}
+                    <span>
+                      <UserRound aria-hidden />
+                      {a.assignee ? (a.assignee.displayName ?? a.assignee.email) : 'Unassigned'}
+                    </span>
+                    {a.dueAt ? (
+                      <span>
+                        <Calendar aria-hidden />
+                        {new Date(a.dueAt).toLocaleDateString()}
+                      </span>
+                    ) : null}
+                    {a.overdue ? (
+                      <span className="editorial-meta__danger">
+                        <AlertTriangle aria-hidden />
+                        Overdue
+                      </span>
+                    ) : null}
+                  </p>
+                  <div className="editorial-queue-card__actions">
+                    {actions.map((action) => (
+                      <QueueAction
+                        key={action}
+                        action={action}
+                        articleId={a.id}
+                        slug={a.slug}
+                        busy={busyId === a.id}
+                        confirmDelete={confirmDeleteId === a.id}
+                        onRun={() => void runAction(a.id, action as 'hide' | 'draft' | 'delete')}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </article>
+            </li>
+          );
+        })}
+        {rows.length === 0 ? <EditorialEmpty icon={Inbox}>No articles yet.</EditorialEmpty> : null}
       </ul>
     </main>
+  );
+}
+
+function StatTile({
+  icon,
+  label,
+  value,
+  pressed,
+  alert,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  pressed?: boolean;
+  alert?: boolean;
+  onClick?: () => void;
+}) {
+  const className = `editorial-stat${pressed ? ' is-on' : ''}${alert ? ' is-alert' : ''}`;
+  const body = (
+    <>
+      <span className="editorial-stat__lead">
+        <span className="editorial-stat__icon">{icon}</span>
+        <span className="editorial-stat__label">{label}</span>
+      </span>
+      <p className="editorial-stat__value">{value}</p>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" className={className} aria-pressed={pressed} onClick={onClick}>
+        {body}
+      </button>
+    );
+  }
+
+  return <div className={className}>{body}</div>;
+}
+
+function QueueAction({
+  action,
+  articleId,
+  slug,
+  busy,
+  confirmDelete,
+  onRun,
+}: {
+  action: EditorialQueueAction;
+  articleId: string;
+  slug: string;
+  busy: boolean;
+  confirmDelete: boolean;
+  onRun: () => void;
+}) {
+  const cls = `editorial-queue-action${action === 'delete' ? ' is-danger' : ''}`;
+  if (action === 'edit') {
+    return (
+      <Link href={`/admin/editorial/articles/${articleId}`} className={cls}>
+        <Pencil className="h-3.5 w-3.5" aria-hidden />
+        Edit
+      </Link>
+    );
+  }
+  if (action === 'preview') {
+    return (
+      <Link href={`/admin/editorial/articles/${articleId}/preview`} className={cls}>
+        <Eye className="h-3.5 w-3.5" aria-hidden />
+        Preview
+      </Link>
+    );
+  }
+  if (action === 'live') {
+    return (
+      <Link href={`/blog/${slug}`} className={cls}>
+        <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+        Live
+      </Link>
+    );
+  }
+  const label =
+    action === 'hide' ? 'Hide' : action === 'draft' ? 'Draft' : confirmDelete ? 'Delete?' : 'Delete';
+  const Icon = action === 'delete' ? Trash2 : action === 'hide' ? EyeOff : PenLine;
+  return (
+    <button type="button" className={cls} disabled={busy} onClick={onRun}>
+      <Icon className="h-3.5 w-3.5" aria-hidden />
+      {label}
+    </button>
   );
 }

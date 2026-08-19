@@ -1,9 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Plus } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
+import { EditorialIconButton } from '@/components/editorial/editorial-ui';
 
 type Writer = { id: string; email: string; displayName: string | null };
 
@@ -49,26 +50,18 @@ export default function NewArticlePage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-lg">
-      <Link href="/admin/editorial" className="text-sm underline opacity-70">
-        ← Editorial
-      </Link>
-      <h1 className="text-2xl font-semibold mt-4">New assignment</h1>
-      <label className="mt-4 block text-sm">
+    <main className="blog-page">
+      <p className="blog-overline">Editorial</p>
+      <h1 className="blog-h1 mt-gs-2">New</h1>
+      <div className="editorial-panel mt-gs-6 max-w-xl p-gs-5">
+      <div className="editorial-fields">
+      <label className="editorial-span block text-sm">
         Title
-        <input
-          className="mt-1 w-full rounded border px-2 py-1"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+        <input className="blog-input" value={title} onChange={(e) => setTitle(e.target.value)} />
       </label>
-      <label className="mt-3 block text-sm">
+      <label className="block text-sm">
         Writer
-        <select
-          className="mt-1 w-full rounded border px-2 py-1"
-          value={assigneeId}
-          onChange={(e) => setAssigneeId(e.target.value)}
-        >
+        <select className="blog-input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
           {writers.map((w) => (
             <option key={w.id} value={w.id}>
               {w.displayName ?? w.email}
@@ -76,39 +69,40 @@ export default function NewArticlePage() {
           ))}
         </select>
       </label>
-      <label className="mt-3 flex items-center gap-2 text-sm">
+      <label className="block text-sm">
+        Due date
+        <input
+          type="date"
+          className="blog-input"
+          value={dueAt}
+          onChange={(e) => setDueAt(e.target.value)}
+        />
+      </label>
+      <label className="editorial-span flex items-center gap-gs-2 text-sm">
         <input
           type="checkbox"
           checked={medicalGateRequired}
           onChange={(e) => setMedicalGateRequired(e.target.checked)}
         />
-        Medical gate required
+        Medical gate
       </label>
-      <label className="mt-3 block text-sm">
-        Due date
-        <input
-          type="date"
-          className="mt-1 w-full rounded border px-2 py-1"
-          value={dueAt}
-          onChange={(e) => setDueAt(e.target.value)}
-        />
-      </label>
-      <label className="mt-3 block text-sm">
+      <label className="editorial-span block text-sm">
         Brief
         <textarea
-          className="mt-1 w-full rounded border px-2 py-1 min-h-[80px]"
+          className="blog-input min-h-[80px]"
           value={brief}
           onChange={(e) => setBrief(e.target.value)}
         />
       </label>
-      <button
-        type="button"
-        className="mt-4 rounded border px-3 py-1 text-sm"
+      </div>
+      <EditorialIconButton
+        className="mt-gs-4 w-full sm:w-auto"
+        label="Create"
+        icon={Plus}
         onClick={() => void create()}
-      >
-        Create
-      </button>
-      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
+      />
+      {error ? <p className="blog-banner blog-banner--danger mt-gs-3 text-sm">{error}</p> : null}
+      </div>
     </main>
   );
 }

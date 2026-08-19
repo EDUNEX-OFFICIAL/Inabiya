@@ -16,7 +16,7 @@ Operations
 Finance
 AI Coding Assistants
 
-Last Updated: July 2026
+Last Updated: August 2026 (Phase 15 Editorial next; Phase 14 paused)
 
 ---
 
@@ -862,7 +862,7 @@ Memory Active Phase must name the **current OPS-N** only. Full P0/P1/exit criter
 
 ## 27. Phase 14 — Procurement OPS (suppliers / POs) — override track
 
-**Status:** **Active** (2026-08-11 human override after Phase 13 P1 closed).  
+**Status:** **Paused** (2026-08-19). S0–S3 exist in repo. Human: not the next client product (suppliers also removed from handover).  
 **Authority:** [`docs/PROCUREMENT_OPS.md`](PROCUREMENT_OPS.md)  
 **Depends on:** OPS-3 inventory ledger  
 **Goal:** Single-merchant supplier + simple purchase order full-receive into inventory. **Not** multi-vendor marketplace.
@@ -872,6 +872,40 @@ Memory Active Phase must name the **current OPS-N** only. Full P0/P1/exit criter
 | S0–S3 | Supplier CRUD · PO DRAFT→ORDERED→RECEIVED · Receive all · Soft Gift desks |
 
 P1 later: partial receive, FINANCE read role, AP invoices.
+
+---
+
+## 28. Phase 15 — Editorial client-ready (next client product)
+
+**Status:** **In progress** (2026-08-19). Shop + Commerce Ops + CMS in **client testing**.  
+**Slice:** **E0 shipped** — shell + public journal + taxonomy admin  
+**Depends on:** Phase 6–7 P0 (already in repo). Not a rebuild.  
+**PRD anchors:** PART 6 editorial; Design System C (`blog`)  
+**Then:** Phase 8 Creator Collective client-ready (campaigns) — do not start that track first.
+
+### Why Editorial before Creator
+
+1. PRD Stage 2 (editorial growth) before Stage 3 (creator marketplace)
+2. Planning law: Trust/Content before Marketplace
+3. One-sided content ops vs two-sided brand/creator + escrow
+4. Journal sits on the same public brand the client is already testing
+
+### First slice (P0 for this track) — **E0 shipped** (2026-08-19)
+
+- Public `/articles` + `/specialists` usable for client walkthrough
+- Editorial CMS shell: assignment → draft → SEO → medical → publish (no gate skip)
+- Categories + specialists admin (create/edit)
+- Theme isolation (`blog` ≠ `gift` ≠ `creator`)
+- Writer cannot publish; finance gate on writer pay remains
+- Do **not** pull P1 related/comments/RSS unless this slice finishes early
+
+### Parallel (not dual product)
+
+Client UAT defects on storefront / Commerce Ops / CMS take priority over new Editorial features.
+
+### Demo
+
+One medically gated article: assign → edit → gates → publish → public URL.
 
 ---
 

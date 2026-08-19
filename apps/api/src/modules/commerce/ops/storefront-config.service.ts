@@ -18,9 +18,21 @@ function rewriteGiftRouteHref(href: string | undefined | null): string | undefin
     return s;
   }
   if (s === '/gift' || s.startsWith('/gift/') || s.startsWith('/gift?') || s.startsWith('/gift#')) {
-    return s.replace(/^\/gift/, '') || '/';
+    return rewriteLegacyArticlesHref(s.replace(/^\/gift/, '') || '/');
   }
-  return s;
+  return rewriteLegacyArticlesHref(s);
+}
+
+function rewriteLegacyArticlesHref(href: string): string {
+  if (
+    href === '/articles' ||
+    href.startsWith('/articles/') ||
+    href.startsWith('/articles?') ||
+    href.startsWith('/articles#')
+  ) {
+    return `/blog${href.slice('/articles'.length)}`;
+  }
+  return href;
 }
 
 function rewriteChromeHrefs<T>(value: T): T {
@@ -115,12 +127,12 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
         imageSrc: '/gift/nav/for-whom.svg',
       },
     },
-    { id: 'journal', label: 'Journal', type: 'link', href: '/articles' },
+    { id: 'journal', label: 'Journal', type: 'link', href: '/blog' },
   ],
   shopLabel: 'Shop',
   forWhomLabel: 'For Whom',
   journalLabel: 'Journal',
-  journalHref: '/articles',
+  journalHref: '/blog',
   shopLinks: [
     { href: '/build-your-box', label: 'Build Your Box', group: 'Shop' },
     { href: '/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
@@ -207,7 +219,7 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
         links: [
           { label: 'About', href: '/about' },
           { label: 'Contact', href: '/contact' },
-          { label: 'Parenting Blog', href: '/articles' },
+          { label: 'Parenting Blog', href: '/blog' },
           { label: 'Our Specialists', href: '/specialists' },
         ],
       },

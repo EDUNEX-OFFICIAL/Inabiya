@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { ArticleBody } from '@/components/editorial/article-body';
+import { ARTICLE_STATUS_LABEL } from '@/lib/editorial-nav';
 
 type Preview = { title: string; slug: string; body: string; status: string; internal: boolean };
 
@@ -22,24 +23,19 @@ export default function ArticlePreviewPage({ params }: { params: { id: string } 
       .catch(() => router.replace('/admin/editorial'));
   }, [params.id, router]);
 
-  if (!preview) return <main className="p-8 text-sm opacity-70">Loading preview…</main>;
+  if (!preview) return <main className="blog-page text-sm opacity-70">Loading preview…</main>;
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <Link
-        href={`/admin/editorial/articles/${params.id}`}
-        className="text-sm underline opacity-70"
-      >
-        ← Back to editor
+    <main className="blog-page max-w-3xl">
+      <Link href={`/admin/editorial/articles/${params.id}`} className="text-sm text-primary hover:underline">
+        ← Editor
       </Link>
-      <p className="mt-2 text-xs uppercase tracking-wide text-amber-700">
-        Internal preview · not published
+      <p className="blog-overline mt-gs-4">Internal preview</p>
+      <h1 className="blog-h1 mt-gs-2">{preview.title}</h1>
+      <p className="mt-gs-1 text-sm opacity-60">
+        /{preview.slug} · {ARTICLE_STATUS_LABEL[preview.status] ?? preview.status}
       </p>
-      <h1 className="font-display text-3xl mt-4">{preview.title}</h1>
-      <p className="text-sm opacity-60 mt-1">
-        /{preview.slug} · {preview.status}
-      </p>
-      <div className="mt-8 text-[15px]">
+      <div className="editorial-panel blog-prose mt-gs-6 p-gs-5">
         <ArticleBody body={preview.body} />
       </div>
     </main>

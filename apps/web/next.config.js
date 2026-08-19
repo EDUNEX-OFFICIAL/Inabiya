@@ -47,15 +47,15 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Legacy System A shell — real journal is Soft Gift /articles (editorial publishes here).
+      // Public journal is `/blog`. Keep old `/articles` links working.
       {
-        source: '/blog',
-        destination: '/articles',
+        source: '/articles',
+        destination: '/blog',
         permanent: true,
       },
       {
-        source: '/blog/:slug',
-        destination: '/articles/:slug',
+        source: '/articles/:slug',
+        destination: '/blog/:slug',
         permanent: true,
       },
     ];

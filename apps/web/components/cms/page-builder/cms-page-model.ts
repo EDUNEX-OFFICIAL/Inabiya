@@ -328,7 +328,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     title: 'From the parenting journal',
     subtitle: '',
     limit: '3',
-    seeAllHref: '/articles',
+    seeAllHref: '/blog',
     seeAllLabel: 'All articles →',
   },
   footer: {

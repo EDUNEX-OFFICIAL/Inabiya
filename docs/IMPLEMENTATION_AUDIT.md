@@ -1,6 +1,6 @@
 # Inabiya — Implementation Cross-Check
 
-Last verified: **2026-07-29** (Phase 13 Commerce OPS Panel OPS-0…9 P0 cross-check)
+Last verified: **2026-08-19** (client UAT shop/ops/CMS; next product = Editorial). Prior Phase 13 cross-check: **2026-07-29**.
 
 This document reconciles phase claims in `Memory.md` against the repo.  
 Authority for Phase 13 detail: [`COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md) v2.0.0.
@@ -26,6 +26,10 @@ Authority for Phase 13 detail: [`COMMERCE_OPS_PANEL.md`](COMMERCE_OPS_PANEL.md) 
 | **11** Marketing Page Builder | **Closed** | 11A–11D; Soft Gift `/gift` on blocks |
 | **12** CMS TipTap + saleStrip + media | **Shipped** | TipTap, saleStrip, local media; real S3 SDK post-dev |
 | **13** Commerce OPS Panel | **P0 Closed** | OPS-0…9 shipped; P1 leftovers listed below |
+| **14** Procurement OPS-10 | **Paused** | S0–S3 in repo; not client-next (2026-08-19) |
+| **15** Editorial client-ready | **E0 shipped** | Shell + journal + categories/specialists admin |
+
+Client testing (2026-08-19): storefront + Commerce Ops + CMS. Next product: Journal before Creator campaigns.
 
 ---
 

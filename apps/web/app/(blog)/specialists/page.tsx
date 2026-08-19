@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export default async function SpecialistsIndexPage() {
   let specialists: PublicSpecialist[] = [];
   try {
-    specialists = await fetchArticles<PublicSpecialist[]>('/articles/specialists');
+    specialists = await fetchArticles<PublicSpecialist[]>('/blog/specialists');
   } catch {
     specialists = [];
   }
@@ -15,9 +15,6 @@ export default async function SpecialistsIndexPage() {
     <main className="blog-page max-w-2xl">
       <p className="blog-overline">Specialists</p>
       <h1 className="blog-h1 mt-gs-2">Meet our specialists</h1>
-      <p className="blog-muted mt-gs-3 max-w-xl">
-        Editorial experts who review and attribute guidance — not Creator Collective profiles.
-      </p>
       <ul className="mt-gs-7 space-y-gs-4">
         {specialists.map((s) => (
           <li key={s.id}>
@@ -37,7 +34,7 @@ export default async function SpecialistsIndexPage() {
         ) : null}
       </ul>
       <p className="mt-gs-7 text-sm">
-        <Link href="/articles" className="text-primary hover:underline">
+        <Link href="/blog" className="text-primary hover:underline">
           ← Parenting journal
         </Link>
       </p>

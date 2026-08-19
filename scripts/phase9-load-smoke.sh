@@ -28,7 +28,7 @@ for ((r = 1; r <= ROUNDS; r++)); do
     hit "$API/ready" &
     hit "$API/catalog/products" &
     hit "$API/creator/marketplace" &
-    hit "$API/articles" &
+    hit "$API/blog" &
     hit "$WEB/" &
     hit "$WEB/creator" &
   done

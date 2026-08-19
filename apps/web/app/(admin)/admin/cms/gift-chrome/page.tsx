@@ -115,7 +115,7 @@ const DEFAULT_NAV_ITEMS: TopNavItem[] = [
     links: DEFAULT_WHOM,
     mega: DEFAULT_WHOM_MEGA,
   },
-  { id: 'journal', label: 'Journal', type: 'link', href: '/articles' },
+  { id: 'journal', label: 'Journal', type: 'link', href: '/blog' },
 ];
 
 function compactNavItems(items: TopNavItem[]): TopNavItem[] {
@@ -160,7 +160,7 @@ const DEFAULT_FOOTER_COLS: FooterColRow[] = [
     links: [
       { label: 'About', href: '/about' },
       { label: 'Contact', href: '/contact' },
-      { label: 'Parenting Blog', href: '/articles' },
+      { label: 'Parenting Blog', href: '/blog' },
       { label: 'Our Specialists', href: '/specialists' },
     ],
   },
@@ -281,7 +281,7 @@ export default function GiftChromeAdminPage() {
   const [shopLabel, setShopLabel] = useState('Shop');
   const [forWhomLabel, setForWhomLabel] = useState('For Whom');
   const [journalLabel, setJournalLabel] = useState('Journal');
-  const [journalHref, setJournalHref] = useState('/articles');
+  const [journalHref, setJournalHref] = useState('/blog');
   const [navItems, setNavItems] = useState<TopNavItem[]>(DEFAULT_NAV_ITEMS);
   const [shopLinks, setShopLinks] = useState<NavLinkRow[]>([]);
   const [whomLinks, setWhomLinks] = useState<NavLinkRow[]>([]);
@@ -338,14 +338,14 @@ export default function GiftChromeAdminPage() {
                   id: 'journal',
                   label: c.journalLabel?.trim() || 'Journal',
                   type: 'link',
-                  href: c.journalHref?.trim() || '/articles',
+                  href: c.journalHref?.trim() || '/blog',
                 },
               ],
         );
         setShopLabel(c.shopLabel?.trim() || 'Shop');
         setForWhomLabel(c.forWhomLabel?.trim() || 'For Whom');
         setJournalLabel(c.journalLabel?.trim() || 'Journal');
-        setJournalHref(c.journalHref?.trim() || '/articles');
+        setJournalHref(c.journalHref?.trim() || '/blog');
         setShopLinks(c.shopLinks?.length ? c.shopLinks : DEFAULT_SHOP);
         setWhomLinks(c.forWhomLinks?.length ? c.forWhomLinks : DEFAULT_WHOM);
         setShopMega({
@@ -405,7 +405,7 @@ export default function GiftChromeAdminPage() {
           shopLabel: shopLabel.trim() || 'Shop',
           forWhomLabel: forWhomLabel.trim() || 'For Whom',
           journalLabel: journalLabel.trim() || 'Journal',
-          journalHref: journalHref.trim() || '/articles',
+          journalHref: journalHref.trim() || '/blog',
           shopLinks: compactNavLinks(shopLinks),
           forWhomLinks: compactNavLinks(whomLinks),
           shopMega,

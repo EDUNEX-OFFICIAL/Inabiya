@@ -47,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [cmsPages, articles, products, collections] = await Promise.all([
     safeJson<CmsRow[]>('/cms/pages'),
-    safeJson<ArticleRow[]>('/articles'),
+    safeJson<ArticleRow[]>('/blog'),
     safeJson<ProductRow[]>('/catalog/products?sort=newest'),
     safeJson<CollectionRow[]>('/catalog/collections'),
   ]);
@@ -66,7 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const a of articles ?? []) {
     if (!a?.slug) continue;
     entries.push({
-      url: `${origin}/articles/${a.slug}`,
+      url: `${origin}/blog/${a.slug}`,
       lastModified: a.publishedAt ? new Date(a.publishedAt) : undefined,
       changeFrequency: 'weekly',
       priority: 0.65,

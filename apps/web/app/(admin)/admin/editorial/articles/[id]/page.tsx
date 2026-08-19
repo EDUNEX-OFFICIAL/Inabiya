@@ -1,15 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  Calendar,
+  ExternalLink,
+  Eye,
+  MessageSquare,
+  Save,
+  UserRound,
+} from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { apiUrl } from '@/lib/api-base';
 import { ArticleEditor } from '@/components/editorial/article-editor';
 import { CmsMediaField } from '@/components/cms/cms-media-field';
-import { SeoSchemaPanel } from '@/components/admin/seo-schema-panel';
+import { ProductSeoSchemaField } from '@/components/admin/product-seo-schema-field';
+import { EditorialStatusRail } from '@/components/editorial/editorial-status-rail';
+import { EditorialSelect, type EditorialSelectOption } from '@/components/editorial/editorial-select';
+import { EditorialTagField, type EditorialTag } from '@/components/editorial/editorial-tag-field';
 import { sanitizeArticleHtml, normalizeArticleBody } from '@/lib/article-html';
 import { getSiteOrigin } from '@/lib/cms-seo';
+import { BLOG_API, BLOG_PATH, blogIndexPath, blogPostPath } from '@/lib/blog-paths';
+import { articleJsonLd, breadcrumbJsonLd } from '@/lib/seo-json-ld';
+import { ARTICLE_STATUS_LABEL } from '@/lib/editorial-nav';
 import type { SeoSchemaEntry } from '@inabiya/validation';
 
 type ArticleDetail = {
@@ -20,12 +34,16 @@ type ArticleDetail = {
   status: string;
   medicalGateRequired: boolean;
   dueAt: string | null;
+  publishedAt?: string | null;
   ogImageUrl?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   seoSchemaExtras?: SeoSchemaEntry[] | null;
   canEditBody: boolean;
   allowedTransitions: string[];
+  category: { slug: string; name: string } | null;
+  specialist: { slug: string; name: string } | null;
+  tags: Array<{ slug: string; name: string }>;
   assignee: { email: string; displayName: string | null } | null;
   comments: Array<{
     id: string;
@@ -51,6 +69,21 @@ type ArticleDetail = {
 
 type Category = { slug: string; name: string };
 type Specialist = { slug: string; name: string };
+type ActivityTab = 'comments' | 'revisions' | 'timeline';
+
+/** SERP hint — same as CMS `CmsPageSeoForm` Count (60 / 160). API hard max is 120 / 320. */
+const SEO_TITLE_HINT = 60;
+const SEO_TITLE_MAX = 120;
+const SEO_DESC_HINT = 160;
+const SEO_DESC_MAX = 320;
+
+function articleSlugify(raw: string): string {
+  return raw
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 120);
+}
 
 export default function ArticleDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -61,18 +94,23 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   const [msg, setMsg] = useState<string | null>(null);
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
+  const [slug, setSlug] = useState('');
   const [ogImageUrl, setOgImageUrl] = useState('');
   const [categorySlug, setCategorySlug] = useState('');
   const [specialistSlug, setSpecialistSlug] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [specialists, setSpecialists] = useState<Specialist[]>([]);
+  const [tags, setTags] = useState<EditorialTag[]>([]);
+  const [tagCatalog, setTagCatalog] = useState<EditorialTag[]>([]);
   const [editorKey, setEditorKey] = useState(0);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [isContent, setIsContent] = useState(false);
   const [canEditSchema, setCanEditSchema] = useState(false);
   const [seoSchemaExtras, setSeoSchemaExtras] = useState<SeoSchemaEntry[]>([]);
+  const [activity, setActivity] = useState<ActivityTab>('comments');
 
   async function load() {
     const me = await apiAuth<{ roles: string[] }>('/auth/me');
@@ -86,16 +124,22 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
     setArticle(a);
     setBody(a.body);
     setTitle(a.title);
+    setSlug(a.slug);
     setSeoTitle(a.seoTitle ?? a.title);
     setSeoDescription(a.seoDescription ?? '');
     setOgImageUrl(a.ogImageUrl ?? '');
-    setSeoSchemaExtras(a.seoSchemaExtras ?? []);
-    const [cats, specs] = await Promise.all([
-      fetch(apiUrl('/articles/categories')).then((r) => r.json() as Promise<Category[]>),
-      fetch(apiUrl('/articles/specialists')).then((r) => r.json() as Promise<Specialist[]>),
+    setSeoSchemaExtras((a.seoSchemaExtras ?? []).filter((e) => e.mode === 'replace').slice(0, 1));
+    setCategorySlug(a.category?.slug ?? '');
+    setSpecialistSlug(a.specialist?.slug ?? '');
+    setTags(a.tags ?? []);
+    const [cats, specs, tagRows] = await Promise.all([
+      fetch(apiUrl(`${BLOG_API}/categories`)).then((r) => r.json() as Promise<Category[]>),
+      fetch(apiUrl(`${BLOG_API}/specialists`)).then((r) => r.json() as Promise<Specialist[]>),
+      fetch(apiUrl(`${BLOG_API}/tags`)).then((r) => r.json() as Promise<EditorialTag[]>).catch(() => []),
     ]);
     setCategories(cats);
     setSpecialists(specs);
+    setTagCatalog(tagRows);
     setEditorKey((k) => k + 1);
     setDirty(false);
   }
@@ -108,37 +152,122 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
     void load().catch(() => router.replace('/admin/editorial'));
   }, [params.id, router]);
 
-  // Auto-save every 30s when dirty + editable
   useEffect(() => {
     if (!article?.canEditBody || !dirty) return;
     const t = setInterval(() => {
       void (async () => {
         try {
-          const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}`, {
-            method: 'PATCH',
-            json: { title, body: sanitizeArticleHtml(normalizeArticleBody(body)) },
-          });
-          setArticle(a);
-          setLastSavedAt(new Date());
-          setDirty(false);
-          setMsg('Auto-saved');
+          await saveAll('auto');
         } catch {
           setMsg('Auto-save failed');
         }
       })();
     }, 30_000);
     return () => clearInterval(t);
-  }, [article?.canEditBody, dirty, title, body, params.id, article]);
+  }, [article?.canEditBody, dirty, title, body, tags, isContent, params.id, article]);
 
-  async function save() {
-    const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}`, {
-      method: 'PATCH',
-      json: { title, body: sanitizeArticleHtml(normalizeArticleBody(body)) },
-    });
+  const categoryOptions = useMemo<EditorialSelectOption[]>(
+    () => [{ value: '', label: 'None' }, ...categories.map((c) => ({ value: c.slug, label: c.name }))],
+    [categories],
+  );
+  const specialistOptions = useMemo<EditorialSelectOption[]>(
+    () => [{ value: '', label: 'None' }, ...specialists.map((s) => ({ value: s.slug, label: s.name }))],
+    [specialists],
+  );
+
+  const schemaAutoNodes = useMemo(() => {
+    if (!article) return [];
+    const origin = getSiteOrigin();
+    const headline = seoTitle.trim() || title.trim() || article.title;
+    return [
+      articleJsonLd({
+        headline,
+        description: seoDescription.trim() || null,
+        slug: slug.trim() || article.slug,
+        canonicalPath: blogPostPath(slug.trim() || article.slug),
+        imageUrl: ogImageUrl.trim() || null,
+        datePublished: article.publishedAt ?? null,
+        authorName: article.specialist?.name ?? article.assignee?.displayName ?? null,
+        siteOrigin: origin,
+      }),
+      breadcrumbJsonLd([
+        { name: 'Journal', url: `${origin}${BLOG_PATH}` },
+        ...(article.category
+          ? [
+              {
+                name: article.category.name,
+                url: `${origin}${blogIndexPath({ category: article.category.slug })}`,
+              },
+            ]
+          : []),
+        {
+          name: headline,
+          url: `${origin}${blogPostPath(slug.trim() || article.slug)}`,
+        },
+      ]),
+    ];
+  }, [article, seoTitle, title, seoDescription, ogImageUrl, slug]);
+
+  function applyArticle(a: ArticleDetail) {
     setArticle(a);
-    setLastSavedAt(new Date());
-    setDirty(false);
-    setMsg('Saved');
+    setSlug(a.slug);
+    setOgImageUrl(a.ogImageUrl ?? '');
+    setSeoTitle(a.seoTitle ?? a.title);
+    setSeoDescription(a.seoDescription ?? '');
+    setSeoSchemaExtras((a.seoSchemaExtras ?? []).filter((e) => e.mode === 'replace').slice(0, 1));
+    setCategorySlug(a.category?.slug ?? '');
+    setSpecialistSlug(a.specialist?.slug ?? '');
+    setTags(a.tags ?? []);
+    setTagCatalog((prev) => {
+      const extra = (a.tags ?? []).filter((t) => !prev.some((p) => p.slug === t.slug));
+      return extra.length ? [...prev, ...extra] : prev;
+    });
+  }
+
+  function persistPayload(): Record<string, unknown> {
+    const json: Record<string, unknown> = {};
+    if (article?.canEditBody) {
+      json.title = title;
+      json.body = sanitizeArticleHtml(normalizeArticleBody(body));
+    }
+    if (isContent) {
+      json.tagSlugs = tags.map((t) => t.slug);
+      const nextSlug = articleSlugify(slug);
+      if (nextSlug.length >= 3) json.slug = nextSlug;
+      json.ogImageUrl = ogImageUrl.trim() || null;
+      json.categorySlug = categorySlug || null;
+      json.specialistSlug = specialistSlug || null;
+      const st = seoTitle.trim();
+      const sd = seoDescription.trim();
+      if (!st || st.length >= 3) json.seoTitle = st || null;
+      if (!sd || sd.length >= 10) json.seoDescription = sd || null;
+    }
+    if (canEditSchema) {
+      json.seoSchemaExtras = seoSchemaExtras.length ? seoSchemaExtras : null;
+    }
+    return json;
+  }
+
+  async function saveAll(kind: 'auto' | 'manual' = 'manual') {
+    if (saving) return;
+    const json = persistPayload();
+    if (Object.keys(json).length === 0) return;
+    setSaving(true);
+    if (kind === 'manual') setMsg(null);
+    try {
+      const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}`, {
+        method: 'PATCH',
+        json,
+      });
+      applyArticle(a);
+      setLastSavedAt(new Date());
+      setDirty(false);
+      setMsg(kind === 'auto' ? 'Auto-saved' : 'Saved');
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function transition(status: string) {
@@ -151,12 +280,19 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   }
 
   async function addComment(kind?: 'CHANGE_REQUEST') {
-    const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}/comments`, {
-      method: 'POST',
-      json: { body: comment, kind },
-    });
-    setArticle(a);
-    setComment('');
+    const text = comment.trim();
+    if (!text) return;
+    try {
+      const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}/comments`, {
+        method: 'POST',
+        json: { body: text, ...(kind ? { kind } : {}) },
+      });
+      setArticle(a);
+      setComment('');
+      setMsg(kind === 'CHANGE_REQUEST' ? 'Change requested' : 'Commented');
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Request failed');
+    }
   }
 
   function publishPayload() {
@@ -165,28 +301,9 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
       seoDescription: seoDescription || undefined,
       categorySlug: categorySlug || undefined,
       specialistSlug: specialistSlug || undefined,
+      tagSlugs: tags.map((t) => t.slug),
       ogImageUrl: ogImageUrl.trim() || undefined,
     };
-  }
-
-  async function saveCoverImage() {
-    const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}`, {
-      method: 'PATCH',
-      json: { ogImageUrl: ogImageUrl.trim() || null },
-    });
-    setArticle(a);
-    setOgImageUrl(a.ogImageUrl ?? '');
-    setMsg('Cover image saved');
-  }
-
-  async function saveSchemaExtras() {
-    const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}`, {
-      method: 'PATCH',
-      json: { seoSchemaExtras: seoSchemaExtras.length ? seoSchemaExtras : null },
-    });
-    setArticle(a);
-    setSeoSchemaExtras(a.seoSchemaExtras ?? []);
-    setMsg('Schema saved');
   }
 
   async function publishNow() {
@@ -213,298 +330,441 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   }
 
   if (!article) {
-    return <main className="p-8 text-sm opacity-70">Loading…</main>;
+    return <main className="blog-page text-sm opacity-70">Loading…</main>;
   }
 
-  return (
-    <main className="min-h-screen p-8 max-w-3xl">
-      <Link href="/admin/editorial" className="text-sm underline opacity-70">
-        ← Editorial
-      </Link>
-      <div className="mt-2 flex flex-wrap gap-3 text-sm">
-        <Link href={`/admin/editorial/articles/${params.id}/preview`} className="underline">
-          Internal preview
-        </Link>
-      </div>
-      <p className="mt-4 text-sm opacity-70">
-        {article.status}
-        {article.medicalGateRequired ? ' · medical gate' : ''}
-        {article.assignee ? ` · ${article.assignee.displayName ?? article.assignee.email}` : ''}
-        {article.dueAt ? ` · due ${new Date(article.dueAt).toLocaleDateString()}` : ''}
-      </p>
+  const showPublish =
+    (isContent || canEditSchema) &&
+    (article.status === 'APPROVED' ||
+      article.status === 'SCHEDULED' ||
+      article.status === 'PUBLISHED');
+  const revisions = article.revisions ?? [];
+  const canSave = article.canEditBody || isContent || canEditSchema;
+  const saveLabel =
+    article.status === 'PUBLISHED' || article.status === 'SCHEDULED' ? 'Save' : 'Save as draft';
+  const msgOk =
+    msg === 'Saved' ||
+    msg === 'Auto-saved' ||
+    msg === 'Published' ||
+    msg === 'Scheduled' ||
+    msg === 'Commented' ||
+    msg === 'Change requested' ||
+    Boolean(msg?.startsWith('Moved to '));
 
-      <label className="mt-4 block text-sm">
-        Title
-        <input
-          className="mt-1 w-full rounded border px-2 py-1"
-          value={title}
-          disabled={!article.canEditBody}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            setDirty(true);
-          }}
-        />
-      </label>
-      <div className="mt-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-          <span>Body</span>
-          <span className="text-xs opacity-60">
-            {dirty ? 'Unsaved changes' : null}
-            {lastSavedAt ? ` · Saved ${lastSavedAt.toLocaleTimeString()}` : null}
-            {article.canEditBody ? ' · auto-saves every 30s' : null}
-          </span>
-        </div>
-        <div className="mt-1">
-          {!article.canEditBody ? (
-            <p className="mb-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-              Body is <strong>read-only</strong> in status <strong>{article.status}</strong> —
-              TipTap toolbar (Bold, headings, image URL, …) only appears when the article is{' '}
-              <strong>ASSIGNED</strong>, <strong>DRAFT</strong>, or{' '}
-              <strong>CHANGES_REQUESTED</strong> and you are allowed to edit. Ask Content Admin to
-              send it back for changes if you need to edit.
-            </p>
+  return (
+    <main className="blog-page editorial-article">
+      {msg ? (
+        <p className={`blog-banner mt-0 text-sm ${msgOk ? 'blog-banner--success' : 'blog-banner--danger'}`}>
+          {msg}
+        </p>
+      ) : null}
+
+      <div className="editorial-article__hero-top">
+        <span className="editorial-status-pill">
+          {ARTICLE_STATUS_LABEL[article.status] ?? article.status}
+        </span>
+        <div className="editorial-article__links">
+          {canSave ? (
+            <>
+              <span className="editorial-article__save-meta">
+                {dirty ? 'Unsaved' : lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString()}` : null}
+              </span>
+              <button
+                type="button"
+                className="blog-btn"
+                disabled={!dirty || saving}
+                onClick={() => void saveAll()}
+              >
+                <Save className="h-4 w-4" aria-hidden />
+                {saving ? 'Saving…' : saveLabel}
+              </button>
+            </>
           ) : null}
-          <ArticleEditor
-            key={`${article.id}-${editorKey}`}
-            initialContent={body}
-            editable={article.canEditBody}
-            enableMediaLibrary={article.canEditBody}
-            onChange={(html) => {
-              setBody(html);
+          <Link href={`/admin/editorial/articles/${params.id}/preview`} className="editorial-article__link">
+            <Eye className="h-4 w-4" aria-hidden />
+            Preview
+          </Link>
+          {article.status === 'PUBLISHED' ? (
+            <Link href={blogPostPath(article.slug)} className="editorial-article__link">
+              <ExternalLink className="h-4 w-4" aria-hidden />
+              Live
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      <header className="editorial-article__hero">
+        {article.canEditBody ? (
+          <input
+            className="editorial-article__title"
+            value={title}
+            aria-label="Title"
+            onChange={(e) => {
+              setTitle(e.target.value);
               setDirty(true);
             }}
           />
-        </div>
-      </div>
-      {article.canEditBody ? (
-        <button
-          type="button"
-          className="mt-2 rounded border px-3 py-1 text-sm"
-          onClick={() => void save()}
-        >
-          Save draft
-        </button>
-      ) : null}
+        ) : (
+          <h1 className="editorial-article__title">{title}</h1>
+        )}
+        <p className="editorial-meta">
+          {article.medicalGateRequired ? <span>Medical gate</span> : null}
+          <span>
+            <UserRound aria-hidden />
+            {article.assignee ? (article.assignee.displayName ?? article.assignee.email) : 'Unassigned'}
+          </span>
+          {article.dueAt ? (
+            <span>
+              <Calendar aria-hidden />
+              {new Date(article.dueAt).toLocaleDateString()}
+            </span>
+          ) : null}
+        </p>
+        <EditorialStatusRail
+          spread
+          status={article.status}
+          medicalGate={article.medicalGateRequired}
+        />
+      </header>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {article.allowedTransitions.map((s) => (
-          <button
-            key={s}
-            type="button"
-            className="rounded border px-3 py-1 text-sm"
-            onClick={() => void transition(s)}
-          >
-            → {s}
-          </button>
-        ))}
-      </div>
+      <div className="editorial-article__layout">
+        <div className="editorial-article__main">
+          <section className="editorial-panel editorial-article__editor">
+            <div className="editorial-article__editor-head">
+              <h2 className="editorial-article__section">Body</h2>
+            </div>
+            {!article.canEditBody ? (
+              <p className="blog-banner blog-banner--info mb-gs-3 px-gs-3 py-gs-2 text-xs">Read-only</p>
+            ) : null}
+            <ArticleEditor
+              key={`${article.id}-${editorKey}`}
+              initialContent={body}
+              editable={article.canEditBody}
+              enableMediaLibrary={article.canEditBody}
+              onChange={(html) => {
+                setBody(html);
+                setDirty(true);
+              }}
+            />
+          </section>
 
-      {(isContent || canEditSchema) &&
-      (article.status === 'APPROVED' ||
-        article.status === 'SCHEDULED' ||
-        article.status === 'PUBLISHED') ? (
-        <section className="mt-8 rounded border p-4 text-sm space-y-3">
-          <h2 className="font-medium">
-            {article.status === 'PUBLISHED' ? 'SEO & cover image' : 'Publish (Phase 7)'}
-          </h2>
-          <p className="opacity-70">
-            Public URL:{' '}
-            <Link href={`/articles/${article.slug}`} className="underline">
-              /articles/{article.slug}
-            </Link>
-          </p>
           {isContent ? (
-            <>
-              <label className="block">
-                SEO title
-                <input
-                  className="mt-1 w-full rounded border px-2 py-1"
-                  value={seoTitle}
-                  onChange={(e) => setSeoTitle(e.target.value)}
-                />
-              </label>
-              <label className="block">
-                SEO description
-                <textarea
-                  className="mt-1 w-full rounded border px-2 py-1 min-h-[60px]"
-                  value={seoDescription}
-                  onChange={(e) => setSeoDescription(e.target.value)}
-                />
-              </label>
-              <div>
-                <p className="mb-1">Cover / journal image</p>
-                <CmsMediaField value={ogImageUrl} onChange={setOgImageUrl} />
-                <p className="mt-1 text-xs opacity-60">
-                  Use a warm photo or clean illustration (~4:3 / square). Skip tiny logos and busy
-                  screenshots — JPG fills the card; SVG illustrations show in full.
-                </p>
-                {article.status === 'PUBLISHED' ? (
-                  <button
-                    type="button"
-                    className="mt-2 rounded border px-3 py-1"
-                    onClick={() => void saveCoverImage()}
-                  >
-                    Save cover image
-                  </button>
-                ) : null}
+            <section className="editorial-panel editorial-article__card">
+              <h2 className="editorial-article__section">Tags</h2>
+              <EditorialTagField
+                value={tags}
+                catalog={tagCatalog}
+                onChange={(next) => {
+                  setTags(next);
+                  setDirty(true);
+                }}
+              />
+            </section>
+          ) : null}
+
+          {isContent ? (
+            <section className="editorial-panel editorial-article__card editorial-article__seo">
+              <h2 className="editorial-article__section">SEO</h2>
+              <div className="editorial-field">
+                <span className="editorial-field__label">Slug</span>
+                <div className="editorial-slug">
+                  <span className="editorial-slug__prefix">/blog/</span>
+                  <input
+                    className="blog-input"
+                    value={slug}
+                    aria-label="Slug"
+                    spellCheck={false}
+                    onChange={(e) => {
+                      setSlug(e.target.value);
+                      setDirty(true);
+                    }}
+                    onBlur={() => {
+                      const next = articleSlugify(slug);
+                      if (next) setSlug(next);
+                    }}
+                  />
+                </div>
               </div>
-              <label className="block">
-                Category
-                <select
-                  className="mt-1 w-full rounded border px-2 py-1"
-                  value={categorySlug}
-                  onChange={(e) => setCategorySlug(e.target.value)}
-                >
-                  <option value="">—</option>
-                  {categories.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                Specialist
-                <select
-                  className="mt-1 w-full rounded border px-2 py-1"
-                  value={specialistSlug}
-                  onChange={(e) => setSpecialistSlug(e.target.value)}
-                >
-                  <option value="">—</option>
-                  {specialists.map((s) => (
-                    <option key={s.slug} value={s.slug}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {article.status !== 'PUBLISHED' ? (
-                <div className="flex flex-wrap gap-2 items-end">
+              <div className="editorial-field">
+                <span className="editorial-field__label">
+                  SEO title
+                  <SeoCount n={seoTitle.length} max={SEO_TITLE_HINT} />
+                </span>
+                <input
+                  className="blog-input"
+                  value={seoTitle}
+                  maxLength={SEO_TITLE_MAX}
+                  onChange={(e) => {
+                    setSeoTitle(e.target.value);
+                    setDirty(true);
+                  }}
+                />
+              </div>
+              <div className="editorial-field">
+                <span className="editorial-field__label">
+                  SEO description
+                  <SeoCount n={seoDescription.length} max={SEO_DESC_HINT} />
+                </span>
+                <textarea
+                  className="blog-input editorial-article__seo-desc"
+                  rows={5}
+                  value={seoDescription}
+                  maxLength={SEO_DESC_MAX}
+                  onChange={(e) => {
+                    setSeoDescription(e.target.value);
+                    setDirty(true);
+                  }}
+                />
+              </div>
+            </section>
+          ) : null}
+
+          {showPublish && canEditSchema ? (
+            <section className="editorial-panel editorial-article__card">
+              <h2 className="editorial-article__section">Schema</h2>
+              <ProductSeoSchemaField
+                embedded
+                radioName="article-schema-mode"
+                autoLabel="Auto from article fields"
+                manualLabel="Edit JSON yourself"
+                emptyPreview="Fill title, SEO & cover to preview"
+                value={seoSchemaExtras}
+                onChange={(v) => {
+                  setSeoSchemaExtras(v);
+                  setDirty(true);
+                }}
+                autoPreviewNodes={schemaAutoNodes}
+                publicUrl={`${getSiteOrigin()}${blogPostPath(slug.trim() || article.slug)}`}
+              />
+            </section>
+          ) : null}
+
+          <section className="editorial-panel editorial-article__card">
+            <div className="editorial-article__tabs" role="tablist" aria-label="Activity">
+              <ActivityTabBtn
+                id="comments"
+                current={activity}
+                count={article.comments.length}
+                onSelect={setActivity}
+              >
+                Comments
+              </ActivityTabBtn>
+              <ActivityTabBtn id="revisions" current={activity} count={revisions.length} onSelect={setActivity}>
+                Revisions
+              </ActivityTabBtn>
+              <ActivityTabBtn
+                id="timeline"
+                current={activity}
+                count={article.statusHistory.length}
+                onSelect={setActivity}
+              >
+                Timeline
+              </ActivityTabBtn>
+            </div>
+
+            {activity === 'comments' ? (
+              <div className="editorial-article__tabpanel">
+                {article.comments.length === 0 ? (
+                  <p className="editorial-article__empty">No comments.</p>
+                ) : (
+                  <ul className="editorial-article__list">
+                    {article.comments.map((c) => (
+                      <li key={c.id} className="editorial-article__note">
+                        <span className="editorial-article__note-meta">
+                          {c.kind} · {c.authorName}
+                        </span>
+                        <p>{c.body}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="editorial-field mt-gs-4">
+                  <span className="editorial-field__label">
+                    <MessageSquare className="h-3.5 w-3.5" aria-hidden />
+                    Comment
+                  </span>
+                  <textarea
+                    className="blog-input min-h-[72px]"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                  />
+                </div>
+                <div className="editorial-article__actions">
                   <button
                     type="button"
-                    className="rounded border px-3 py-1"
-                    onClick={() => void publishNow()}
+                    className="blog-btn-secondary"
+                    disabled={!comment.trim()}
+                    onClick={() => void addComment()}
                   >
-                    Publish now
+                    Comment
                   </button>
-                  <label>
-                    Schedule
+                  <button
+                    type="button"
+                    className="blog-btn-ghost"
+                    disabled={!comment.trim()}
+                    onClick={() => void addComment('CHANGE_REQUEST')}
+                  >
+                    Change request
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {activity === 'revisions' ? (
+              <div className="editorial-article__tabpanel">
+                {revisions.length === 0 ? (
+                  <p className="editorial-article__empty">No revisions yet.</p>
+                ) : (
+                  <ul className="editorial-article__list">
+                    {revisions.map((r) => (
+                      <li key={r.id} className="editorial-article__note">
+                        <span className="editorial-article__note-meta">
+                          {new Date(r.createdAt).toLocaleString()} · {r.actorName ?? 'unknown'}
+                        </span>
+                        <p className="font-medium">{r.title}</p>
+                        <p className="whitespace-pre-wrap opacity-70">{r.bodyPreview}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : null}
+
+            {activity === 'timeline' ? (
+              <div className="editorial-article__tabpanel">
+                <ol className="editorial-article__timeline">
+                  {article.statusHistory.map((h, i) => (
+                    <li key={`${h.status}-${h.createdAt}-${i}`}>
+                      <span>{ARTICLE_STATUS_LABEL[h.status] ?? h.status}</span>
+                      <time dateTime={h.createdAt}>{new Date(h.createdAt).toLocaleString()}</time>
+                      {h.note ? <p>{h.note}</p> : null}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
+          </section>
+        </div>
+
+        {(article.allowedTransitions.length > 0 || (showPublish && isContent)) ? (
+        <aside className="editorial-article__side">
+          {article.allowedTransitions.length > 0 ? (
+            <section className="editorial-panel editorial-article__card">
+              <h2 className="editorial-article__section">Move to</h2>
+              <div className="editorial-article__stack">
+                {article.allowedTransitions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className="blog-btn-secondary"
+                    onClick={() => void transition(s)}
+                  >
+                    {ARTICLE_STATUS_LABEL[s] ?? s}
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {showPublish && isContent ? (
+            <section className="editorial-panel editorial-article__card">
+              <h2 className="editorial-article__section">
+                {article.status === 'PUBLISHED' ? 'Cover' : 'Publish'}
+              </h2>
+              <div className="editorial-field">
+                <span className="editorial-field__label">Cover</span>
+                <CmsMediaField
+                  value={ogImageUrl}
+                  onChange={(v) => {
+                    setOgImageUrl(v);
+                    setDirty(true);
+                  }}
+                />
+              </div>
+              <div className="editorial-field">
+                <span className="editorial-field__label">Category</span>
+                <EditorialSelect
+                  ariaLabel="Category"
+                  value={categorySlug}
+                  onChange={(v) => {
+                    setCategorySlug(v);
+                    setDirty(true);
+                  }}
+                  options={categoryOptions}
+                />
+              </div>
+              <div className="editorial-field">
+                <span className="editorial-field__label">Specialist</span>
+                <EditorialSelect
+                  ariaLabel="Specialist"
+                  value={specialistSlug}
+                  onChange={(v) => {
+                    setSpecialistSlug(v);
+                    setDirty(true);
+                  }}
+                  options={specialistOptions}
+                />
+              </div>
+              {article.status !== 'PUBLISHED' ? (
+                <div className="editorial-article__stack">
+                  <button type="button" className="blog-btn" onClick={() => void publishNow()}>
+                    Publish
+                  </button>
+                  <div className="editorial-field">
+                    <span className="editorial-field__label">Schedule</span>
                     <input
                       type="datetime-local"
-                      className="mt-1 block rounded border px-2 py-1"
+                      className="blog-input"
                       value={scheduledAt}
                       onChange={(e) => setScheduledAt(e.target.value)}
                     />
-                  </label>
-                  <button
-                    type="button"
-                    className="rounded border px-3 py-1"
-                    onClick={() => void schedule()}
-                  >
+                  </div>
+                  <button type="button" className="blog-btn-secondary" onClick={() => void schedule()}>
                     Schedule
                   </button>
                 </div>
               ) : null}
-            </>
+            </section>
           ) : null}
-          {canEditSchema ? (
-            <div className="space-y-2 border-t pt-3">
-              <SeoSchemaPanel
-                value={seoSchemaExtras}
-                onChange={setSeoSchemaExtras}
-                hasSystemFaq={false}
-                autoTypes={['Article', 'Breadcrumb']}
-                publicUrl={`${getSiteOrigin()}/articles/${article.slug}`}
-              />
-              <button
-                type="button"
-                className="rounded border px-3 py-1"
-                onClick={() => void saveSchemaExtras()}
-              >
-                Save schema
-              </button>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      {article.status === 'PUBLISHED' ? (
-        <p className="mt-4 text-sm">
-          Live:{' '}
-          <Link href={`/articles/${article.slug}`} className="underline">
-            /articles/{article.slug}
-          </Link>
-        </p>
-      ) : null}
-
-      <section className="mt-8">
-        <h2 className="font-medium text-sm">Comments / change requests</h2>
-        <ul className="mt-2 space-y-2 text-sm">
-          {article.comments.map((c) => (
-            <li key={c.id} className="rounded border p-2">
-              <span className="text-xs opacity-60">
-                {c.kind} · {c.authorName}
-              </span>
-              <p>{c.body}</p>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-2 flex flex-col gap-2">
-          <textarea
-            className="rounded border px-2 py-1 text-sm min-h-[60px]"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="rounded border px-2 py-1 text-sm"
-              onClick={() => void addComment()}
-            >
-              Comment
-            </button>
-            <button
-              type="button"
-              className="rounded border px-2 py-1 text-sm"
-              onClick={() => void addComment('CHANGE_REQUEST')}
-            >
-              Change request
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-8 text-sm opacity-80">
-        <h2 className="font-medium">Revisions</h2>
-        <ul className="mt-2 space-y-2">
-          {(article.revisions ?? []).length === 0 ? (
-            <li className="opacity-60">No revisions yet — saved on each body/title change.</li>
-          ) : (
-            article.revisions.map((r) => (
-              <li key={r.id} className="rounded border p-2">
-                <p className="text-xs opacity-60">
-                  {new Date(r.createdAt).toLocaleString()} · {r.actorName ?? 'unknown'}
-                </p>
-                <p className="font-medium">{r.title}</p>
-                <p className="opacity-70 whitespace-pre-wrap">{r.bodyPreview}</p>
-              </li>
-            ))
-          )}
-        </ul>
-      </section>
-
-      <section className="mt-8 text-sm opacity-80">
-        <h2 className="font-medium">Status timeline</h2>
-        <ol className="mt-2 space-y-1">
-          {article.statusHistory.map((h, i) => (
-            <li key={i}>
-              {h.status} — {new Date(h.createdAt).toLocaleString()}
-              {h.note ? ` (${h.note})` : ''}
-            </li>
-          ))}
-        </ol>
-      </section>
-      {msg ? <p className="mt-4 text-sm text-green-700">{msg}</p> : null}
+        </aside>
+        ) : null}
+      </div>
     </main>
+  );
+}
+
+function SeoCount({ n, max }: { n: number; max: number }) {
+  return (
+    <span className={`editorial-field__count${n > max ? ' is-over' : ''}`}>
+      {n}/{max}
+    </span>
+  );
+}
+
+function ActivityTabBtn({
+  id,
+  current,
+  count,
+  onSelect,
+  children,
+}: {
+  id: ActivityTab;
+  current: ActivityTab;
+  count: number;
+  onSelect: (id: ActivityTab) => void;
+  children: string;
+}) {
+  const selected = current === id;
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      className={`editorial-article__tab${selected ? ' is-on' : ''}`}
+      onClick={() => onSelect(id)}
+    >
+      {children}
+      <span>{count}</span>
+    </button>
   );
 }

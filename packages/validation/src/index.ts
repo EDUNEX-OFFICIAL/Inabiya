@@ -1500,15 +1500,16 @@ export const cmsMediaUrlSchema = z
   );
 
 /** Phase 6 — editorial */
+const articleSlugSchema = z
+  .string()
+  .trim()
+  .min(3)
+  .max(120)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+
 export const createArticleBodySchema = z.object({
   title: z.string().trim().min(3).max(200),
-  slug: z
-    .string()
-    .trim()
-    .min(3)
-    .max(120)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-    .optional(),
+  slug: articleSlugSchema.optional(),
   assigneeId: z.string().uuid().optional(),
   medicalGateRequired: z.boolean().optional(),
   dueAt: z.string().min(8).max(40).optional(),
@@ -1522,6 +1523,8 @@ export const updateArticleBodySchema = z.object({
     .max(200_000)
     .optional()
     .transform((s) => (s == null ? s : sanitizeArticleHtml(s))),
+  /** Public URL slug (`/blog/{slug}`). */
+  slug: articleSlugSchema.optional(),
   assigneeId: z.string().uuid().nullable().optional(),
   dueAt: z.string().min(8).max(40).nullable().optional(),
   /** Cover / OG image — media library, https, or same-origin /gift/media/… (incl. SVG). */
@@ -1529,6 +1532,24 @@ export const updateArticleBodySchema = z.object({
     (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
     cmsMediaUrlSchema.nullable().optional(),
   ),
+  seoTitle: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+    z.string().trim().min(3).max(120).nullable().optional(),
+  ),
+  seoDescription: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+    z.string().trim().min(10).max(320).nullable().optional(),
+  ),
+  categorySlug: z.preprocess(
+    (v) => (v === '' ? null : v),
+    z.string().min(2).max(80).nullable().optional(),
+  ),
+  specialistSlug: z.preprocess(
+    (v) => (v === '' ? null : v),
+    z.string().min(2).max(80).nullable().optional(),
+  ),
+  /** Secondary tags (create-on-write). Empty array clears. Max 12. */
+  tagSlugs: z.array(z.string().trim().min(2).max(80)).max(12).optional(),
   /** Admin Schema.org extras (presets + custom JSON-LD). Null clears. */
   seoSchemaExtras: seoSchemaExtrasNullableSchema,
 });
@@ -1606,6 +1627,30 @@ export type PublishArticleBody = z.infer<typeof publishArticleBodySchema>;
 export type NewsletterSignupBody = z.infer<typeof newsletterSignupBodySchema>;
 export type CreateSpecialistBody = z.infer<typeof createSpecialistBodySchema>;
 export type CreateEditorialCategoryBody = z.infer<typeof createEditorialCategoryBodySchema>;
+export const updateSpecialistBodySchema = z.object({
+  slug: z
+    .string()
+    .min(2)
+    .max(80)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .optional(),
+  name: z.string().min(2).max(120).optional(),
+  title: z.string().max(160).nullable().optional(),
+  bio: z.string().max(4000).nullable().optional(),
+  credentials: z.string().max(500).nullable().optional(),
+});
+export const updateEditorialCategoryBodySchema = z.object({
+  slug: z
+    .string()
+    .min(2)
+    .max(80)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .optional(),
+  name: z.string().min(2).max(120).optional(),
+  description: z.string().max(500).nullable().optional(),
+});
+export type UpdateSpecialistBody = z.infer<typeof updateSpecialistBodySchema>;
+export type UpdateEditorialCategoryBody = z.infer<typeof updateEditorialCategoryBodySchema>;
 
 export type UpdateProfileBody = z.infer<typeof updateProfileBodySchema>;
 

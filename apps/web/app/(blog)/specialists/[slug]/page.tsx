@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 async function load(slug: string): Promise<PublicSpecialist | null> {
   try {
-    return await fetchArticles<PublicSpecialist>(`/articles/specialists/${slug}`);
+    return await fetchArticles<PublicSpecialist>(`/blog/specialists/${slug}`);
   } catch {
     return null;
   }
@@ -46,7 +46,7 @@ export default async function SpecialistPage({ params }: { params: { slug: strin
         <ul className="mt-gs-4 space-y-gs-3">
           {(s.articles ?? []).map((a) => (
             <li key={a.id}>
-              <Link href={`/articles/${a.slug}`} className="blog-card block p-gs-4">
+              <Link href={`/blog/${a.slug}`} className="blog-card block p-gs-4">
                 <span className="font-medium text-foreground hover:text-primary">{a.title}</span>
                 {a.seoDescription ? (
                   <p className="mt-gs-1 text-sm opacity-70">{a.seoDescription}</p>

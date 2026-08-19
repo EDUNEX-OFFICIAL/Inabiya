@@ -1,5 +1,6 @@
 import type { SeoSchemaEntry, SeoSchemaPreset } from '@inabiya/validation';
 import { faqPageJsonLd } from '@/components/gift/faq-json-ld';
+import { articleCanonicalPath } from '@/lib/blog-paths';
 
 export type JsonLdNode = Record<string, unknown>;
 
@@ -239,7 +240,7 @@ export type ArticleJsonLdInput = {
 };
 
 export function articleJsonLd(input: ArticleJsonLdInput): JsonLdNode {
-  const path = input.canonicalPath?.trim() || `/articles/${input.slug}`;
+  const path = articleCanonicalPath(input.slug, input.canonicalPath);
   const url = path.startsWith('http')
     ? path
     : `${input.siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;

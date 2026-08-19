@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -15,13 +16,16 @@ import type { RoleCode } from '@inabiya/types';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { readSeoSchemaExtras, seoSchemaExtrasWriteValue } from '../../../common/seo-schema-extras';
+import { allowedArticleTransitions, canEditArticleBody } from './editorial-transitions';
+import { articleCanonicalPath } from '../article-canonical';
+import { upsertArticleTagIds } from '../article-tags';
 
 function slugify(title: string): string {
   return title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
-    .slice(0, 100);
+    .slice(0, 120);
 }
 
 function parseDueAt(raw: string | null | undefined): Date | null | undefined {
@@ -168,6 +172,9 @@ export class ArticlesService {
       include: {
         assignee: { select: { id: true, email: true, displayName: true } },
         createdBy: { select: { id: true, email: true, displayName: true } },
+        category: { select: { slug: true, name: true } },
+        specialist: { select: { slug: true, name: true } },
+        tags: { include: { tag: { select: { slug: true, name: true } } } },
         comments: {
           orderBy: { createdAt: 'asc' },
           include: { author: { select: { email: true, displayName: true } } },
@@ -195,10 +202,14 @@ export class ArticlesService {
       status: article.status,
       medicalGateRequired: article.medicalGateRequired,
       dueAt: article.dueAt,
+      publishedAt: article.publishedAt,
       ogImageUrl: article.ogImageUrl,
       seoTitle: article.seoTitle,
       seoDescription: article.seoDescription,
       seoSchemaExtras: readSeoSchemaExtras(article.seoSchemaExtras),
+      category: article.category,
+      specialist: article.specialist,
+      tags: article.tags.map((t) => t.tag),
       assignee: article.assignee,
       createdBy: article.createdBy,
       comments: article.comments.map((c) => ({
@@ -221,13 +232,13 @@ export class ArticlesService {
         actorName: r.actor?.displayName ?? r.actor?.email ?? null,
         createdAt: r.createdAt,
       })),
-      allowedTransitions: this.allowedTargets(
+      allowedTransitions: allowedArticleTransitions(
         article.status,
         article.medicalGateRequired,
         actor,
         article.assigneeId,
       ),
-      canEditBody: this.canEditBody(actor, article.status, article.assigneeId),
+      canEditBody: canEditArticleBody(article.status, actor, article.assigneeId),
     };
   }
 
@@ -247,7 +258,7 @@ export class ArticlesService {
     if (!article) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Article not found.' });
     }
-    if (body.body != null && !this.canEditBody(actor, article.status, article.assigneeId)) {
+    if (body.body != null && !canEditArticleBody(article.status, actor, article.assigneeId)) {
       throw new ForbiddenException({
         code: 'FORBIDDEN',
         message: 'Cannot edit article body in this state.',
@@ -263,6 +274,18 @@ export class ArticlesService {
     if (body.seoSchemaExtras !== undefined) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN', 'SEO_EDITOR']);
     }
+    if (body.seoTitle !== undefined || body.seoDescription !== undefined) {
+      this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN', 'SEO_EDITOR']);
+    }
+    if (body.categorySlug !== undefined || body.specialistSlug !== undefined) {
+      this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
+    }
+    if (body.tagSlugs !== undefined) {
+      this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
+    }
+    if (body.slug !== undefined) {
+      this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
+    }
     if (body.title != null) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN', 'WRITER']);
       if (actor.roles.includes('WRITER') && !this.isOps(actor) && article.assigneeId !== actor.id) {
@@ -274,6 +297,33 @@ export class ArticlesService {
     const bodyChanged = body.body != null && body.body !== article.body;
     const titleChanged = body.title != null && body.title !== article.title;
     const dueAt = parseDueAt(body.dueAt);
+    const taxonomy = await this.resolveTaxonomy({
+      categorySlug: body.categorySlug,
+      specialistSlug: body.specialistSlug,
+    });
+
+    let nextSlug: string | undefined;
+    if (body.slug !== undefined) {
+      nextSlug = slugify(body.slug);
+      if (nextSlug.length < 3) {
+        throw new BadRequestException({
+          code: 'SLUG_INVALID',
+          message: 'Slug must be at least 3 characters.',
+        });
+      }
+      if (nextSlug !== article.slug) {
+        const taken = await this.prisma.article.findFirst({
+          where: { slug: nextSlug, NOT: { id } },
+          select: { id: true },
+        });
+        if (taken) {
+          throw new ConflictException({
+            code: 'SLUG_TAKEN',
+            message: 'That slug is already in use.',
+          });
+        }
+      }
+    }
 
     const updated = await this.prisma.$transaction(async (tx) => {
       if (bodyChanged || titleChanged) {
@@ -286,7 +336,7 @@ export class ArticlesService {
           },
         });
       }
-      return tx.article.update({
+      const row = await tx.article.update({
         where: { id },
         data: {
           title: body.title,
@@ -295,6 +345,13 @@ export class ArticlesService {
           dueAt: dueAt === undefined ? undefined : dueAt,
           ...(dueAt !== undefined ? { dueReminderSentAt: null } : {}),
           ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
+          ...(body.seoTitle !== undefined ? { seoTitle: body.seoTitle } : {}),
+          ...(body.seoDescription !== undefined ? { seoDescription: body.seoDescription } : {}),
+          ...(taxonomy.categoryId !== undefined ? { categoryId: taxonomy.categoryId } : {}),
+          ...(taxonomy.specialistId !== undefined ? { specialistId: taxonomy.specialistId } : {}),
+          ...(nextSlug !== undefined
+            ? { slug: nextSlug, canonicalPath: articleCanonicalPath(nextSlug) }
+            : {}),
           ...(body.seoSchemaExtras !== undefined
             ? {
                 seoSchemaExtras: seoSchemaExtrasWriteValue(body.seoSchemaExtras, {
@@ -304,6 +361,16 @@ export class ArticlesService {
             : {}),
         },
       });
+      if (body.tagSlugs !== undefined) {
+        const tagIds = await upsertArticleTagIds(tx, body.tagSlugs);
+        await tx.articleTagOnArticle.deleteMany({ where: { articleId: id } });
+        if (tagIds.length) {
+          await tx.articleTagOnArticle.createMany({
+            data: tagIds.map((tagId) => ({ articleId: id, tagId })),
+          });
+        }
+      }
+      return row;
     });
 
     await this.audit.write({
@@ -413,7 +480,7 @@ export class ArticlesService {
     if (!article) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Article not found.' });
     }
-    const allowed = this.allowedTargets(
+    const allowed = allowedArticleTransitions(
       article.status,
       article.medicalGateRequired,
       actor,
@@ -476,6 +543,75 @@ export class ArticlesService {
     return this.get(id, actor);
   }
 
+  async returnToDraft(id: string, actor: Actor, requestId?: string) {
+    this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
+    const article = await this.prisma.article.findUnique({ where: { id } });
+    if (!article) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Article not found.' });
+    }
+    if (article.status === ArticleStatus.DRAFT || article.status === ArticleStatus.ASSIGNED) {
+      throw new BadRequestException({
+        code: 'ALREADY_DRAFT',
+        message: 'Article is already in writing.',
+      });
+    }
+    const wasPublic =
+      article.status === ArticleStatus.PUBLISHED || article.status === ArticleStatus.SCHEDULED;
+    await this.prisma.article.update({
+      where: { id },
+      data: {
+        status: ArticleStatus.DRAFT,
+        ...(wasPublic ? { publishedAt: null, scheduledAt: null } : {}),
+        statusHistory: {
+          create: {
+            status: ArticleStatus.DRAFT,
+            note: wasPublic ? 'Returned to draft (hidden from Journal)' : 'Returned to draft',
+            actorId: actor.id,
+          },
+        },
+      },
+    });
+    await this.audit.write({
+      actorId: actor.id,
+      action: 'article.returned_to_draft',
+      resource: 'article',
+      resourceId: id,
+      metadata: { from: article.status },
+      requestId,
+    });
+    return this.get(id, actor);
+  }
+
+  async remove(id: string, actor: Actor, requestId?: string) {
+    this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
+    const article = await this.prisma.article.findUnique({ where: { id } });
+    if (!article) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Article not found.' });
+    }
+    if (article.status === ArticleStatus.PUBLISHED || article.status === ArticleStatus.SCHEDULED) {
+      throw new BadRequestException({
+        code: 'PUBLISHED_LOCKED',
+        message: 'Hide the article from Journal before deleting.',
+      });
+    }
+    const payment = await this.prisma.writerPayment.findUnique({ where: { articleId: id } });
+    if (payment) {
+      throw new BadRequestException({
+        code: 'HAS_WRITER_PAYMENT',
+        message: 'Cannot delete an article that has a writer payment.',
+      });
+    }
+    await this.prisma.article.delete({ where: { id } });
+    await this.audit.write({
+      actorId: actor.id,
+      action: 'article.deleted',
+      resource: 'article',
+      resourceId: id,
+      metadata: { title: article.title, slug: article.slug, from: article.status },
+      requestId,
+    });
+  }
+
   async listWriters() {
     const role = await this.prisma.role.findUnique({ where: { code: 'WRITER' } });
     if (!role) return [];
@@ -486,60 +622,42 @@ export class ArticlesService {
     return rows.filter((r) => r.user.isActive).map((r) => r.user);
   }
 
-  private allowedTargets(
-    from: ArticleStatus,
-    medicalRequired: boolean,
-    actor: Actor,
-    assigneeId?: string | null,
-  ): ArticleStatus[] {
-    const isWriter =
-      this.isOps(actor) || (actor.roles.includes('WRITER') && assigneeId === actor.id);
-    const isSeo = actor.roles.includes('SEO_EDITOR') || this.isOps(actor);
-    // Independent medical gate: CONTENT_ADMIN cannot self-approve medical
-    const isMed = actor.roles.includes('MEDICAL_REVIEWER');
-    const ops = this.isOps(actor);
-
-    const out: ArticleStatus[] = [];
-    switch (from) {
-      case ArticleStatus.ASSIGNED:
-        if (isWriter || ops) out.push(ArticleStatus.DRAFT);
-        break;
-      case ArticleStatus.DRAFT:
-      case ArticleStatus.CHANGES_REQUESTED:
-        if (isWriter || ops) out.push(ArticleStatus.SEO_REVIEW);
-        break;
-      case ArticleStatus.SEO_REVIEW:
-        if (isSeo) {
-          out.push(ArticleStatus.CHANGES_REQUESTED);
-          out.push(medicalRequired ? ArticleStatus.MEDICAL_REVIEW : ArticleStatus.APPROVED);
+  private async resolveTaxonomy(body: {
+    categorySlug?: string | null;
+    specialistSlug?: string | null;
+  }): Promise<{ categoryId?: string | null; specialistId?: string | null }> {
+    let categoryId: string | null | undefined;
+    let specialistId: string | null | undefined;
+    if (body.categorySlug !== undefined) {
+      if (body.categorySlug == null || body.categorySlug === '') {
+        categoryId = null;
+      } else {
+        const c = await this.prisma.editorialCategory.findUnique({
+          where: { slug: body.categorySlug },
+        });
+        if (!c) {
+          throw new BadRequestException({ code: 'CATEGORY_NOT_FOUND', message: 'Category missing.' });
         }
-        break;
-      case ArticleStatus.MEDICAL_REVIEW:
-        if (isMed) {
-          out.push(ArticleStatus.CHANGES_REQUESTED);
-          out.push(ArticleStatus.APPROVED);
+        categoryId = c.id;
+      }
+    }
+    if (body.specialistSlug !== undefined) {
+      if (body.specialistSlug == null || body.specialistSlug === '') {
+        specialistId = null;
+      } else {
+        const s = await this.prisma.specialistProfile.findUnique({
+          where: { slug: body.specialistSlug },
+        });
+        if (!s) {
+          throw new BadRequestException({
+            code: 'SPECIALIST_NOT_FOUND',
+            message: 'Specialist missing.',
+          });
         }
-        break;
-      case ArticleStatus.APPROVED:
-        break;
+        specialistId = s.id;
+      }
     }
-    return out;
-  }
-
-  private canEditBody(actor: Actor, status: ArticleStatus, assigneeId: string | null): boolean {
-    if (this.isOps(actor)) {
-      return (
-        status === ArticleStatus.ASSIGNED ||
-        status === ArticleStatus.DRAFT ||
-        status === ArticleStatus.CHANGES_REQUESTED
-      );
-    }
-    if (!actor.roles.includes('WRITER') || assigneeId !== actor.id) return false;
-    return (
-      status === ArticleStatus.ASSIGNED ||
-      status === ArticleStatus.DRAFT ||
-      status === ArticleStatus.CHANGES_REQUESTED
-    );
+    return { categoryId, specialistId };
   }
 
   private isOps(actor: Actor) {

@@ -3,7 +3,10 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Inbox } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
+import { ARTICLE_STATUS_LABEL } from '@/lib/editorial-nav';
+import { EditorialEmpty } from '@/components/editorial/editorial-ui';
 
 type ArticleRow = {
   id: string;
@@ -27,25 +30,19 @@ export default function WriterDashboardPage() {
   }, [router]);
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <Link href="/admin/editorial" className="text-sm underline opacity-70">
-        ← Editorial
-      </Link>
-      <h1 className="font-display text-3xl mt-4">Writer queue</h1>
-      <p className="text-sm opacity-70 mt-1">Assignments assigned to you.</p>
-      <ul className="mt-6 space-y-2">
+    <main className="blog-page">
+      <p className="blog-overline">Editorial</p>
+      <h1 className="blog-h1 mt-gs-2">Writer</h1>
+      <ul className="editorial-panel mt-gs-6">
         {rows.map((a) => (
-          <li key={a.id} className="rounded border p-3 text-sm">
-            <Link
-              href={`/admin/editorial/articles/${a.id}`}
-              className="font-medium hover:underline"
-            >
-              {a.title}
+          <li key={a.id}>
+            <Link href={`/admin/editorial/articles/${a.id}`} className="editorial-row text-sm">
+              <p className="font-display text-lg leading-snug">{a.title}</p>
+              <p className="mt-gs-1 text-xs opacity-60">{ARTICLE_STATUS_LABEL[a.status] ?? a.status}</p>
             </Link>
-            <p className="opacity-70 mt-1">{a.status}</p>
           </li>
         ))}
-        {rows.length === 0 ? <li className="text-sm opacity-70">No assignments.</li> : null}
+        {rows.length === 0 ? <EditorialEmpty icon={Inbox}>No assignments.</EditorialEmpty> : null}
       </ul>
     </main>
   );

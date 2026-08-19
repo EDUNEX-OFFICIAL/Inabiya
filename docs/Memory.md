@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 19, 2026 (live CMS chips + DB backup rule)
+Last Updated: August 19, 2026 (Phase 15 public journal `/blog`)
 
 ---
 
@@ -73,14 +73,14 @@ Path: `/srv/Inabiya/docs/` (canonical)
 
 | Field | Value |
 |---|---|
-| Phase | **Phase 14 / OPS-10 — Procurement** |
-| Status | **In progress** — S0→S3 first slice (suppliers + simple PO full-receive) |
-| Milestone | Single-merchant procurement |
+| Phase | **Phase 15 — Editorial client-ready** |
+| Status | **In progress** — E0 walkthrough path (shell + taxonomy admin) |
+| Milestone | Client UAT of Journal (`blog`) after shop/ops/CMS testing |
 | Owner | Eng |
-| Target window | 2026-08-11+ |
+| Target window | 2026-08-19+ |
 | Monorepo | `/srv/Inabiya` (GitHub: `EDUNEX-OFFICIAL/Inabiya`) |
-| Authority | [`docs/PROCUREMENT_OPS.md`](PROCUREMENT_OPS.md) |
-| Prior | Phase 13 OPS P1 closed |
+| Authority | [`docs/Phases.md`](Phases.md) §28 + PRD PART 6 |
+| Prior | Shop + Commerce Ops + CMS in **client testing** (2026-08-19). Phase 14 Procurement **paused** |
 
 ### 3.2 Locked production stack
 
@@ -97,7 +97,7 @@ Path: `/srv/Inabiya/docs/` (canonical)
 ### 3.3 Triple design reminder
 
 - **System A Soft Gift (`gift`):** `#FF6B9D` pastels, Fraunces + Plus Jakarta — ecommerce + commerce CMS
-- **System C Blog Creative (`blog`):** paper/ink + teal accent, Newsreader + Source Sans 3 — `/articles`, specialists, editorial CMS
+- **System C Blog Creative (`blog`):** paper/ink + teal accent, Newsreader + Source Sans 3 — `/blog`, specialists, editorial CMS
 - **System B Creator (`creator`):** forest/cream/terracotta HSL, Playfair + Manrope — influencer campaigns
 - Shared foundations on `:root` (space/type/z/duration); never mix casually; no `data-theme="admin"`
 ### 3.4 Docs completion status
@@ -111,7 +111,7 @@ Path: `/srv/Inabiya/docs/` (canonical)
 | Design.md | Expanded **triple**-system authority | **2.1.0** |
 | Memory.md | Expanded living memory | **2.0.0** |
 | COMMERCE_OPS_PANEL.md | Phase 13 OPS journey; OPS-0…9 **complete** | **2.0.0** |
-| PROCUREMENT_OPS.md | Phase 14 OPS-10 suppliers/POs | **1.0.0** |
+| PROCUREMENT_OPS.md | Phase 14 OPS-10 — **paused** (not client-next) | **1.0.0** |
 | handover/ | Client docs 1, 2, 4, 5 (no UAT booklet) | **1.0.0** |
 | deliverables-framework | Reusable pack + templates + Cursor skill | **1.0.0** |
 
@@ -119,11 +119,13 @@ Path: `/srv/Inabiya/docs/` (canonical)
 
 | Product | Status | Notes |
 |---|---|---|
-| A Gift Commerce | Phase 5 leftovers closed | Analytics, account, abandonment |
-| B Commerce Admin | Phase 13 OPS-0…9 + **P1 closed** (2026-08-11) | Soft Gift ops desk + P1 leftovers |
-| C Editorial | Phase 7 closed | Public publish + TipTap + writer payments |
-| D Creator Collective | Phase 8 closed | Reverse-bid path + brand analytics |
+| A Gift Commerce | **Client testing** (2026-08-19) | Storefront GA path; mock pay; live on VPS loopback |
+| B Commerce Admin | **Client testing** (2026-08-19) | Phase 13 OPS-0…9 + P1 closed; handover pack 18 Aug |
+| CMS (marketing) | **Client testing** (2026-08-19) | Page builder + nav/footer; client creating pages/products |
+| C Editorial (blog) | **Phase 15 E0** — shell + taxonomy | Walkthrough-ready; client UAT not done |
+| D Creator Collective | Eng MVP closed (Phase 8); **not client-ready** | After Editorial. Reverse-bid + campaigns exist in repo |
 | Shared Platform | Phase 1 + 9 closed | Mail/S3 stubs; real providers deferred |
+| Procurement (OPS-10) | **Paused** | Built S0–S3; not in client pack; not next |
 
 ### 3.6 Prototype caveat
 
@@ -145,11 +147,11 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Client: read `docs/handover/`, fill and sign the certificate (training + prod logins)
-2. Confirm Cloudflare Web Analytics stays **off** for `inabiya.edunexservices.in` (beacon not in repo; CSP still blocks it)
-3. If stock buy is needed later: **product + qty + amount only** (no PO / received / vendor-pay). Do not put suppliers in the client pack
-4. **Deferred:** OPS permission matrix (Super Admin grants tracking/other nav to roles) — tracking write is SUPER_ADMIN-only until then
-5. **Deferred:** CDN + real PSP (C2 mock pay); PLP/PDP muted/strikethrough contrast + canonical if chasing a11y/SEO 100 off-home
+1. Client walkthrough: `/blog` + `/admin/editorial` assign → gates → publish
+2. **Commerce UAT lane** still first if shop/ops/CMS bugs come in
+3. Do **not** start Creator campaigns
+4. Editorial chrome: Queue/Writer/Journal/More + New FAB — confirm on phone
+5. **Paused / later:** Phase 14 procurement; related/comments/RSS; real Razorpay / SMTP / public https
 
 
 ### Remediation plan (audit → execute) — CLOSED 2026-07-21
@@ -182,6 +184,18 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-19 — Queue overdue is a toggle, not a status option
+
+- Overdue is SLA (`dueAt` passed), orthogonal to `ArticleStatus`. Combining in one dropdown would drop “Draft + overdue”. Filter bar is one control visually; APIs stay `?status=` + `?overdue=1`.
+
+### 2026-08-19 — Next product = Editorial (blog), then Creator; shop in client UAT
+
+- **Override:** Pause Phase 14 Procurement as the active client track. Human: storefront + Commerce Ops + CMS development is complete; client has started testing/using them. Choose between blog system and creator campaign — pick first.
+- **Choice: Editorial / Journal (`blog`) first.** Creator Collective campaigns second.
+- Why: PRD Stage 2 before Stage 3; Phases.md Foundation → Revenue → Trust/Content → Marketplace; blog is one-sided content (writers/SEO/medical) vs two-sided marketplace (brand + creator + escrow); same public brand as the shop already in UAT; Phase 6–7 P0 already in repo — this is client-ready polish, not greenfield.
+- Commerce UAT bugs stay a parallel support lane (not a second product stream).
+- Phase 14 S0–S3 remains in repo but **paused**. Not in handover certificate.
 
 ### 2026-08-18 — Standard project deliverables framework
 
@@ -867,8 +881,9 @@ Resolve → move to Decisions Log → remove from this table.
 | Risk | Gift XSS + localStorage JWTs | Session theft on /gift | Parser sanitizer + cookie-only tokens + CSP | Open (2026-08-14 audit) |
 | Risk | Inventory reserve race | Oversell | Conditional UPDATE / row lock | Open |
 | Risk | Non-idempotent payments | Money defects | Phase 3 hard stops | Future (PSP remaining; mock confirm still live) |
-| Risk | Medical gate bypass | Trust failure | Phase 6–7 tests | Future |
+| Risk | Medical gate bypass | Trust failure | Phase 6–7 tests | Open — Editorial is next client track |
 | Blocker | None yet | — | — | — |
+| Watch | Client UAT on shop/ops/CMS | Live DB / product data | Backup before migrate; UAT bugs first | Active (2026-08-19) |
 
 ---
 
@@ -881,8 +896,8 @@ Resolve → move to Decisions Log → remove from this table.
 | notifications | Platform | Done (ConsoleMail stub) |
 | audit | Platform | Done (privileged paths) |
 | commerce/* | Commerce | Phase 5 closed |
-| editorial/* | Content | Phase 7 closed |
-| creator/* | Creator Collective | Phase 8 closed |
+| editorial/* | Content | Phase 7 MVP closed; **Phase 15 client-ready next** |
+| creator/* | Creator Collective | Phase 8 MVP closed; after Editorial |
 | feature-flags | Platform | Done (Phase 1) |
 
 Update owners when assigned.
@@ -1301,6 +1316,146 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-19 (Public journal `/blog`)
+
+- Human: article URL → `/blog` (makes more sense); public API too, same name, not confusing.
+- Site: `/blog`, `/blog/{slug}`. API: `GET /api/v1/blog`. Old `/articles` 301s to `/blog`. Canonical `/blog/{slug}`.
+- Desk stays `/admin/editorial/articles` + `/editorial/articles` (CMS resource). Chrome stored `/articles` rewritten on read. No migrate.
+
+### Session — 2026-08-19 (Queue card slug)
+
+- Human: show slug on queue cards. Path `/articles/{slug}` under title. No API/migrate.
+
+### Session — 2026-08-19 (Editable article slug)
+
+- Human: slug editable. PATCH `slug` (ops). Unique. Updates `canonicalPath`. SEO card also on drafts. No migrate.
+
+### Session — 2026-08-19 (Change request error)
+
+- Human: Change request → Next “1 error”. Empty body POSTed; Zod min(1); unhandled throw.
+- Buttons disabled until there’s text; catch → banner. No migrate.
+
+### Session — 2026-08-19 (Sticky article toolbar)
+
+- Human: should the Save/Preview bar be sticky?
+- Yes. First sticky was inside the hero so it unstuck after the title. Toolbar is now a sibling of the hero (page-level sticky under editorial header).
+
+### Session — 2026-08-19 (One article save)
+
+- Human: multiple Save buttons (body / schema / sidebar) — bad UX.
+- One `saveAll` PATCH. Sticky toolbar next to Preview. Publish / Schedule stay. No migrate.
+
+### Session — 2026-08-19 (Article tags)
+
+- Human: tags on logs, like a blog.
+- Schema + public `?tag=` already existed; desk had no field. Content admin: chip input (create-on-write, max 12). PATCH `tagSlugs`. Journal lists tags. No migrate.
+
+### Session — 2026-08-19 (Article SEO in main)
+
+- Human: slug / SEO title / description out of right rail; before schema; character count.
+- CMS already counts 60/160 (`CmsPageSeoForm`). Commerce product SEO counts 200/500 (storage). Editorial uses CMS SERP hint + API max 120/320.
+- Main: SEO card then Schema. Sidebar: Cover / category / specialist / publish. No migrate.
+
+### Session — 2026-08-19 (Queue row actions)
+
+- Human: Queue needs Edit / Delete / Draft / Hide.
+- Ops: Hide = unpublish → APPROVED (off Journal). Draft = return to DRAFT (also unpublishes). Delete = unpublished only (click twice). Writer: Edit + Preview.
+- API: `POST …/unpublish`, `POST …/return-to-draft`, `DELETE …/articles/:id`. Delete blocked if writer payment exists (`HAS_WRITER_PAYMENT`). Audit. No migrate.
+
+### Session — 2026-08-19 (Article schema + published edit)
+
+- Human: schema write like Commerce product; how to edit a published blog.
+- Schema = `ProductSeoSchemaField` (Auto vs Edit JSON). SEO + schema save via PATCH (title/desc/cover/category/specialist/extras).
+- Content Admin can edit **published** body/title (writer still draft-only). Save label = Save when live.
+- Check: `editorial-transitions.check.ts`, `editorial-ui.check.ts`. No migrate / deploy.
+
+### Session — 2026-08-19 (Article body wider)
+
+- Human: shift SEO & cover right; widen body. Article page was capped at compact `--page-max` 72rem, leaving side gutters.
+- `.blog-page.editorial-article` → 96rem / 108rem. Grid: `1fr` body + 19rem sidebar, `space-7` gap. Sidebar no nested scroll.
+- Check: `editorial-ui.check.ts`. No DB / deploy.
+
+### Session — 2026-08-19 (Article desk UI)
+
+- Human: article page narrow column, native selects, long scroll, weak hierarchy.
+- Dropped `max-w-4xl`. Desktop: editor + sticky sidebar (Move to / SEO). Category + Specialist = `EditorialSelect`. Activity = Comments/Revisions/Timeline tabs. Title is the page heading.
+- Check: `editorial-ui.check.ts`. No DB / deploy.
+
+### Session — 2026-08-19 (Queue status dropdown)
+
+- Human: Status dropdown not opening (mobile Queue).
+- Cause: menu portal `ul` is `data-theme="blog"` **and** `.editorial-select-menu`; CSS was a descendant selector so `position: fixed` never applied — list painted at the bottom of `body`.
+- Fix: `[data-theme='blog'].editorial-select-menu` + Tailwind `fixed` / `--z-modal` on the portal. Check updated.
+
+### Session — 2026-08-19 (Queue UI: filter + cards)
+
+- Human: overdue sat outside native `<select>`; stats/list cards had dead space on the right.
+- Overdue stays a **toggle** (SLA flag, not ArticleStatus) so Draft+overdue still works; visually joined to status in one filter bar.
+- Native select → `EditorialSelect` (blog tokens, listbox). Stats: split cards, value on the right; overdue tile toggles the same filter. List: title + status pill + full-width pipeline + chevron.
+- Check: `editorial-ui.check.ts`. No DB / deploy.
+
+### Session — 2026-08-19 (Editorial sheet + FAB)
+
+- Human: bottom drawer pattern from Google prompt.
+- Tabs: Queue, Writer, Journal, More. New = FAB (bottom-right, Content Admin). More = full-width sheet (handle, overlay, swipe-down, body scroll lock, safe-area). Drawer: Payments, Categories, Specialists.
+
+### Session — 2026-08-19 (Editorial 4-tab More)
+
+- Human: only 4 bottom tabs; rest in More dropdown.
+- `splitEditorialBottomNav`: ≤4 all tabs; else Queue/New/Writer + More (Journal, Payments, Categories, Specialists). Desktop header still full nav.
+
+### Session — 2026-08-19 (Editorial bottom nav)
+
+- Human: no sidebar; mobile bottom navigation, responsive.
+- Removed hamburger drawer. `<lg` fixed tab bar (icon+label; 6–7 tabs icon-only under 430px). `lg+` header nav only. Page padding clears the bar + safe area.
+
+### Session — 2026-08-19 (Editorial chrome size)
+
+- Human: hamburger + avatar filled the whole nav; match storefront density.
+- Controls 36px / 32px, no bordered tap-min box; header padding like Gift nav. Drawer offset 3.25rem.
+
+### Session — 2026-08-19 (Editorial chrome: drawer + avatar)
+
+- Human: mobile-first editorial CMS — icons, hamburger drawer, profile avatar dropdown; icon+text on desktop, icon-only when chrome would wrap.
+- Shell: Menu/X drawer (overlay, Esc, identity footer); avatar menu (Journal + Sign out). Desktop nav icons from `lg`; labels from `xl`.
+- Queue/New/Writer/Categories/Specialists/Payments: tap chips, stat tiles, empty icons, Create/Edit with icon+label. Blog tokens only.
+- Check: `editorial-ui.check.ts`. No DB / deploy.
+
+### Session — 2026-08-19 (Editorial desk: flat UI)
+
+- Human: editorial CMS should be better, responsive, consistent; drop skeuomorphic shadows.
+- Blog theme shadows → none (paper/ink, not clay). Compact desk: hairline panels, list rows, lg nav vs Menu (no both).
+- Queue uses full page width + inline filters. Status rail is a text pipeline (current = teal), not identical pills.
+
+### Session — 2026-08-19 (Phase 15 E0 taxonomy admin)
+
+- Human: next (E0 leftover). Categories + specialists create/edit in editorial CMS.
+- API: `GET/PATCH /editorial/categories|:id`, `GET/PATCH /editorial/specialists|:id`; duplicate slug → `*_SLUG_TAKEN`.
+- Nav: Content Admin only. Writer/Finance cannot see. No delete (articles may still point at them).
+- Live: `deploy-vps.sh web api` — health/ready 200. `/admin/editorial/categories` + `/specialists` 200.
+- No related/comments/RSS. No Creator.
+
+### Session — 2026-08-19 (Phase 15 E0 started)
+
+- Human: start blog system development phase. Active → Phase 15 E0.
+- Editorial ops shell (`blog` + compact) + role nav. Public journal: footer, category chips, less jargon.
+- Workflow extracted: writer cannot publish; Content Admin cannot skip medical. Checks: `editorial-nav.check.ts`, `editorial-transitions.check.ts`.
+- Publish form now pre-fills category/specialist. Seed can create demo slug `first-weeks-at-home` if missing — live already had `sleep-cues-for-newborns`, so no insert.
+- Deployed `web`+`api` @ `745d3c7`. `/articles` + `/specialists` 200. No related/comments/RSS. No Creator work.
+
+### Session — 2026-08-19 (client UAT documented; next = blog then creator)
+
+- **Override:** Pause Phase 14 as active client track. Human: storefront, Commerce Ops, CMS **development complete**; client has **started testing/using**. Asked which to do first: blog vs creator campaign.
+- Documented in Memory snapshot + handover residual. No product code this session.
+- **Decision:** Phase 15 Editorial client-ready first; Creator campaigns after. Keep commerce UAT bugfix lane.
+- Honest: Phase 6–7 and Phase 8 P0 already exist in repo; they were **out of** the 18 Aug handover certificate. Next work is client-facing readiness, not a from-scratch rebuild.
+
+### Session — 2026-08-19 (CMS rich-text toolbar sticky)
+
+- **Override:** Phase 14; human: keep TipTap toolbar visible while scrolling About copy.
+- `ArticleEditor`: toolbar `sticky top-0`; body scrolls inside `max-h-[min(70vh,36rem)]`. No DB change.
+- **Live:** `deploy-vps.sh web` — health/ready 200; web healthy. Hard-refresh CMS page editor.
 
 ### Session — 2026-08-19 (live deploy + DB backup rule)
 

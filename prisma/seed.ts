@@ -1686,7 +1686,7 @@ async function main() {
         title: 'From the parenting journal',
         subtitle: 'Warm, honest reads from real parents & pediatric experts.',
         limit: 3,
-        seeAllHref: '/articles',
+        seeAllHref: '/blog',
         seeAllLabel: 'All articles →',
       },
     },
@@ -1774,7 +1774,7 @@ async function main() {
     shopLabel: 'Shop',
     forWhomLabel: 'For Whom',
     journalLabel: 'Journal',
-    journalHref: '/articles',
+    journalHref: '/blog',
     shopLinks: [
       { href: '/build-your-box', label: 'Build Your Box', group: 'Shop' },
       { href: '/collections/ready-hampers', label: 'Ready-Made Hampers', group: 'Shop' },
@@ -1852,7 +1852,7 @@ async function main() {
           links: [
             { label: 'About', href: '/about' },
             { label: 'Contact', href: '/contact' },
-            { label: 'Parenting Blog', href: '/articles' },
+            { label: 'Parenting Blog', href: '/blog' },
             { label: 'Our Specialists', href: '/specialists' },
           ],
         },
@@ -2161,6 +2161,47 @@ async function main() {
     },
   });
   console.log('Seeded specialist dr-meera-sharma');
+
+  const contentUser = await prisma.user.findUnique({ where: { email: 'content@test.inabiya' } });
+  const writerUser = await prisma.user.findUnique({ where: { email: 'writer@test.inabiya' } });
+  const newbornCat = await prisma.editorialCategory.findUnique({ where: { slug: 'newborn-care' } });
+  const specialist = await prisma.specialistProfile.findUnique({
+    where: { slug: 'dr-meera-sharma' },
+  });
+  if (contentUser) {
+    const demoSlug = 'first-weeks-at-home';
+    const existingDemo = await prisma.article.findUnique({ where: { slug: demoSlug } });
+    if (!existingDemo) {
+      await prisma.article.create({
+        data: {
+          title: 'The first weeks at home',
+          slug: demoSlug,
+          body: '<p>The first weeks are about rest, feeding, and a small circle of help. Keep the room dim at night, and ask visitors to wait until you are ready.</p><p>If something about feeding or fever worries you, talk to your paediatrician — this journal is guidance, not a diagnosis.</p>',
+          status: 'PUBLISHED',
+          medicalGateRequired: true,
+          createdById: contentUser.id,
+          assigneeId: writerUser?.id ?? null,
+          categoryId: newbornCat?.id ?? null,
+          specialistId: specialist?.id ?? null,
+          seoTitle: 'The first weeks at home',
+          seoDescription: 'Calm notes for the first weeks with a newborn.',
+          canonicalPath: `/blog/${demoSlug}`,
+          publishedAt: new Date(),
+          statusHistory: {
+            create: [
+              { status: 'ASSIGNED', actorId: contentUser.id },
+              { status: 'DRAFT', actorId: writerUser?.id ?? contentUser.id },
+              { status: 'SEO_REVIEW', actorId: contentUser.id },
+              { status: 'MEDICAL_REVIEW', actorId: contentUser.id },
+              { status: 'APPROVED', actorId: contentUser.id },
+              { status: 'PUBLISHED', actorId: contentUser.id },
+            ],
+          },
+        },
+      });
+      console.log('Seeded demo article first-weeks-at-home');
+    }
+  }
 
   const brandUser = await prisma.user.findUniqueOrThrow({
     where: { email: 'brand@test.inabiya' },
