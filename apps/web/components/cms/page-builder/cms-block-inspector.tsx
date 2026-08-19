@@ -15,6 +15,7 @@ import {
   StepsRowsEditor,
   TestimonialsEditor,
   TextRowsEditor,
+  TrustChipsEditor,
   UspsRowsEditor,
 } from '@/components/cms/cms-structured-fields';
 import {
@@ -82,7 +83,7 @@ function PropField({
           initialContent={value || '<p></p>'}
           onChange={onChange}
           placeholder="Write page copy…"
-          className="text-sm"
+          className="text-sm leading-relaxed"
           enableMediaLibrary
         />
       </div>
@@ -99,7 +100,7 @@ function PropField({
           key={`${editorKey ?? 'custom'}-${fieldKey}`}
           initialContent={value || '<p></p>'}
           onChange={onChange}
-          className="text-sm"
+          className="text-sm leading-relaxed"
           enableMediaLibrary
         />
       </div>
@@ -144,13 +145,17 @@ function PropField({
     );
   }
 
-  if (fieldKey === 'trustLine' || fieldKey === 'productSlugs') {
+  if (fieldKey === 'trustLine') {
+    return <TrustChipsEditor value={value} onChange={onChange} />;
+  }
+
+  if (fieldKey === 'productSlugs') {
     return (
       <textarea
         className={INSPECTOR_TEXTAREA_SHORT}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={fieldKey === 'trustLine' ? 'Chip A · Chip B · Chip C' : 'one, two, three'}
+        placeholder="one, two, three"
       />
     );
   }

@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 18, 2026 (cookie banner card)
+Last Updated: August 19, 2026 (live CMS chips + DB backup rule)
 
 ---
 
@@ -60,6 +60,8 @@ If chat and Memory disagree → ask human → sync Memory.
 | `Design.md` v2 | Dual visual systems | Before UI |
 | `Memory.md` v2 | Current progress | Every session |
 | `IMPLEMENTATION_AUDIT.md` | Phases vs repo cross-check | Before phase transitions |
+| `handover/` | Client pack: handbook, ops manual, certificate, residual | Handover / sign-off |
+| `deliverables-framework.md` | Reusable handover standard (any project) | Starting another client pack |
 
 Path: `/srv/Inabiya/docs/` (canonical)
 
@@ -110,6 +112,8 @@ Path: `/srv/Inabiya/docs/` (canonical)
 | Memory.md | Expanded living memory | **2.0.0** |
 | COMMERCE_OPS_PANEL.md | Phase 13 OPS journey; OPS-0…9 **complete** | **2.0.0** |
 | PROCUREMENT_OPS.md | Phase 14 OPS-10 suppliers/POs | **1.0.0** |
+| handover/ | Client docs 1, 2, 4, 5 (no UAT booklet) | **1.0.0** |
+| deliverables-framework | Reusable pack + templates + Cursor skill | **1.0.0** |
 
 ### 3.5 Product implementation status
 
@@ -141,9 +145,9 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Human: re-run PSI mobile on `/` + one PLP + one PDP (API quota 429 here; do not treat local LH 12.8 as PSI 13.4)
+1. Client: read `docs/handover/`, fill and sign the certificate (training + prod logins)
 2. Confirm Cloudflare Web Analytics stays **off** for `inabiya.edunexservices.in` (beacon not in repo; CSP still blocks it)
-3. Resume OPS-10 Procurement
+3. If stock buy is needed later: **product + qty + amount only** (no PO / received / vendor-pay). Do not put suppliers in the client pack
 4. **Deferred:** OPS permission matrix (Super Admin grants tracking/other nav to roles) — tracking write is SUPER_ADMIN-only until then
 5. **Deferred:** CDN + real PSP (C2 mock pay); PLP/PDP muted/strikethrough contrast + canonical if chasing a11y/SEO 100 off-home
 
@@ -178,6 +182,23 @@ Resolve → move to Decisions Log → remove from this table.
 ---
 
 ## 6. Decisions log (append-only, newest first)
+
+### 2026-08-18 — Standard project deliverables framework
+
+- **Override:** Phase 14; human: reusable handover kit for other projects, not Inabiya-only.
+- Kit: `.cursor/skills/project-deliverables/` (FRAMEWORK + templates 0–5). Copies: `~/.cursor/skills/project-deliverables/`, `/srv/templates/project-deliverables/`. Pointer: `docs/deliverables-framework.md`.
+- Default pack: Developer Handbook, Client Ops Manual, UAT (unless skipped), Certificate, Residual. Simple English. Honest delivered vs not. Client flows stay small.
+
+### 2026-08-18 — Client pack: no supplier / PO workflow
+
+- **Override:** Phase 14; human: remove suppliers from handover. Client only needs “this product, this quantity, this amount”. No ordered / received / paid-to-vendor steps.
+- Updated `docs/handover/` (README, handbook, ops manual, certificate, residual). Ops manual: stock buy = Inventory qty + optional amount in the note.
+
+### 2026-08-18 — Client handover pack (docs 1, 2, 4, 5)
+
+- **Override:** Phase 14 still active; human asked for final client documents now that storefront, Commerce Ops, and CMS are built. Not a phase skip. Procurement stays in progress.
+- Shipped under `docs/handover/`: Developer Handbook, Client Operations Manual, Handover certificate, Residual & next. UAT booklet (item 3) skipped on request.
+- Language: simple English (no Hinglish). Honest: mock pay, stub email, no public https, OPS-10 not in the certificate.
 
 ### 2026-08-18 — Meta Pixel + cookie Consent Mode v2 (human override)
 
@@ -1280,6 +1301,48 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-19 (live deploy + DB backup rule)
+
+- **Override:** Phase 14; human: make CMS chips live; always dump Postgres before DB-risking work (client is creating pages/products).
+- Rule `.cursor/rules/43-db-backup.mdc` (alwaysApply). `deploy-vps.sh` dumps before api migrate unless `SKIP_BACKUP=1`. Pointer in `13-prisma-data.mdc`.
+- Dump: `backups/inabiya-20260819-042616.dump` (gitignored). Live: `deploy-vps.sh web api` @ `f975a31` — no pending migrations; health/ready 200.
+
+### Session — 2026-08-19 (CMS chips editable + non-editable audit)
+
+- **Override:** Phase 14; client: Baby-safe / PAN-India / Free shipping still not editable; hunt sections that block publish.
+- Trust chips: inspector remounted on each keystroke (`key={text}`); now stable keys + icon dropdown. Image+text insert prefills chips/eyebrow as real fields. Hero eyebrow/joy-italic no longer hardcoded.
+- Also CMS-owned: USP header (no magic 4-card fallback), brand `showUsps` not forced on, catalog brands not shown when list is empty in the editor, corporate CTA chips removed, Shop-by-baby overline editable. Hero `accentWord` on schema + inspector. Publish still fails on FAQ/testimonials/countdown empty JSON, bad hrefs, missing image alt/url after sanitize.
+
+### Session — 2026-08-19 (CMS rich text spacing + trust chips)
+
+- **Override:** Phase 14; human: client cannot publish — rich text cramped; Image+text trust chips (baby-safe / free shipping / PAN-India) stuck and icons reshuffle on remove.
+- Empty Trust chips now hide (no hardcoded fallback). Inspector: per-chip remove. Icons follow the label, not row index.
+- TipTap/article-prose paragraph gaps; Word/Google `div`/`h1` sanitize to `p`/`h2`; CMS HTML max 200k; save sanitizes before PATCH. Publish errors show the first Zod field.
+
+### Session — 2026-08-18 (exportable deliverables bundle)
+
+- **Override:** Phase 14; human: one folder + zip to export the handover kit.
+- `docs/project-deliverables-bundle/` (README how-to, FRAMEWORK, templates, Inabiya example, Cursor skill). Zip: `docs/project-deliverables-bundle.zip`.
+
+### Session — 2026-08-18 (reusable deliverables framework)
+
+- **Override:** Phase 14; human: standard framework to reuse on other project handovers.
+- Wrote skill `project-deliverables` + FRAMEWORK + blank templates. Installed to `~/.cursor/skills/` and `/srv/templates/`. Inabiya pointer `docs/deliverables-framework.md`. Handover README links it.
+- No app change.
+
+### Session — 2026-08-18 (handover: drop suppliers)
+
+- **Override:** Phase 14; human: strip supplier/PO from client docs. Keep buy-side as product + quantity + amount only.
+- Residual no longer lists procurement. Certificate known-limits no longer mention POs. Ops menu rows for Suppliers / Purchase orders removed.
+- No app change this session.
+
+### Session — 2026-08-18 (handover docs 1, 2, 4, 5)
+
+- **Override:** Phase 14; human: write Developer Handbook, Client Operations Manual, Handover certificate, Residual & next. Skip UAT pack. Easy English, no Hinglish.
+- Files: `docs/handover/README.md`, `01-DEVELOPER_HANDBOOK.md`, `02-CLIENT_OPERATIONS_MANUAL.md`, `04-HANDOVER_CERTIFICATE.md`, `05-RESIDUAL_AND_NEXT.md`.
+- No app/code change. Certificate leaves training + prod passwords blank for humans to fill. Residual lists payments, email, DNS, procurement plus related launch leftovers.
+- Next: client fills/signs certificate; resume OPS-10 when ready.
 
 ### Session — 2026-08-18 (professional cookie banner)
 

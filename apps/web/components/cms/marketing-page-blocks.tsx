@@ -310,32 +310,30 @@ function normalizeUspLabel(label: string): string {
 function UspRow({
   items,
   columns = 4,
+  overline,
+  title,
+  subtitle,
 }: {
   items?: Array<{ label: string; icon?: keyof typeof USP_ICON_MAP; body?: string }>;
   columns?: 2 | 3 | 4;
+  overline?: string;
+  title?: string;
+  subtitle?: string;
 }) {
-  const rows =
-    items?.length && items.some((i) => i.label.trim())
-      ? items
-          .filter((i) => i.label.trim())
-          .map((i, idx) => ({
-            label: normalizeUspLabel(i.label),
-            body: normalizeUspBody(
-              i.body?.trim() || DEFAULT_USP_ITEMS[idx % DEFAULT_USP_ITEMS.length]?.body || '',
-            ),
-            icon: (i.icon ??
-              DEFAULT_USP_ITEMS[idx % DEFAULT_USP_ITEMS.length]?.icon ??
-              'heart') as keyof typeof USP_ICON_MAP,
-          }))
-      : DEFAULT_USP_ITEMS;
+  const rows = (items ?? [])
+    .filter((i) => i.label.trim())
+    .map((i, idx) => ({
+      label: normalizeUspLabel(i.label),
+      body: i.body?.trim() ? normalizeUspBody(i.body) : '',
+      icon: (i.icon ??
+        DEFAULT_USP_ITEMS[idx % DEFAULT_USP_ITEMS.length]?.icon ??
+        'heart') as keyof typeof USP_ICON_MAP,
+    }));
+  if (!rows.length) return null;
 
   return (
     <>
-      <GiftSectionHeader
-        overline="Why parents choose us"
-        title="Thoughtful extras, every order"
-        subtitle="Personal notes, ready hampers, and baby-safe picks — so gifting feels easy, not overwhelming."
-      />
+      <GiftSectionHeader overline={overline} title={title} subtitle={subtitle} />
       <ul className="gift-usp-cards list-none" data-cols={String(columns)}>
         {rows.map(({ icon, label, body }, idx) => {
           const Icon = USP_ICON_MAP[icon] ?? Heart;
@@ -409,23 +407,14 @@ function HeroBlock({ props, layout }: { props: Record<string, unknown>; layout: 
   );
 }
 
-const CORPORATE_CTA_HIGHLIGHTS = [
-  { label: 'Volume pricing', Icon: Briefcase },
-  { label: 'Branded cards', Icon: Sparkles },
-  { label: 'PAN-India', Icon: Truck },
-] as const;
-
 function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: boolean }) {
   const secondary = props.variant === 'secondary';
   const href = cmsHref(props.href, '/');
-  const isCorporate = String(props.href ?? '').includes('/corporate');
-  const highlights = isCorporate ? CORPORATE_CTA_HIGHLIGHTS : [];
   const btnClass = secondary ? 'clay-btn-secondary' : 'clay-btn';
 
   const copy = props.title ? (
     <>
-      {home && isCorporate ? <p className="gift-overline">Teams · events</p> : null}
-      <h2 className={`gift-h2 ${home && isCorporate ? 'mt-gs-2' : ''}`}>{String(props.title)}</h2>
+      <h2 className="gift-h2">{String(props.title)}</h2>
       {props.body ? <p className="gift-muted mt-gs-3 max-w-prose">{String(props.body)}</p> : null}
       <Link href={href} className={`mt-gs-6 inline-flex items-center gap-gs-2 ${btnClass}`}>
         {String(props.label ?? 'Continue')}
@@ -455,18 +444,6 @@ function CtaBlock({ props, home }: { props: Record<string, unknown>; home?: bool
           decoding="async"
           fetchPriority="low"
         />
-        {highlights.length ? (
-          <ul className="gift-cta-split__chips">
-            {highlights.map(({ label, Icon }) => (
-              <li key={label} className="gift-cta-split__chip">
-                <span className="gift-cta-split__chip-icon" aria-hidden>
-                  <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
-                </span>
-                {label}
-              </li>
-            ))}
-          </ul>
-        ) : null}
       </div>
     ) : null;
 
@@ -674,14 +651,6 @@ const BRAND_LOGO_BY_NAME: Record<string, string> = {
   'Soft Nest': '/gift/brands/soft-nest.svg',
 };
 
-const DEFAULT_HOME_BRANDS = [
-  'The Moms Co.',
-  'Chicco',
-  'Mamaearth',
-  'Soft Nest',
-  'Himalaya',
-] as const;
-
 type BrandItem = { name: string; logoUrl: string | null };
 
 function brandInitials(name: string) {
@@ -699,10 +668,7 @@ function brandInitials(name: string) {
 function normalizeBrands(raw: unknown): BrandItem[] {
   const mapped = (() => {
     if (!Array.isArray(raw)) {
-      return DEFAULT_HOME_BRANDS.map((name) => ({
-        name,
-        logoUrl: BRAND_LOGO_BY_NAME[name] ?? null,
-      }));
+      return [];
     }
     if (raw.length === 0) return [];
     return raw
@@ -846,7 +812,18 @@ function BrandStripBlock({ props, home }: { props: Record<string, unknown>; home
 
   const body = (
     <>
-      {showUsps ? <UspRow items={usps} columns={parseUspColumns(props.uspColumns)} /> : null}
+      {showUsps ? (
+        <UspRow
+          items={usps}
+          columns={parseUspColumns(props.uspColumns)}
+          overline={String(props.overline ?? '').trim() || undefined}
+          title={
+            String(props.title ?? '').trim() ||
+            (uspsOnly ? 'Thoughtful extras, every order' : undefined)
+          }
+          subtitle={String(props.subtitle ?? '').trim() || undefined}
+        />
+      ) : null}
       {showBrands ? <BrandPillPanel brands={brands} title={title} /> : null}
     </>
   );
@@ -904,7 +881,7 @@ function RecipientSplitBlock({ props, home }: { props: Record<string, unknown>; 
   const body = (
     <>
       <GiftSectionHeader
-        overline={home ? 'For every little one' : null}
+        overline={props.overline ? String(props.overline) : null}
         title={props.title ? String(props.title) : null}
         subtitle={props.subtitle ? String(props.subtitle) : null}
       />
@@ -1129,7 +1106,7 @@ function RichTextBlock({ html }: { html: string }) {
   const safe = sanitizeArticleHtml(html);
   return (
     <section
-      className="prose prose-sm mx-auto max-w-prose py-gs-6 prose-headings:font-display prose-a:text-primary"
+      className="article-prose prose prose-sm mx-auto max-w-prose py-gs-6 prose-headings:font-display prose-p:my-4 prose-headings:mt-8 prose-headings:mb-3 prose-a:text-primary"
       dangerouslySetInnerHTML={{ __html: safe }}
     />
   );

@@ -1,0 +1,41 @@
+---
+description: Dump Postgres before any live-DB-risking step — client is creating pages and products
+alwaysApply: true
+---
+
+# Live DB backup (mandatory)
+
+Client is **live** on this VPS: CMS pages, products, orders. Treat `inabiya` Postgres as production.
+
+## Before you proceed
+
+Run a dump **and wait for success** if the next step can change or wipe data:
+
+```bash
+bash scripts/backup-postgres.sh
+# → /srv/Inabiya/backups/inabiya-YYYYMMDD-HHMMSS.dump
+```
+
+If the script fails or no new `.dump` file appears → **stop**. Do not migrate, seed, restore, or deploy API.
+
+## Always dump first
+
+- `prisma migrate` / `db push` / `db execute` / any SQL on the live DB
+- `pnpm db:seed` or any seed/sync script against live
+- `DROP` / `TRUNCATE` / `DELETE` without a tight `WHERE`
+- Restore, schema reset, `prisma db pull` that is followed by a write
+- `deploy-vps.sh` that includes **api** (script runs `migrate deploy`)
+- One-off scripts that upsert CMS pages, catalog, users, or settings
+
+`deploy-vps.sh` also dumps automatically before migrate unless `SKIP_BACKUP=1`.
+
+## Never
+
+- Skip the dump because “this migration is additive”
+- Commit `backups/*.dump` (gitignored)
+- Point seed/migrate at live `DATABASE_URL` as a convenience test
+
+```text
+❌ prisma migrate deploy on live with no dump
+✅ backup-postgres.sh succeeds → then migrate / seed / api deploy
+```

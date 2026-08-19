@@ -59,7 +59,7 @@ function Html({ html }: { html: string }) {
   if (!safe || safe === '<p></p>') return null;
   return (
     <div
-      className="prose prose-sm mt-gs-3 max-w-prose prose-headings:font-display prose-a:text-primary"
+      className="article-prose prose prose-sm mt-gs-3 max-w-prose prose-headings:font-display prose-p:my-4 prose-headings:mt-8 prose-headings:mb-3 prose-a:text-primary"
       dangerouslySetInnerHTML={{ __html: safe }}
     />
   );

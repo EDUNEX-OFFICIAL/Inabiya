@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { MarketingPageBlocks } from '@/components/cms/marketing-page-blocks';
 import { GiftStorefrontHero } from '@/components/cms/gift-storefront-hero';
+import { DEFAULT_HERO_TRUST } from '@/components/cms/parse-trust-line';
 import { JsonLdScript } from '@/components/seo/json-ld-script';
 import { apiUrl } from '@/lib/api-base';
 import { homepageLcpHref } from '@/lib/homepage-lcp';
@@ -61,6 +62,7 @@ function LegacyGiftHomeFallback() {
         ctaHref="/build-your-box"
         ctaLabel2="Browse Hampers"
         ctaHref2="/collections/ready-hampers"
+        trustLine={DEFAULT_HERO_TRUST.join(' · ')}
       />
       <CategoryCarousel />
       <div className="mx-auto w-full max-w-page px-[var(--gift-pad-x)] py-gs-7">

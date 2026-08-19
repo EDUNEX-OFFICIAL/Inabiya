@@ -40,6 +40,26 @@ export function isUnauthorizedError(err: unknown): boolean {
   return err instanceof ApiClientError && err.status === 401;
 }
 
+function firstFieldError(details: unknown): string | null {
+  if (!details || typeof details !== 'object') return null;
+  const fieldErrors = (details as { fieldErrors?: Record<string, unknown> }).fieldErrors;
+  if (!fieldErrors || typeof fieldErrors !== 'object') return null;
+  for (const [key, raw] of Object.entries(fieldErrors)) {
+    const msg = Array.isArray(raw) ? raw.find((s) => typeof s === 'string' && s.trim()) : null;
+    if (typeof msg === 'string') return `${key}: ${msg}`;
+  }
+  return null;
+}
+
+function apiErrorMessage(data: unknown, fallback: string): string {
+  if (!data || typeof data !== 'object') return fallback;
+  const error = (data as { error?: { message?: unknown; details?: unknown } }).error;
+  const field = firstFieldError(error?.details);
+  if (field) return field;
+  if (typeof error?.message === 'string' && error.message.trim()) return error.message;
+  return fallback;
+}
+
 /** Soft Gift / ops return path after login (portal-aware). */
 export function loginUrl(nextPath: string): string {
   return portalLoginUrl(nextPath);
@@ -162,11 +182,7 @@ export async function apiAuth<T>(
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const message =
-      typeof data?.error?.message === 'string'
-        ? data.error.message
-        : `Request failed (${res.status})`;
-    throw new ApiClientError(message, res.status);
+    throw new ApiClientError(apiErrorMessage(data, `Request failed (${res.status})`), res.status);
   }
   return data as T;
 }
@@ -198,11 +214,7 @@ export async function apiAuthUpload<T>(
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const message =
-      typeof data?.error?.message === 'string'
-        ? data.error.message
-        : `Upload failed (${res.status})`;
-    throw new ApiClientError(message, res.status);
+    throw new ApiClientError(apiErrorMessage(data, `Upload failed (${res.status})`), res.status);
   }
   return data as T;
 }

@@ -1278,6 +1278,10 @@ async function main() {
       sortOrder: 5,
       props: {
         showUsps: true,
+        overline: 'Why parents choose us',
+        title: 'Thoughtful extras, every order',
+        subtitle:
+          'Personal notes, ready hampers, and baby-safe picks — so gifting feels easy, not overwhelming.',
         usps: [
           {
             icon: 'gift',

@@ -65,11 +65,22 @@ export function sanitizeArticleHtml(html: string): string {
       img: ['src', 'alt', 'title'],
       th: ['colspan', 'rowspan'],
       td: ['colspan', 'rowspan'],
+      p: ['class', 'style'],
+      h2: ['class', 'style'],
+      h3: ['class', 'style'],
+      h4: ['class', 'style'],
       '*': ['class'],
+    },
+    allowedStyles: {
+      '*': {
+        'text-align': [/^left$/, /^right$/, /^center$/, /^justify$/],
+      },
     },
     allowedSchemes: ['http', 'https', 'mailto', 'tel'],
     allowProtocolRelative: false,
     transformTags: {
+      h1: 'h2',
+      div: 'p',
       a: (_tag, attribs) => {
         const href = attribs.href ?? '';
         const next: Record<string, string> = {};

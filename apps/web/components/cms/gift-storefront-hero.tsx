@@ -8,17 +8,16 @@ import { runGiftHeroEntrance } from '@/components/cms/gift-hero-entrance';
 import { HeroMedia } from '@/components/cms/hero-media';
 import { GiftResponsiveLink } from '@/components/gift/gift-responsive-cta';
 import { preferPublicHeroSrc } from '@/lib/public-hero';
+import { parseTrustChips, trustIconKind } from '@/components/cms/parse-trust-line';
 import type { SectionStyle } from '@/components/cms/section-style';
 
 const DEFAULT_HERO_IMAGE = '/gift/media/baby-soft-gift.webp';
 
-const DEFAULT_TRUST = [
-  'Baby-safe brands',
-  'Free shipping over ₹2,000',
-  'PAN-India delivery',
-] as const;
-
-const TRUST_ICONS = [ShieldCheck, Truck, HeartHandshake] as const;
+const TRUST_ICONS = {
+  shield: ShieldCheck,
+  truck: Truck,
+  heart: HeartHandshake,
+} as const;
 
 export type GiftStorefrontHeroProps = {
   headline: string;
@@ -37,15 +36,6 @@ export type GiftStorefrontHeroProps = {
   mediaSide?: 'left' | 'right';
   style?: SectionStyle;
 };
-
-function parseTrustChips(trustLine?: string): string[] {
-  if (!trustLine?.trim()) return [...DEFAULT_TRUST];
-  return trustLine
-    .split(/\s*[·|•\n]\s*/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 6);
-}
 
 function AccentHeadline({ text, accentWord }: { text: string; accentWord?: string }) {
   const needle = accentWord?.trim();
@@ -102,8 +92,8 @@ export function GiftStorefrontHero({
   const containerRef = useRef<HTMLElement>(null);
   const photoSrc = preferPublicHeroSrc(imageUrl?.trim() || DEFAULT_HERO_IMAGE);
   const trustChips = parseTrustChips(trustLine);
-  const eyebrowText = eyebrow?.trim() || 'Personalised baby gifting';
-  const accent = accentWord?.trim() || (/\bjoy\b/i.test(headline) ? 'joy' : undefined);
+  const eyebrowText = eyebrow?.trim();
+  const accent = accentWord?.trim() || undefined;
   const [photoReady, setPhotoReady] = useState(false);
   const enteredSrc = useRef<string | null>(null);
 
@@ -175,9 +165,11 @@ export function GiftStorefrontHero({
                 : 'justify-center'
           } ${mediaSide === 'left' ? 'order-2' : 'order-1'}`}
         >
-          <p data-hero-anim="eyebrow" className="gift-hero-split__eyebrow gift-overline">
-            {eyebrowText}
-          </p>
+          {eyebrowText ? (
+            <p data-hero-anim="eyebrow" className="gift-hero-split__eyebrow gift-overline">
+              {eyebrowText}
+            </p>
+          ) : null}
 
           <h1
             data-hero-anim="headline"
@@ -243,14 +235,14 @@ export function GiftStorefrontHero({
               data-hero-anim="trust"
               className="gift-hero-split__trust mt-gs-3 flex w-full list-none flex-row flex-wrap items-start justify-center gap-x-gs-2 gap-y-gs-2 overflow-visible sm:mt-gs-4 sm:gap-x-gs-4 lg:justify-start"
             >
-              {trustChips.map((label, i) => {
-                const Icon = TRUST_ICONS[i % TRUST_ICONS.length] ?? ShieldCheck;
+              {trustChips.map((chip, i) => {
+                const Icon = TRUST_ICONS[chip.icon] ?? TRUST_ICONS[trustIconKind(chip.label, i)];
                 return (
-                  <li key={`${label}-${i}`} className="gift-hero-split__trust-item">
+                  <li key={`${chip.label}-${i}`} className="gift-hero-split__trust-item">
                     <span className="gift-hero-split__trust-icon" aria-hidden>
                       <Icon className="h-4 w-4" strokeWidth={1.75} />
                     </span>
-                    <TrustChipLabel label={label} />
+                    <TrustChipLabel label={chip.label} />
                   </li>
                 );
               })}

@@ -447,9 +447,14 @@ export class CmsPagesService {
   private async resolveBrandStripProps(props: Record<string, unknown>) {
     const title = typeof props.title === 'string' ? props.title : undefined;
     const subtitle = typeof props.subtitle === 'string' ? props.subtitle : undefined;
+    const overline = typeof props.overline === 'string' ? props.overline : undefined;
     const uspsOnly = props.showUsps === true;
-    const showUsps = props.showUsps !== false;
+    const showUsps = props.showUsps === true ? true : props.showUsps === false ? false : undefined;
     const usps = Array.isArray(props.usps) ? props.usps : undefined;
+    const uspColumns =
+      props.uspColumns === 2 || props.uspColumns === 3 || props.uspColumns === 4
+        ? props.uspColumns
+        : undefined;
     let brands = Array.isArray(props.brands) ? props.brands.slice(0, 24) : [];
     // USP-only strips must not invent a second brand carousel from catalog brands.
     if (!brands.length && !uspsOnly) {
@@ -464,9 +469,11 @@ export class CmsPagesService {
     return {
       ...(title ? { title } : {}),
       ...(subtitle ? { subtitle } : {}),
+      ...(overline ? { overline } : {}),
       ...(brands.length ? { brands } : {}),
       ...(usps ? { usps } : {}),
-      showUsps: uspsOnly ? true : showUsps,
+      ...(showUsps !== undefined ? { showUsps } : {}),
+      ...(uspColumns ? { uspColumns } : {}),
     };
   }
 

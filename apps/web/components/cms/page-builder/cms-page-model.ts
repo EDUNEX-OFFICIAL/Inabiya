@@ -1,5 +1,7 @@
 import type { SeoSchemaEntry } from '@inabiya/validation';
+import { sanitizeArticleHtml } from '@/lib/article-html';
 import { attachStyle } from '../section-style';
+import { defaultHeroTrustLine } from '@/components/cms/parse-trust-line';
 import { HERO_LAYOUTS, HERO_LAYOUT_LABELS, parseHeroLayout, type HeroLayout } from '../hero-layout';
 import {
   CUSTOM_SECTION_LAYOUTS,
@@ -229,6 +231,7 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
     ctaLabel2: '',
     ctaHref2: '',
     trustLine: '',
+    accentWord: '',
     imageUrl: '',
     imageUrl2: '',
     headline2: '',
@@ -259,14 +262,16 @@ export const EMPTY_PROPS: Record<BlockType, Record<string, string>> = {
   brandStrip: {
     title: 'Trusted brands we stock',
     subtitle: '',
+    overline: '',
     brands: '',
     usps: '',
-    showUsps: 'true',
+    showUsps: 'false',
     uspColumns: '4',
   },
   recipientSplit: {
     title: 'Shop by baby',
     subtitle: 'Curated palettes, unisex-safe products.',
+    overline: 'For every little one',
     grid: '2x1',
     itemsJson: JSON.stringify(
       [
@@ -726,6 +731,7 @@ function payloadWithoutStyle(b: Block) {
         ...(b.props.ctaHref2 ? { ctaHref2: b.props.ctaHref2 } : {}),
         ...(b.props.trustLine ? { trustLine: b.props.trustLine } : {}),
         ...(b.props.eyebrow ? { eyebrow: b.props.eyebrow } : {}),
+        ...(b.props.accentWord ? { accentWord: b.props.accentWord } : {}),
         ...(b.props.imageUrl ? { imageUrl: b.props.imageUrl } : {}),
         ...(b.props.imageUrl2 ? { imageUrl2: b.props.imageUrl2 } : {}),
         ...(b.props.headline2 ? { headline2: b.props.headline2 } : {}),
@@ -736,7 +742,10 @@ function payloadWithoutStyle(b: Block) {
     };
   }
   if (b.type === 'richText') {
-    return { type: 'richText' as const, props: { html: b.props.html || '<p></p>' } };
+    return {
+      type: 'richText' as const,
+      props: { html: sanitizeArticleHtml(b.props.html || '<p></p>') || '<p></p>' },
+    };
   }
   if (b.type === 'image') {
     return {
@@ -841,9 +850,14 @@ function payloadWithoutStyle(b: Block) {
       props: {
         ...(b.props.title ? { title: b.props.title } : {}),
         ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
+        ...(b.props.overline !== undefined ? { overline: b.props.overline } : {}),
         ...(brands.length ? { brands } : {}),
         ...(usps.length ? { usps } : {}),
-        ...(b.props.showUsps === 'false' ? { showUsps: false } : { showUsps: true }),
+        ...(b.props.showUsps === 'true'
+          ? { showUsps: true }
+          : b.props.showUsps === 'false'
+            ? { showUsps: false }
+            : {}),
         ...(b.props.uspColumns === '2' || b.props.uspColumns === '3' || b.props.uspColumns === '4'
           ? { uspColumns: Number(b.props.uspColumns) as 2 | 3 | 4 }
           : {}),
@@ -878,6 +892,7 @@ function payloadWithoutStyle(b: Block) {
       props: {
         ...(b.props.title ? { title: b.props.title } : {}),
         ...(b.props.subtitle ? { subtitle: b.props.subtitle } : {}),
+        ...(b.props.overline ? { overline: b.props.overline } : {}),
         grid,
         items: stored,
         left,
@@ -1291,11 +1306,11 @@ function payloadWithoutStyle(b: Block) {
         ...(layout ? { layout } : {}),
         ...(b.props.overline ? { overline: b.props.overline } : {}),
         ...(b.props.title ? { title: b.props.title } : {}),
-        ...(b.props.body ? { body: b.props.body } : {}),
+        ...(b.props.body ? { body: sanitizeArticleHtml(b.props.body) } : {}),
         ...(b.props.title2 ? { title2: b.props.title2 } : {}),
-        ...(b.props.body2 ? { body2: b.props.body2 } : {}),
+        ...(b.props.body2 ? { body2: sanitizeArticleHtml(b.props.body2) } : {}),
         ...(b.props.title3 ? { title3: b.props.title3 } : {}),
-        ...(b.props.body3 ? { body3: b.props.body3 } : {}),
+        ...(b.props.body3 ? { body3: sanitizeArticleHtml(b.props.body3) } : {}),
         ...(b.props.imageUrl ? { imageUrl: b.props.imageUrl } : {}),
         ...(b.props.imageUrl2 ? { imageUrl2: b.props.imageUrl2 } : {}),
         ...(b.props.imageUrl3 ? { imageUrl3: b.props.imageUrl3 } : {}),
@@ -1421,6 +1436,7 @@ export type PaletteInsert = {
 
 function heroInsert(layout: HeroLayout): PaletteInsert {
   const textOnly = layout === 'fullText' || layout === 'splitCopy';
+  const split = layout === 'splitMediaCopy' || layout === 'splitCopyMedia';
   return {
     id: `hero-${layout}`,
     group: 'hero',
@@ -1430,6 +1446,12 @@ function heroInsert(layout: HeroLayout): PaletteInsert {
     props: {
       layout,
       variant: textOnly ? 'panel' : 'storefront',
+      ...(split
+        ? {
+            eyebrow: 'Personalised baby gifting',
+            trustLine: defaultHeroTrustLine(),
+          }
+        : {}),
     },
   };
 }
@@ -1517,6 +1539,7 @@ export function heroVisibleKeys(layout: HeroLayout | undefined): string[] {
     'ctaLabel2',
     'ctaHref2',
     'trustLine',
+    'accentWord',
   ];
   switch (layout) {
     case 'fullText':
@@ -1561,7 +1584,7 @@ export const FIELD_LABELS: Record<string, string> = {
   ctaHref: 'Button link',
   ctaLabel2: 'Second button',
   ctaHref2: 'Second button link',
-  trustLine: 'Trust line',
+  trustLine: 'Trust chips',
   imageUrl: 'Image',
   imageUrl2: 'Second image',
   headline2: 'Second headline',

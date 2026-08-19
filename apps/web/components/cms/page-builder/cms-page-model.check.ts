@@ -35,6 +35,16 @@ assert.equal(payload.length, 1);
 assert.equal(payload[0]?.type, 'hero');
 assert.equal((payload[0]?.props as { headline: string }).headline, 'Little bundles of joy');
 assert.equal((payload[0]?.props as { layout?: string }).layout, 'full');
+assert.equal((payload[0]?.props as { trustLine?: string }).trustLine, undefined);
+
+const withTrust = toPayload([
+  {
+    clientId: 'b-trust',
+    type: 'hero',
+    props: { ...EMPTY_PROPS.hero, headline: 'Hi', trustLine: 'Baby-safe\nFree shipping' },
+  },
+]);
+assert.equal((withTrust[0]?.props as { trustLine?: string }).trustLine, 'Baby-safe\nFree shipping');
 
 const round = toEditable([
   { id: 'blk-1', type: 'hero', props: payload[0]!.props as Record<string, unknown> },
@@ -188,6 +198,9 @@ const inspector = readFileSync(join(__dirname, 'cms-block-inspector.tsx'), 'utf8
 assert.match(inspector, /FeaturedCarouselCardsEditor/);
 assert.match(inspector, /BrandsRowsEditor/);
 assert.match(inspector, /UspsRowsEditor/);
+assert.match(inspector, /TrustChipsEditor/);
+const structured = readFileSync(join(__dirname, '../cms-structured-fields.tsx'), 'utf8');
+assert.match(structured, /key=\{`chip-\$\{i\}`\}/);
 assert.match(inspector, /OfferCardsEditor/);
 assert.match(inspector, /FaqItemsEditor/);
 assert.match(inspector, /RecipientCardsEditor/);
@@ -215,6 +228,7 @@ assert.equal(brandProps.brands.length, 14);
 assert.equal((brandProps.brands[0] as { name: string }).name, 'Chicco');
 assert.equal(brandProps.usps[0]?.icon, 'gift');
 assert.equal(brandProps.uspColumns, 3);
+assert.equal((brandPayload[0]?.props as { showUsps?: boolean }).showUsps, false);
 
 const split = toPayload([
   {

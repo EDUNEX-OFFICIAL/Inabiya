@@ -5801,21 +5801,32 @@ html:has([data-theme='gift'])::-webkit-scrollbar-corner,
 }
 .article-prose h2 {
   @apply font-display text-2xl mt-8 mb-3;
+  line-height: 1.35;
 }
 .article-prose h3 {
   @apply font-display text-xl mt-6 mb-2;
+  line-height: 1.4;
 }
 .article-prose h4 {
   @apply font-display text-lg mt-4 mb-2;
+  line-height: 1.4;
 }
 .article-prose p {
-  @apply my-3;
+  margin-top: 0.9em;
+  margin-bottom: 0.9em;
+  line-height: 1.75;
+}
+.article-prose p + p {
+  margin-top: 1.15em;
 }
 .article-prose ul {
-  @apply my-3 list-disc pl-6;
+  @apply my-4 list-disc pl-6;
 }
 .article-prose ol {
-  @apply my-3 list-decimal pl-6;
+  @apply my-4 list-decimal pl-6;
+}
+.ProseMirror.article-prose p {
+  min-height: 1.5em;
 }
 .article-prose blockquote {
   @apply my-4 border-l-4 border-[var(--primary)] pl-4 italic opacity-90;

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fast VPS deploy: BuildKit cache + path-aware rebuild of web/api/worker.
 # Usage: bash scripts/deploy-vps.sh [web|api|worker ...]
-# Env: FORCE_ALL=1 rebuild everything; SKIP_SMOKE=1 skip curl checks
+# Env: FORCE_ALL=1 rebuild everything; SKIP_SMOKE=1 skip curl checks; SKIP_BACKUP=1 skip dump before api migrate
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -108,6 +108,10 @@ echo "==> Recreating: ${SERVICE_ARR[*]}"
 "${COMPOSE[@]}" up -d --remove-orphans
 
 if printf ' %s ' "${SERVICE_ARR[@]}" | grep -q ' api '; then
+  if [ "${SKIP_BACKUP:-0}" != "1" ]; then
+    echo "==> Postgres backup (live client data)"
+    bash "$REPO/scripts/backup-postgres.sh"
+  fi
   echo "==> Prisma migrate deploy"
   "${COMPOSE[@]}" run --rm --no-deps \
     -e DATABASE_URL="postgresql://${POSTGRES_USER:-inabiya}:${POSTGRES_PASSWORD:-inabiya}@postgres:5432/${POSTGRES_DB:-inabiya}?schema=public" \

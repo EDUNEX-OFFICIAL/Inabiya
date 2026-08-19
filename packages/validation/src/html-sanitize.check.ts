@@ -38,4 +38,17 @@ assert.equal(safeNextPath('https://evil.example'), null);
 assert.equal(isProbablyHtml('<p>x</p>'), true);
 assert.match(normalizeArticleBody('hello\n\nworld'), /<p>hello<\/p>/);
 
+const fromDivs = sanitizeArticleHtml('<div>One</div><div>Two</div>');
+assert.match(fromDivs, /<p>One<\/p>/);
+assert.match(fromDivs, /<p>Two<\/p>/);
+
+const fromH1 = sanitizeArticleHtml('<h1>About</h1><p>Body</p>');
+assert.match(fromH1, /<h2>About<\/h2>/);
+
+const aligned = sanitizeArticleHtml('<p style="text-align:center">Hi</p>');
+assert.match(aligned, /text-align:\s*center/);
+const droppedStyle = sanitizeArticleHtml('<p style="color:red;text-align:left">Hi</p>');
+assert.equal(/color/i.test(droppedStyle), false);
+assert.match(droppedStyle, /text-align:\s*left/);
+
 console.log('html-sanitize.check.ts ok');

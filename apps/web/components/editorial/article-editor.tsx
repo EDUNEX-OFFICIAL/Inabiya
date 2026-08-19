@@ -127,7 +127,7 @@ export function ArticleEditor({
     editorProps: {
       attributes: {
         class:
-          'article-prose min-h-[280px] max-w-none px-3 py-3 focus:outline-none font-body text-[15px] leading-relaxed',
+          'article-prose min-h-[280px] max-w-none px-3 py-4 focus:outline-none font-body text-[15px] leading-7',
       },
     },
     onUpdate: ({ editor: ed }) => {

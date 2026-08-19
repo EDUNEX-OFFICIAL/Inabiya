@@ -1,6 +1,7 @@
 'use client';
 
 import { CmsMediaField } from '@/components/cms/cms-media-field';
+import { parseTrustChipDrafts, serializeTrustChips, TRUST_ICON_KINDS } from '@/components/cms/parse-trust-line';
 import {
   INSPECTOR_INPUT,
   INSPECTOR_TEXTAREA_SHORT,
@@ -155,7 +156,7 @@ export function UspsRowsEditor({
     <div className="space-y-2">
       {rows.map((row, i) => (
         <RepeatableRow
-          key={`${row.label}-${i}`}
+          key={`usp-${i}`}
           label={`USP ${i + 1}`}
           onMove={(dir) => set(moveItem(rows, i, dir))}
           onRemove={() => set(rows.filter((_, j) => j !== i))}
@@ -705,6 +706,62 @@ export function TextRowsEditor({
         label={addLabel}
         disabled={rows.length >= max}
         onClick={() => set([...rows, 'New line'])}
+      />
+    </div>
+  );
+}
+
+export function TrustChipsEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const rows = parseTrustChipDrafts(value);
+  function set(next: typeof rows) {
+    onChange(serializeTrustChips(next));
+  }
+  return (
+    <div className="space-y-2">
+      {rows.map((row, i) => (
+        <RepeatableRow
+          key={`chip-${i}`}
+          label={`Chip ${i + 1}`}
+          onMove={(dir) => set(moveItem(rows, i, dir))}
+          onRemove={() => set(rows.filter((_, j) => j !== i))}
+        >
+          <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-1.5">
+            <select
+              className={INSPECTOR_INPUT}
+              aria-label="Icon"
+              value={row.icon}
+              onChange={(e) =>
+                set(
+                  rows.map((r, j) =>
+                    j === i ? { ...r, icon: e.target.value as typeof row.icon } : r,
+                  ),
+                )
+              }
+            >
+              {TRUST_ICON_KINDS.map((icon) => (
+                <option key={icon} value={icon}>
+                  {icon}
+                </option>
+              ))}
+            </select>
+            <input
+              className={INSPECTOR_INPUT}
+              value={row.label}
+              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))}
+            />
+          </div>
+        </RepeatableRow>
+      ))}
+      <RepeatableAdd
+        label="Add chip"
+        disabled={rows.length >= 6}
+        onClick={() => set([...rows, { icon: 'heart', label: 'New chip' }])}
       />
     </div>
   );

@@ -1784,9 +1784,10 @@ const heroPropsSchema = z.object({
   ctaHref: optionalSafeStorefrontHrefSchema,
   ctaLabel2: z.string().max(80).optional(),
   ctaHref2: optionalSafeStorefrontHrefSchema,
-  /** Pipe/middot-separated trust chips, e.g. "A · B · C" */
+  /** Pipe/middot/newline-separated trust chips, e.g. "shield:Baby-safe · truck:Free shipping" */
   trustLine: z.string().max(400).optional(),
   eyebrow: z.string().max(80).optional(),
+  accentWord: z.string().max(40).optional(),
   imageUrl: cmsMediaUrlSchema.optional(),
   /** Second column media (two-image hero). */
   imageUrl2: cmsMediaUrlSchema.optional(),
@@ -1798,7 +1799,12 @@ const heroPropsSchema = z.object({
 });
 
 const richTextPropsSchema = z.object({
-  html: z.string().min(1).max(50_000).transform(sanitizeArticleHtml),
+  html: z
+    .string()
+    .min(1)
+    .max(200_000)
+    .transform(sanitizeArticleHtml)
+    .pipe(z.string().min(1).max(200_000)),
 });
 
 const imagePropsSchema = z.object({
@@ -1864,6 +1870,7 @@ const uspItemSchema = z.object({
 const brandStripPropsSchema = z.object({
   title: z.string().max(120).optional(),
   subtitle: z.string().max(200).optional(),
+  overline: z.string().max(80).optional(),
   brands: z.array(brandEntrySchema).max(24).optional(),
   /** When set, replaces hardcoded USP row under Soft Gift home brand band */
   usps: z.array(uspItemSchema).max(8).optional(),
@@ -1886,6 +1893,7 @@ const recipientCardSchema = z.object({
 const recipientSplitPropsSchema = z.object({
   title: z.string().max(120).optional(),
   subtitle: z.string().max(300).optional(),
+  overline: z.string().max(80).optional(),
   /** Desktop tile layout. Phone = 1 col; tablet = 2; `3x2` = 3 col from lg. */
   grid: z.enum(['2x1', '2x2', '2x3', '3x2']).optional(),
   items: z.array(recipientCardSchema).min(2).max(6).optional(),
@@ -2107,7 +2115,7 @@ const countdownPropsSchema = z.object({
 
 const optionalSanitizedHtml = z.preprocess(
   (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
-  z.string().max(50_000).transform(sanitizeArticleHtml).optional(),
+  z.string().max(200_000).transform(sanitizeArticleHtml).optional(),
 );
 
 const customSectionPropsSchema = z.object({
