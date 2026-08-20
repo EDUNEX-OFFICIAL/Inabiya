@@ -64,7 +64,8 @@ export class PublishingPublicController {
     return this.publishing.listTags();
   }
 
-  @Get(':slug((?!search$|categories$|tags$|specialists$|newsletter$).+)')
+  /** Static paths above take precedence; keep this param plain (custom regex never matches under Nest/Express). */
+  @Get(':slug')
   getBySlug(@Param('slug') slug: string) {
     return this.publishing.getPublicBySlug(slug);
   }
