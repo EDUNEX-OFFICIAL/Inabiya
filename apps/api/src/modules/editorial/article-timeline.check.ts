@@ -49,9 +49,18 @@ const items = buildArticleTimeline({
 
 assert.equal(items[0].status, 'ASSIGNED');
 assert.equal(items[0].actorName, 'Content');
-assert.equal(items.some((i) => i.kind === 'edit'), true);
-assert.equal(items.some((i) => i.kind === 'edit' && i.at.includes('10:10')), false);
-assert.equal(items.some((i) => i.kind === 'change_request' && i.detail === 'Add intro'), true);
+assert.equal(
+  items.some((i) => i.kind === 'edit'),
+  true,
+);
+assert.equal(
+  items.some((i) => i.kind === 'edit' && i.at.includes('10:10')),
+  false,
+);
+assert.equal(
+  items.some((i) => i.kind === 'change_request' && i.detail === 'Add intro'),
+  true,
+);
 assert.equal(items[items.length - 1].kind, 'payment');
 assert.equal(items[items.length - 1].amountPaise, 75000);
 

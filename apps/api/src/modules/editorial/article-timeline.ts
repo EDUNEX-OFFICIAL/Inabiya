@@ -1,10 +1,5 @@
 export type ArticleTimelineKind =
-  | 'status'
-  | 'comment'
-  | 'change_request'
-  | 'edit'
-  | 'details'
-  | 'payment';
+  'status' | 'comment' | 'change_request' | 'edit' | 'details' | 'payment';
 
 export type ArticleTimelineItem = {
   at: string;
@@ -20,7 +15,9 @@ function iso(d: Date | string): string {
   return d instanceof Date ? d.toISOString() : d;
 }
 
-function actorLabel(actor: { displayName: string | null; email: string } | null | undefined): string | null {
+function actorLabel(
+  actor: { displayName: string | null; email: string } | null | undefined,
+): string | null {
   if (!actor) return null;
   return actor.displayName?.trim() || actor.email || null;
 }

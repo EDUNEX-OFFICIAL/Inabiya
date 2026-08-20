@@ -12,7 +12,12 @@ type Props = {
   currentTag?: string;
 };
 
-export function BlogCategoryFilter({ categories, currentCategory, currentQuery, currentTag }: Props) {
+export function BlogCategoryFilter({
+  categories,
+  currentCategory,
+  currentQuery,
+  currentTag,
+}: Props) {
   const router = useRouter();
 
   return (

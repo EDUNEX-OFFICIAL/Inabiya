@@ -79,28 +79,25 @@ export default function EditorialAdminPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const load = useCallback(
-    async (u: AuthUser, st: string, assignee: string) => {
-      const params = new URLSearchParams();
-      const isOps = u.roles.includes('CONTENT_ADMIN') || u.roles.includes('SUPER_ADMIN');
-      const isWriterOnly =
-        u.roles.includes('WRITER') &&
-        !isOps &&
-        !u.roles.includes('SEO_EDITOR') &&
-        !u.roles.includes('MEDICAL_REVIEWER');
-      if (isWriterOnly) {
-        params.set('mine', '1');
-      }
-      if (st) params.set('status', st);
-      if (isOps && assignee) params.set('assigneeId', assignee);
-      const q = params.toString() ? `?${params}` : '';
-      setRows(await apiAuth<ArticleRow[]>(`/editorial/articles${q}`));
-      if (isOps) {
-        setStats(await apiAuth<Turnaround>('/editorial/analytics/turnaround'));
-      }
-    },
-    [],
-  );
+  const load = useCallback(async (u: AuthUser, st: string, assignee: string) => {
+    const params = new URLSearchParams();
+    const isOps = u.roles.includes('CONTENT_ADMIN') || u.roles.includes('SUPER_ADMIN');
+    const isWriterOnly =
+      u.roles.includes('WRITER') &&
+      !isOps &&
+      !u.roles.includes('SEO_EDITOR') &&
+      !u.roles.includes('MEDICAL_REVIEWER');
+    if (isWriterOnly) {
+      params.set('mine', '1');
+    }
+    if (st) params.set('status', st);
+    if (isOps && assignee) params.set('assigneeId', assignee);
+    const q = params.toString() ? `?${params}` : '';
+    setRows(await apiAuth<ArticleRow[]>(`/editorial/articles${q}`));
+    if (isOps) {
+      setStats(await apiAuth<Turnaround>('/editorial/analytics/turnaround'));
+    }
+  }, []);
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
@@ -282,10 +279,10 @@ export default function EditorialAdminPage() {
                       </span>
                     ) : null}
                     {canSeeWriterFee(actor.roles) && a.writerFeePaise != null ? (
-                    <span>
-                      <Wallet aria-hidden />
-                      {formatWriterFee(a.writerFeePaise)}
-                    </span>
+                      <span>
+                        <Wallet aria-hidden />
+                        {formatWriterFee(a.writerFeePaise)}
+                      </span>
                     ) : null}
                     {a.overdue ? (
                       <span className="editorial-meta__danger">

@@ -83,19 +83,10 @@ type EditorialCheckProps = {
 } & Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>;
 
 /** Styled checkbox — native input for a11y, custom box + label. */
-export function EditorialCheck({
-  label,
-  icon: Icon,
-  className,
-  id,
-  ...rest
-}: EditorialCheckProps) {
+export function EditorialCheck({ label, icon: Icon, className, id, ...rest }: EditorialCheckProps) {
   const checked = Boolean(rest.checked);
   return (
-    <label
-      htmlFor={id}
-      className={`editorial-check${className ? ` ${className}` : ''}`.trim()}
-    >
+    <label htmlFor={id} className={`editorial-check${className ? ` ${className}` : ''}`.trim()}>
       <input id={id} type="checkbox" className="editorial-check__input" {...rest} />
       <span className={`editorial-check__box${checked ? ' is-on' : ''}`} aria-hidden>
         {checked ? <Check className="h-3 w-3" strokeWidth={2.5} /> : null}

@@ -74,9 +74,13 @@ export default async function BlogIndexPage({
                     <span className="blog-overline">Journal</span>
                     <span className="blog-home-hero__latest">Latest</span>
                   </div>
-                  {featured.category?.name ? <p className="blog-card__category mt-gs-3">{featured.category.name}</p> : null}
+                  {featured.category?.name ? (
+                    <p className="blog-card__category mt-gs-3">{featured.category.name}</p>
+                  ) : null}
                   <h1 className="blog-home-hero__title mt-gs-2">{featured.title}</h1>
-                  {featured.description ? <p className="blog-home-hero__desc mt-gs-2">{featured.description}</p> : null}
+                  {featured.description ? (
+                    <p className="blog-home-hero__desc mt-gs-2">{featured.description}</p>
+                  ) : null}
                 </div>
 
                 <div className="blog-home-hero__right">
@@ -106,9 +110,15 @@ export default async function BlogIndexPage({
       )}
 
       <section className="blog-page !pt-gs-5">
-        <h2 className="blog-h2 sm:text-3xl">{searchQuery ? `Results for “${searchQuery}”` : 'Blog'}</h2>
+        <h2 className="blog-h2 sm:text-3xl">
+          {searchQuery ? `Results for “${searchQuery}”` : 'Blog'}
+        </h2>
         <div className="blog-browse-row mt-gs-4" aria-label="Browse journal">
-          <BlogSearch defaultQuery={searchQuery} defaultExpanded className="blog-browse-row__search max-w-none" />
+          <BlogSearch
+            defaultQuery={searchQuery}
+            defaultExpanded
+            className="blog-browse-row__search max-w-none"
+          />
         </div>
 
         <div className="blog-feed-tools mt-gs-4">
@@ -163,9 +173,7 @@ export default async function BlogIndexPage({
           ))}
           {sortedArticles.length === 0 ? (
             <li className="blog-card blog-feed-empty p-gs-6 text-sm opacity-70">
-              {searchQuery
-                ? `No articles match “${searchQuery}”.`
-                : 'No published articles yet.'}
+              {searchQuery ? `No articles match “${searchQuery}”.` : 'No published articles yet.'}
             </li>
           ) : null}
         </ul>

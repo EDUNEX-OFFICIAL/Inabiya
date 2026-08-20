@@ -32,9 +32,7 @@ function ArticleBody({
   return (
     <div className={`blog-card__body ${hero ? 'blog-card__body--hero' : ''}`}>
       {label ? <p className="blog-card__label">{label}</p> : null}
-      {a.category?.name ? (
-        <p className="blog-card__category">{a.category.name}</p>
-      ) : null}
+      {a.category?.name ? <p className="blog-card__category">{a.category.name}</p> : null}
       <h3 className={`blog-card__title ${hero ? 'blog-card__title--hero' : ''}`}>{a.title}</h3>
       {a.description ? (
         <p className={`blog-card__excerpt ${hero ? 'blog-card__excerpt--hero' : ''}`}>

@@ -68,8 +68,7 @@ export default function WriterDashboardPage() {
           <p className="editorial-page-head__count">
             <Inbox aria-hidden />
             {visibleRows.length}
-            {status ? ` / ${rows.length}` : ''}{' '}
-            {rows.length === 1 ? 'assignment' : 'assignments'}
+            {status ? ` / ${rows.length}` : ''} {rows.length === 1 ? 'assignment' : 'assignments'}
           </p>
           {rows.length > 0 ? (
             <div className="editorial-filters">

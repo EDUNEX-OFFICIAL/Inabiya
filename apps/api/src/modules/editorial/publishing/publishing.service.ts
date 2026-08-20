@@ -566,7 +566,10 @@ export class PublishingService {
   }
 
   private estimateReadTimeMinutes(body: string): number {
-    const plain = body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const plain = body
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     if (!plain) return 1;
     const words = plain.split(' ').length;
     return Math.max(1, Math.round(words / 220));

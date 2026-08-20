@@ -248,7 +248,11 @@ export default function EditorialCategoriesPage() {
                     </div>
                   </div>
                   <div className="editorial-resource-card__actions">
-                    <EditorialIconButton label="Save" icon={Check} onClick={() => void saveEdit()} />
+                    <EditorialIconButton
+                      label="Save"
+                      icon={Check}
+                      onClick={() => void saveEdit()}
+                    />
                     <EditorialIconButton
                       label="Cancel"
                       icon={X}

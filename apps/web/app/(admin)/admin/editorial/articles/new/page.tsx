@@ -173,7 +173,12 @@ export default function NewArticlePage() {
             className="mt-gs-4 w-full sm:w-auto"
             label={busy ? 'Creating…' : 'Create'}
             icon={Plus}
-            disabled={busy || !title.trim() || writers.length === 0 || rupeesToPaise(writerFeeRupees) == null}
+            disabled={
+              busy ||
+              !title.trim() ||
+              writers.length === 0 ||
+              rupeesToPaise(writerFeeRupees) == null
+            }
             onClick={() => void create()}
           />
         </section>

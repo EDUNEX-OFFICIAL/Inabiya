@@ -3,15 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Banknote,
-  CheckCircle2,
-  Clock,
-  Inbox,
-  Pencil,
-  UserRound,
-  Wallet,
-} from 'lucide-react';
+import { Banknote, CheckCircle2, Clock, Inbox, Pencil, UserRound, Wallet } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { EditorialEmpty } from '@/components/editorial/editorial-ui';
 import {
@@ -47,7 +39,10 @@ function paymentStatusLabel(status: string) {
   if (status === 'PENDING') return 'Pending';
   if (status === 'RELEASED') return 'Released';
   if (status === 'CANCELLED') return 'Cancelled';
-  return status.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+  return status
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/^\w/, (c) => c.toUpperCase());
 }
 
 function paymentStatusClass(status: string) {
@@ -206,9 +201,7 @@ export default function WriterPaymentsPage() {
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-gs-2">
-                  <span
-                    className={`editorial-status-pill ${paymentStatusClass(p.status)}`.trim()}
-                  >
+                  <span className={`editorial-status-pill ${paymentStatusClass(p.status)}`.trim()}>
                     {paymentStatusLabel(p.status)}
                   </span>
                   {canRelease && p.status === 'PENDING' ? (

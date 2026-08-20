@@ -308,7 +308,11 @@ export default function EditorialSpecialistsPage() {
                     </div>
                   </div>
                   <div className="editorial-resource-card__actions">
-                    <EditorialIconButton label="Save" icon={Check} onClick={() => void saveEdit()} />
+                    <EditorialIconButton
+                      label="Save"
+                      icon={Check}
+                      onClick={() => void saveEdit()}
+                    />
                     <EditorialIconButton
                       label="Cancel"
                       icon={X}
@@ -355,9 +359,7 @@ export default function EditorialSpecialistsPage() {
         ))}
         {visibleRows.length === 0 ? (
           <EditorialEmpty icon={Stethoscope}>
-            {query.trim()
-              ? 'No specialists match your search.'
-              : 'No specialists yet.'}
+            {query.trim() ? 'No specialists match your search.' : 'No specialists yet.'}
           </EditorialEmpty>
         ) : null}
       </ul>

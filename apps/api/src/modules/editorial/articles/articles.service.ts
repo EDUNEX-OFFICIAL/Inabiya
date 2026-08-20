@@ -150,11 +150,7 @@ export class ArticlesService {
       where.status = filters.status;
     }
 
-    if (
-      filters.assigneeId !== undefined &&
-      this.isOps(actor) &&
-      !filters.mineOnly
-    ) {
+    if (filters.assigneeId !== undefined && this.isOps(actor) && !filters.mineOnly) {
       where.assigneeId = filters.assigneeId;
     }
 
@@ -297,7 +293,10 @@ export class ArticlesService {
     }
     if (body.writerFeePaise !== undefined) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
-      if (article.status === ArticleStatus.PUBLISHED || article.status === ArticleStatus.SCHEDULED) {
+      if (
+        article.status === ArticleStatus.PUBLISHED ||
+        article.status === ArticleStatus.SCHEDULED
+      ) {
         throw new BadRequestException({
           code: 'FEE_LOCKED',
           message: 'Writer fee cannot change after schedule or publish.',
