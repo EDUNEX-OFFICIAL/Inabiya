@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 20, 2026 (Push Journal expand + CI green)
+Last Updated: August 20, 2026 (Fix blog slug API 404)
 ---
 
 ## 1. Why this file exists
@@ -1315,6 +1315,11 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-20 (Fix blog slug API 404)
+
+- Root cause: `@Get(':slug((?!…).+)')` registered but Express never matched; list/categories OK, `/api/v1/blog/:slug` → Cannot GET → web `notFound()` Soft Gift 404.
+- Fix `e6b7cc2`: plain `@Get(':slug')`. CI deploy green; article URLs resolve again.
 
 ### Session — 2026-08-20 (Push Journal expand + CI green)
 
