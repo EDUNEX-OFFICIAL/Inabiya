@@ -13,8 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 20, 2026 (Blog mobile logo + footer layout)
-
+Last Updated: August 20, 2026 (Deploy + push Journal UI)
 ---
 
 ## 1. Why this file exists
@@ -1316,6 +1315,11 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-20 (Deploy + push Journal UI)
+
+- Commit `1c92d34` pushed to `origin/main` (gh auth; stale embedded remote token cleared).
+- VPS deploy web+api(+worker): backup `inabiya-20260820-164441.dump`; migrate deploy — no pending; smoke health/ready/web 200.
 
 ### Session — 2026-08-20 (Blog mobile logo + footer layout)
 
