@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 20, 2026 (Blog footer Shop label LTR)
+Last Updated: August 20, 2026 (Push Journal expand + CI green)
 ---
 
 ## 1. Why this file exists
