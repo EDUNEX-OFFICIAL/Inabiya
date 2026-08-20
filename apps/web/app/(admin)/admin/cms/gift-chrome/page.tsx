@@ -115,7 +115,7 @@ const DEFAULT_NAV_ITEMS: TopNavItem[] = [
     links: DEFAULT_WHOM,
     mega: DEFAULT_WHOM_MEGA,
   },
-  { id: 'journal', label: 'Journal', type: 'link', href: '/blog' },
+  { id: 'journal', label: 'Blogs', type: 'link', href: '/blog' },
 ];
 
 function compactNavItems(items: TopNavItem[]): TopNavItem[] {
@@ -280,7 +280,7 @@ export default function GiftChromeAdminPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [shopLabel, setShopLabel] = useState('Shop');
   const [forWhomLabel, setForWhomLabel] = useState('For Whom');
-  const [journalLabel, setJournalLabel] = useState('Journal');
+  const [journalLabel, setJournalLabel] = useState('Blogs');
   const [journalHref, setJournalHref] = useState('/blog');
   const [navItems, setNavItems] = useState<TopNavItem[]>(DEFAULT_NAV_ITEMS);
   const [shopLinks, setShopLinks] = useState<NavLinkRow[]>([]);
@@ -336,7 +336,7 @@ export default function GiftChromeAdminPage() {
                 },
                 {
                   id: 'journal',
-                  label: c.journalLabel?.trim() || 'Journal',
+                  label: c.journalLabel?.trim() || 'Blogs',
                   type: 'link',
                   href: c.journalHref?.trim() || '/blog',
                 },
@@ -344,7 +344,7 @@ export default function GiftChromeAdminPage() {
         );
         setShopLabel(c.shopLabel?.trim() || 'Shop');
         setForWhomLabel(c.forWhomLabel?.trim() || 'For Whom');
-        setJournalLabel(c.journalLabel?.trim() || 'Journal');
+        setJournalLabel(c.journalLabel?.trim() || 'Blogs');
         setJournalHref(c.journalHref?.trim() || '/blog');
         setShopLinks(c.shopLinks?.length ? c.shopLinks : DEFAULT_SHOP);
         setWhomLinks(c.forWhomLinks?.length ? c.forWhomLinks : DEFAULT_WHOM);
@@ -404,7 +404,7 @@ export default function GiftChromeAdminPage() {
           navItems: compactNavItems(navItems),
           shopLabel: shopLabel.trim() || 'Shop',
           forWhomLabel: forWhomLabel.trim() || 'For Whom',
-          journalLabel: journalLabel.trim() || 'Journal',
+          journalLabel: journalLabel.trim() || 'Blogs',
           journalHref: journalHref.trim() || '/blog',
           shopLinks: compactNavLinks(shopLinks),
           forWhomLinks: compactNavLinks(whomLinks),

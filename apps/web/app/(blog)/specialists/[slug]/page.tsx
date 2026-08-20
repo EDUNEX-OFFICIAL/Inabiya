@@ -46,7 +46,7 @@ export default async function SpecialistPage({ params }: { params: { slug: strin
     <main className="blog-page blog-page--specialist">
       <article className="blog-specialist">
         <nav className="blog-specialist__crumb" aria-label="Breadcrumb">
-          <Link href={BLOG_PATH}>Journal</Link>
+          <Link href={BLOG_PATH}>Blogs</Link>
           <span className="blog-specialist__crumb-sep" aria-hidden>
             /
           </span>
@@ -128,12 +128,12 @@ export default async function SpecialistPage({ params }: { params: { slug: strin
         </section>
 
         <aside className="blog-specialist__cta">
-          <p className="blog-overline">More from the Journal</p>
+          <p className="blog-overline">More from Blogs</p>
           <p className="blog-specialist__cta-body">
             Parenting notes reviewed with care — sleep, newborn weeks, and gentle routines.
           </p>
           <Link href={BLOG_PATH} className="blog-btn">
-            Browse Journal
+            Browse Blogs
           </Link>
         </aside>
       </article>

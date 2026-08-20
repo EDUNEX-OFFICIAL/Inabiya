@@ -27,7 +27,7 @@ export default async function SpecialistsIndexPage() {
           <p className="blog-specialists__kicker">Specialists</p>
           <h1 className="blog-specialists__title">Meet our specialists</h1>
           <p className="blog-specialists__dek">
-            Clinicians and care experts who review Journal pieces for families.
+            Clinicians and care experts who review our blog for families.
           </p>
         </header>
 
@@ -73,7 +73,7 @@ export default async function SpecialistsIndexPage() {
         )}
 
         <p className="blog-specialists__back">
-          <Link href={BLOG_PATH}>← Parenting journal</Link>
+          <Link href={BLOG_PATH}>← Blogs</Link>
         </p>
       </div>
     </main>

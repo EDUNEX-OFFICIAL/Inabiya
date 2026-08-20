@@ -12,7 +12,7 @@ type Props = {
   className?: string;
 };
 
-/** Lucide glyph for public Journal chrome nav ids. */
+/** Lucide glyph for public Blogs chrome nav ids. */
 export function BlogNavIcon({ id, className }: Props) {
   const Icon = BLOG_NAV_ICONS[id];
   if (!Icon) return null;

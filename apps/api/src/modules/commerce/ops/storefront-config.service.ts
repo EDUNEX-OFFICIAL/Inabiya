@@ -54,6 +54,38 @@ function rewriteChromeHrefs<T>(value: T): T {
   return out as T;
 }
 
+/** Product rename: public label Journal → Blogs (keep nav id `journal` stable). */
+function renameJournalToBlogs(chrome: GiftChromeBody): GiftChromeBody {
+  const navItems = chrome.navItems?.map((item) => {
+    if (item.id !== 'journal') return item;
+    const label = item.label?.trim();
+    if (!label || label === 'Journal') return { ...item, label: 'Blogs' };
+    return item;
+  });
+  const journalLabel = chrome.journalLabel?.trim();
+  const footerColumns = chrome.footer?.columns?.map((col) => ({
+    ...col,
+    links: col.links?.map((link) => {
+      const label = link.label?.trim();
+      if (label === 'Journal' || label === 'Parenting Blog' || label === 'Parenting blog') {
+        return { ...link, label: 'Blogs' };
+      }
+      return link;
+    }),
+  }));
+  return {
+    ...chrome,
+    ...(navItems ? { navItems } : {}),
+    journalLabel: !journalLabel || journalLabel === 'Journal' ? 'Blogs' : journalLabel,
+    footer: chrome.footer
+      ? {
+          ...chrome.footer,
+          ...(footerColumns ? { columns: footerColumns } : {}),
+        }
+      : chrome.footer,
+  };
+}
+
 /** Old seed was BYB + hampers only (no groups). Treat as unset so CMS defaults apply. */
 function isLegacySlimShop(links: GiftChromeBody['shopLinks']): boolean {
   if (!links?.length) return true;
@@ -127,11 +159,11 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
         imageSrc: '/gift/nav/for-whom.svg',
       },
     },
-    { id: 'journal', label: 'Journal', type: 'link', href: '/blog' },
+    { id: 'journal', label: 'Blogs', type: 'link', href: '/blog' },
   ],
   shopLabel: 'Shop',
   forWhomLabel: 'For Whom',
-  journalLabel: 'Journal',
+  journalLabel: 'Blogs',
   journalHref: '/blog',
   shopLinks: [
     { href: '/build-your-box', label: 'Build Your Box', group: 'Shop' },
@@ -219,7 +251,7 @@ export const DEFAULT_GIFT_CHROME: Required<Pick<GiftChromeBody, 'shopLinks' | 'f
         links: [
           { label: 'About', href: '/about' },
           { label: 'Contact', href: '/contact' },
-          { label: 'Parenting Blog', href: '/blog' },
+          { label: 'Blogs', href: '/blog' },
           { label: 'Our Specialists', href: '/specialists' },
         ],
       },
@@ -242,7 +274,7 @@ export class StorefrontConfigService {
       row?.value && typeof row.value === 'object' && !Array.isArray(row.value)
         ? rewriteChromeHrefs(row.value as GiftChromeBody)
         : {};
-    return {
+    return renameJournalToBlogs({
       navItems: stored.navItems?.length ? stored.navItems : DEFAULT_GIFT_CHROME.navItems,
       shopLabel: stored.shopLabel?.trim() || DEFAULT_GIFT_CHROME.shopLabel,
       forWhomLabel: stored.forWhomLabel?.trim() || DEFAULT_GIFT_CHROME.forWhomLabel,
@@ -274,7 +306,7 @@ export class StorefrontConfigService {
         showNewsletter:
           stored.footer?.showNewsletter ?? DEFAULT_GIFT_CHROME.footer?.showNewsletter ?? true,
       },
-    };
+    });
   }
 
   async setGiftChrome(

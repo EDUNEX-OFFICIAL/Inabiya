@@ -69,7 +69,7 @@ export const EDITORIAL_NAV: EditorialNavItem[] = [
   },
   {
     id: 'journal',
-    label: 'Journal',
+    label: 'Blogs',
     href: '/blog',
     roles: [...EDITORIAL_ROLES],
     match: 'exact',
@@ -107,7 +107,7 @@ export function isEditorialNavActive(pathname: string, item: EditorialNavItem): 
   return pathname.startsWith(`${item.href}/`);
 }
 
-/** Mobile tab bar: Queue, Writer, Journal + More. `new` is a FAB, not a tab. */
+/** Mobile tab bar: Queue, Writer, Blogs + More. `new` is a FAB, not a tab. */
 export const EDITORIAL_BOTTOM_TAB_IDS = ['queue', 'writer', 'journal'] as const;
 export const EDITORIAL_BOTTOM_MORE_IDS = ['payments', 'categories', 'specialists'] as const;
 
@@ -147,7 +147,7 @@ export const ARTICLE_STATUS_LABEL: Record<string, string> = {
 
 export type EditorialQueueAction = 'edit' | 'preview' | 'live' | 'hide' | 'draft' | 'delete';
 
-/** Queue row actions. Hide = off Journal; Draft = writing pipeline; Delete = unpublished only. */
+/** Queue row actions. Hide = off Blogs; Draft = writing pipeline; Delete = unpublished only. */
 export function editorialQueueActions(status: string, isOps: boolean): EditorialQueueAction[] {
   const out: EditorialQueueAction[] = ['edit', 'preview'];
   if (status === 'PUBLISHED') out.push('live');

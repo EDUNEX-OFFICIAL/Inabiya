@@ -1,4 +1,4 @@
-/** Public journal (site + public API). Editorial desk stays `/admin/editorial/articles`. */
+/** Public blogs (site + public API). Editorial desk stays `/admin/editorial/articles`. */
 
 export const BLOG_PATH = '/blog';
 export const BLOG_API = '/blog';

@@ -208,7 +208,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
         siteOrigin: origin,
       }),
       breadcrumbJsonLd([
-        { name: 'Journal', url: `${origin}${BLOG_PATH}` },
+        { name: 'Blogs', url: `${origin}${BLOG_PATH}` },
         ...(article.category
           ? [
               {

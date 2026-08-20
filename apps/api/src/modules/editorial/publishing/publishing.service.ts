@@ -105,7 +105,7 @@ export class PublishingService {
     });
   }
 
-  /** Take off Journal. Stays APPROVED so ops can Publish again without re-running gates. */
+  /** Take off Blogs. Stays APPROVED so ops can Publish again without re-running gates. */
   async unpublish(articleId: string, actor: Actor, requestId?: string) {
     this.assertOps(actor);
     const article = await this.prisma.article.findUnique({ where: { id: articleId } });
@@ -127,7 +127,7 @@ export class PublishingService {
         statusHistory: {
           create: {
             status: ArticleStatus.APPROVED,
-            note: 'Hidden from Journal',
+            note: 'Hidden from Blogs',
             actorId: actor.id,
           },
         },
@@ -187,7 +187,7 @@ export class PublishingService {
     return rows.map((a) => this.mapPublicSummary(a));
   }
 
-  /** Typeahead for Journal search — published articles only. */
+  /** Typeahead for Blogs search — published articles only. */
   async searchPublic(q: string) {
     const text = q.trim();
     if (text.length < 2) return [];

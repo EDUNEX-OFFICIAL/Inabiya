@@ -105,7 +105,7 @@ const DEFAULT_NAV_ITEMS: GiftTopNavItem[] = [
     links: DEFAULT_FOR_WHOM_LINKS,
     mega: DEFAULT_WHOM_MEGA,
   },
-  { id: 'journal', label: 'Journal', type: 'link', href: '/blog' },
+  { id: 'journal', label: 'Blogs', type: 'link', href: '/blog' },
 ];
 
 type MegaKey = string | null;

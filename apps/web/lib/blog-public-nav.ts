@@ -1,4 +1,4 @@
-/** Public Journal chrome — Blog Creative theme only. */
+/** Public Blogs chrome — Blog Creative theme only. */
 
 export type BlogPublicNavItem = {
   id: string;
@@ -10,7 +10,7 @@ export type BlogPublicNavItem = {
 };
 
 export const BLOG_PUBLIC_NAV: BlogPublicNavItem[] = [
-  { id: 'journal', label: 'Journal', href: '/blog', match: 'exact' },
+  { id: 'journal', label: 'Blogs', href: '/blog', match: 'exact' },
   { id: 'specialists', label: 'Specialists', href: '/specialists', match: 'prefix' },
   { id: 'shop', label: 'Gift Store', href: '/', match: 'prefix', cta: true },
 ];

@@ -1682,8 +1682,8 @@ async function main() {
       type: 'articleTeasers',
       sortOrder: 19,
       props: {
-        overline: 'Journal',
-        title: 'From the parenting journal',
+        overline: 'Blogs',
+        title: 'From the parenting blogs',
         subtitle: 'Warm, honest reads from real parents & pediatric experts.',
         limit: 3,
         seeAllHref: '/blog',
@@ -1773,7 +1773,7 @@ async function main() {
   const giftChromeValue = {
     shopLabel: 'Shop',
     forWhomLabel: 'For Whom',
-    journalLabel: 'Journal',
+    journalLabel: 'Blogs',
     journalHref: '/blog',
     shopLinks: [
       { href: '/build-your-box', label: 'Build Your Box', group: 'Shop' },
@@ -1852,7 +1852,7 @@ async function main() {
           links: [
             { label: 'About', href: '/about' },
             { label: 'Contact', href: '/contact' },
-            { label: 'Parenting Blog', href: '/blog' },
+            { label: 'Blogs', href: '/blog' },
             { label: 'Our Specialists', href: '/specialists' },
           ],
         },

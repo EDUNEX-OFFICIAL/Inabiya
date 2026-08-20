@@ -657,7 +657,7 @@ export class ArticlesService {
         statusHistory: {
           create: {
             status: ArticleStatus.DRAFT,
-            note: wasPublic ? 'Returned to draft (hidden from Journal)' : 'Returned to draft',
+            note: wasPublic ? 'Returned to draft (hidden from Blogs)' : 'Returned to draft',
             actorId: actor.id,
           },
         },
@@ -683,7 +683,7 @@ export class ArticlesService {
     if (article.status === ArticleStatus.PUBLISHED || article.status === ArticleStatus.SCHEDULED) {
       throw new BadRequestException({
         code: 'PUBLISHED_LOCKED',
-        message: 'Hide the article from Journal before deleting.',
+        message: 'Hide the article from Blogs before deleting.',
       });
     }
     const payment = await this.prisma.writerPayment.findUnique({ where: { articleId: id } });

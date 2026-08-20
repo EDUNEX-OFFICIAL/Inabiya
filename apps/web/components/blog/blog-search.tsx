@@ -168,7 +168,7 @@ export function BlogSearch({
       >
         <Search className="h-4 w-4 shrink-0 opacity-60" aria-hidden />
         <label htmlFor={inputId} className="sr-only">
-          Search journal
+          Search blogs
         </label>
         <input
           ref={inputRef}
@@ -184,7 +184,7 @@ export function BlogSearch({
             onExpand?.();
             setOpenList(true);
           }}
-          placeholder="Search journal…"
+          placeholder="Search blogs…"
           className="min-w-0 flex-1 bg-transparent py-gs-2 text-body outline-none [&::-webkit-search-cancel-button]:hidden"
           autoComplete="off"
           enterKeyHint="search"
@@ -206,7 +206,7 @@ export function BlogSearch({
         <div
           className="absolute left-0 right-0 z-40 mt-gs-2 w-full overflow-hidden rounded-control border border-border-subtle bg-white p-gs-2 shadow-clay"
           role="listbox"
-          aria-label="Journal search suggestions"
+          aria-label="Blogs search suggestions"
         >
           {busy ? <p className="blog-muted px-gs-2 py-gs-2">Searching…</p> : null}
           {error ? <p className="px-gs-2 py-gs-2 text-body text-danger">{error}</p> : null}

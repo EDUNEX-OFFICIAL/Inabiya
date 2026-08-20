@@ -79,7 +79,7 @@ export function BlogMenuDrawer({ open, onClose, pathname }: Props) {
             <div>
               <p className="blog-drawer__overline">Inabiya</p>
               <p id={titleId} className="blog-drawer__title font-display">
-                Journal
+                Blogs
               </p>
             </div>
             <button
@@ -93,7 +93,7 @@ export function BlogMenuDrawer({ open, onClose, pathname }: Props) {
           </div>
 
           <div className="blog-drawer__body">
-            <nav aria-label="Journal">
+            <nav aria-label="Blogs">
               <ul className="blog-drawer__list">
                 {navLinks.map((item) => {
                   const active = isBlogNavActive(pathname, item);

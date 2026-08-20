@@ -80,7 +80,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
         siteOrigin: origin,
       }),
       breadcrumbJsonLd([
-        { name: 'Journal', url: `${origin}${BLOG_PATH}` },
+        { name: 'Blogs', url: `${origin}${BLOG_PATH}` },
         ...(article.category
           ? [
               {
@@ -104,7 +104,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       <article className="blog-article">
         <header className="blog-article__header">
           <nav className="blog-article__crumb" aria-label="Breadcrumb">
-            <Link href={BLOG_PATH}>Journal</Link>
+            <Link href={BLOG_PATH}>Blogs</Link>
             {article.category ? (
               <>
                 <span className="blog-article__crumb-sep" aria-hidden>

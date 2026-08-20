@@ -988,7 +988,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
     if (props.showEmptyPlaceholder === true) {
       const body = (
         <p className="clay-panel px-gs-4 py-gs-6 text-center text-body opacity-70">
-          Journal stories are on the way — check back soon.
+          Blog stories are on the way — check back soon.
         </p>
       );
       if (home) {
@@ -1012,8 +1012,15 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
   const body = (
     <>
       <GiftSectionHeader
-        overline={props.overline ? String(props.overline) : home ? 'Journal' : null}
-        title={String(props.title ?? 'From the parenting journal')}
+        overline={(() => {
+          const raw = props.overline ? String(props.overline) : home ? 'Blogs' : null;
+          return raw === 'Journal' ? 'Blogs' : raw;
+        })()}
+        title={String(
+          props.title === 'From the parenting journal'
+            ? 'From the parenting blogs'
+            : (props.title ?? 'From the parenting blogs'),
+        )}
         subtitle={
           props.subtitle
             ? String(props.subtitle)
@@ -1064,7 +1071,7 @@ function ArticleTeasersBlock({ props, home }: { props: Record<string, unknown>; 
                   )
                 ) : (
                   <div className="gift-media-fallback absolute inset-0 flex items-end p-gs-5">
-                    <p className="gift-display text-primary/35">Journal</p>
+                    <p className="gift-display text-primary/35">Blogs</p>
                   </div>
                 )}
               </div>

@@ -96,7 +96,7 @@ export function BlogEditorialVisual() {
       <AuthBrandLockup surface="dark" placement="visual" />
       <div className="auth-visual__copy">
         <p className="auth-visual__kicker">Blog Creative</p>
-        <p className="auth-visual__headline">Journal desk for writers & reviewers</p>
+        <p className="auth-visual__headline">Blogs desk for writers & reviewers</p>
         <ul className="auth-visual__chips">
           <li>Drafts</li>
           <li>SEO</li>

@@ -234,7 +234,7 @@ export function EditorialOpsShell({ children }: Props) {
                   onClick={() => setAccountOpen(false)}
                 >
                   <Newspaper className="h-4 w-4 shrink-0" aria-hidden />
-                  Journal
+                  Blogs
                 </Link>
                 <button
                   type="button"

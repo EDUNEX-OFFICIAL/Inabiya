@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 20, 2026 (Fix blog slug API 404)
+Last Updated: August 20, 2026 (Rename Journal → Blogs)
 ---
 
 ## 1. Why this file exists
@@ -1315,6 +1315,11 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-20 (Rename Journal → Blogs)
+
+- Public/editorial UI copy: Journal → **Blogs** (nav, footer, search, breadcrumbs, Soft Gift chrome defaults). URLs stay `/blog`; nav id `journal` kept.
+- Soft Gift chrome read remaps stored `Journal` label → `Blogs`; CMS article teaser overline/title legacy remap.
 
 ### Session — 2026-08-20 (Fix blog slug API 404)
 

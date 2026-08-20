@@ -71,7 +71,7 @@ export default async function BlogIndexPage({
               <div className="blog-home-hero__bottom">
                 <div className="blog-home-hero__left">
                   <div className="blog-home-hero__meta">
-                    <span className="blog-overline">Journal</span>
+                    <span className="blog-overline">Blogs</span>
                     <span className="blog-home-hero__latest">Latest</span>
                   </div>
                   {featured.category?.name ? (
@@ -103,17 +103,17 @@ export default async function BlogIndexPage({
       ) : (
         <section className="blog-band">
           <div className="blog-band-inner">
-            <p className="blog-overline">Journal</p>
-            <h1 className="blog-h1 mt-gs-3">Parenting journal</h1>
+            <p className="blog-overline">Blogs</p>
+            <h1 className="blog-h1 mt-gs-3">Parenting blogs</h1>
           </div>
         </section>
       )}
 
       <section className="blog-page !pt-gs-5">
         <h2 className="blog-h2 sm:text-3xl">
-          {searchQuery ? `Results for “${searchQuery}”` : 'Blog'}
+          {searchQuery ? `Results for “${searchQuery}”` : 'Blogs'}
         </h2>
-        <div className="blog-browse-row mt-gs-4" aria-label="Browse journal">
+        <div className="blog-browse-row mt-gs-4" aria-label="Browse blogs">
           <BlogSearch
             defaultQuery={searchQuery}
             defaultExpanded

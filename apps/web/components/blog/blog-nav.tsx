@@ -35,12 +35,12 @@ export function BlogNav() {
           href="/blog"
           size="md"
           className="relative z-10 max-w-[min(100%,11.5rem)] sm:max-w-none"
-          label="Inabiya Journal"
+          label="Inabiya Blogs"
         />
 
         <nav
           className="flex min-w-0 flex-1 items-center justify-end gap-gs-2 text-body"
-          aria-label="Journal"
+          aria-label="Blogs"
         >
           <div className="hidden items-center gap-gs-2 lg:flex">
             {BLOG_PUBLIC_NAV.filter((item) => !item.cta).map((item) => {

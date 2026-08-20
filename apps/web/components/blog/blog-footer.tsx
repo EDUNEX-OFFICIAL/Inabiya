@@ -19,14 +19,14 @@ export function BlogFooter() {
             kind="mark"
             href="/blog"
             size="sm"
-            label="Inabiya Journal"
+            label="Inabiya Blogs"
             className="blog-footer__logo"
           />
           <p className="blog-footer__tagline">Parenting notes from Inabiya.</p>
         </div>
 
         <div className="blog-footer__cols">
-          <nav className="blog-footer__explore" aria-label="Journal">
+          <nav className="blog-footer__explore" aria-label="Blogs">
             <p className="blog-footer__label">Explore</p>
             <ul className="blog-footer__list">
               {EXPLORE.map((item) => (
@@ -58,7 +58,7 @@ export function BlogFooter() {
 
       <div className="blog-footer__bar">
         <div className="blog-shell-width blog-footer__bar-inner">
-          <p className="blog-footer__copy">© {year} Inabiya Journal</p>
+          <p className="blog-footer__copy">© {year} Inabiya Blogs</p>
           <p className="blog-footer__credit">
             <span>{FOOTER_DEVELOPER_CREDIT.prefix}</span>
             <Heart className="blog-footer__heart" strokeWidth={2} aria-hidden />
