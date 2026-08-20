@@ -159,7 +159,10 @@ export function EditorialSelect({
       : null;
 
   return (
-    <div ref={rootRef} className={`editorial-select editorial-select--${variant} ${className}`.trim()}>
+    <div
+      ref={rootRef}
+      className={`editorial-select editorial-select--${variant} ${className}`.trim()}
+    >
       <button
         ref={triggerRef}
         type="button"

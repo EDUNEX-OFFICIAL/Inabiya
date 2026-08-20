@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { ArticleStatus } from '@prisma/client';
-import { allowedArticleTransitions, canEditArticleBody, publishBlockReason } from './editorial-transitions';
+import {
+  allowedArticleTransitions,
+  canEditArticleBody,
+  publishBlockReason,
+} from './editorial-transitions';
 
 const writer = { id: 'w1', roles: ['WRITER'] };
 const seo = { id: 's1', roles: ['SEO_EDITOR'] };

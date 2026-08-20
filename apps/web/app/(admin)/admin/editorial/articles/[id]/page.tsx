@@ -3,21 +3,17 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Calendar,
-  ExternalLink,
-  Eye,
-  MessageSquare,
-  Save,
-  UserRound,
-} from 'lucide-react';
+import { Calendar, ExternalLink, Eye, MessageSquare, Save, UserRound } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { apiUrl } from '@/lib/api-base';
 import { ArticleEditor } from '@/components/editorial/article-editor';
 import { CmsMediaField } from '@/components/cms/cms-media-field';
 import { ProductSeoSchemaField } from '@/components/admin/product-seo-schema-field';
 import { EditorialStatusRail } from '@/components/editorial/editorial-status-rail';
-import { EditorialSelect, type EditorialSelectOption } from '@/components/editorial/editorial-select';
+import {
+  EditorialSelect,
+  type EditorialSelectOption,
+} from '@/components/editorial/editorial-select';
 import { EditorialTagField, type EditorialTag } from '@/components/editorial/editorial-tag-field';
 import { sanitizeArticleHtml, normalizeArticleBody } from '@/lib/article-html';
 import { getSiteOrigin } from '@/lib/cms-seo';
@@ -135,7 +131,9 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
     const [cats, specs, tagRows] = await Promise.all([
       fetch(apiUrl(`${BLOG_API}/categories`)).then((r) => r.json() as Promise<Category[]>),
       fetch(apiUrl(`${BLOG_API}/specialists`)).then((r) => r.json() as Promise<Specialist[]>),
-      fetch(apiUrl(`${BLOG_API}/tags`)).then((r) => r.json() as Promise<EditorialTag[]>).catch(() => []),
+      fetch(apiUrl(`${BLOG_API}/tags`))
+        .then((r) => r.json() as Promise<EditorialTag[]>)
+        .catch(() => []),
     ]);
     setCategories(cats);
     setSpecialists(specs);
@@ -167,11 +165,17 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   }, [article?.canEditBody, dirty, title, body, tags, isContent, params.id, article]);
 
   const categoryOptions = useMemo<EditorialSelectOption[]>(
-    () => [{ value: '', label: 'None' }, ...categories.map((c) => ({ value: c.slug, label: c.name }))],
+    () => [
+      { value: '', label: 'None' },
+      ...categories.map((c) => ({ value: c.slug, label: c.name })),
+    ],
     [categories],
   );
   const specialistOptions = useMemo<EditorialSelectOption[]>(
-    () => [{ value: '', label: 'None' }, ...specialists.map((s) => ({ value: s.slug, label: s.name }))],
+    () => [
+      { value: '', label: 'None' },
+      ...specialists.map((s) => ({ value: s.slug, label: s.name })),
+    ],
     [specialists],
   );
 
@@ -354,7 +358,9 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   return (
     <main className="blog-page editorial-article">
       {msg ? (
-        <p className={`blog-banner mt-0 text-sm ${msgOk ? 'blog-banner--success' : 'blog-banner--danger'}`}>
+        <p
+          className={`blog-banner mt-0 text-sm ${msgOk ? 'blog-banner--success' : 'blog-banner--danger'}`}
+        >
           {msg}
         </p>
       ) : null}
@@ -367,7 +373,11 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
           {canSave ? (
             <>
               <span className="editorial-article__save-meta">
-                {dirty ? 'Unsaved' : lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString()}` : null}
+                {dirty
+                  ? 'Unsaved'
+                  : lastSavedAt
+                    ? `Saved ${lastSavedAt.toLocaleTimeString()}`
+                    : null}
               </span>
               <button
                 type="button"
@@ -380,7 +390,10 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
               </button>
             </>
           ) : null}
-          <Link href={`/admin/editorial/articles/${params.id}/preview`} className="editorial-article__link">
+          <Link
+            href={`/admin/editorial/articles/${params.id}/preview`}
+            className="editorial-article__link"
+          >
             <Eye className="h-4 w-4" aria-hidden />
             Preview
           </Link>
@@ -411,7 +424,9 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
           {article.medicalGateRequired ? <span>Medical gate</span> : null}
           <span>
             <UserRound aria-hidden />
-            {article.assignee ? (article.assignee.displayName ?? article.assignee.email) : 'Unassigned'}
+            {article.assignee
+              ? (article.assignee.displayName ?? article.assignee.email)
+              : 'Unassigned'}
           </span>
           {article.dueAt ? (
             <span>
@@ -434,7 +449,9 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
               <h2 className="editorial-article__section">Body</h2>
             </div>
             {!article.canEditBody ? (
-              <p className="blog-banner blog-banner--info mb-gs-3 px-gs-3 py-gs-2 text-xs">Read-only</p>
+              <p className="blog-banner blog-banner--info mb-gs-3 px-gs-3 py-gs-2 text-xs">
+                Read-only
+              </p>
             ) : null}
             <ArticleEditor
               key={`${article.id}-${editorKey}`}
@@ -549,7 +566,12 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
               >
                 Comments
               </ActivityTabBtn>
-              <ActivityTabBtn id="revisions" current={activity} count={revisions.length} onSelect={setActivity}>
+              <ActivityTabBtn
+                id="revisions"
+                current={activity}
+                count={revisions.length}
+                onSelect={setActivity}
+              >
                 Revisions
               </ActivityTabBtn>
               <ActivityTabBtn
@@ -646,87 +668,91 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
           </section>
         </div>
 
-        {(article.allowedTransitions.length > 0 || (showPublish && isContent)) ? (
-        <aside className="editorial-article__side">
-          {article.allowedTransitions.length > 0 ? (
-            <section className="editorial-panel editorial-article__card">
-              <h2 className="editorial-article__section">Move to</h2>
-              <div className="editorial-article__stack">
-                {article.allowedTransitions.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className="blog-btn-secondary"
-                    onClick={() => void transition(s)}
-                  >
-                    {ARTICLE_STATUS_LABEL[s] ?? s}
-                  </button>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          {showPublish && isContent ? (
-            <section className="editorial-panel editorial-article__card">
-              <h2 className="editorial-article__section">
-                {article.status === 'PUBLISHED' ? 'Cover' : 'Publish'}
-              </h2>
-              <div className="editorial-field">
-                <span className="editorial-field__label">Cover</span>
-                <CmsMediaField
-                  value={ogImageUrl}
-                  onChange={(v) => {
-                    setOgImageUrl(v);
-                    setDirty(true);
-                  }}
-                />
-              </div>
-              <div className="editorial-field">
-                <span className="editorial-field__label">Category</span>
-                <EditorialSelect
-                  ariaLabel="Category"
-                  value={categorySlug}
-                  onChange={(v) => {
-                    setCategorySlug(v);
-                    setDirty(true);
-                  }}
-                  options={categoryOptions}
-                />
-              </div>
-              <div className="editorial-field">
-                <span className="editorial-field__label">Specialist</span>
-                <EditorialSelect
-                  ariaLabel="Specialist"
-                  value={specialistSlug}
-                  onChange={(v) => {
-                    setSpecialistSlug(v);
-                    setDirty(true);
-                  }}
-                  options={specialistOptions}
-                />
-              </div>
-              {article.status !== 'PUBLISHED' ? (
+        {article.allowedTransitions.length > 0 || (showPublish && isContent) ? (
+          <aside className="editorial-article__side">
+            {article.allowedTransitions.length > 0 ? (
+              <section className="editorial-panel editorial-article__card">
+                <h2 className="editorial-article__section">Move to</h2>
                 <div className="editorial-article__stack">
-                  <button type="button" className="blog-btn" onClick={() => void publishNow()}>
-                    Publish
-                  </button>
-                  <div className="editorial-field">
-                    <span className="editorial-field__label">Schedule</span>
-                    <input
-                      type="datetime-local"
-                      className="blog-input"
-                      value={scheduledAt}
-                      onChange={(e) => setScheduledAt(e.target.value)}
-                    />
-                  </div>
-                  <button type="button" className="blog-btn-secondary" onClick={() => void schedule()}>
-                    Schedule
-                  </button>
+                  {article.allowedTransitions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className="blog-btn-secondary"
+                      onClick={() => void transition(s)}
+                    >
+                      {ARTICLE_STATUS_LABEL[s] ?? s}
+                    </button>
+                  ))}
                 </div>
-              ) : null}
-            </section>
-          ) : null}
-        </aside>
+              </section>
+            ) : null}
+
+            {showPublish && isContent ? (
+              <section className="editorial-panel editorial-article__card">
+                <h2 className="editorial-article__section">
+                  {article.status === 'PUBLISHED' ? 'Cover' : 'Publish'}
+                </h2>
+                <div className="editorial-field">
+                  <span className="editorial-field__label">Cover</span>
+                  <CmsMediaField
+                    value={ogImageUrl}
+                    onChange={(v) => {
+                      setOgImageUrl(v);
+                      setDirty(true);
+                    }}
+                  />
+                </div>
+                <div className="editorial-field">
+                  <span className="editorial-field__label">Category</span>
+                  <EditorialSelect
+                    ariaLabel="Category"
+                    value={categorySlug}
+                    onChange={(v) => {
+                      setCategorySlug(v);
+                      setDirty(true);
+                    }}
+                    options={categoryOptions}
+                  />
+                </div>
+                <div className="editorial-field">
+                  <span className="editorial-field__label">Specialist</span>
+                  <EditorialSelect
+                    ariaLabel="Specialist"
+                    value={specialistSlug}
+                    onChange={(v) => {
+                      setSpecialistSlug(v);
+                      setDirty(true);
+                    }}
+                    options={specialistOptions}
+                  />
+                </div>
+                {article.status !== 'PUBLISHED' ? (
+                  <div className="editorial-article__stack">
+                    <button type="button" className="blog-btn" onClick={() => void publishNow()}>
+                      Publish
+                    </button>
+                    <div className="editorial-field">
+                      <span className="editorial-field__label">Schedule</span>
+                      <input
+                        type="datetime-local"
+                        className="blog-input"
+                        value={scheduledAt}
+                        onChange={(e) => setScheduledAt(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="blog-btn-secondary"
+                      onClick={() => void schedule()}
+                    >
+                      Schedule
+                    </button>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+          </aside>
         ) : null}
       </div>
     </main>

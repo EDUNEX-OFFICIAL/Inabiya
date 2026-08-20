@@ -133,7 +133,10 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           <ul className="mt-gs-6 flex flex-wrap gap-gs-2 text-sm">
             {article.tags.map((t) => (
               <li key={t.slug}>
-                <Link href={blogIndexPath({ tag: t.slug })} className="blog-chip hover:text-primary">
+                <Link
+                  href={blogIndexPath({ tag: t.slug })}
+                  className="blog-chip hover:text-primary"
+                >
                   {t.name}
                 </Link>
               </li>

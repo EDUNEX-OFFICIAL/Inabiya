@@ -636,7 +636,10 @@ export class ArticlesService {
           where: { slug: body.categorySlug },
         });
         if (!c) {
-          throw new BadRequestException({ code: 'CATEGORY_NOT_FOUND', message: 'Category missing.' });
+          throw new BadRequestException({
+            code: 'CATEGORY_NOT_FOUND',
+            message: 'Category missing.',
+          });
         }
         categoryId = c.id;
       }

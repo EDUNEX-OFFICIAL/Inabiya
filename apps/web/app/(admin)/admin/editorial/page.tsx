@@ -25,7 +25,10 @@ import {
   type EditorialQueueAction,
 } from '@/lib/editorial-nav';
 import { EditorialEmpty } from '@/components/editorial/editorial-ui';
-import { EditorialSelect, type EditorialSelectOption } from '@/components/editorial/editorial-select';
+import {
+  EditorialSelect,
+  type EditorialSelectOption,
+} from '@/components/editorial/editorial-select';
 import { EditorialStatusRail } from '@/components/editorial/editorial-status-rail';
 
 type ArticleRow = {
@@ -112,7 +115,9 @@ export default function EditorialAdminPage() {
         if (
           u.roles.includes('FINANCE') &&
           !u.roles.some((r) =>
-            ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'SUPER_ADMIN'].includes(r),
+            ['CONTENT_ADMIN', 'WRITER', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'SUPER_ADMIN'].includes(
+              r,
+            ),
           )
         ) {
           router.replace('/admin/editorial/payments');
@@ -132,7 +137,10 @@ export default function EditorialAdminPage() {
   const published = stats?.byStatus.find((s) => s.status === 'PUBLISHED')?.count ?? 0;
   const avg = stats?.avgHoursToApprove;
 
-  async function runAction(id: string, action: Exclude<EditorialQueueAction, 'edit' | 'preview' | 'live'>) {
+  async function runAction(
+    id: string,
+    action: Exclude<EditorialQueueAction, 'edit' | 'preview' | 'live'>,
+  ) {
     if (busyId) return;
     if (action === 'delete' && confirmDeleteId !== id) {
       setConfirmDeleteId(id);
@@ -224,7 +232,10 @@ export default function EditorialAdminPage() {
                 <div className="editorial-queue-card__main">
                   <div className="editorial-queue-card__head">
                     <div className="editorial-queue-card__id">
-                      <Link href={`/admin/editorial/articles/${a.id}`} className="editorial-queue-card__title">
+                      <Link
+                        href={`/admin/editorial/articles/${a.id}`}
+                        className="editorial-queue-card__title"
+                      >
                         {a.title}
                       </Link>
                       <p className="editorial-queue-card__slug">/blog/{a.slug}</p>
@@ -359,7 +370,13 @@ function QueueAction({
     );
   }
   const label =
-    action === 'hide' ? 'Hide' : action === 'draft' ? 'Draft' : confirmDelete ? 'Delete?' : 'Delete';
+    action === 'hide'
+      ? 'Hide'
+      : action === 'draft'
+        ? 'Draft'
+        : confirmDelete
+          ? 'Delete?'
+          : 'Delete';
   const Icon = action === 'delete' ? Trash2 : action === 'hide' ? EyeOff : PenLine;
   return (
     <button type="button" className={cls} disabled={busy} onClick={onRun}>

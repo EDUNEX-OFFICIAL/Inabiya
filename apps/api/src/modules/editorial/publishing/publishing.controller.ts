@@ -94,11 +94,7 @@ export class PublishingAdminController {
   }
 
   @Post('articles/:id/unpublish')
-  unpublish(
-    @CurrentUser() user: OpsUser,
-    @Param('id') id: string,
-    @Req() req: AuthedRequest,
-  ) {
+  unpublish(@CurrentUser() user: OpsUser, @Param('id') id: string, @Req() req: AuthedRequest) {
     return this.publishing.unpublish(id, user, String(req.id ?? ''));
   }
 

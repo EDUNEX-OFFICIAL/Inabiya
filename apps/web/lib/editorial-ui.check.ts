@@ -29,10 +29,7 @@ assert.equal(
 assert.equal(editorialRoleLabel(['CONTENT_ADMIN']), 'Content admin');
 assert.equal(editorialRoleLabel(['FINANCE', 'WRITER']), 'Writer');
 
-const queuePage = readFileSync(
-  join(__dirname, '../app/(admin)/admin/editorial/page.tsx'),
-  'utf8',
-);
+const queuePage = readFileSync(join(__dirname, '../app/(admin)/admin/editorial/page.tsx'), 'utf8');
 assert.match(queuePage, /EditorialSelect/);
 assert.doesNotMatch(queuePage, /<select[\s>]/);
 assert.doesNotMatch(queuePage, /value: 'OVERDUE'/);

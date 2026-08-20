@@ -22,7 +22,8 @@ export function EditorialStatusRail({
       aria-label="Workflow"
     >
       {steps.map((s, i) => {
-        const kind = idx < 0 ? 'is-todo' : i < idx ? 'is-done' : i === idx ? 'is-current' : 'is-todo';
+        const kind =
+          idx < 0 ? 'is-todo' : i < idx ? 'is-done' : i === idx ? 'is-current' : 'is-todo';
         return (
           <li key={s} className={kind}>
             {ARTICLE_STATUS_LABEL[s] ?? s}

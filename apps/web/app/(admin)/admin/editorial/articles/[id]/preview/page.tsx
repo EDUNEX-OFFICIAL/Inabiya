@@ -27,7 +27,10 @@ export default function ArticlePreviewPage({ params }: { params: { id: string } 
 
   return (
     <main className="blog-page max-w-3xl">
-      <Link href={`/admin/editorial/articles/${params.id}`} className="text-sm text-primary hover:underline">
+      <Link
+        href={`/admin/editorial/articles/${params.id}`}
+        className="text-sm text-primary hover:underline"
+      >
         ← Editor
       </Link>
       <p className="blog-overline mt-gs-4">Internal preview</p>

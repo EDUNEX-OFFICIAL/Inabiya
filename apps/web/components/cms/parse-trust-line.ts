@@ -63,9 +63,7 @@ export function parseTrustLine(trustLine?: string): string[] {
 }
 
 export function serializeTrustLine(chips: string[]): string {
-  return serializeTrustChips(
-    chips.map((label, i) => ({ icon: trustIconKind(label, i), label })),
-  );
+  return serializeTrustChips(chips.map((label, i) => ({ icon: trustIconKind(label, i), label })));
 }
 
 export function defaultHeroTrustLine(): string {

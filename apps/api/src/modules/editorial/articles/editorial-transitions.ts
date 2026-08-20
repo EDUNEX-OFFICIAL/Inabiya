@@ -28,7 +28,8 @@ export function allowedArticleTransitions(
   actor: TransitionActor,
   assigneeId?: string | null,
 ): ArticleStatus[] {
-  const isWriter = isOps(actor.roles) || (actor.roles.includes('WRITER') && assigneeId === actor.id);
+  const isWriter =
+    isOps(actor.roles) || (actor.roles.includes('WRITER') && assigneeId === actor.id);
   const isSeo = actor.roles.includes('SEO_EDITOR') || isOps(actor.roles);
   const isMed = actor.roles.includes('MEDICAL_REVIEWER');
 

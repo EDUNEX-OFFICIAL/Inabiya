@@ -1,7 +1,11 @@
 'use client';
 
 import { CmsMediaField } from '@/components/cms/cms-media-field';
-import { parseTrustChipDrafts, serializeTrustChips, TRUST_ICON_KINDS } from '@/components/cms/parse-trust-line';
+import {
+  parseTrustChipDrafts,
+  serializeTrustChips,
+  TRUST_ICON_KINDS,
+} from '@/components/cms/parse-trust-line';
 import {
   INSPECTOR_INPUT,
   INSPECTOR_TEXTAREA_SHORT,
@@ -753,7 +757,9 @@ export function TrustChipsEditor({
             <input
               className={INSPECTOR_INPUT}
               value={row.label}
-              onChange={(e) => set(rows.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))}
+              onChange={(e) =>
+                set(rows.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))
+              }
             />
           </div>
         </RepeatableRow>

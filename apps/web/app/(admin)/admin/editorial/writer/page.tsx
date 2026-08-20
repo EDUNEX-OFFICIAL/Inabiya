@@ -38,7 +38,9 @@ export default function WriterDashboardPage() {
           <li key={a.id}>
             <Link href={`/admin/editorial/articles/${a.id}`} className="editorial-row text-sm">
               <p className="font-display text-lg leading-snug">{a.title}</p>
-              <p className="mt-gs-1 text-xs opacity-60">{ARTICLE_STATUS_LABEL[a.status] ?? a.status}</p>
+              <p className="mt-gs-1 text-xs opacity-60">
+                {ARTICLE_STATUS_LABEL[a.status] ?? a.status}
+              </p>
             </Link>
           </li>
         ))}

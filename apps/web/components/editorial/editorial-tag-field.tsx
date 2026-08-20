@@ -28,7 +28,10 @@ export function EditorialTagField({ value, catalog, onChange, disabled }: Props)
   const suggestions = useMemo(() => {
     const q = draft.trim().toLowerCase();
     return catalog
-      .filter((t) => !selected.has(t.slug) && (!q || t.name.toLowerCase().includes(q) || t.slug.includes(q)))
+      .filter(
+        (t) =>
+          !selected.has(t.slug) && (!q || t.name.toLowerCase().includes(q) || t.slug.includes(q)),
+      )
       .slice(0, 8);
   }, [catalog, draft, selected]);
 
@@ -90,7 +93,11 @@ export function EditorialTagField({ value, catalog, onChange, disabled }: Props)
         <ul className="editorial-tag-field__suggest">
           {suggestions.map((t) => (
             <li key={t.slug}>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => add(t.name)}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => add(t.name)}
+              >
                 {t.name}
               </button>
             </li>

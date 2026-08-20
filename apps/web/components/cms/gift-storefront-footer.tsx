@@ -251,11 +251,7 @@ export function GiftStorefrontFooter(props: GiftFooterProps = {}) {
               <span className="sr-only">love</span>
               <span>
                 {FOOTER_DEVELOPER_CREDIT.mid}{' '}
-                <a
-                  href={FOOTER_DEVELOPER_CREDIT.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={FOOTER_DEVELOPER_CREDIT.href} target="_blank" rel="noopener noreferrer">
                   {FOOTER_DEVELOPER_CREDIT.label}
                 </a>
               </span>

@@ -145,7 +145,11 @@ export default function EditorialSpecialistsPage() {
           </label>
           <label className="block text-sm">
             Title
-            <input className="blog-input" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <input
+              className="blog-input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
           </label>
           <label className="block text-sm">
             Credentials
@@ -157,7 +161,11 @@ export default function EditorialSpecialistsPage() {
           </label>
           <label className="editorial-span block text-sm">
             Bio
-            <textarea className="blog-input min-h-[80px]" value={bio} onChange={(e) => setBio(e.target.value)} />
+            <textarea
+              className="blog-input min-h-[80px]"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+            />
           </label>
         </div>
         <EditorialIconButton

@@ -254,12 +254,7 @@ export function EditorialOpsShell({ children }: Props) {
       <div className="flex-1">{children}</div>
 
       {fab ? (
-        <Link
-          href={fab.href}
-          className="editorial-fab"
-          aria-label={fab.label}
-          title={fab.label}
-        >
+        <Link href={fab.href} className="editorial-fab" aria-label={fab.label} title={fab.label}>
           <Plus className="h-6 w-6" strokeWidth={2} aria-hidden />
         </Link>
       ) : null}

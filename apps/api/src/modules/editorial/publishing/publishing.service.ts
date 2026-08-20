@@ -258,12 +258,7 @@ export class PublishingService {
     }
   }
 
-  async updateSpecialist(
-    id: string,
-    actor: Actor,
-    body: UpdateSpecialistBody,
-    requestId?: string,
-  ) {
+  async updateSpecialist(id: string, actor: Actor, body: UpdateSpecialistBody, requestId?: string) {
     this.assertOps(actor);
     const existing = await this.prisma.specialistProfile.findUnique({ where: { id } });
     if (!existing) {
@@ -514,7 +509,10 @@ export class PublishingService {
     return d;
   }
 
-  private throwIfSlugTaken(e: unknown, code: 'CATEGORY_SLUG_TAKEN' | 'SPECIALIST_SLUG_TAKEN'): void {
+  private throwIfSlugTaken(
+    e: unknown,
+    code: 'CATEGORY_SLUG_TAKEN' | 'SPECIALIST_SLUG_TAKEN',
+  ): void {
     if (typeof e === 'object' && e && 'code' in e && (e as { code: string }).code === 'P2002') {
       throw new ConflictException({
         code,
