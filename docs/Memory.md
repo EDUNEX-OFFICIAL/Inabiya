@@ -1316,6 +1316,12 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-08-20 (Push Journal expand + CI green)
+
+- Pushed `daa707d` (articles + Journal chrome) then `ef5c7ca` (prettier HTML). First run failed format check; second run verify+deploy **success**.
+- Cleared stale embedded `x-access-token` in `origin` URL (gh PAT credential helper).
+- Run: https://github.com/EDUNEX-OFFICIAL/Inabiya/actions/runs/32396656858
+
 ### Session — 2026-08-20 (Blog footer mobile Shop right)
 
 - Mobile footer cols full-width: Explore left, Shop column on the right; label/links stay left-aligned (not RTL text).
