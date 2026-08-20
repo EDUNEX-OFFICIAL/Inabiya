@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 20, 2026 (Deploy + push Journal UI)
+Last Updated: August 20, 2026 (Blog footer Shop label LTR)
 ---
 
 ## 1. Why this file exists
@@ -1315,6 +1315,36 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 ---
 
 ## 13. Session log (newest first)
+
+### Session — 2026-08-20 (Blog footer mobile Shop right)
+
+- Mobile footer cols full-width: Explore left, Shop column on the right; label/links stay left-aligned (not RTL text).
+- Desktop Shop reset to start.
+
+### Session — 2026-08-20 (Specialist pages redesign)
+
+- `/specialists` + `/specialists/[slug]`: trust-card layout — avatar initials, credential chips, bio, dated article rows with arrow, Journal CTA; index cards show title/creds/bio.
+
+### Session — 2026-08-20 (Blog article page redesign)
+
+- `/blog/[slug]`: professional longform layout — breadcrumb, dek, author avatar byline + read time, unboxed prose (~70ch), wide 16:9 cover, specialist attribution, wash CTA (no body card chrome).
+
+### Session — 2026-08-20 (Blog footer Gift Store plain link)
+
+- Footer Shop: Gift Store now plain `blog-footer__link` (same as Explore), not pink CTA.
+- Removed duplicate Soft Gift store link from footer bar; bar is copyright + EDUNEX only.
+
+### Session — 2026-08-20 (Expand published blog bodies)
+
+- Backup `inabiya-20260820-165549.dump` then expanded all 3 PUBLISHED Journal articles (not stubs).
+- `uat-visitors-first-fortnight`: ~50 → ~830 words (~4 min); `understanding-newborn-sleep-cycles`: ~221 → ~841 words (~4 min); `sleep-cues-for-newborns` kept ~1097 words (~5 min).
+- HTML sources under `content/articles/`; upsert via `scripts/expand-published-blog-articles.ts` (revision row + longer `seoDescription` for cards).
+- Next: spot-check `/blog` cards + article pages in browser; commit content/script if desired.
+
+### Session — 2026-08-20 (Blog nav/footer icons)
+
+- Journal chrome: lucide icons on nav links + Gift Store CTA (navbar, mobile drawer, footer Explore/Shop + bar link).
+- Map: Journal=`BookOpen`, Specialists=`UsersRound`, Gift Store=`Gift` via `BlogNavIcon`.
 
 ### Session — 2026-08-20 (Deploy + push Journal UI)
 

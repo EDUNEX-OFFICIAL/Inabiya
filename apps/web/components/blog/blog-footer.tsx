@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
+import { BlogNavIcon } from '@/components/blog/blog-nav-icon';
 import { BLOG_PUBLIC_NAV } from '@/lib/blog-public-nav';
 import { FOOTER_DEVELOPER_CREDIT } from '@/lib/gift-footer-chrome';
 
@@ -31,6 +32,7 @@ export function BlogFooter() {
               {EXPLORE.map((item) => (
                 <li key={item.id}>
                   <Link href={item.href} className="blog-footer__link">
+                    <BlogNavIcon id={item.id} />
                     {item.label}
                   </Link>
                 </li>
@@ -39,12 +41,17 @@ export function BlogFooter() {
           </nav>
 
           {STORE ? (
-            <div className="blog-footer__shop">
+            <nav className="blog-footer__shop" aria-label="Shop">
               <p className="blog-footer__label">Shop</p>
-              <Link href={STORE.href} className="blog-gift-store-cta">
-                {STORE.label}
-              </Link>
-            </div>
+              <ul className="blog-footer__list">
+                <li>
+                  <Link href={STORE.href} className="blog-footer__link">
+                    <BlogNavIcon id={STORE.id} />
+                    {STORE.label}
+                  </Link>
+                </li>
+              </ul>
+            </nav>
           ) : null}
         </div>
       </div>
@@ -63,11 +70,6 @@ export function BlogFooter() {
               </a>
             </span>
           </p>
-          {STORE ? (
-            <Link href={STORE.href} className="blog-footer__bar-link">
-              Soft Gift store
-            </Link>
-          ) : null}
         </div>
       </div>
     </footer>

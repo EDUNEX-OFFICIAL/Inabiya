@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, X } from 'lucide-react';
+import { BlogNavIcon } from '@/components/blog/blog-nav-icon';
 import { BLOG_PUBLIC_NAV, isBlogNavActive } from '@/lib/blog-public-nav';
 import { cn } from '@/lib/utils';
 
@@ -104,7 +105,10 @@ export function BlogMenuDrawer({ open, onClose, pathname }: Props) {
                         className={cn('blog-drawer__link', active && 'blog-drawer__link--active')}
                         aria-current={active ? 'page' : undefined}
                       >
-                        <span>{item.label}</span>
+                        <span className="blog-drawer__link-main">
+                          <BlogNavIcon id={item.id} />
+                          <span>{item.label}</span>
+                        </span>
                         <ChevronRight className="blog-drawer__chevron" aria-hidden />
                       </Link>
                     </li>
@@ -123,6 +127,7 @@ export function BlogMenuDrawer({ open, onClose, pathname }: Props) {
                   onClick={onClose}
                   className="blog-gift-store-cta blog-gift-store-cta--block"
                 >
+                  <BlogNavIcon id={item.id} />
                   {item.label}
                 </Link>
               ))}

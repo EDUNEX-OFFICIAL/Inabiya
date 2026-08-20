@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { BrandLogo } from '@/components/brand-logo';
 import { BlogMenuDrawer } from '@/components/blog/blog-menu-drawer';
+import { BlogNavIcon } from '@/components/blog/blog-nav-icon';
 import { BLOG_PUBLIC_NAV, isBlogNavActive } from '@/lib/blog-public-nav';
 import { cn } from '@/lib/utils';
 
@@ -51,12 +52,14 @@ export function BlogNav() {
                   className={cn('blog-nav__link', active && 'blog-nav__link--active')}
                   aria-current={active ? 'page' : undefined}
                 >
+                  <BlogNavIcon id={item.id} />
                   {item.label}
                 </Link>
               );
             })}
             {BLOG_PUBLIC_NAV.filter((item) => item.cta).map((item) => (
               <Link key={item.id} href={item.href} className="blog-gift-store-cta">
+                <BlogNavIcon id={item.id} />
                 {item.label}
               </Link>
             ))}
