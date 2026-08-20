@@ -1507,6 +1507,8 @@ const articleSlugSchema = z
   .max(120)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
+const writerFeePaiseSchema = z.number().int().min(0).max(10_000_000);
+
 export const createArticleBodySchema = z.object({
   title: z.string().trim().min(3).max(200),
   slug: articleSlugSchema.optional(),
@@ -1514,6 +1516,7 @@ export const createArticleBodySchema = z.object({
   medicalGateRequired: z.boolean().optional(),
   dueAt: z.string().min(8).max(40).optional(),
   brief: z.string().trim().max(2000).optional(),
+  writerFeePaise: writerFeePaiseSchema.optional(),
 });
 
 export const updateArticleBodySchema = z.object({
@@ -1527,6 +1530,7 @@ export const updateArticleBodySchema = z.object({
   slug: articleSlugSchema.optional(),
   assigneeId: z.string().uuid().nullable().optional(),
   dueAt: z.string().min(8).max(40).nullable().optional(),
+  writerFeePaise: writerFeePaiseSchema.optional(),
   /** Cover / OG image — media library, https, or same-origin /gift/media/… (incl. SVG). */
   ogImageUrl: z.preprocess(
     (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
@@ -1550,6 +1554,7 @@ export const updateArticleBodySchema = z.object({
   ),
   /** Secondary tags (create-on-write). Empty array clears. Max 12. */
   tagSlugs: z.array(z.string().trim().min(2).max(80)).max(12).optional(),
+  revisionSource: z.enum(['auto', 'manual']).optional(),
   /** Admin Schema.org extras (presets + custom JSON-LD). Null clears. */
   seoSchemaExtras: seoSchemaExtrasNullableSchema,
 });
@@ -1595,6 +1600,19 @@ export const publishArticleBodySchema = z.object({
   specialistSlug: z.string().min(2).max(80).optional(),
   ogImageUrl: cmsMediaUrlSchema.optional(),
 });
+
+export const blogPublicListQuerySchema = z.object({
+  category: z.string().trim().max(80).optional(),
+  tag: z.string().trim().max(80).optional(),
+  q: z.string().trim().max(120).optional(),
+});
+
+export const blogSearchQuerySchema = z.object({
+  q: z.string().trim().min(2).max(120),
+});
+
+export type BlogPublicListQuery = z.infer<typeof blogPublicListQuerySchema>;
+export type BlogSearchQuery = z.infer<typeof blogSearchQuerySchema>;
 
 export const newsletterSignupBodySchema = z.object({
   email: z.string().email().max(320),

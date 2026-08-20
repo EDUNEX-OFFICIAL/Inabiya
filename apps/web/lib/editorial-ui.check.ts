@@ -69,6 +69,7 @@ assert.doesNotMatch(
   /editorial-article__hero">\s*<div className="editorial-article__hero-top"/,
 );
 assert.match(articlePage, /addComment\('CHANGE_REQUEST'\)/);
+assert.match(articlePage, /article\.timeline/);
 assert.match(articlePage, /disabled=\{!comment.trim\(\)\}/);
 assert.doesNotMatch(articlePage, /<select[\s>]/);
 assert.doesNotMatch(articlePage, /max-w-4xl/);

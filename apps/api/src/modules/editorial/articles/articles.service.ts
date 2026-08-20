@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ArticleCommentKind, ArticleStatus } from '@prisma/client';
+import { ArticleCommentKind, ArticleRevisionSource, ArticleStatus } from '@prisma/client';
 import type {
   ArticleCommentBody,
   ArticleTransitionBody,
@@ -19,6 +19,8 @@ import { readSeoSchemaExtras, seoSchemaExtrasWriteValue } from '../../../common/
 import { allowedArticleTransitions, canEditArticleBody } from './editorial-transitions';
 import { articleCanonicalPath } from '../article-canonical';
 import { upsertArticleTagIds } from '../article-tags';
+import { defaultWriterFeePaise, canSeeWriterFee } from '../writer-fee';
+import { buildArticleTimeline } from '../article-timeline';
 
 function slugify(title: string): string {
   return title
@@ -47,6 +49,8 @@ type ListFilters = {
   mineOnly?: boolean;
   status?: ArticleStatus;
   overdue?: boolean;
+  /** Ops queue filter: UUID, or `null` for unassigned only. */
+  assigneeId?: string | null;
 };
 
 @Injectable()
@@ -77,6 +81,7 @@ export class ArticlesService {
         assigneeId: body.assigneeId ?? null,
         createdById: actor.id,
         dueAt,
+        writerFeePaise: body.writerFeePaise ?? defaultWriterFeePaise(),
         statusHistory: {
           create: {
             status: ArticleStatus.ASSIGNED,
@@ -145,6 +150,14 @@ export class ArticlesService {
       where.status = filters.status;
     }
 
+    if (
+      filters.assigneeId !== undefined &&
+      this.isOps(actor) &&
+      !filters.mineOnly
+    ) {
+      where.assigneeId = filters.assigneeId;
+    }
+
     const rows = await this.prisma.article.findMany({
       where,
       orderBy: [{ dueAt: 'asc' }, { updatedAt: 'desc' }],
@@ -160,6 +173,7 @@ export class ArticlesService {
       status: a.status,
       medicalGateRequired: a.medicalGateRequired,
       dueAt: a.dueAt,
+      ...(canSeeWriterFee(actor.roles) ? { writerFeePaise: a.writerFeePaise } : {}),
       overdue: Boolean(a.dueAt && a.dueAt < new Date() && a.status !== ArticleStatus.APPROVED),
       updatedAt: a.updatedAt,
       assignee: a.assignee,
@@ -181,13 +195,14 @@ export class ArticlesService {
         },
         statusHistory: {
           orderBy: { createdAt: 'asc' },
-          include: { actor: { select: { email: true } } },
+          include: { actor: { select: { email: true, displayName: true } } },
         },
         revisions: {
           orderBy: { createdAt: 'desc' },
-          take: 20,
+          take: 40,
           include: { actor: { select: { email: true, displayName: true } } },
         },
+        writerPayment: true,
       },
     });
     if (!article) {
@@ -202,6 +217,7 @@ export class ArticlesService {
       status: article.status,
       medicalGateRequired: article.medicalGateRequired,
       dueAt: article.dueAt,
+      ...(canSeeWriterFee(actor.roles) ? { writerFeePaise: article.writerFeePaise } : {}),
       publishedAt: article.publishedAt,
       ogImageUrl: article.ogImageUrl,
       seoTitle: article.seoTitle,
@@ -223,6 +239,7 @@ export class ArticlesService {
         status: h.status,
         note: h.note,
         actorEmail: h.actor?.email ?? null,
+        actorName: h.actor?.displayName ?? h.actor?.email ?? null,
         createdAt: h.createdAt,
       })),
       revisions: article.revisions.map((r) => ({
@@ -232,6 +249,13 @@ export class ArticlesService {
         actorName: r.actor?.displayName ?? r.actor?.email ?? null,
         createdAt: r.createdAt,
       })),
+      timeline: buildArticleTimeline({
+        statusHistory: article.statusHistory,
+        comments: article.comments,
+        revisions: article.revisions,
+        payment: article.writerPayment,
+        includePayment: canSeeWriterFee(actor.roles),
+      }),
       allowedTransitions: allowedArticleTransitions(
         article.status,
         article.medicalGateRequired,
@@ -254,7 +278,10 @@ export class ArticlesService {
   }
 
   async update(id: string, actor: Actor, body: UpdateArticleBody, requestId?: string) {
-    const article = await this.prisma.article.findUnique({ where: { id } });
+    const article = await this.prisma.article.findUnique({
+      where: { id },
+      include: { tags: { include: { tag: { select: { slug: true } } } } },
+    });
     if (!article) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Article not found.' });
     }
@@ -267,6 +294,15 @@ export class ArticlesService {
     if (body.assigneeId !== undefined || body.dueAt !== undefined) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
       if (body.assigneeId) await this.assertWriter(body.assigneeId);
+    }
+    if (body.writerFeePaise !== undefined) {
+      this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
+      if (article.status === ArticleStatus.PUBLISHED || article.status === ArticleStatus.SCHEDULED) {
+        throw new BadRequestException({
+          code: 'FEE_LOCKED',
+          message: 'Writer fee cannot change after schedule or publish.',
+        });
+      }
     }
     if (body.ogImageUrl !== undefined) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SUPER_ADMIN']);
@@ -325,14 +361,39 @@ export class ArticlesService {
       }
     }
 
+    const dueMs = (d: Date | null | undefined) => d?.getTime() ?? null;
+    const tagKey = (slugs: string[]) => [...slugs].sort().join('|');
+    const extrasNow = JSON.stringify(readSeoSchemaExtras(article.seoSchemaExtras) ?? null);
+    const extrasNext =
+      body.seoSchemaExtras !== undefined ? JSON.stringify(body.seoSchemaExtras) : extrasNow;
+    const metaChanged =
+      (body.assigneeId !== undefined && body.assigneeId !== article.assigneeId) ||
+      (dueAt !== undefined && dueMs(dueAt) !== dueMs(article.dueAt)) ||
+      (body.writerFeePaise !== undefined && body.writerFeePaise !== article.writerFeePaise) ||
+      (body.ogImageUrl !== undefined && body.ogImageUrl !== article.ogImageUrl) ||
+      (body.seoTitle !== undefined && body.seoTitle !== article.seoTitle) ||
+      (body.seoDescription !== undefined && body.seoDescription !== article.seoDescription) ||
+      (taxonomy.categoryId !== undefined && taxonomy.categoryId !== article.categoryId) ||
+      (taxonomy.specialistId !== undefined && taxonomy.specialistId !== article.specialistId) ||
+      (nextSlug !== undefined && nextSlug !== article.slug) ||
+      (body.seoSchemaExtras !== undefined && extrasNext !== extrasNow) ||
+      (body.tagSlugs !== undefined &&
+        tagKey(body.tagSlugs) !== tagKey(article.tags.map((t) => t.tag.slug)));
+
     const updated = await this.prisma.$transaction(async (tx) => {
-      if (bodyChanged || titleChanged) {
+      if (bodyChanged || titleChanged || metaChanged) {
         await tx.articleRevision.create({
           data: {
             articleId: id,
             title: article.title,
             body: article.body,
             actorId: actor.id,
+            source:
+              bodyChanged || titleChanged
+                ? body.revisionSource === 'manual'
+                  ? ArticleRevisionSource.MANUAL
+                  : ArticleRevisionSource.AUTO
+                : ArticleRevisionSource.META,
           },
         });
       }
@@ -344,6 +405,7 @@ export class ArticlesService {
           assigneeId: body.assigneeId === undefined ? undefined : body.assigneeId,
           dueAt: dueAt === undefined ? undefined : dueAt,
           ...(dueAt !== undefined ? { dueReminderSentAt: null } : {}),
+          ...(body.writerFeePaise !== undefined ? { writerFeePaise: body.writerFeePaise } : {}),
           ...(body.ogImageUrl !== undefined ? { ogImageUrl: body.ogImageUrl } : {}),
           ...(body.seoTitle !== undefined ? { seoTitle: body.seoTitle } : {}),
           ...(body.seoDescription !== undefined ? { seoDescription: body.seoDescription } : {}),
@@ -529,15 +591,46 @@ export class ArticlesService {
     if (kind === ArticleCommentKind.CHANGE_REQUEST) {
       this.assertAnyRole(actor, ['CONTENT_ADMIN', 'SEO_EDITOR', 'MEDICAL_REVIEWER', 'SUPER_ADMIN']);
     }
-    const comment = await this.prisma.articleComment.create({
-      data: { articleId: id, authorId: actor.id, kind, body: body.body },
+    const allowed = allowedArticleTransitions(
+      article.status,
+      article.medicalGateRequired,
+      actor,
+      article.assigneeId,
+    );
+    const sendBack =
+      kind === ArticleCommentKind.CHANGE_REQUEST &&
+      allowed.includes(ArticleStatus.CHANGES_REQUESTED);
+    const comment = await this.prisma.$transaction(async (tx) => {
+      const row = await tx.articleComment.create({
+        data: { articleId: id, authorId: actor.id, kind, body: body.body },
+      });
+      if (sendBack) {
+        await tx.article.update({
+          where: { id },
+          data: {
+            status: ArticleStatus.CHANGES_REQUESTED,
+            statusHistory: {
+              create: {
+                status: ArticleStatus.CHANGES_REQUESTED,
+                note: body.body,
+                actorId: actor.id,
+              },
+            },
+          },
+        });
+      }
+      return row;
     });
     await this.audit.write({
       actorId: actor.id,
       action: 'article.comment.added',
       resource: 'article',
       resourceId: id,
-      metadata: { commentId: comment.id, kind },
+      metadata: {
+        commentId: comment.id,
+        kind,
+        status: sendBack ? ArticleStatus.CHANGES_REQUESTED : undefined,
+      },
       requestId,
     });
     return this.get(id, actor);

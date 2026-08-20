@@ -7,10 +7,17 @@ export function blogPostPath(slug: string): string {
   return `${BLOG_PATH}/${slug}`;
 }
 
-export function blogIndexPath(opts?: { category?: string; tag?: string }): string {
+export function blogIndexPath(opts?: {
+  category?: string;
+  tag?: string;
+  q?: string;
+  sort?: 'newest' | 'oldest';
+}): string {
   const p = new URLSearchParams();
   if (opts?.category) p.set('category', opts.category);
   if (opts?.tag) p.set('tag', opts.tag);
+  if (opts?.q) p.set('q', opts.q);
+  if (opts?.sort && opts.sort !== 'newest') p.set('sort', opts.sort);
   const q = p.toString();
   return q ? `${BLOG_PATH}?${q}` : BLOG_PATH;
 }

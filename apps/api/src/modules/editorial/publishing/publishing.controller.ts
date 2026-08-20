@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
+  blogPublicListQuerySchema,
+  blogSearchQuerySchema,
   createEditorialCategoryBodySchema,
   createSpecialistBodySchema,
   newsletterSignupBodySchema,
@@ -7,6 +9,8 @@ import {
   scheduleArticleBodySchema,
   updateEditorialCategoryBodySchema,
   updateSpecialistBodySchema,
+  type BlogPublicListQuery,
+  type BlogSearchQuery,
   type CreateEditorialCategoryBody,
   type CreateSpecialistBody,
   type NewsletterSignupBody,
@@ -31,8 +35,13 @@ export class PublishingPublicController {
   constructor(private readonly publishing: PublishingService) {}
 
   @Get()
-  list(@Query('category') category?: string, @Query('tag') tag?: string) {
-    return this.publishing.listPublic({ category, tag });
+  list(@Query(new ZodValidationPipe(blogPublicListQuerySchema)) query: BlogPublicListQuery) {
+    return this.publishing.listPublic(query);
+  }
+
+  @Get('search')
+  search(@Query(new ZodValidationPipe(blogSearchQuerySchema)) query: BlogSearchQuery) {
+    return this.publishing.searchPublic(query.q);
   }
 
   @Get('specialists')
@@ -55,7 +64,7 @@ export class PublishingPublicController {
     return this.publishing.listTags();
   }
 
-  @Get(':slug')
+  @Get(':slug((?!search$|categories$|tags$|specialists$|newsletter$).+)')
   getBySlug(@Param('slug') slug: string) {
     return this.publishing.getPublicBySlug(slug);
   }

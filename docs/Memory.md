@@ -13,7 +13,7 @@ AI Coding Assistants
 Tech Leads
 QA
 
-Last Updated: August 19, 2026 (Phase 15 public journal `/blog`)
+Last Updated: August 20, 2026 (Blog mobile logo + footer layout)
 
 ---
 
@@ -147,7 +147,7 @@ Q4 (Architecture rewrite) → **Resolved**
 
 ## 4. Next actions (max 5 — keep fresh)
 
-1. Client walkthrough: `/blog` + `/admin/editorial` assign → gates → publish
+1. Create article: set Writer fee (₹) → Queue card shows it; Publish stamps that amount PENDING
 2. **Commerce UAT lane** still first if shop/ops/CMS bugs come in
 3. Do **not** start Creator campaigns
 4. Editorial chrome: Queue/Writer/Journal/More + New FAB — confirm on phone
@@ -1317,6 +1317,132 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 
 ## 13. Session log (newest first)
 
+### Session — 2026-08-20 (Blog mobile logo + footer layout)
+
+- Journal navbar uses full `wordmark` on all breakpoints (no mobile mark-only chrome).
+- Footer keeps small `mark`; mobile: centered brand + 2-col Explore/Shop; bar stacks copyright / EDUNEX credit / Soft Gift link.
+
+### Session — 2026-08-20 (Blog footer EDUNEX credit)
+
+- Journal footer bar now uses locked `FOOTER_DEVELOPER_CREDIT` (Developed with ♥ By EDUNEX) — same source as Soft Gift storefront.
+
+### Session — 2026-08-20 (Blog footer redesign)
+
+- Replaced thin footer strip with `BlogFooter`: brand lockup + tagline, Explore links, Soft Gift pink CTA, copyright bar.
+- Blog Creative wash gradient; no newsletter (index already has Stay in touch).
+
+### Session — 2026-08-20 (Blog chips, drawer, Gift Store CTA)
+
+- Filter chips: moved horizontal scroll to `.blog-filters` (fixes overflow-x/auto clipping pill bottoms); chips use `inline-flex` + min-height.
+- Mobile drawer: wash gradient header, overline/title, chevron nav rows, Gift Store pinned in footer.
+- Gift Store CTA: `.blog-gift-store-cta` — Soft Gift pink pill (`#c44575`) on nav, drawer footer, and site footer.
+
+### Session — 2026-08-20 (Blog mobile menu drawer fix)
+
+- Root cause: portal had `data-theme="blog"` on same node as `.blog-drawer-root`, so descendant CSS selectors never matched — drawer had no fixed positioning or solid background.
+- Fix: wrap portal in outer `data-theme="blog"` + `.blog-drawer-portal`; solid `--surface` on panel/header/body; backdrop blur + z-index `z-nav + 40`; drawer CTA uses `.blog-drawer__cta`.
+
+### Session — 2026-08-20 (Blog nav matches storefront layout)
+
+- Journal header uses `clay-nav` shell + `blog-shell-width` inner (same max-width/padding rhythm as Soft Gift).
+- Logo `size="md"` (40px), `justify-between` row, nav links `px-gs-3 py-gs-2 text-body` — blog wash hover, not gift pink/white.
+
+### Session — 2026-08-20 (Blog chrome full width)
+
+- Journal navbar + footer now span full viewport width (removed `max-w-page` cap); shared `blog-chrome` padding.
+- Nav CTA renamed `Shop gifts` → `Soft Gift`; header uses `blog-btn-secondary`, mobile drawer aligned.
+- Nav links get active pill state via `blog-nav__link`; footer reuses `BLOG_PUBLIC_NAV`.
+
+### Session — 2026-08-20 (Blog cover image consistency)
+
+- Clarified: editorial Cover (`ogImageUrl`) is the single source for card + hero + post page — not a hardcoded `parenting.svg` fallback.
+- Assigned `/parenting.svg` only on latest article `uat-visitors-first-fortnight` in DB.
+- Added shared `BlogCoverMedia` with forced SVG cover sizing (min-width/min-height 100% center) so SVG fills edge-to-edge; used on cards, hero, and `/blog/[slug]`.
+
+### Session — 2026-08-20 (Journal search below hero)
+
+- `/blog`: search moved from header + mobile drawer to full-width toolbar below hero band; category chips moved with search; tag chips removed from index (categories only; `?tag=` URLs still work). Hero = overline + title only. No API/migrate.
+
+### Session — 2026-08-20 (Journal search moved to Latest section)
+
+- `/blog`: moved search + category chips from hero-adjacent toolbar into the content area under `Latest`/results heading for better reading flow on desktop + mobile. No API/migrate.
+
+### Session — 2026-08-20 (Journal browse row single-line)
+
+- `/blog`: browse controls under `Latest` updated to a single row on desktop (search left, category chips right) with mobile-safe stacked fallback. No API/migrate.
+
+### Session — 2026-08-20 (Journal dropdown filter + search fallback)
+
+- `/blog`: replaced fixed category chips with category dropdown in the browse row for cleaner scalable UX.
+- Search UX hardening: `BlogSearch` now falls back to `GET /blog?q=` when `GET /blog/search` fails, so suggestions continue working even if the typeahead route is unavailable.
+- Results header clear action removed to reduce duplicate controls; search reset is now handled from the input clear (`X`) with URL-sync.
+- Search input `X` now clears URL `q` too (not just textbox), so results reset immediately while preserving active category/tag context.
+- Removed static `Latest` heading from feed section; added `Latest` label directly on the featured lead card.
+
+### Session — 2026-08-20 (Blog homepage hero redesign)
+
+- `/blog` homepage adapted to full-width visual hero layout (image-led masthead with overlay content + primary article CTA), inspired by reference style while keeping blog theme tokens.
+- Browse controls (search + category dropdown) kept below hero; default feed now starts from remaining articles when featured hero is shown.
+- Lower feed section aligned to reference pattern: `Blog` heading, category chip tabs row, and sort control (`Newest` / `Oldest`) above cards.
+- Replaced native HTML `select` sort with custom dropdown menu (trigger + popover options) and expanded listing section to full width (`blog-page--wide`).
+- Feed grid now uses 3 columns on desktop (`>=1024px`), and hero image is pinned to the parenting illustration asset for the latest blog masthead.
+- Hero now uses latest blog article image dynamically (`featured.imageUrl`), with `/parenting.svg` fallback asset copied into web public for missing-image cases.
+- Hero overlay restructured to reference pattern: left-bottom article label/title/excerpt, right-bottom author + date + read-time block.
+- Added computed `readTimeMinutes` to public article summary payload and surfaced `x min read` in every blog card meta line.
+- Latest post now appears in hero and remains included in the card listing grid (no removal from feed).
+- SVG card media rendering switched to cover-fit so placeholder/illustration images fill card width consistently.
+
+### Session — 2026-08-20 (Journal card layout — editorial grid)
+
+- `/blog` cards: hero = desktop split (image left, copy right); grid = vertical 3:2 image-top cards in 2-col md / 3-col xl feed. Removed cramped horizontal card rows.
+
+### Session — 2026-08-20 (Journal blog UI: nav, search, drawer)
+
+- Public `/blog`: new `BlogNav` (search bar md+, drawer lg−), `BlogSearch` typeahead, mobile menu drawer, wider layout, featured lead card, 2-col grid, active filter chips, newsletter CTA split.
+- API: `GET /blog/search?q=` + `q` on list (`blogPublicListQuerySchema`). No migrate.
+- Deploy: `bash scripts/backup-postgres.sh` then `bash scripts/deploy-vps.sh web api`.
+
+### Session — 2026-08-20 (Article timeline activity feed)
+
+- Timeline: status (with actor + note), comments, change requests, manual/meta edits (autosave skipped), writer payment pending/released (fee-visible roles).
+- Comments **Change request** in SEO/Medical also sets `CHANGES_REQUESTED`. Move-to Changes needs a comment. Migration `20260820053000_article_revision_source`.
+
+### Session — 2026-08-20 (Medical review field align)
+
+- New article: Medical review uses the same label + control row as Writer fee so the check lines up with the inputs. No API/migrate.
+
+### Session — 2026-08-20 (Assignment writer fee)
+
+- New article: **Writer fee (₹)** → `writerFeePaise` on Article. Queue + article meta show INR. Publish uses article fee (not only env).
+- Locked after SCHEDULED/PUBLISHED (`FEE_LOCKED`). Existing rows default ₹500. Migration `20260820050000_article_writer_fee`.
+- Check: `writer-fee.check.ts`.
+
+### Session — 2026-08-20 (UAT: writer complete + desk states)
+
+- No code. Live API as roles. Backup `inabiya-20260820-042450.dump`.
+- Writer completed **Understanding newborn sleep cycles** (body → DRAFT → SEO → medical → APPROVED → PUBLISH). Writer payment **PENDING** ₹500.
+- Extra assigned-to-Test-Writer fixtures: ASSIGNED / DRAFT / SEO_REVIEW / MEDICAL_REVIEW / APPROVED / CHANGES_REQUESTED / SCHEDULED (`uat-*` slugs).
+
+### Session — 2026-08-20 (Remove duplicate filter chips)
+
+- Human: drop Payments count badge; drop Queue Overdue chip; drop extra buttons that duplicate filters.
+- Payments: count badge gone; stats are display-only. Queue: Overdue chip + clickable overdue tile gone (status/writer selects remain). Specialists: Incomplete chip gone (search remains). No API/migrate.
+
+### Session — 2026-08-20 (Editorial admin filters)
+
+- Human: status filter on Payments; check other editorial pages for appropriate filters.
+- Payments: Queue-style status select (All/Pending/Released/Cancelled) + clickable stat tiles. Categories/Specialists: search bar; specialists also get Incomplete chip. Writer: status select + resource cards. Queue already had status/writer/overdue — unchanged. CSS: search-in-filters, link card hover. No API/migrate.
+
+### Session — 2026-08-20 (Payments admin polish)
+
+- Human: improve Editorial Payments desk page design.
+- Page head + count + Pending filter chip; stats row (pending count, awaiting release total, released count); payment cards with amount, writer, release date, status pill, inline Release/Article actions. CSS: status pill variants, payment amount typography. No API/migrate.
+
+### Session — 2026-08-20 (Categories & specialists admin polish)
+
+- Human: improve Categories and Specialists desk pages (layout/spacing/cards).
+- Both pages: page head + count badge; add form uses `editorial-field` grid + panel head; list uses spaced resource cards (display title, slug/meta, inline Edit) aligned with Queue card patterns. CSS: `editorial-page-head`, `editorial-panel__head/body`, `editorial-resource-list/card`. No API/migrate.
+
 ### Session — 2026-08-19 (Public journal `/blog`)
 
 - Human: article URL → `/blog` (makes more sense); public API too, same name, not confusing.
@@ -1394,6 +1520,17 @@ _Phase 0 closed 2026-07-20. Health + worker sample + CI/CD deploy verified on VP
 - Overdue stays a **toggle** (SLA flag, not ArticleStatus) so Draft+overdue still works; visually joined to status in one filter bar.
 - Native select → `EditorialSelect` (blog tokens, listbox). Stats: split cards, value on the right; overdue tile toggles the same filter. List: title + status pill + full-width pipeline + chevron.
 - Check: `editorial-ui.check.ts`. No DB / deploy.
+
+### Session — 2026-08-20 (Writer nav + Queue assignee filter)
+
+- Human: hide Writer tab for Super Admin / Content Admin; Queue needs assignee filter.
+- Writer nav → `WRITER` role only; ops direct URL redirects to Queue. Queue filter bar: Status + Writer + Overdue; API `assigneeId` / `unassigned`. No DB / deploy.
+
+### Session — 2026-08-20 (New article page + FAB desktop)
+
+- Human: polish `/admin/editorial/articles/new` like Queue; hide floating + on desktop.
+- New page: `editorial-field` labels, `EditorialSelect` writer, medical gate toggle chip, loading/busy states, two-column Writer/Due on `sm+`, full-width panel.
+- FAB: styles scoped to `<lg` only (fixed cascade bug); hidden on New route (header nav already has + New). No DB / deploy.
 
 ### Session — 2026-08-19 (Editorial sheet + FAB)
 

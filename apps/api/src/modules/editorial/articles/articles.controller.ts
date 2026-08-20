@@ -56,13 +56,21 @@ export class ArticlesController {
     @Query('mine') mine?: string,
     @Query('status') status?: string,
     @Query('overdue') overdue?: string,
+    @Query('assigneeId') assigneeId?: string,
   ) {
     const allowed = Object.values(ArticleStatus) as string[];
     const parsed = status && allowed.includes(status) ? (status as ArticleStatus) : undefined;
+    let assigneeFilter: string | null | undefined;
+    if (assigneeId === 'unassigned') {
+      assigneeFilter = null;
+    } else if (assigneeId && /^[0-9a-f-]{36}$/i.test(assigneeId)) {
+      assigneeFilter = assigneeId;
+    }
     return this.articles.list(user, {
       mineOnly: mine === '1' || mine === 'true',
       status: parsed,
       overdue: overdue === '1' || overdue === 'true',
+      assigneeId: assigneeFilter,
     });
   }
 

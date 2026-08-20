@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, ExternalLink, Eye, MessageSquare, Save, UserRound } from 'lucide-react';
+import { Calendar, ExternalLink, Eye, MessageSquare, Save, UserRound, Wallet } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl } from '@/lib/auth-client';
 import { apiUrl } from '@/lib/api-base';
 import { ArticleEditor } from '@/components/editorial/article-editor';
@@ -19,7 +19,7 @@ import { sanitizeArticleHtml, normalizeArticleBody } from '@/lib/article-html';
 import { getSiteOrigin } from '@/lib/cms-seo';
 import { BLOG_API, BLOG_PATH, blogIndexPath, blogPostPath } from '@/lib/blog-paths';
 import { articleJsonLd, breadcrumbJsonLd } from '@/lib/seo-json-ld';
-import { ARTICLE_STATUS_LABEL } from '@/lib/editorial-nav';
+import { ARTICLE_STATUS_LABEL, canSeeWriterFee } from '@/lib/editorial-nav';
 import type { SeoSchemaEntry } from '@inabiya/validation';
 
 type ArticleDetail = {
@@ -30,6 +30,7 @@ type ArticleDetail = {
   status: string;
   medicalGateRequired: boolean;
   dueAt: string | null;
+  writerFeePaise?: number;
   publishedAt?: string | null;
   ogImageUrl?: string | null;
   seoTitle?: string | null;
@@ -52,7 +53,17 @@ type ArticleDetail = {
     status: string;
     note: string | null;
     actorEmail: string | null;
+    actorName?: string | null;
     createdAt: string;
+  }>;
+  timeline?: Array<{
+    at: string;
+    kind: string;
+    label: string;
+    actorName: string | null;
+    detail: string | null;
+    status?: string;
+    amountPaise?: number;
   }>;
   revisions: Array<{
     id: string;
@@ -104,6 +115,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isContent, setIsContent] = useState(false);
+  const [showWriterFee, setShowWriterFee] = useState(false);
   const [canEditSchema, setCanEditSchema] = useState(false);
   const [seoSchemaExtras, setSeoSchemaExtras] = useState<SeoSchemaEntry[]>([]);
   const [activity, setActivity] = useState<ActivityTab>('comments');
@@ -111,6 +123,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   async function load() {
     const me = await apiAuth<{ roles: string[] }>('/auth/me');
     setIsContent(me.roles.includes('CONTENT_ADMIN') || me.roles.includes('SUPER_ADMIN'));
+    setShowWriterFee(canSeeWriterFee(me.roles));
     setCanEditSchema(
       me.roles.includes('CONTENT_ADMIN') ||
         me.roles.includes('SUPER_ADMIN') ||
@@ -256,6 +269,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
     if (saving) return;
     const json = persistPayload();
     if (Object.keys(json).length === 0) return;
+    json.revisionSource = kind === 'auto' ? 'auto' : 'manual';
     setSaving(true);
     if (kind === 'manual') setMsg(null);
     try {
@@ -275,12 +289,21 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
   }
 
   async function transition(status: string) {
+    if (status === 'CHANGES_REQUESTED' && !comment.trim()) {
+      setActivity('comments');
+      setMsg('Add a comment for the change request.');
+      return;
+    }
     const a = await apiAuth<ArticleDetail>(`/editorial/articles/${params.id}/transition`, {
       method: 'POST',
-      json: { status },
+      json: {
+        status,
+        ...(status === 'CHANGES_REQUESTED' ? { note: comment.trim() } : {}),
+      },
     });
     setArticle(a);
-    setMsg(`Moved to ${status}`);
+    if (status === 'CHANGES_REQUESTED') setComment('');
+    setMsg(`Moved to ${ARTICLE_STATUS_LABEL[status] ?? status}`);
   }
 
   async function addComment(kind?: 'CHANGE_REQUEST') {
@@ -432,6 +455,16 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
             <span>
               <Calendar aria-hidden />
               {new Date(article.dueAt).toLocaleDateString()}
+            </span>
+          ) : null}
+          {showWriterFee && article.writerFeePaise != null ? (
+            <span>
+              <Wallet aria-hidden />
+              {new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0,
+              }).format(article.writerFeePaise / 100)}
             </span>
           ) : null}
         </p>
@@ -654,15 +687,29 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
 
             {activity === 'timeline' ? (
               <div className="editorial-article__tabpanel">
-                <ol className="editorial-article__timeline">
-                  {article.statusHistory.map((h, i) => (
-                    <li key={`${h.status}-${h.createdAt}-${i}`}>
-                      <span>{ARTICLE_STATUS_LABEL[h.status] ?? h.status}</span>
-                      <time dateTime={h.createdAt}>{new Date(h.createdAt).toLocaleString()}</time>
-                      {h.note ? <p>{h.note}</p> : null}
-                    </li>
-                  ))}
-                </ol>
+                {(article.timeline ?? []).length === 0 ? (
+                  <p className="editorial-article__empty">No timeline yet.</p>
+                ) : (
+                  <ol className="editorial-article__timeline">
+                    {(article.timeline ?? []).map((h, i) => (
+                      <li key={`${h.kind}-${h.at}-${i}`}>
+                        <span>
+                          {h.kind === 'status'
+                            ? (ARTICLE_STATUS_LABEL[h.status ?? h.label] ?? h.label)
+                            : h.label}
+                          {h.kind === 'payment' && h.amountPaise != null
+                            ? ` · ${formatTimelineInr(h.amountPaise)}`
+                            : ''}
+                        </span>
+                        <time dateTime={h.at}>
+                          {new Date(h.at).toLocaleString()}
+                          {h.actorName ? ` · ${h.actorName}` : ''}
+                        </time>
+                        {h.detail ? <p>{h.detail}</p> : null}
+                      </li>
+                    ))}
+                  </ol>
+                )}
               </div>
             ) : null}
           </section>
@@ -757,6 +804,14 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
       </div>
     </main>
   );
+}
+
+function formatTimelineInr(paise: number) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(paise / 100);
 }
 
 function SeoCount({ n, max }: { n: number; max: number }) {

@@ -17,10 +17,12 @@ import {
   Timer,
   Trash2,
   UserRound,
+  Wallet,
 } from 'lucide-react';
 import { apiAuth, getStoredAccessToken, loginUrl, type AuthUser } from '@/lib/auth-client';
 import {
   ARTICLE_STATUS_LABEL,
+  canSeeWriterFee,
   editorialQueueActions,
   type EditorialQueueAction,
 } from '@/lib/editorial-nav';
@@ -38,6 +40,7 @@ type ArticleRow = {
   status: string;
   medicalGateRequired: boolean;
   dueAt: string | null;
+  writerFeePaise?: number;
   overdue: boolean;
   assignee: { email: string; displayName: string | null } | null;
   updatedAt: string;
@@ -49,6 +52,8 @@ type Turnaround = {
   overdueCount: number;
   approvedSample: number;
 };
+
+type WriterOption = { id: string; email: string; displayName: string | null };
 
 const STATUS_OPTIONS: EditorialSelectOption[] = [
   { value: '', label: 'All' },
@@ -67,31 +72,35 @@ export default function EditorialAdminPage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [rows, setRows] = useState<ArticleRow[]>([]);
   const [status, setStatus] = useState('');
-  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [assigneeId, setAssigneeId] = useState('');
+  const [writers, setWriters] = useState<WriterOption[]>([]);
   const [stats, setStats] = useState<Turnaround | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const load = useCallback(async (u: AuthUser, st: string, overdue: boolean) => {
-    const params = new URLSearchParams();
-    const isOps = u.roles.includes('CONTENT_ADMIN') || u.roles.includes('SUPER_ADMIN');
-    const isWriterOnly =
-      u.roles.includes('WRITER') &&
-      !isOps &&
-      !u.roles.includes('SEO_EDITOR') &&
-      !u.roles.includes('MEDICAL_REVIEWER');
-    if (isWriterOnly) {
-      params.set('mine', '1');
-    }
-    if (st) params.set('status', st);
-    if (overdue) params.set('overdue', '1');
-    const q = params.toString() ? `?${params}` : '';
-    setRows(await apiAuth<ArticleRow[]>(`/editorial/articles${q}`));
-    if (isOps) {
-      setStats(await apiAuth<Turnaround>('/editorial/analytics/turnaround'));
-    }
-  }, []);
+  const load = useCallback(
+    async (u: AuthUser, st: string, assignee: string) => {
+      const params = new URLSearchParams();
+      const isOps = u.roles.includes('CONTENT_ADMIN') || u.roles.includes('SUPER_ADMIN');
+      const isWriterOnly =
+        u.roles.includes('WRITER') &&
+        !isOps &&
+        !u.roles.includes('SEO_EDITOR') &&
+        !u.roles.includes('MEDICAL_REVIEWER');
+      if (isWriterOnly) {
+        params.set('mine', '1');
+      }
+      if (st) params.set('status', st);
+      if (isOps && assignee) params.set('assigneeId', assignee);
+      const q = params.toString() ? `?${params}` : '';
+      setRows(await apiAuth<ArticleRow[]>(`/editorial/articles${q}`));
+      if (isOps) {
+        setStats(await apiAuth<Turnaround>('/editorial/analytics/turnaround'));
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
@@ -123,10 +132,14 @@ export default function EditorialAdminPage() {
           router.replace('/admin/editorial/payments');
           return;
         }
-        await load(u, status, overdueOnly);
+        const isOps = u.roles.includes('CONTENT_ADMIN') || u.roles.includes('SUPER_ADMIN');
+        if (isOps) {
+          setWriters(await apiAuth<WriterOption[]>('/editorial/writers'));
+        }
+        await load(u, status, assigneeId);
       })
       .catch(() => router.replace(loginUrl('/admin/editorial')));
-  }, [router, load, status, overdueOnly]);
+  }, [router, load, status, assigneeId]);
 
   if (!user) {
     return <main className="blog-page text-sm opacity-70">Loading…</main>;
@@ -136,6 +149,12 @@ export default function EditorialAdminPage() {
   const isOps = actor.roles.includes('CONTENT_ADMIN') || actor.roles.includes('SUPER_ADMIN');
   const published = stats?.byStatus.find((s) => s.status === 'PUBLISHED')?.count ?? 0;
   const avg = stats?.avgHoursToApprove;
+
+  const assigneeOptions: EditorialSelectOption[] = [
+    { value: '', label: 'All writers' },
+    { value: 'unassigned', label: 'Unassigned' },
+    ...writers.map((w) => ({ value: w.id, label: w.displayName ?? w.email })),
+  ];
 
   async function runAction(
     id: string,
@@ -158,7 +177,7 @@ export default function EditorialAdminPage() {
       } else {
         await apiAuth(`/editorial/articles/${id}`, { method: 'DELETE' });
       }
-      await load(actor, status, overdueOnly);
+      await load(actor, status, assigneeId);
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Failed');
     } finally {
@@ -184,15 +203,18 @@ export default function EditorialAdminPage() {
               options={STATUS_OPTIONS}
             />
           </div>
-          <button
-            type="button"
-            className={`editorial-chip ${overdueOnly ? 'is-on' : ''}`}
-            aria-pressed={overdueOnly}
-            onClick={() => setOverdueOnly((v) => !v)}
-          >
-            <AlertTriangle className="h-4 w-4" aria-hidden />
-            Overdue
-          </button>
+          {isOps ? (
+            <div className="editorial-filters__status editorial-filters__segment">
+              Writer
+              <EditorialSelect
+                variant="inline"
+                ariaLabel="Filter by assigned writer"
+                value={assigneeId}
+                onChange={setAssigneeId}
+                options={assigneeOptions}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -211,9 +233,7 @@ export default function EditorialAdminPage() {
             icon={<Clock className="h-4 w-4" aria-hidden />}
             label="Overdue"
             value={String(stats.overdueCount)}
-            pressed={overdueOnly}
             alert={stats.overdueCount > 0}
-            onClick={() => setOverdueOnly((v) => !v)}
           />
           <StatTile
             icon={<CheckCircle2 className="h-4 w-4" aria-hidden />}
@@ -261,6 +281,12 @@ export default function EditorialAdminPage() {
                         {new Date(a.dueAt).toLocaleDateString()}
                       </span>
                     ) : null}
+                    {canSeeWriterFee(actor.roles) && a.writerFeePaise != null ? (
+                    <span>
+                      <Wallet aria-hidden />
+                      {formatWriterFee(a.writerFeePaise)}
+                    </span>
+                    ) : null}
                     {a.overdue ? (
                       <span className="editorial-meta__danger">
                         <AlertTriangle aria-hidden />
@@ -296,37 +322,22 @@ function StatTile({
   icon,
   label,
   value,
-  pressed,
   alert,
-  onClick,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
-  pressed?: boolean;
   alert?: boolean;
-  onClick?: () => void;
 }) {
-  const className = `editorial-stat${pressed ? ' is-on' : ''}${alert ? ' is-alert' : ''}`;
-  const body = (
-    <>
+  return (
+    <div className={`editorial-stat${alert ? ' is-alert' : ''}`}>
       <span className="editorial-stat__lead">
         <span className="editorial-stat__icon">{icon}</span>
         <span className="editorial-stat__label">{label}</span>
       </span>
       <p className="editorial-stat__value">{value}</p>
-    </>
+    </div>
   );
-
-  if (onClick) {
-    return (
-      <button type="button" className={className} aria-pressed={pressed} onClick={onClick}>
-        {body}
-      </button>
-    );
-  }
-
-  return <div className={className}>{body}</div>;
 }
 
 function QueueAction({
@@ -384,4 +395,12 @@ function QueueAction({
       {label}
     </button>
   );
+}
+
+function formatWriterFee(paise: number) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format((paise ?? 0) / 100);
 }

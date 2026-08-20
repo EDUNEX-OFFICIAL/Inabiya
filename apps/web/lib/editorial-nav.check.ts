@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   canAccessEditorial,
+  canSeeWriterFee,
   defaultEditorialLanding,
   editorialQueueActions,
   filterEditorialNav,
@@ -41,7 +42,18 @@ assert.ok(contentNav.some((i) => i.id === 'new'));
 assert.ok(contentNav.some((i) => i.id === 'payments'));
 assert.ok(contentNav.some((i) => i.id === 'categories'));
 assert.ok(contentNav.some((i) => i.id === 'specialists'));
+assert.ok(!contentNav.some((i) => i.id === 'writer'));
 assert.equal(contentNav.length, filterEditorialNav(['SUPER_ADMIN']).length);
+
+const superNav = filterEditorialNav(['SUPER_ADMIN']);
+assert.ok(!superNav.some((i) => i.id === 'writer'));
+
+assert.equal(canSeeWriterFee(['WRITER']), false);
+assert.equal(canSeeWriterFee(['SEO_EDITOR']), false);
+assert.equal(canSeeWriterFee(['MEDICAL_REVIEWER']), false);
+assert.equal(canSeeWriterFee(['CONTENT_ADMIN']), true);
+assert.equal(canSeeWriterFee(['FINANCE']), true);
+assert.equal(canSeeWriterFee(['SUPER_ADMIN']), true);
 
 assert.equal(defaultEditorialLanding(['FINANCE']), '/admin/editorial/payments');
 assert.equal(defaultEditorialLanding(['WRITER']), '/admin/editorial');
@@ -83,7 +95,7 @@ assert.ok(EDITORIAL_NAV.every((i) => i.id !== 'campaigns'));
 const contentBottom = splitEditorialBottomNav(filterEditorialNav(['CONTENT_ADMIN']));
 assert.deepEqual(
   contentBottom.tabs.map((i) => i.id),
-  ['queue', 'writer', 'journal'],
+  ['queue', 'journal'],
 );
 assert.equal(contentBottom.fab?.id, 'new');
 assert.deepEqual(

@@ -43,7 +43,7 @@ export const EDITORIAL_NAV: EditorialNavItem[] = [
     id: 'writer',
     label: 'Writer',
     href: '/admin/editorial/writer',
-    roles: ['WRITER', 'CONTENT_ADMIN', 'SUPER_ADMIN'],
+    roles: ['WRITER'],
     match: 'prefix',
   },
   {
@@ -81,8 +81,12 @@ export function canAccessEditorial(roles: string[]): boolean {
   return roles.some((r) => (EDITORIAL_ROLES as readonly string[]).includes(r));
 }
 
+/** Assignment fee on queue/article — Payments roles only (not writer/SEO/medical). */
+export function canSeeWriterFee(roles: string[]): boolean {
+  return roles.some((r) => r === 'CONTENT_ADMIN' || r === 'SUPER_ADMIN' || r === 'FINANCE');
+}
+
 export function filterEditorialNav(roles: string[]): EditorialNavItem[] {
-  if (roles.includes('SUPER_ADMIN')) return EDITORIAL_NAV;
   return EDITORIAL_NAV.filter((item) => item.roles.some((r) => roles.includes(r)));
 }
 

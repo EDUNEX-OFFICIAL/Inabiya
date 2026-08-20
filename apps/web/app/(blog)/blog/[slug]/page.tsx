@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { BlogCoverMedia } from '@/components/blog/blog-cover-media';
 import { fetchArticles, type PublicArticleDetail } from '@/lib/articles';
 import { ArticleBody } from '@/components/editorial/article-body';
 import { JsonLdScript } from '@/components/seo/json-ld-script';
@@ -118,11 +119,14 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           ) : null}
         </p>
 
-        {article.seo.ogImageUrl ? (
-          <div className="relative mt-gs-6 aspect-[16/10] overflow-hidden rounded-clay border border-border-subtle bg-surface-soft">
-            {/* eslint-disable-next-line @next/next/no-img-element -- editorial covers may be SVG */}
-            <img src={article.seo.ogImageUrl} alt="" className="h-full w-full object-cover" />
-          </div>
+        {article.seo.ogImageUrl || article.imageUrl ? (
+          <BlogCoverMedia
+            src={article.seo.ogImageUrl || article.imageUrl}
+            alt=""
+            className="blog-post-cover mt-gs-6"
+            sizes="(max-width: 768px) 100vw, 48rem"
+            priority
+          />
         ) : null}
 
         <div className="blog-card blog-prose mt-gs-6 p-gs-5 sm:p-gs-7">

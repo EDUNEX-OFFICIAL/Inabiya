@@ -1,7 +1,8 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
 import type { AuthUser } from '@/lib/auth-client';
 
 const labelVisibility = {
@@ -73,6 +74,37 @@ export function EditorialIconButton({
       <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
       <span className={labelVisibility[labelFrom]}>{label}</span>
     </button>
+  );
+}
+
+type EditorialCheckProps = {
+  label: string;
+  icon?: LucideIcon;
+} & Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>;
+
+/** Styled checkbox — native input for a11y, custom box + label. */
+export function EditorialCheck({
+  label,
+  icon: Icon,
+  className,
+  id,
+  ...rest
+}: EditorialCheckProps) {
+  const checked = Boolean(rest.checked);
+  return (
+    <label
+      htmlFor={id}
+      className={`editorial-check${className ? ` ${className}` : ''}`.trim()}
+    >
+      <input id={id} type="checkbox" className="editorial-check__input" {...rest} />
+      <span className={`editorial-check__box${checked ? ' is-on' : ''}`} aria-hidden>
+        {checked ? <Check className="h-3 w-3" strokeWidth={2.5} /> : null}
+      </span>
+      <span className="editorial-check__label">
+        {Icon ? <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden /> : null}
+        {label}
+      </span>
+    </label>
   );
 }
 

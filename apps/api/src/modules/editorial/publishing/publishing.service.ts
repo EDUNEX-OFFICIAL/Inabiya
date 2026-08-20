@@ -21,10 +21,9 @@ import { readSeoSchemaExtras } from '../../../common/seo-schema-extras';
 import { upsertArticleTagIds } from '../article-tags';
 import { articleCanonicalPath } from '../article-canonical';
 import { publishBlockReason } from '../articles/editorial-transitions';
+import { writerFeeForPayment } from '../writer-fee';
 
 type Actor = { id: string; roles: RoleCode[] };
-
-const DEFAULT_WRITER_FEE_PAISE = Number(process.env.WRITER_FEE_PAISE ?? 50000);
 
 @Injectable()
 export class PublishingService {
@@ -168,12 +167,14 @@ export class PublishingService {
     return { published: results.length, articles: results };
   }
 
-  async listPublic(query?: { category?: string; tag?: string }) {
+  async listPublic(query?: { category?: string; tag?: string; q?: string }) {
+    const text = query?.q?.trim();
     const rows = await this.prisma.article.findMany({
       where: {
         status: ArticleStatus.PUBLISHED,
         ...(query?.category ? { category: { slug: query.category } } : {}),
         ...(query?.tag ? { tags: { some: { tag: { slug: query.tag } } } } : {}),
+        ...(text ? { OR: this.publicTextOr(text) } : {}),
       },
       orderBy: { publishedAt: 'desc' },
       take: 50,
@@ -184,6 +185,35 @@ export class PublishingService {
       },
     });
     return rows.map((a) => this.mapPublicSummary(a));
+  }
+
+  /** Typeahead for Journal search — published articles only. */
+  async searchPublic(q: string) {
+    const text = q.trim();
+    if (text.length < 2) return [];
+    const rows = await this.prisma.article.findMany({
+      where: {
+        status: ArticleStatus.PUBLISHED,
+        OR: this.publicTextOr(text),
+      },
+      orderBy: { publishedAt: 'desc' },
+      take: 8,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        seoTitle: true,
+        seoDescription: true,
+        category: { select: { name: true } },
+      },
+    });
+    return rows.map((a) => ({
+      id: a.id,
+      slug: a.slug,
+      title: a.seoTitle ?? a.title,
+      description: a.seoDescription,
+      category: a.category?.name ?? null,
+    }));
   }
 
   async getPublicBySlug(slug: string) {
@@ -415,7 +445,7 @@ export class PublishingService {
           create: {
             articleId,
             writerId: article.assigneeId,
-            amountPaise: DEFAULT_WRITER_FEE_PAISE,
+            amountPaise: writerFeeForPayment(article.writerFeePaise),
             status: WriterPaymentStatus.PENDING,
           },
           update: {},
@@ -527,10 +557,26 @@ export class PublishingService {
     }
   }
 
+  private publicTextOr(text: string) {
+    return [
+      { title: { contains: text, mode: 'insensitive' as const } },
+      { seoTitle: { contains: text, mode: 'insensitive' as const } },
+      { seoDescription: { contains: text, mode: 'insensitive' as const } },
+    ];
+  }
+
+  private estimateReadTimeMinutes(body: string): number {
+    const plain = body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!plain) return 1;
+    const words = plain.split(' ').length;
+    return Math.max(1, Math.round(words / 220));
+  }
+
   private mapPublicSummary(a: {
     id: string;
     title: string;
     slug: string;
+    body: string;
     seoTitle: string | null;
     seoDescription: string | null;
     publishedAt: Date | null;
@@ -547,6 +593,7 @@ export class PublishingService {
       description: a.seoDescription,
       publishedAt: a.publishedAt,
       viewCount: a.viewCount,
+      readTimeMinutes: this.estimateReadTimeMinutes(a.body),
       imageUrl: a.ogImageUrl,
       category: a.category,
       specialist: a.specialist,

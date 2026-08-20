@@ -23,7 +23,7 @@ Also: `CHANGES_REQUESTED`. Illegal jump → domain error (`409`/`400`) + stable 
 | If `medicalGateRequired` | history must include `MEDICAL_REVIEW` or `MEDICAL_GATE_REQUIRED` |
 | Writers cannot self-approve SEO/medical | role checks on transition endpoints |
 | Schedule → publish | `processDueSchedules` / scanner — not browser-only hope |
-| On publish | upsert `WriterPayment` PENDING + audit `article.published` |
+| On publish | upsert `WriterPayment` PENDING using `article.writerFeePaise` + audit `article.published` |
 
 ```typescript
 // publishing.service.ts — do not weaken this
@@ -34,6 +34,10 @@ if (article.medicalGateRequired) {
 ```
 
 ## Writer payouts
+
+Fee is set on **create assignment** (`writerFeePaise`). Visible only to **CONTENT_ADMIN / SUPER_ADMIN / FINANCE** (API omits the field otherwise). Locked after schedule/publish.
+
+Article **Timeline** = status + comments/change requests + manual/meta edits (not autosave) + payment events for fee-visible roles. Show actor. Change-request comment in SEO/Medical **also** moves status to `CHANGES_REQUESTED`.
 
 `POST …/writer-payments/:id/release` — `@Roles('FINANCE', 'SUPER_ADMIN')`.  
 Only `PENDING` + article `PUBLISHED` → `RELEASED`; audit `writer_payment.released`. Re-release of non-PENDING → `NOT_PENDING` (idempotent-safe refusal).

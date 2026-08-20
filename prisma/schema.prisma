@@ -905,6 +905,8 @@ model Article {
   specialistId         String?                @map("specialist_id") @db.Uuid
   dueAt                DateTime?              @map("due_at")
   dueReminderSentAt    DateTime?              @map("due_reminder_sent_at")
+  /// Writer payout on publish (paise). Set at assignment; default WRITER_FEE_PAISE.
+  writerFeePaise       Int                    @default(50000) @map("writer_fee_paise")
   seoTitle             String?                @map("seo_title")
   seoDescription       String?                @map("seo_description")
   canonicalPath        String?                @map("canonical_path")
@@ -934,13 +936,20 @@ model Article {
   @@map("articles")
 }
 
+enum ArticleRevisionSource {
+  AUTO
+  MANUAL
+  META
+}
+
 model ArticleRevision {
-  id        String   @id @default(uuid()) @db.Uuid
-  articleId String   @map("article_id") @db.Uuid
+  id        String                 @id @default(uuid()) @db.Uuid
+  articleId String                 @map("article_id") @db.Uuid
   title     String
   body      String
-  actorId   String?  @map("actor_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
+  source    ArticleRevisionSource  @default(AUTO)
+  actorId   String?                @map("actor_id") @db.Uuid
+  createdAt DateTime               @default(now()) @map("created_at")
   article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
   actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
 
